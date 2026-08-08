@@ -612,6 +612,97 @@ async function main() {
       0,
       'failed validation leaves no installed version behind',
     );
+
+    console.log('\n9. Argentina IVA pack passes activation validation and computes inclusive tax');
+    const argentinaPackData = require('../main/tax-packs/argentina.json');
+    const argentinaPackJson = JSON.stringify(argentinaPackData);
+    const argentinaSignature = sign(
+      null,
+      Buffer.from(argentinaPackJson, 'utf8'),
+      privateKey,
+    ).toString('base64');
+    const argentinaTag = `tax-pack-${argentinaPackData.id}-v${argentinaPackData.version}`;
+    const argentinaEntry = {
+      id: argentinaPackData.id,
+      publisher: argentinaPackData.publisher,
+      country: argentinaPackData.country,
+      jurisdiction: argentinaPackData.jurisdiction,
+      version: argentinaPackData.version,
+      publishedAt: argentinaPackData.publishedAt,
+      minFloVersion: argentinaPackData.minFloVersion,
+      downloadUrl: `https://github.com/FreeOpenSourcePOS/FloCafe-Plugins/releases/download/${argentinaTag}/${argentinaPackData.id}-v${argentinaPackData.version}.json`,
+      signatureUrl: `https://github.com/FreeOpenSourcePOS/FloCafe-Plugins/releases/download/${argentinaTag}/${argentinaPackData.id}-v${argentinaPackData.version}.json.sig`,
+      digest: taxPackSha256(argentinaPackJson),
+    };
+    const argentinaFetch = async (input: string | URL | Request) => new Response(
+      String(input) === argentinaEntry.downloadUrl ? argentinaPackJson : argentinaSignature,
+      { status: 200 },
+    );
+    const argentinaInstalled = await installCatalogEntry(argentinaEntry, {
+      actorUserId: owner.userId,
+      fetchImpl: argentinaFetch,
+      publicKey,
+    });
+    assertEqual(
+      argentinaInstalled.validation.checks.length,
+      24,
+      'Argentina pack goes through the same 24-check validation as every other country pack',
+    );
+    assertEqual(
+      argentinaInstalled.validation.valid,
+      true,
+      'Argentina IVA pack passes activation validation',
+    );
+
+    // Schema sanity: the Argentina pack source JSON declares
+    // registrationNumberLabel so receipt/footer consumers resolve the label
+    // through getActiveCountryPack as through countries.ts.
+    assertEqual(argentinaPackData.registrationNumberLabel, 'CUIT', 'Argentina pack declares registration label "CUIT"');
+
+    // Mirror ensure-country's category backfill (main/routes/tax-packs.ts:739-744)
+    // so the active pack's default product category is what uncategorized
+    // products resolve to. The install helper writes the version row directly
+    // without going through the route, so it has to reproduce that step.
+    db.prepare(
+      `UPDATE products SET tax_category_id = ? WHERE tax_category_id IS NULL AND deleted_at IS NULL`
+    ).run(argentinaPackData.defaultCategories.product);
+    db.prepare(
+      `UPDATE addons SET tax_category_id = ? WHERE tax_category_id IS NULL`
+    ).run(argentinaPackData.defaultCategories.addon);
+    // The store country must match the pack for getActiveCountryPack to pick
+    // it up; the other sections set it to IN/TH through the legacy fixtures.
+    db.prepare("UPDATE settings SET value = 'AR' WHERE key = 'country'").run();
+    db.prepare("UPDATE settings SET value = 'true' WHERE key = 'taxes_enabled'").run();
+    // Switch to the Argentina catalog entry's installed pack by making it
+    // the active row for country=AR.
+    db.prepare(`
+      UPDATE country_packs
+      SET active_version_id = ?, status = 'active', updated_at = ?
+      WHERE id = ?
+    `).run(argentinaInstalled.versionId, new Date().toISOString(), argentinaPackData.id);
+    // activePackForCountry() picks the active row whose country matches the
+    // store's setting; mark the AR-installed pack as the one that resolves.
+    db.prepare(`
+      UPDATE country_packs SET status = 'installed', updated_at = ?
+      WHERE country = 'AR' AND id != ?
+    `).run(new Date().toISOString(), argentinaPackData.id);
+
+    const arCalculation = await api(baseUrl, '/api/tax-packs/test-calculation', {
+      method: 'POST',
+      body: { category_id: 'iva_21', amount: '1000', tax_behavior: 'inclusive' },
+      headers: manager.authHeader,
+    });
+    assertEqual(arCalculation.status, 200, 'Argentina test calculation runs against the active pack');
+    assertEqual(
+      arCalculation.data.calculation.taxAmount,
+      '173.55',
+      'ARS 1000 inclusive at 21% extracts ARS 173.55 tax',
+    );
+    assertEqual(
+      arCalculation.data.calculation.payableTotal,
+      '1000',
+      'inclusive payable total stays at ARS 1000',
+    );
   } finally {
     server.close();
     closeDatabase();
