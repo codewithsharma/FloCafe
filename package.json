@@ -164,7 +164,7 @@
     "electron-log": "^5.4.4",
     "electron-updater": "^6.8.9",
     "express": "^5.2.1",
-    "googleapis": "^173.0.0",
+    "googleapis": "^174.0.1",
     "jsonwebtoken": "^9.0.2",
     "libphonenumber-js": "^1.13.10",
     "pino": "^10.3.1",
