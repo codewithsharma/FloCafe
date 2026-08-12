@@ -55,7 +55,7 @@ export default function ShiftStatusSection({
   if (!enabled) return null;
   if (loading && !shift && !error) {
     return (
-      <div className="inline-flex h-6 items-center gap-1.5 rounded-full bg-muted px-2.5 text-muted-foreground ring-1 ring-inset ring-border/70">
+      <div className="inline-flex h-6 items-center gap-1.5 rounded-full bg-flo-bg px-2.5 text-flo-text-secondary ring-1 ring-inset ring-flo-border">
         <CircleDot size={13} className="animate-pulse" />
         <span>{t('shift.loading')}</span>
       </div>
@@ -65,13 +65,13 @@ export default function ShiftStatusSection({
   const hasActiveShift = Boolean(shift);
   const shiftIsStale = hasActiveShift && shift ? isShiftStale(shift.opened_at, staleHours) : false;
   const pillClass = hasActiveShift
-    ? 'bg-emerald-50 text-emerald-700 ring-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800'
-    : 'bg-amber-50 text-amber-800 ring-amber-200/80 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-800';
+    ? 'bg-flo-success-subtle text-flo-success ring-flo-success/30'
+    : 'bg-flo-warning-subtle text-flo-warning ring-flo-warning/30';
 
   return (
     <>
       {shiftIsStale && (
-        <div className="inline-flex h-6 max-w-[14rem] items-center gap-1.5 rounded-full bg-amber-100 px-2.5 text-[10px] font-medium text-amber-900 ring-1 ring-inset ring-amber-300/80 dark:bg-amber-950/50 dark:text-amber-100 dark:ring-amber-700 sm:max-w-none">
+        <div className="inline-flex h-6 max-w-[14rem] items-center gap-1.5 rounded-full bg-flo-warning-subtle px-2.5 text-[10px] font-medium text-flo-warning ring-1 ring-inset ring-flo-warning/40 sm:max-w-none">
           <AlertTriangle size={12} className="shrink-0" />
           <span className="truncate">{t('shift.staleWarning', { hours: staleHours })}</span>
           {canForceClose && (
@@ -79,7 +79,7 @@ export default function ShiftStatusSection({
               type="button"
               size="sm"
               variant="ghost"
-              className="h-5 shrink-0 px-1.5 text-[10px] font-semibold text-amber-900 hover:bg-amber-200/80 dark:text-amber-100 dark:hover:bg-amber-900/60"
+              className="h-5 shrink-0 px-1.5 text-[10px] font-semibold text-flo-warning hover:bg-flo-warning/15"
               onClick={() => setForceCloseModal(true)}
             >
               {t('shift.forceCloseAction')}
@@ -106,7 +106,7 @@ export default function ShiftStatusSection({
             type="button"
             size="sm"
             variant="ghost"
-            className="h-5 px-2 text-[10px] font-semibold hover:bg-amber-100/80 dark:hover:bg-amber-900/40"
+            className="h-5 px-2 text-[10px] font-semibold hover:bg-flo-warning/15"
             onClick={() => setOpenModal(true)}
           >
             {t('shift.openAction')}
@@ -117,7 +117,7 @@ export default function ShiftStatusSection({
             type="button"
             size="sm"
             variant="ghost"
-            className="h-5 px-2 text-[10px] font-semibold hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40"
+            className="h-5 px-2 text-[10px] font-semibold hover:bg-flo-success/15"
             onClick={() => setCloseModal(true)}
           >
             {t('shift.closeAction')}
@@ -126,7 +126,7 @@ export default function ShiftStatusSection({
       </div>
 
       {error?.code === 'invalid_terminal' && (
-        <span className="hidden text-amber-700 sm:inline" title={error.message}>
+        <span className="hidden text-flo-warning sm:inline" title={error.message}>
           {t('shift.invalidTerminal')}
         </span>
       )}
@@ -135,7 +135,7 @@ export default function ShiftStatusSection({
           type="button"
           size="sm"
           variant="ghost"
-          className="h-6 px-2 text-[10px] text-red-600"
+          className="h-6 px-2 text-[10px] text-flo-danger"
           onClick={() => void refresh()}
         >
           {t('shift.retry')}

@@ -1,11 +1,11 @@
 {
-  "name": "Nexora",
-  "short_name": "Nexora",
-  "description": "Smart Point of Sale for restaurants, salons, and retail",
-  "start_url": "/dashboard",
+  "name": "Flo POS",
+  "short_name": "Flo POS",
+  "description": "Restaurant operating system — point of sale, kitchen, and operations",
+  "start_url": "/pos",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#3248FF",
+  "background_color": "#F7F5F2",
+  "theme_color": "#E85D04",
   "orientation": "any",
   "icons": [
     {

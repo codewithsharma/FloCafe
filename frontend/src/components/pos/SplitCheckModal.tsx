@@ -1,10 +1,18 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Minus, Plus, X } from 'lucide-react';
+import { Minus, Plus } from 'lucide-react';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { useI18n } from '@/hooks/useI18n';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import type { Bill, Order, OrderItem } from '@/lib/types';
@@ -59,10 +67,83 @@ export function SplitCheckModal({ bill, order, onClose, onSplit }: { bill: Bill;
     } finally { setSaving(false); }
   };
 
-  return <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4"><div className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
-    <div className="p-5 border-b flex items-center justify-between"><div><h2 className="text-lg font-bold">{t('pos.splitCheck', { defaultValue: 'Split check' })}</h2><p className="text-sm text-gray-500">{t('pos.splitCheckHint', { defaultValue: 'Assign whole item quantities to each guest check.' })}</p></div><button onClick={onClose}><X size={20} /></button></div>
-    <div className="p-5 border-b flex items-center gap-3"><span className="text-sm text-gray-600">{t('pos.numberOfChecks', { defaultValue: 'Number of checks' })}</span><button onClick={() => resize(count - 1)} className="size-7 rounded-full bg-gray-100 flex items-center justify-center"><Minus size={13} /></button><strong>{count}</strong><button onClick={() => resize(count + 1)} className="size-7 rounded-full bg-gray-100 flex items-center justify-center"><Plus size={13} /></button></div>
-    <div className="overflow-auto p-5"><table className="w-full text-sm"><thead><tr><th className="text-left p-2 sticky left-0 bg-white">{t('pos.items')}</th>{Array.from({ length: count }, (_, i) => <th key={i} className="p-2 min-w-28"><input value={labels[i]} onChange={(e) => setLabels((old) => old.map((label, n) => n === i ? e.target.value.slice(0, 40) : label))} className="w-full text-center border rounded px-2 py-1" /></th>)}</tr></thead><tbody>{items.map((item: OrderItem) => <tr key={item.id} className="border-t"><td className="p-2 sticky left-0 bg-white"><div className="font-medium">{item.product_name}</div><div className="text-xs text-gray-400">{item.quantity} × {fmt(Number(item.total) / item.quantity)}</div></td>{Array.from({ length: count }, (_, i) => <td key={i} className="p-2"><input type="number" min="0" max={item.quantity} value={allocations[item.id]?.[i] || 0} onChange={(e) => { const value = Math.min(item.quantity, Math.max(0, Number(e.target.value) || 0)); setAllocations((old) => ({ ...old, [item.id]: old[item.id].map((qty, n) => n === i ? value : qty) })); }} className="w-full text-center border rounded px-2 py-1" /></td>)}</tr>)}</tbody><tfoot><tr className="border-t font-semibold"><td className="p-2">{t('pos.estimatedItemsTotal', { defaultValue: 'Items total' })}</td>{totals.map((total, i) => <td key={i} className="p-2 text-center">{fmt(total)}</td>)}</tr></tfoot></table></div>
-    <div className="p-5 border-t flex justify-end gap-2"><Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button><Button onClick={submit} disabled={saving}>{saving ? t('common.saving') : t('pos.createChecks', { defaultValue: 'Create checks' })}</Button></div>
-  </div></div>;
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="border-flo-border bg-flo-surface sm:max-w-5xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
+        <DialogHeader className="p-5 border-b border-flo-border">
+          <DialogTitle className="text-flo-text">{t('pos.splitCheck', { defaultValue: 'Split check' })}</DialogTitle>
+          <DialogDescription className="text-flo-text-secondary">
+            {t('pos.splitCheckHint', { defaultValue: 'Assign whole item quantities to each guest check.' })}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="p-5 border-b border-flo-border flex items-center gap-3">
+          <span className="text-sm text-flo-text-secondary">{t('pos.numberOfChecks', { defaultValue: 'Number of checks' })}</span>
+          <button type="button" onClick={() => resize(count - 1)} className="size-7 min-h-11 min-w-11 sm:min-h-7 sm:min-w-7 rounded-full bg-flo-bg flex items-center justify-center text-flo-text hover:bg-flo-border">
+            <Minus size={13} />
+          </button>
+          <strong className="text-flo-text">{count}</strong>
+          <button type="button" onClick={() => resize(count + 1)} className="size-7 min-h-11 min-w-11 sm:min-h-7 sm:min-w-7 rounded-full bg-flo-bg flex items-center justify-center text-flo-text hover:bg-flo-border">
+            <Plus size={13} />
+          </button>
+        </div>
+        <div className="overflow-auto p-5 flex-1">
+          <table className="w-full text-sm">
+            <thead>
+              <tr>
+                <th className="text-left p-2 sticky left-0 bg-flo-surface text-flo-text">{t('pos.items')}</th>
+                {Array.from({ length: count }, (_, i) => (
+                  <th key={i} className="p-2 min-w-28">
+                    <input
+                      value={labels[i]}
+                      onChange={(e) => setLabels((old) => old.map((label, n) => n === i ? e.target.value.slice(0, 40) : label))}
+                      className="w-full text-center border border-flo-border rounded-flo-md px-2 py-1 min-h-11 bg-flo-surface text-flo-text focus:ring-2 focus:ring-flo-brand-500 outline-none"
+                    />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item: OrderItem) => (
+                <tr key={item.id} className="border-t border-flo-border">
+                  <td className="p-2 sticky left-0 bg-flo-surface">
+                    <div className="font-medium text-flo-text">{item.product_name}</div>
+                    <div className="text-xs text-flo-text-muted">{item.quantity} × {fmt(Number(item.total) / item.quantity)}</div>
+                  </td>
+                  {Array.from({ length: count }, (_, i) => (
+                    <td key={i} className="p-2">
+                      <input
+                        type="number"
+                        min="0"
+                        max={item.quantity}
+                        value={allocations[item.id]?.[i] || 0}
+                        onChange={(e) => {
+                          const value = Math.min(item.quantity, Math.max(0, Number(e.target.value) || 0));
+                          setAllocations((old) => ({ ...old, [item.id]: old[item.id].map((qty, n) => n === i ? value : qty) }));
+                        }}
+                        className="w-full text-center border border-flo-border rounded-flo-md px-2 py-1 min-h-11 bg-flo-surface text-flo-text focus:ring-2 focus:ring-flo-brand-500 outline-none"
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t border-flo-border font-semibold">
+                <td className="p-2 text-flo-text">{t('pos.estimatedItemsTotal', { defaultValue: 'Items total' })}</td>
+                {totals.map((total, i) => (
+                  <td key={i} className="p-2 text-center text-flo-brand-600">{fmt(total)}</td>
+                ))}
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <DialogFooter className="p-5 border-t border-flo-border gap-2 sm:justify-end">
+          <Button variant="outline" onClick={onClose} className="min-h-11">{t('common.cancel')}</Button>
+          <Button onClick={submit} disabled={saving} className="min-h-11 bg-flo-brand-600 hover:bg-flo-brand-700 text-white">
+            {saving ? t('common.saving') : t('pos.createChecks', { defaultValue: 'Create checks' })}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }

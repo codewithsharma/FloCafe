@@ -27,6 +27,8 @@ interface ModalItem {
   orderNumber: string;
 }
 
+const FALLBACK_ORDER_TYPE_BADGE = 'bg-flo-bg text-flo-text-secondary border-flo-border';
+
 export function KdsTabsView({ orders, updating, updateItemStatus }: KdsTabsViewProps) {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<KitchenStatus>('pending');
@@ -71,7 +73,7 @@ export function KdsTabsView({ orders, updating, updateItemStatus }: KdsTabsViewP
 
   return (
     <>
-      <div className="shrink-0 flex flex-wrap items-center gap-2 mb-4">
+      <div className="mb-4 flex shrink-0 flex-wrap items-center gap-2">
         {(Object.keys(STATUS_CONFIG) as KitchenStatus[]).map((status) => {
           const config = STATUS_CONFIG[status];
           const count = orderCounts(status);
@@ -80,33 +82,33 @@ export function KdsTabsView({ orders, updating, updateItemStatus }: KdsTabsViewP
             <button
               key={status}
               onClick={() => setActiveTab(status)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+              className={`flex min-h-11 items-center gap-1.5 rounded-flo-md px-3 py-1.5 text-sm font-medium transition-all ${
                 isActive
                   ? `${config.bg} ${config.text} ring-2 ring-current`
                   : `${config.bg} ${config.text} opacity-50 hover:opacity-80`
               }`}
             >
-              <div className={`w-2 h-2 rounded-full ${config.color}`} />
+              <div className={`h-2 w-2 rounded-full ${config.color}`} />
               {statusLabel(status)}
-              <span className="text-xs px-1.5 py-0.5 rounded-full bg-white/60">{count}</span>
+              <span className="rounded-full bg-flo-surface/60 px-1.5 py-0.5 text-xs">{count}</span>
             </button>
           );
         })}
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 items-start">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {filteredOrders.map((order) => (
             <div
               key={order.id}
-              className={`bg-white rounded-xl border-2 ${STATUS_CONFIG[activeTab].border} p-4 flex flex-col`}
+              className={`flex flex-col rounded-flo-lg border-2 bg-flo-surface p-4 ${STATUS_CONFIG[activeTab].border}`}
             >
-              <div className="flex justify-between items-center mb-3 gap-2">
-                <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-                  <span className="font-bold text-base shrink-0">#{order.order_number}</span>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                  <span className="shrink-0 text-base font-bold text-flo-text">#{order.order_number}</span>
                   <Badge
                     variant="outline"
-                    className={ORDER_TYPE_BADGE_STYLES[order.type] || 'bg-gray-50 text-gray-700 border-gray-200'}
+                    className={ORDER_TYPE_BADGE_STYLES[order.type] || FALLBACK_ORDER_TYPE_BADGE}
                   >
                     {t(ORDER_TYPE_LABEL_KEYS[order.type] ?? order.type)}
                   </Badge>
@@ -114,21 +116,21 @@ export function KdsTabsView({ orders, updating, updateItemStatus }: KdsTabsViewP
                     <Badge variant="secondary">{t('kds.tableLabel', { name: order.table.name })}</Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-1 text-sm text-gray-400 font-mono shrink-0">
+                <div className="flex shrink-0 items-center gap-1 font-mono text-sm text-flo-text-muted">
                   <Clock size={12} />
                   {timeSince(order.created_at)}
                 </div>
               </div>
 
               {order.special_instructions && (
-                <div className="mb-2 px-2 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
-                  <p className="text-sm text-amber-700 font-medium break-words">
+                <div className="mb-2 rounded-flo-md border border-flo-warning/30 bg-flo-warning-subtle px-2 py-1.5">
+                  <p className="break-words text-sm font-medium text-flo-warning">
                     📝 {order.special_instructions}
                   </p>
                 </div>
               )}
 
-              <div className="space-y-2 flex-1">
+              <div className="flex-1 space-y-2">
                 {order.items?.map((item) => {
                   const itemStatus = normalizeKitchenStatus(item.status);
                   const config = STATUS_CONFIG[itemStatus];
@@ -138,22 +140,24 @@ export function KdsTabsView({ orders, updating, updateItemStatus }: KdsTabsViewP
                     <button
                       key={item.id}
                       onClick={() => setModalItem({ item, orderNumber: order.order_number })}
-                      className={`w-full text-left rounded-xl border-2 ${config.border} ${config.bg} px-3 py-2.5 transition-all active:scale-95 hover:brightness-95`}
+                      className={`w-full rounded-flo-lg border-2 px-3 py-2.5 text-left transition-all hover:brightness-95 active:scale-95 ${config.border} ${config.bg}`}
                     >
                       <div className="flex items-center gap-2">
-                        <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${config.color}`} />
-                        <span className={`font-bold text-base w-6 shrink-0 ${config.text}`}>{item.quantity}×</span>
-                        <span className={`text-lg font-semibold flex-1 truncate ${isVoided ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                        <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${config.color}`} />
+                        <span className={`w-6 shrink-0 text-base font-bold ${config.text}`}>{item.quantity}×</span>
+                        <span
+                          className={`flex-1 truncate text-lg font-semibold ${isVoided ? 'text-flo-text-muted line-through' : 'text-flo-text'}`}
+                        >
                           {item.product_name}
                         </span>
-                        <ChevronRight size={14} className="text-gray-400 shrink-0" />
+                        <ChevronRight size={14} className="shrink-0 text-flo-text-muted" />
                       </div>
                       {item.addons && item.addons.length > 0 && (
-                        <div className="ml-[26px] flex flex-wrap gap-1 mt-1">
+                        <div className="ml-[26px] mt-1 flex flex-wrap gap-1">
                           {item.addons.map((addon, i) => (
                             <span
                               key={`${addon.id ?? addon.name}-${i}`}
-                              className="text-[10px] bg-white/70 text-blue-600 px-1.5 py-0.5 rounded border border-blue-200"
+                              className="rounded border border-flo-info/30 bg-flo-surface/70 px-1.5 py-0.5 text-[10px] text-flo-info"
                             >
                               + {addon.name}{(addon.quantity || 1) > 1 ? ` ×${addon.quantity}` : ''}
                             </span>
@@ -161,7 +165,7 @@ export function KdsTabsView({ orders, updating, updateItemStatus }: KdsTabsViewP
                         </div>
                       )}
                       {item.special_instructions && (
-                        <p className="ml-[26px] text-sm text-red-600 italic mt-0.5 font-medium break-words">
+                        <p className="ml-[26px] mt-0.5 break-words text-sm font-medium italic text-flo-danger">
                           {`"${item.special_instructions}"`}
                         </p>
                       )}
@@ -174,7 +178,7 @@ export function KdsTabsView({ orders, updating, updateItemStatus }: KdsTabsViewP
         </div>
 
         {filteredOrders.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+          <div className="flex flex-col items-center justify-center py-16 text-flo-text-muted">
             <p className="text-lg">{t('kds.emptyItems', { status: statusLabel(activeTab).toLowerCase() })}</p>
             <p className="text-sm">{t('kds.emptyHint')}</p>
           </div>

@@ -3,14 +3,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { parseDbTimestamp } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import { PageHeader, Panel, EmptyState, LoadingState, StatusBadge } from '@/components/flo';
+import type { StatusBadgeVariant } from '@/lib/flo-display';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
-  Loader2, AlertTriangle, CheckCircle2, XCircle, QrCode, Ban, Send, Inbox, Copy, KeyRound, Info,
+  AlertTriangle, CheckCircle2, XCircle, QrCode, Ban, Send, Inbox, Copy, KeyRound, Info,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -107,13 +107,28 @@ function StatusStepper({ status, t }: { status: string; t: (k: string) => string
         return (
           <span
             key={step}
-            className={`h-1.5 w-4 rounded-full ${reached ? 'bg-primary' : 'bg-muted'} ${i === current ? 'ring-2 ring-primary/30' : ''}`}
+            className={`h-1.5 w-4 rounded-full ${reached ? 'bg-flo-brand-500' : 'bg-flo-border'} ${i === current ? 'ring-2 ring-flo-brand-500/30' : ''}`}
           />
         );
       })}
-      {failed && <span className="ml-1 text-xs text-destructive">{t('whatsapp.status.failed')}</span>}
+      {failed && <span className="ml-1 text-xs text-flo-danger">{t('whatsapp.status.failed')}</span>}
     </div>
   );
+}
+
+function whatsappStateVariant(state: string): StatusBadgeVariant {
+  switch (state) {
+    case 'connected':
+      return 'success';
+    case 'cooldown':
+      return 'danger';
+    case 'waiting_qr':
+    case 'waiting_pairing':
+    case 'connecting':
+      return 'warning';
+    default:
+      return 'secondary';
+  }
 }
 
 /**
@@ -398,16 +413,18 @@ export default function WhatsAppPage() {
   return (
     <>
       {ConfirmDialog}
-      <div className="space-y-4 p-2">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{t('nav.whatsapp')}</h1>
-        {status && (
-          <Badge variant={status.state === 'connected' ? 'default' : status.state === 'cooldown' ? 'destructive' : 'secondary'}>
-            {stateLabel(status.state)}
-            {status.connectedPhone ? ` · ${status.connectedPhone}` : ''}
-          </Badge>
-        )}
-      </div>
+      <div className="space-y-4">
+      <PageHeader
+        title={t('nav.whatsapp')}
+        actions={
+          status ? (
+            <StatusBadge variant={whatsappStateVariant(status.state)} dot>
+              {stateLabel(status.state)}
+              {status.connectedPhone ? ` · ${status.connectedPhone}` : ''}
+            </StatusBadge>
+          ) : null
+        }
+      />
 
       <Tabs value={effectiveTab} onValueChange={onTabChange}>
         <TabsList>
@@ -418,8 +435,8 @@ export default function WhatsAppPage() {
 
         <TabsContent value="connection" className="space-y-4">
           {!status?.enabled && (
-            <Card>
-              <CardContent className="text-sm text-muted-foreground flex items-center justify-between gap-4 py-4">
+            <Panel>
+              <div className="flex flex-col gap-4 text-sm text-flo-text-secondary sm:flex-row sm:items-center sm:justify-between">
                 <span>
                   {t('whatsapp.connection.notEnabled', {
                     defaultValue: 'WhatsApp is not enabled on this tenant.',
@@ -432,30 +449,34 @@ export default function WhatsAppPage() {
                     })}
                   </Link>
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </Panel>
           )}
 
           {status?.enabled && (
             <>
               {isAdmin && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t('whatsapp.connect.title')}</CardTitle>
-                    <CardDescription>{t('whatsapp.connect.description')}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+                <Panel
+                  title={t('whatsapp.connect.title')}
+                  description={t('whatsapp.connect.description')}
+                  footer={
+                    <div className="flex justify-end">
+                      <Button variant="destructive" size="sm" onClick={disableFeature}>{t('whatsapp.active.disableCta')}</Button>
+                    </div>
+                  }
+                >
+                  <div className="space-y-4">
                     {status.state === 'disconnected' && (
                       <div className="grid gap-4 md:grid-cols-2">
-                        <div className="rounded-lg border bg-card p-4 flex flex-col gap-3">
+                        <div className="rounded-flo-lg border border-flo-border bg-flo-surface p-4 flex flex-col gap-3">
                           <div className="flex items-center gap-2">
-                            <div className="flex items-center justify-center size-9 rounded-md bg-brand-light text-brand">
+                            <div className="flex items-center justify-center size-9 rounded-flo-md bg-flo-brand-50 text-flo-brand-600">
                               <QrCode className="size-5" />
                             </div>
-                            <h3 className="font-semibold text-sm">{t('whatsapp.connect.qrMethodTitle')}</h3>
+                            <h3 className="font-semibold text-sm text-flo-text">{t('whatsapp.connect.qrMethodTitle')}</h3>
                           </div>
-                          <p className="text-sm text-muted-foreground">{t('whatsapp.connect.qrMethodDescription')}</p>
-                          <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                          <p className="text-sm text-flo-text-secondary">{t('whatsapp.connect.qrMethodDescription')}</p>
+                          <div className="rounded-flo-md bg-flo-bg px-3 py-2 text-xs text-flo-text-secondary">
                             <div className="flex items-start gap-1.5">
                               <Info className="size-3.5 mt-0.5 shrink-0" />
                               <span>{t('whatsapp.connect.qrMethodWhere')}</span>
@@ -466,22 +487,22 @@ export default function WhatsAppPage() {
                           </Button>
                         </div>
 
-                        <div className="rounded-lg border bg-card p-4 flex flex-col gap-3">
+                        <div className="rounded-flo-lg border border-flo-border bg-flo-surface p-4 flex flex-col gap-3">
                           <div className="flex items-center gap-2">
-                            <div className="flex items-center justify-center size-9 rounded-md bg-brand-light text-brand">
+                            <div className="flex items-center justify-center size-9 rounded-flo-md bg-flo-brand-50 text-flo-brand-600">
                               <KeyRound className="size-5" />
                             </div>
-                            <h3 className="font-semibold text-sm">{t('whatsapp.connect.pairingMethodTitle')}</h3>
+                            <h3 className="font-semibold text-sm text-flo-text">{t('whatsapp.connect.pairingMethodTitle')}</h3>
                           </div>
-                          <p className="text-sm text-muted-foreground">{t('whatsapp.connect.pairingMethodDescription')}</p>
-                          <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                          <p className="text-sm text-flo-text-secondary">{t('whatsapp.connect.pairingMethodDescription')}</p>
+                          <div className="rounded-flo-md bg-flo-bg px-3 py-2 text-xs text-flo-text-secondary">
                             <div className="flex items-start gap-1.5">
                               <Info className="size-3.5 mt-0.5 shrink-0" />
                               <span>{t('whatsapp.connect.pairingMethodWhere')}</span>
                             </div>
                           </div>
                           <div className="space-y-1.5">
-                            <label className="text-xs text-muted-foreground">{t('whatsapp.connect.pairingPhoneLabel')}</label>
+                            <label className="text-xs text-flo-text-secondary">{t('whatsapp.connect.pairingPhoneLabel')}</label>
                             <Input
                               value={pairingPhone}
                               onChange={(e) => setPairingPhone(e.target.value)}
@@ -498,32 +519,32 @@ export default function WhatsAppPage() {
 
                     {status.state === 'waiting_qr' && (
                       <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">{t('whatsapp.connect.qrInstruction')}</p>
+                        <p className="text-sm text-flo-text-secondary">{t('whatsapp.connect.qrInstruction')}</p>
                         {qrDataUrl ? (
-                          <div className="rounded-md border p-3 inline-block bg-white">
+                          <div className="rounded-flo-md border border-flo-border p-3 inline-block bg-white">
                             <img src={qrDataUrl} alt={t('whatsapp.tabs.connection')} className="w-64 h-64" />
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> {t('whatsapp.connect.qrGenerating')}</div>
+                          <LoadingState label={t('whatsapp.connect.qrGenerating')} className="min-h-[120px]" />
                         )}
-                        <p className="text-xs text-muted-foreground">{t('whatsapp.connect.qrRefreshHint')}</p>
+                        <p className="text-xs text-flo-text-muted">{t('whatsapp.connect.qrRefreshHint')}</p>
                       </div>
                     )}
 
                     {status.state === 'waiting_pairing' && (
                       <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">{t('whatsapp.connect.pairingInstruction')}</p>
+                        <p className="text-sm text-flo-text-secondary">{t('whatsapp.connect.pairingInstruction')}</p>
                         {pairingCode ? (
-                          <div className="text-3xl font-mono tracking-widest p-4 rounded-md bg-muted inline-block">{pairingCode}</div>
+                          <div className="text-3xl font-mono tracking-widest p-4 rounded-flo-md bg-flo-bg inline-block text-flo-text">{pairingCode}</div>
                         ) : (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> {t('whatsapp.connect.pairingWaiting')}</div>
+                          <LoadingState label={t('whatsapp.connect.pairingWaiting')} className="min-h-[120px]" />
                         )}
                       </div>
                     )}
 
                     {status.state === 'connected' && (
                       <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-green-700">
+                        <div className="flex items-center gap-2 text-flo-success">
                           <CheckCircle2 className="size-5" />
                           <span>{t('whatsapp.connect.connectedAs')}</span>
                           <button
@@ -538,10 +559,10 @@ export default function WhatsAppPage() {
                         <div className="flex flex-wrap gap-2">
                           <Button variant="outline" onClick={disconnect}>{t('whatsapp.connect.disconnectCta')}</Button>
                         </div>
-                        <label className="flex items-start gap-3 text-sm cursor-pointer pt-2 border-t">
+                        <label className="flex items-start gap-3 text-sm cursor-pointer pt-2 border-t border-flo-border">
                           <input
                             type="checkbox"
-                            className="mt-1 size-4 accent-primary"
+                            className="mt-1 size-4 accent-flo-brand-500"
                             checked={filterGroups}
                             onChange={(e) => {
                               const next = e.target.checked;
@@ -550,7 +571,7 @@ export default function WhatsAppPage() {
                                 .catch(() => { setFilterGroupsState(!next); toast.error(t('common.saveFailed')); });
                             }}
                           />
-                          <span className="text-muted-foreground">
+                          <span className="text-flo-text-secondary">
                             {t('whatsapp.connect.filterGroupsLabel')}
                           </span>
                         </label>
@@ -559,8 +580,8 @@ export default function WhatsAppPage() {
 
                     {status.state === 'cooldown' && (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-amber-700"><AlertTriangle className="size-5" /> {translateLastError(status.lastErrorReason, status.lastError, t)}</div>
-                        {status.cooldownUntil && <p className="text-xs text-muted-foreground">{t('whatsapp.connect.cooldownResumesAt', { time: fmtClock(status.cooldownUntil) })}</p>}
+                        <div className="flex items-center gap-2 text-flo-warning"><AlertTriangle className="size-5" /> {translateLastError(status.lastErrorReason, status.lastError, t)}</div>
+                        {status.cooldownUntil && <p className="text-xs text-flo-text-muted">{t('whatsapp.connect.cooldownResumesAt', { time: fmtClock(status.cooldownUntil) })}</p>}
                         <div className="flex flex-wrap gap-2">
                           <Button variant="outline" onClick={disconnect}>{t('whatsapp.connect.disconnectCta')}</Button>
                         </div>
@@ -568,41 +589,31 @@ export default function WhatsAppPage() {
                     )}
 
                     {status.state === 'connecting' && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> {t('whatsapp.connect.connecting')}</div>
+                      <LoadingState label={t('whatsapp.connect.connecting')} className="min-h-[80px]" />
                     )}
-
-                    <div className="pt-2 border-t flex justify-end">
-                      <Button variant="destructive" size="sm" onClick={disableFeature}>{t('whatsapp.active.disableCta')}</Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </Panel>
               )}
 
               {!isAdmin && status.state === 'connected' && status.connectedPhone && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t('whatsapp.connect.title')}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-2 text-green-700">
-                      <CheckCircle2 className="size-5" />
-                      <span>{t('whatsapp.connect.connectedAs')}</span>
-                      <strong className="font-mono">{status.connectedPhone}</strong>
-                    </div>
-                  </CardContent>
-                </Card>
+                <Panel title={t('whatsapp.connect.title')}>
+                  <div className="flex items-center gap-2 text-flo-success">
+                    <CheckCircle2 className="size-5" />
+                    <span>{t('whatsapp.connect.connectedAs')}</span>
+                    <strong className="font-mono">{status.connectedPhone}</strong>
+                  </div>
+                </Panel>
               )}
 
               {isAdmin && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Ban className="size-5" /> {t('whatsapp.blocklist.title')}</CardTitle>
-                    <CardDescription>{t('whatsapp.blocklist.description')}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
+                <Panel
+                  title={<span className="flex items-center gap-2"><Ban className="size-5" /> {t('whatsapp.blocklist.title')}</span>}
+                  description={t('whatsapp.blocklist.description')}
+                >
+                  <div className="space-y-3">
                     <div className="flex flex-wrap gap-2 items-end">
                       <div className="flex-1 min-w-[180px]">
-                        <label className="text-xs text-gray-500">{t('whatsapp.blocklist.phoneLabel')}</label>
+                        <label className="text-xs text-flo-text-secondary">{t('whatsapp.blocklist.phoneLabel')}</label>
                         <Input
                           value={blockPhone}
                           onChange={(e) => setBlockPhone(e.target.value)}
@@ -611,13 +622,17 @@ export default function WhatsAppPage() {
                         />
                       </div>
                       <div className="flex-1 min-w-[180px]">
-                        <label className="text-xs text-gray-500">{t('whatsapp.blocklist.reasonLabel')}</label>
+                        <label className="text-xs text-flo-text-secondary">{t('whatsapp.blocklist.reasonLabel')}</label>
                         <Input value={blockReason} onChange={(e) => setBlockReason(e.target.value)} placeholder={t('whatsapp.blocklist.reasonPlaceholder')} />
                       </div>
                       <Button onClick={addBlock}>{t('whatsapp.blocklist.addCta')}</Button>
                     </div>
                     {blocklist.length === 0 ? (
-                      <p className="text-sm text-gray-500">{t('whatsapp.blocklist.empty')}</p>
+                      <EmptyState
+                        title={t('whatsapp.blocklist.empty')}
+                        icon={<Ban className="size-10" strokeWidth={1.5} />}
+                        className="min-h-[120px]"
+                      />
                     ) : (
                       <Table>
                         <TableHeader>
@@ -632,34 +647,32 @@ export default function WhatsAppPage() {
                           {blocklist.map((b) => (
                             <TableRow key={b.phone_e164}>
                               <TableCell className="font-mono text-sm">{b.phone_e164}</TableCell>
-                              <TableCell className="text-sm text-gray-600">{b.reason ?? '—'}</TableCell>
-                              <TableCell className="text-sm text-gray-600">{parseDbTimestamp(b.blocked_at).toLocaleString()}</TableCell>
+                              <TableCell className="text-sm text-flo-text-secondary">{b.reason ?? '—'}</TableCell>
+                              <TableCell className="text-sm text-flo-text-secondary">{parseDbTimestamp(b.blocked_at).toLocaleString()}</TableCell>
                               <TableCell><Button size="sm" variant="ghost" onClick={() => removeBlock(b.phone_e164)}>{t('whatsapp.blocklist.removeCta')}</Button></TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
                       </Table>
                     )}
-                  </CardContent>
-                </Card>
+                  </div>
+                </Panel>
               )}
             </>
           )}
         </TabsContent>
 
         <TabsContent value="sent" className="space-y-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('whatsapp.sent.title')}</CardTitle>
-              <CardDescription>{t('whatsapp.sent.description')}</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <Panel
+            title={t('whatsapp.sent.title')}
+            description={t('whatsapp.sent.description')}
+          >
               {sentMessages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-center text-sm text-muted-foreground">
-                  <Send className="size-8 mb-2 opacity-40" />
-                  <p className="font-medium text-foreground">{t('whatsapp.sent.empty')}</p>
-                  <p className="mt-1 max-w-sm">{t('whatsapp.sent.emptyHint')}</p>
-                </div>
+                <EmptyState
+                  title={t('whatsapp.sent.empty')}
+                  description={t('whatsapp.sent.emptyHint')}
+                  icon={<Send className="size-10" strokeWidth={1.5} />}
+                />
               ) : (
                 <Table>
                   <TableHeader>
@@ -674,12 +687,12 @@ export default function WhatsAppPage() {
                   <TableBody>
                     {sentMessages.map((m) => (
                       <TableRow key={m.id}>
-                        <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmt(m.queued_at)}</TableCell>
+                        <TableCell className="text-xs text-flo-text-muted whitespace-nowrap">{fmt(m.queued_at)}</TableCell>
                         <TableCell className="font-mono text-xs">
                           <button
                             type="button"
                             onClick={() => copyToClipboard(m.phone_e164, m.phone_e164)}
-                            className="hover:text-foreground transition-colors cursor-pointer"
+                            className="hover:text-flo-text transition-colors cursor-pointer"
                             title={t('whatsapp.inbox.copyPhone')}
                           >
                             {m.phone_e164}
@@ -689,12 +702,12 @@ export default function WhatsAppPage() {
                         <TableCell>
                           <div className="flex flex-col gap-1">
                             <StatusStepper status={m.status} t={t} />
-                            {m.error && <div className="text-xs text-destructive">{m.error}</div>}
+                            {m.error && <div className="text-xs text-flo-danger">{m.error}</div>}
                           </div>
                         </TableCell>
                         <TableCell className="text-sm max-w-md">
                           <div className="line-clamp-3 whitespace-pre-line break-words">{m.body}</div>
-                          <details className="text-xs text-muted-foreground mt-1">
+                          <details className="text-xs text-flo-text-muted mt-1">
                             <summary>{t('whatsapp.sent.timeline')}</summary>
                             <div>{t('whatsapp.sent.timelineQueued', { time: fmt(m.queued_at) })}</div>
                             {m.typing_at && <div>{t('whatsapp.sent.timelineTyping', { time: fmt(m.typing_at) })}</div>}
@@ -709,23 +722,20 @@ export default function WhatsAppPage() {
                   </TableBody>
                 </Table>
               )}
-            </CardContent>
-          </Card>
+          </Panel>
         </TabsContent>
 
         <TabsContent value="inbox" className="space-y-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('whatsapp.inbox.title')}</CardTitle>
-              <CardDescription>{t('whatsapp.inbox.description')}</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <Panel
+            title={t('whatsapp.inbox.title')}
+            description={t('whatsapp.inbox.description')}
+          >
               {inbox.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-center text-sm text-muted-foreground">
-                  <Inbox className="size-8 mb-2 opacity-40" />
-                  <p className="font-medium text-foreground">{t('whatsapp.inbox.empty')}</p>
-                  <p className="mt-1 max-w-sm">{t('whatsapp.inbox.emptyHint')}</p>
-                </div>
+                <EmptyState
+                  title={t('whatsapp.inbox.empty')}
+                  description={t('whatsapp.inbox.emptyHint')}
+                  icon={<Inbox className="size-10" strokeWidth={1.5} />}
+                />
               ) : (
                 <Table>
                   <TableHeader>
@@ -741,12 +751,12 @@ export default function WhatsAppPage() {
                       const isBlocked = blocklist.some((b) => b.phone_e164 === m.phone_e164);
                       return (
                         <TableRow key={m.id}>
-                          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmt(m.queued_at)}</TableCell>
+                          <TableCell className="text-xs text-flo-text-muted whitespace-nowrap">{fmt(m.queued_at)}</TableCell>
                           <TableCell className="font-mono text-xs">
                             <button
                               type="button"
                               onClick={() => copyToClipboard(m.phone_e164, m.phone_e164)}
-                              className="inline-flex items-center gap-1 hover:text-foreground transition-colors cursor-pointer"
+                              className="inline-flex items-center gap-1 hover:text-flo-text transition-colors cursor-pointer"
                               title={t('whatsapp.inbox.copyPhone')}
                             >
                               <Copy className="size-3 opacity-0 group-hover:opacity-100" />
@@ -756,7 +766,7 @@ export default function WhatsAppPage() {
                           <TableCell className="text-sm whitespace-pre-line break-words max-w-md">{m.body}</TableCell>
                           <TableCell>
                             {isBlocked ? (
-                              <Badge variant="secondary">{t('whatsapp.inbox.blocked')}</Badge>
+                              <StatusBadge variant="secondary">{t('whatsapp.inbox.blocked')}</StatusBadge>
                             ) : (
                               <Button size="sm" variant="outline" onClick={() => blockFromInbox(m.phone_e164)}>
                                 <Ban className="size-3" /> {t('whatsapp.inbox.blockCta')}
@@ -769,13 +779,12 @@ export default function WhatsAppPage() {
                   </TableBody>
                 </Table>
               )}
-            </CardContent>
-          </Card>
+          </Panel>
         </TabsContent>
       </Tabs>
 
       {status?.lastError && status.state !== 'cooldown' && (
-        <div className="text-sm text-red-600 flex items-center gap-1">
+        <div className="text-sm text-flo-danger flex items-center gap-1">
           <XCircle className="size-4" /> {translateLastError(status.lastErrorReason, status.lastError, t)}
         </div>
       )}

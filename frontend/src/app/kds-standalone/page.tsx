@@ -72,9 +72,9 @@ export default function KdsStandalonePage() {
 
   if (kdsDisabled) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen gap-3 text-center px-6 bg-gray-900 text-white">
-        <h1 className="text-lg font-semibold">Kitchen Display is disabled</h1>
-        <p className="text-sm text-gray-400 max-w-sm">
+      <div className="flex flex-col items-center justify-center h-full min-h-[60vh] gap-3 rounded-flo-lg border border-flo-border bg-flo-surface px-6 text-center">
+        <h1 className="text-lg font-semibold text-flo-text">Kitchen Display is disabled</h1>
+        <p className="max-w-sm text-sm text-flo-text-secondary">
           This business has turned off the Kitchen Display System. Ask an owner or manager to re-enable it from Settings.
         </p>
       </div>
@@ -83,8 +83,8 @@ export default function KdsStandalonePage() {
 
   if (conn.loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-900">
-        <div className="w-10 h-10 border-4 border-white/40 border-t-transparent rounded-full animate-spin" />
+      <div className="flex h-full min-h-[60vh] items-center justify-center rounded-flo-lg border border-flo-border bg-flo-surface">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-flo-brand-500 border-t-transparent" />
       </div>
     );
   }

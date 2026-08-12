@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChefHat } from 'lucide-react';
 import api from '@/lib/api';
+import { EmptyState, LoadingState } from '@/components/flo';
 import { KdsLoginForm } from '@/components/kds/KdsLoginForm';
 import { KdsWorkspace } from '@/components/kds/KdsWorkspace';
 import { useKdsConnection } from '@/hooks/useKdsConnection';
@@ -55,34 +56,37 @@ export default function KdsPage() {
   const kdsEnabled = useKdsEnabledCheck();
 
   if (kdsEnabled === null) {
-    return (
-      <div className="flex items-center justify-center h-full min-h-[60vh]">
-        <div className="w-10 h-10 border-4 border-brand border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState className="min-h-[60vh]" />;
   }
   if (kdsEnabled === false) {
     return (
-      <div className="flex flex-col items-center justify-center h-full min-h-[60vh] gap-3 text-center px-6">
-        <ChefHat size={40} className="text-gray-300" />
-        <h1 className="text-lg font-semibold text-gray-900">Kitchen Display is disabled</h1>
-        <p className="text-sm text-gray-500 max-w-sm">
-          This business has turned off the Kitchen Display System. An owner or manager can turn it back on from Settings.
-        </p>
-        <Link href="/settings?tab=kds" className="text-sm text-brand hover:underline mt-1">
-          Go to Settings
-        </Link>
-      </div>
+      <EmptyState
+        className="min-h-[60vh]"
+        icon={<ChefHat size={40} strokeWidth={1.5} />}
+        title="Kitchen Display is disabled"
+        description="This business has turned off the Kitchen Display System. An owner or manager can turn it back on from Settings."
+        action={
+          <Link href="/settings?tab=kds" className="text-sm text-flo-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500 rounded">
+            Go to Settings
+          </Link>
+        }
+      />
     );
   }
 
   if (conn.loading) {
+    return <LoadingState className="min-h-[60vh]" />;
+  }
+  if (!conn.user) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[60vh]">
-        <div className="w-10 h-10 border-4 border-brand border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-[60vh] rounded-flo-lg border border-flo-border bg-flo-surface">
+        <KdsLoginForm conn={conn} />
       </div>
     );
   }
-  if (!conn.user) return <KdsLoginForm conn={conn} />;
-  return <KdsWorkspace conn={conn} serverDefault={kdsDefaultView} />;
+  return (
+    <div className="h-full min-h-0 flex flex-col bg-flo-bg -mx-4 md:-mx-6">
+      <KdsWorkspace conn={conn} serverDefault={kdsDefaultView} />
+    </div>
+  );
 }

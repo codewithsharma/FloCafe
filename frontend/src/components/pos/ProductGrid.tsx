@@ -10,6 +10,8 @@ import api from '@/lib/api';
 import { useI18n } from '@/hooks/useI18n';
 import { parseDbTimestamp } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { StatusBadge } from '@/components/flo/StatusBadge';
+import { cn } from '@/lib/utils';
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string; activeBg: string; activeText: string }> = {
   red: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', activeBg: 'bg-red-500', activeText: 'text-white' },
@@ -64,18 +66,17 @@ export default function ProductGrid({
   });
 
   return (
-    <div data-testid="pos-product-grid" className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-      <div className="shrink-0 mb-3">
-        <div className="relative mb-2">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+    <div data-testid="pos-product-grid" className="flex flex-1 flex-col min-w-0 h-full overflow-hidden rounded-flo-lg border border-flo-border bg-flo-surface">
+      {/* Discovery bar — categories + search */}
+      <div className="shrink-0 border-b border-flo-border p-3 md:p-4 space-y-3">
+        <div className="relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-flo-text-muted pointer-events-none" aria-hidden />
           <input
-            type="text"
+            type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => {
               if (e.key !== 'Enter') return;
-              // Typed or pasted barcode, not just a scanner — a dedicated
-              // action into this field works regardless of typing speed.
               const trimmed = search.trim();
               if (!trimmed) return;
               const match = products.find((p) => p.barcode === trimmed);
@@ -85,15 +86,20 @@ export default function ProductGrid({
               }
             }}
             placeholder={t('pos.searchProducts')}
-            className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:border-brand outline-none transition-colors text-sm"
+            aria-label={t('pos.searchProducts')}
+            className="w-full min-h-11 pl-9 pr-4 py-2 bg-flo-bg border border-flo-border rounded-flo-md focus:border-flo-brand-500 focus:ring-2 focus:ring-flo-brand-500/20 outline-none transition-colors text-body"
           />
         </div>
-        <div className="flex flex-wrap gap-2 pb-1">
+        <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-thin">
           <button
+            type="button"
             onClick={() => setSelectedCategory(null)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-              !selectedCategory ? 'bg-brand text-white' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-            }`}
+            className={cn(
+              'min-h-11 shrink-0 px-4 rounded-flo-md text-sm font-medium whitespace-nowrap transition-colors',
+              !selectedCategory
+                ? 'bg-flo-brand-600 text-white'
+                : 'bg-flo-bg text-flo-text-secondary border border-flo-border hover:border-flo-brand-500',
+            )}
           >
             {t('pos.allCategories')}
           </button>
@@ -103,16 +109,18 @@ export default function ProductGrid({
             return (
               <button
                 key={cat.id}
+                type="button"
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                className={cn(
+                  'min-h-11 shrink-0 px-4 rounded-flo-md text-sm font-medium whitespace-nowrap transition-colors',
                   isSelected
                     ? colorClasses
                       ? `${colorClasses.activeBg} ${colorClasses.activeText}`
-                      : 'bg-brand text-white'
+                      : 'bg-flo-brand-600 text-white'
                     : colorClasses
-                      ? `${colorClasses.bg} ${colorClasses.text} border ${colorClasses.border} hover:opacity-80`
-                      : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-                }`}
+                      ? `${colorClasses.bg} ${colorClasses.text} border ${colorClasses.border}`
+                      : 'bg-flo-bg text-flo-text-secondary border border-flo-border hover:border-flo-brand-500',
+                )}
               >
                 {cat.name}
               </button>
@@ -121,47 +129,59 @@ export default function ProductGrid({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pb-20 md:pb-0">
-        <div className={`grid gap-3 ${
-          sidebarOpen 
-            ? 'grid-cols-4' 
-            : 'grid-cols-5'
-        }`}>
+      {/* Product workspace */}
+      <div className="flex-1 overflow-y-auto p-3 md:p-4 pb-24 md:pb-4">
+        <div
+          className={cn(
+            'grid gap-3',
+            sidebarOpen
+              ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4'
+              : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5',
+          )}
+        >
           {filtered.map((product) => {
             const inCartQty = cart.items
               .filter((i) => i.product.id === product.id)
               .reduce((sum, i) => sum + i.quantity, 0);
-            
+
+            const outOfStock = !!product.track_inventory && product.stock_quantity <= 0;
+            const lowStock = !!product.track_inventory
+              && product.stock_quantity > 0
+              && product.stock_quantity <= (product.low_stock_threshold || 0);
 
             return (
-              <div
+              <button
                 key={product.id}
+                type="button"
                 data-testid="pos-product-card"
                 onClick={() => onProductClick(product)}
-                className="bg-white rounded-xl p-2.5 border border-gray-100 hover:border-brand/40 hover:shadow-md transition-all text-left relative group cursor-pointer overflow-hidden"
+                disabled={outOfStock}
+                className={cn(
+                  'relative min-h-[88px] rounded-flo-lg p-3 border text-left transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500 focus-visible:ring-offset-2',
+                  outOfStock
+                    ? 'border-flo-border bg-flo-surface-muted opacity-60 cursor-not-allowed'
+                    : 'border-flo-border bg-flo-surface hover:border-flo-brand-500 hover:bg-flo-brand-50/30',
+                )}
               >
-                {!!product.track_inventory && (
-                  <>
-                    {product.stock_quantity <= 0 ? (
-                      <span className="absolute top-2 left-2 bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full z-10 shadow-sm border border-red-200 pointer-events-none">
-                        {t('pos.outOfStock')}
-                      </span>
-                    ) : product.stock_quantity <= (product.low_stock_threshold || 0) ? (
-                      <span className="absolute top-2 left-2 bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-0.5 rounded-full z-10 shadow-sm border border-orange-200 pointer-events-none">
-                        {t('pos.lowStock')}
-                      </span>
-                    ) : null}
-                  </>
+                {outOfStock && (
+                  <StatusBadge variant="danger" className="absolute top-2 left-2 z-10">
+                    {t('pos.outOfStock')}
+                  </StatusBadge>
+                )}
+                {lowStock && (
+                  <StatusBadge variant="warning" className="absolute top-2 left-2 z-10">
+                    {t('pos.lowStock')}
+                  </StatusBadge>
                 )}
                 {inCartQty > 0 && (
-                  <span className="absolute top-0 right-0 bg-brand text-white text-xs w-6 h-6 rounded-bl-lg flex items-center justify-center font-bold z-10">
+                  <span className="absolute top-0 right-0 min-w-6 h-6 px-1 rounded-bl-flo-lg rounded-tr-flo-lg bg-flo-brand-600 text-white text-xs flex items-center justify-center font-bold tabular-nums">
                     {inCartQty}
                   </span>
                 )}
 
                 {showProductImages && (
-                  <div className="w-full aspect-square rounded-lg mb-3 relative overflow-hidden">
-                    {/* Always-visible background tile — no flash when image loads */}
+                  <div className="w-full aspect-square rounded-flo-md mb-2 relative overflow-hidden">
                     <div
                       className="absolute inset-0 flex items-center justify-center"
                       style={{ backgroundColor: nameToColor(product.name) }}
@@ -170,19 +190,16 @@ export default function ProductGrid({
                         {product.name.substring(0, 2).toUpperCase()}
                       </span>
                     </div>
-
-                    {/* Image overlays the tile when available */}
                     {product.has_image && (
                       <img
                         src={`${api.defaults.baseURL}/products/${product.id}/image?t=${product.updated_at ? parseDbTimestamp(product.updated_at).getTime() : 0}`}
-                        alt={product.name}
-                        className="absolute inset-0 w-full h-full object-cover rounded-lg"
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover rounded-flo-md"
                         onError={(e) => {
                           (e.target as HTMLImageElement).style.display = 'none';
                         }}
                       />
                     )}
-
                     {product.tags && product.tags.length > 0 && (
                       <span className="absolute bottom-1.5 right-1.5 z-10">
                         <TagBadge tag={product.tags[0]} />
@@ -191,31 +208,19 @@ export default function ProductGrid({
                   </div>
                 )}
 
-                <h3 className="font-medium text-gray-900 text-sm line-clamp-2 leading-snug">{product.name}</h3>
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-brand font-bold">
-                    {fmt(Number(product.price))}
-                  </p>
+                <h3 className="text-body font-medium text-flo-text line-clamp-2 leading-snug text-left">{product.name}</h3>
+                <div className="flex items-center justify-between mt-1.5 gap-1">
+                  <p className="text-numeric text-flo-brand-700">{fmt(Number(product.price))}</p>
                   <div className="flex items-center gap-1 shrink-0">
                     {!showProductImages && product.tags && product.tags.length > 0 && (
                       <TagBadge tag={product.tags[0]} />
                     )}
                     {product.addon_groups && product.addon_groups.length > 0 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onProductClick(product);
-                        }}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                        title={t('pos.customisable')}
-                      >
-                        <SlidersHorizontal size={12} />
-                      </button>
+                      <SlidersHorizontal size={14} className="text-flo-text-muted" aria-hidden />
                     )}
                   </div>
                 </div>
-
-              </div>
+              </button>
             );
           })}
         </div>

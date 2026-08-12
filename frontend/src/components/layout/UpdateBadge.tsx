@@ -36,12 +36,12 @@ export default function UpdateBadge() {
         <Button
           variant="outline"
           size="sm"
-          className={`flex items-center gap-1.5 h-7 px-2 ${isReady ? 'text-brand border-brand/30' : 'text-gray-500 border-current/30'}`}
+          className={`flex h-7 items-center gap-1.5 px-2 ${isReady ? 'border-flo-brand-600/30 text-flo-brand-600' : 'border-current/30 text-flo-text-secondary'}`}
         >
           {isReady ? (
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-flo-brand-600 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-flo-brand-600" />
             </span>
           ) : (
             <Download size={12} />
@@ -52,35 +52,35 @@ export default function UpdateBadge() {
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel className="text-xs text-gray-500">
+      <DropdownMenuContent align="end" className="w-64 border-flo-border bg-flo-surface">
+        <DropdownMenuLabel className="text-xs text-flo-text-secondary">
           {t('update.sectionLabel')}
         </DropdownMenuLabel>
 
-        <div className="px-2 py-1.5 text-xs text-gray-500">
+        <div className="px-2 py-1.5 text-xs text-flo-text-secondary">
           {isReady ? (
-            <p className="flex items-center gap-1.5 text-gray-700">
-              <Sparkles size={13} className="text-brand" />
+            <p className="flex items-center gap-1.5 text-flo-text">
+              <Sparkles size={13} className="text-flo-brand-600" />
               {t('update.versionReady', { version: updateStatus?.version || '' })}
             </p>
           ) : (
             <div>
-              <p className="text-gray-700">{t('update.downloadingDetail', { version: updateStatus?.version || '' })}</p>
-              <div className="w-full bg-gray-200 rounded-full h-1.5 mt-2">
+              <p className="text-flo-text">{t('update.downloadingDetail', { version: updateStatus?.version || '' })}</p>
+              <div className="mt-2 h-1.5 w-full rounded-full bg-flo-border">
                 <div
-                  className="bg-brand h-1.5 rounded-full transition-all"
+                  className="h-1.5 rounded-full bg-flo-brand-600 transition-all"
                   style={{ width: `${updateStatus?.percent || 0}%` }}
                 />
               </div>
             </div>
           )}
-          <p className="mt-1.5 text-gray-400">{t('update.currentVersion', { version: appVersion })}</p>
+          <p className="mt-1.5 text-flo-text-muted">{t('update.currentVersion', { version: appVersion })}</p>
         </div>
 
         {isReady && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={restartAndInstall} className="text-sm cursor-pointer">
+            <DropdownMenuItem onClick={restartAndInstall} className="cursor-pointer text-sm">
               {t('update.restartNow')}
             </DropdownMenuItem>
           </>

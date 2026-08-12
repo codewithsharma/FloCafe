@@ -80,8 +80,8 @@ export default function ShiftHistoryPanel() {
 
   if (disabled) {
     return (
-      <div className="pb-6 max-w-4xl">
-        <div className="rounded-xl border border-gray-100 bg-white p-6 text-sm text-gray-500">
+      <div className="max-w-4xl pb-6">
+        <div className="rounded-flo-lg border border-flo-border bg-flo-surface p-6 text-sm text-flo-text-secondary">
           {t('shift.historyDisabled')}
         </div>
       </div>
@@ -89,15 +89,15 @@ export default function ShiftHistoryPanel() {
   }
 
   return (
-    <div className="pb-6 max-w-4xl space-y-4">
+    <div className="max-w-4xl space-y-4 pb-6">
       <div className="flex items-center gap-2">
-        <Clock size={20} className="text-gray-500" />
-        <h2 className="font-semibold text-gray-900">{t('shift.historyTitle')}</h2>
+        <Clock size={20} className="text-flo-text-secondary" />
+        <h2 className="font-semibold text-flo-text">{t('shift.historyTitle')}</h2>
         <Button
           type="button"
           size="sm"
           variant="ghost"
-          className="ml-auto"
+          className="ml-auto min-h-11"
           onClick={() => void loadPage(0, false)}
           disabled={loading}
         >
@@ -107,12 +107,12 @@ export default function ShiftHistoryPanel() {
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-red-600">{error}</p>
+        <p role="alert" className="text-sm text-flo-danger">{error}</p>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white">
+      <div className="overflow-x-auto rounded-flo-lg border border-flo-border bg-flo-surface">
         <table className="min-w-full text-sm">
-          <thead className="border-b border-gray-100 bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
+          <thead className="border-b border-flo-border bg-flo-bg text-left text-xs uppercase tracking-wide text-flo-text-secondary">
             <tr>
               <th className="px-4 py-3">{t('shift.historyColId')}</th>
               <th className="px-4 py-3">{t('shift.historyColStatus')}</th>
@@ -128,50 +128,50 @@ export default function ShiftHistoryPanel() {
           <tbody>
             {loading && shifts.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-flo-text-secondary">
                   {t('shift.loading')}
                 </td>
               </tr>
             ) : shifts.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-flo-text-secondary">
                   {t('shift.historyEmpty')}
                 </td>
               </tr>
             ) : (
               shifts.map((shift) => (
-                <tr key={shift.id} className="border-b border-gray-50 last:border-0">
-                  <td className="px-4 py-3 font-medium text-gray-900">#{shift.id}</td>
+                <tr key={shift.id} className="border-b border-flo-border/50 last:border-0">
+                  <td className="px-4 py-3 font-medium text-flo-text">#{shift.id}</td>
                   <td className="px-4 py-3">
                     <span className={shift.status === 'open'
-                      ? 'text-emerald-700'
-                      : 'text-gray-600'}>
+                      ? 'text-flo-success'
+                      : 'text-flo-text-secondary'}>
                       {shift.status === 'open' ? t('shift.statusOpenShort') : t('shift.statusClosedShort')}
                     </span>
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-gray-600" title={shift.terminal_id}>
+                  <td className="px-4 py-3 font-mono text-xs text-flo-text-secondary" title={shift.terminal_id}>
                     {shift.terminal_id.length > 12
                       ? `${shift.terminal_id.slice(0, 8)}…`
                       : shift.terminal_id}
                   </td>
-                  <td className="px-4 py-3 text-gray-700">{formatDateTime(shift.opened_at)}</td>
-                  <td className="px-4 py-3 text-gray-700">
+                  <td className="px-4 py-3 text-flo-text">{formatDateTime(shift.opened_at)}</td>
+                  <td className="px-4 py-3 text-flo-text">
                     {shift.closed_at ? formatDateTime(shift.closed_at) : '—'}
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-900">
+                  <td className="px-4 py-3 text-right text-flo-text">
                     {formatCurrency(shift.opening_float_cents / 100)}
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-900">
+                  <td className="px-4 py-3 text-right text-flo-text">
                     {shift.expected_cash_cents != null
                       ? formatCurrency(shift.expected_cash_cents / 100)
                       : '—'}
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-900">
+                  <td className="px-4 py-3 text-right text-flo-text">
                     {shift.counted_cash_cents != null
                       ? formatCurrency(shift.counted_cash_cents / 100)
                       : '—'}
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-900">
+                  <td className="px-4 py-3 text-right text-flo-text">
                     {shift.variance_cents != null ? (() => {
                       const label = formatVarianceLabel(shift.variance_cents);
                       const amount = formatCurrency(Math.abs(shift.variance_cents) / 100);
@@ -193,6 +193,7 @@ export default function ShiftHistoryPanel() {
             type="button"
             variant="outline"
             size="sm"
+            className="min-h-11"
             disabled={loadingMore}
             onClick={() => void loadPage(offset, true)}
           >

@@ -213,13 +213,13 @@ function KanbanOrderCard({
         isDragging ? 'opacity-40' : ''
       } ${busy ? 'pointer-events-none opacity-60' : ''}`}
     >
-      <div className={`rounded-xl border-2 ${config.border} bg-white p-3 flex flex-col shadow-sm`}>
-        <div className="flex justify-between items-center mb-2 gap-2">
-          <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-            <span className="font-bold text-sm shrink-0">#{order.order_number}</span>
+      <div className={`flex flex-col rounded-flo-lg border-2 bg-flo-surface p-3 shadow-sm ${config.border}`}>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <span className="shrink-0 text-sm font-bold text-flo-text">#{order.order_number}</span>
             <Badge
               variant="outline"
-              className={ORDER_TYPE_BADGE_STYLES[order.type] || 'bg-gray-50 text-gray-700 border-gray-200'}
+              className={ORDER_TYPE_BADGE_STYLES[order.type] || 'bg-flo-bg text-flo-text-secondary border-flo-border'}
             >
               {t(ORDER_TYPE_LABEL_KEYS[order.type] ?? order.type)}
             </Badge>
@@ -227,14 +227,14 @@ function KanbanOrderCard({
               <Badge variant="secondary">{t('kds.tableLabel', { name: order.table.name })}</Badge>
             )}
           </div>
-          <div className="flex items-center gap-1 text-sm text-gray-400 font-mono shrink-0">
+          <div className="flex shrink-0 items-center gap-1 font-mono text-sm text-flo-text-muted">
             <Clock size={12} />
             {timeSince(order.created_at)}
           </div>
         </div>
 
         {order.special_instructions && (
-          <p className="mb-2 px-2 py-1 bg-amber-50 border border-amber-200 rounded text-sm text-amber-700 font-medium break-words">
+          <p className="mb-2 break-words rounded border border-flo-warning/30 bg-flo-warning-subtle px-2 py-1 text-sm font-medium text-flo-warning">
             📝 {order.special_instructions}
           </p>
         )}
@@ -249,17 +249,17 @@ function KanbanOrderCard({
                 e.stopPropagation();
                 onItemOpen(item);
               }}
-              className={`w-full text-left rounded-lg border ${config.border} ${config.bg} px-2 py-1.5 hover:brightness-95 active:scale-[0.98] transition`}
+              className={`w-full rounded-flo-md border px-2 py-1.5 text-left transition hover:brightness-95 active:scale-[0.98] ${config.border} ${config.bg}`}
             >
               <div className="flex items-center gap-2">
-                <span className={`text-base font-bold w-6 shrink-0 ${config.text}`}>{item.quantity}×</span>
-                <span className="text-lg text-gray-900 font-medium flex-1 truncate">{item.product_name}</span>
+                <span className={`w-6 shrink-0 text-base font-bold ${config.text}`}>{item.quantity}×</span>
+                <span className="flex-1 truncate text-lg font-medium text-flo-text">{item.product_name}</span>
                 {item.addons && item.addons.length > 0 && (
-                  <span className="text-[10px] text-blue-600">+{item.addons.length}</span>
+                  <span className="text-[10px] text-flo-info">+{item.addons.length}</span>
                 )}
               </div>
               {item.special_instructions && (
-                <p className="ml-[26px] text-sm text-red-600 italic mt-0.5 font-medium break-words">
+                <p className="ml-[26px] mt-0.5 break-words text-sm font-medium italic text-flo-danger">
                   {`"${item.special_instructions}"`}
                 </p>
               )}
@@ -288,21 +288,21 @@ function VoidedColumn({
 
   return (
     <div className="flex-1 min-w-[260px] flex flex-col">
-      <div className={`flex items-center gap-2 px-3 py-2 ${config.bg} rounded-t-lg border-2 ${config.border} border-b-0`}>
-        <div className={`w-2 h-2 rounded-full ${config.color}`} />
+      <div className={`flex items-center gap-2 rounded-t-lg border-2 border-b-0 px-3 py-2 ${config.bg} ${config.border}`}>
+        <div className={`h-2 w-2 rounded-full ${config.color}`} />
         <span className={`text-base font-semibold ${config.text}`}>{t(config.labelKey)}</span>
-        <span className="ml-auto text-xs px-1.5 py-0.5 rounded-full bg-white/70 text-gray-700 font-medium tabular-nums">
+        <span className="ml-auto rounded-full bg-flo-surface/70 px-1.5 py-0.5 text-xs font-medium tabular-nums text-flo-text">
           {count}
         </span>
       </div>
       <div
-        className={`flex-1 border-2 ${config.border} border-t-0 rounded-b-lg p-2 space-y-2 overflow-y-auto bg-gray-50/40`}
+        className={`flex-1 space-y-2 overflow-y-auto rounded-b-lg border-2 border-t-0 bg-flo-bg/40 p-2 ${config.border}`}
         style={{ minHeight: '60vh', maxHeight: 'calc(100vh - 220px)' }}
       >
         {groups.map(({ order, items }) => (
-          <div key={order.id} className={`rounded-xl border-2 ${config.border} bg-white p-3 flex flex-col shadow-sm opacity-80`}>
-            <div className="flex items-center gap-1.5 min-w-0 flex-wrap mb-2">
-              <span className="font-bold text-sm shrink-0">#{order.order_number}</span>
+          <div key={order.id} className={`flex flex-col rounded-flo-lg border-2 bg-flo-surface p-3 opacity-80 shadow-sm ${config.border}`}>
+            <div className="mb-2 flex min-w-0 flex-wrap items-center gap-1.5">
+              <span className="shrink-0 text-sm font-bold text-flo-text">#{order.order_number}</span>
               {order.table?.name && (
                 <Badge variant="secondary">{t('kds.tableLabel', { name: order.table.name })}</Badge>
               )}
@@ -313,11 +313,11 @@ function VoidedColumn({
                   key={item.id}
                   type="button"
                   onClick={() => onItemOpen(item, order.order_number)}
-                  className={`w-full text-left rounded-lg border ${config.border} ${config.bg} px-2 py-1.5 hover:brightness-95 active:scale-[0.98] transition`}
+                  className={`w-full rounded-flo-md border px-2 py-1.5 text-left transition hover:brightness-95 active:scale-[0.98] ${config.border} ${config.bg}`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className={`text-base font-bold w-6 shrink-0 ${config.text}`}>{item.quantity}×</span>
-                    <span className="text-lg text-gray-400 line-through font-medium flex-1 truncate">{item.product_name}</span>
+                    <span className={`w-6 shrink-0 text-base font-bold ${config.text}`}>{item.quantity}×</span>
+                    <span className="flex-1 truncate text-lg font-medium text-flo-text-muted line-through">{item.product_name}</span>
                   </div>
                 </button>
               ))}
@@ -325,7 +325,7 @@ function VoidedColumn({
           </div>
         ))}
         {count === 0 && (
-          <div className="flex flex-col items-center justify-center py-6 text-gray-400 text-xs">
+          <div className="flex flex-col items-center justify-center py-6 text-xs text-flo-text-muted">
             <span>{t('kds.emptyColumn')}</span>
           </div>
         )}

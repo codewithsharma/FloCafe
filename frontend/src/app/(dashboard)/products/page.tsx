@@ -1,68 +1,38 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
-import { Plus, Pencil, Trash2, X, Package, Folder, Puzzle, FileSpreadsheet, Download, Upload, CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react';
+import { Plus, FileSpreadsheet } from 'lucide-react';
 import type { Product, Category, AddonGroup } from '@/lib/types';
-import TagBadge, { tagLabel } from '@/components/pos/DietaryBadge';
-import { parseDbTimestamp } from '@/lib/utils';
-import ImageUploader from '@/components/products/ImageUploader';
+import {
+  ProductsTabBar,
+  ProductsTable,
+  CategoriesTable,
+  AddonGroupsTable,
+  ProductFormDialog,
+  CategoryFormDialog,
+  CategoryDeleteDialog,
+  AddonGroupDialog,
+  CsvImportDialog,
+  BulkTaxDialog,
+  parseProductsTab,
+  type ProductsTabType,
+} from '@/components/products';
+import { PageHeader, LoadingState } from '@/components/flo';
 import { getCurrencySymbol, getCountryByCode } from '@/lib/countries';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useConfirm } from '@/hooks/use-confirm';
-import { nameToColor } from '@/lib/image-utils';
 import { useI18n } from '@/hooks/useI18n';
-
-const PRESET_TAGS = [
-  { key: 'veg', labelKey: 'pos.tagVeg' },
-  { key: 'non_veg', labelKey: 'pos.tagNonVeg' },
-  { key: 'vegan', labelKey: 'pos.tagVegan' },
-  { key: 'egg', labelKey: 'pos.tagEgg' },
-  { key: 'spicy', labelKey: 'pos.tagSpicy' },
-  { key: 'contains_nuts', labelKey: 'pos.tagContainsNuts' },
-  { key: 'gluten_free', labelKey: 'pos.tagGlutenFree' },
-  { key: 'dairy_free', labelKey: 'pos.tagDairyFree' },
-  { key: 'new_arrival', labelKey: 'pos.tagNewArrival' },
-  { key: 'bestseller', labelKey: 'pos.tagBestseller' },
-  { key: 'organic', labelKey: 'pos.tagOrganic' },
-  { key: 'fragrance_free', labelKey: 'pos.tagFragranceFree' },
-  { key: 'limited', labelKey: 'pos.tagLimited' },
-];
-
-const CATEGORY_COLORS = [
-  { key: '', labelKey: 'products.colorNone', bg: 'bg-gray-100', text: 'text-gray-600' },
-  { key: 'red', labelKey: 'products.colorRed', bg: 'bg-red-100', text: 'text-red-700' },
-  { key: 'orange', labelKey: 'products.colorOrange', bg: 'bg-orange-100', text: 'text-orange-700' },
-  { key: 'amber', labelKey: 'products.colorAmber', bg: 'bg-amber-100', text: 'text-amber-700' },
-  { key: 'yellow', labelKey: 'products.colorYellow', bg: 'bg-yellow-100', text: 'text-yellow-700' },
-  { key: 'lime', labelKey: 'products.colorLime', bg: 'bg-lime-100', text: 'text-lime-700' },
-  { key: 'green', labelKey: 'products.colorGreen', bg: 'bg-green-100', text: 'text-green-700' },
-  { key: 'emerald', labelKey: 'products.colorEmerald', bg: 'bg-emerald-100', text: 'text-emerald-700' },
-  { key: 'teal', labelKey: 'products.colorTeal', bg: 'bg-teal-100', text: 'text-teal-700' },
-  { key: 'cyan', labelKey: 'products.colorCyan', bg: 'bg-cyan-100', text: 'text-cyan-700' },
-  { key: 'sky', labelKey: 'products.colorSky', bg: 'bg-sky-100', text: 'text-sky-700' },
-  { key: 'blue', labelKey: 'products.colorBlue', bg: 'bg-blue-100', text: 'text-blue-700' },
-  { key: 'indigo', labelKey: 'products.colorIndigo', bg: 'bg-indigo-100', text: 'text-indigo-700' },
-  { key: 'violet', labelKey: 'products.colorViolet', bg: 'bg-violet-100', text: 'text-violet-700' },
-  { key: 'purple', labelKey: 'products.colorPurple', bg: 'bg-purple-100', text: 'text-purple-700' },
-  { key: 'fuchsia', labelKey: 'products.colorFuchsia', bg: 'bg-fuchsia-100', text: 'text-fuchsia-700' },
-  { key: 'pink', labelKey: 'products.colorPink', bg: 'bg-pink-100', text: 'text-pink-700' },
-  { key: 'rose', labelKey: 'products.colorRose', bg: 'bg-rose-100', text: 'text-rose-700' },
-];
-
-type TabType = 'products' | 'categories' | 'addons';
-
-function taxCategoryOptionLabel(tc: { label: string; rate_percent?: number | null }): string {
-  return tc.rate_percent != null ? `${tc.label} (${tc.rate_percent}%)` : tc.label;
-}
 
 export default function ProductsPage() {
   const { t } = useI18n();
+  const searchParams = useSearchParams();
   const { currentTenant } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<TabType>('products');
+  const [activeTab, setActiveTab] = useState<ProductsTabType>(() => parseProductsTab(searchParams?.get('tab')) ?? 'products');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [addonGroups, setAddonGroups] = useState<AddonGroup[]>([]);
@@ -456,32 +426,23 @@ export default function ProductsPage() {
   const removeAddonItem = (idx: number) => setAddonList((prev) => prev.filter((_, i) => i !== idx));
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState label={t('products.title')} className="min-h-[16rem]" />;
   }
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('products.title')}</h1>
-      </div>
+      <PageHeader title={t('products.title')} />
 
-      <div className="flex gap-1 mb-6 border-b">
-        <button onClick={() => setActiveTab('products')} className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeTab === 'products' ? 'border-brand text-brand' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-          <Package size={16} /> {t('products.tabProducts')}
-        </button>
-        <button onClick={() => setActiveTab('categories')} className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeTab === 'categories' ? 'border-brand text-brand' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-          <Folder size={16} /> {t('products.tabCategories')}
-        </button>
-        {isRestaurant && (
-          <button onClick={() => setActiveTab('addons')} className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 -mb-px ${activeTab === 'addons' ? 'border-brand text-brand' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-            <Puzzle size={16} /> {t('products.tabAddonGroups')}
-          </button>
-        )}
-      </div>
+      <ProductsTabBar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        isRestaurant={isRestaurant}
+        labels={{
+          products: t('products.tabProducts'),
+          categories: t('products.tabCategories'),
+          addonGroups: t('products.tabAddonGroups'),
+        }}
+      />
 
       {activeTab === 'products' && (
         <>
@@ -500,394 +461,35 @@ export default function ProductsPage() {
           </div>
 
       {/* Product Table */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">{t('products.columnProduct')}</th>
-              <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">{t('products.columnCategory')}</th>
-              <th className="text-center p-4 text-xs font-medium text-gray-500 uppercase">Add-ons</th>
-              <th className="text-right p-4 text-xs font-medium text-gray-500 uppercase">{t('products.columnPrice')}</th>
-              <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">{t('products.columnTax')}</th>
-              {loyaltyEnabled && <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">{t('products.columnCashback')}</th>}
-              <th className="text-center p-4 text-xs font-medium text-gray-500 uppercase">{t('products.columnStock')}</th>
-              <th className="text-center p-4 text-xs font-medium text-gray-500 uppercase">{t('products.columnStatus')}</th>
-              <th className="text-right p-4 text-xs font-medium text-gray-500 uppercase">{t('products.columnActions')}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {products.map((product) => {
-              const parentCat = categories.find((c) => String(c.id) === String(product.category_id || product.category?.id));
-              const isCategoryInactive = Boolean(parentCat && !parentCat.is_active);
-              const matchedTaxCategory = taxCategories.find((tc) => tc.id === product.tax_category_id);
-              const taxLabel = product.tax_category_id
-                ? (matchedTaxCategory ? taxCategoryOptionLabel(matchedTaxCategory) : product.tax_category_id)
-                : '—';
-              return (
-              <tr key={product.id} className="hover:bg-gray-50">
-                <td className="p-4 max-w-[220px]">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 relative flex items-center justify-center">
-                      <div
-                        className="absolute inset-0 flex items-center justify-center"
-                        style={{ backgroundColor: nameToColor(product.name) }}
-                      >
-                        <span className="text-sm font-bold text-white/80">
-                          {product.name.substring(0, 2).toUpperCase()}
-                        </span>
-                      </div>
-                      {product.has_image && (
-                        <img 
-                          src={`${api.defaults.baseURL}/products/${product.id}/image?t=${product.updated_at ? parseDbTimestamp(product.updated_at).getTime() : 0}`}
-                          alt="" 
-                          className="absolute inset-0 w-full h-full object-cover"
-                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                        />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{product.name}</p>
-                      {product.sku && <p className="text-xs text-gray-400 mt-0.5">{t('products.skuLabel', { sku: product.sku })}</p>}
-                      {product.barcode && <p className="text-xs text-gray-400 mt-0.5 font-mono">{t('products.barcodeLabel', { barcode: product.barcode })}</p>}
-                      {product.tags && product.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1.5">
-                          {product.tags.map((tag: string) => <TagBadge key={tag} tag={tag} />)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </td>
-                <td className="p-4 text-sm text-gray-600">
-                  <div className="flex flex-col gap-0.5">
-                    <span>{product.category?.name || '—'}</span>
-                    {isCategoryInactive && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 w-fit" title="Parent category is inactive; product is hidden on POS">
-                        <AlertTriangle size={11} className="shrink-0" /> Category Inactive
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="p-4 text-center">
-                  {product.addon_groups && product.addon_groups.length > 0 ? (
-                    <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
-                      {t('products.addonGroupCount', { count: product.addon_groups.length })}
-                    </span>
-                  ) : (
-                    <span className="text-gray-400 text-sm">—</span>
-                  )}
-                </td>
-                <td className="p-4 text-right">
-                  <p className="font-medium">{fmt(Number(product.price))}</p>
-                  {product.cost_price != null && product.cost_price > 0 && <p className="text-xs text-gray-400">Cost: {fmt(Number(product.cost_price))}</p>}
-                </td>
-                <td className="p-4 text-sm text-gray-600">
-                  <div className="flex flex-col gap-0.5">
-                    <span>{taxLabel}</span>
-                    {!product.tax_category_id && taxCategories.length > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 w-fit" title={t('products.notTaxedTooltip')}>
-                        <AlertTriangle size={11} className="shrink-0" /> {t('products.notTaxedBadge')}
-                      </span>
-                    )}
-                  </div>
-                </td>
-                {loyaltyEnabled && (
-                  <td className="p-4 text-sm text-gray-600">
-                    {product.cb_percent === null || product.cb_percent === undefined ? (
-                      <span>{globalCashbackPercent}% <span className="text-gray-400 text-xs">({t('products.cashbackGlobalBadge')})</span></span>
-                    ) : product.cb_percent === 0 ? (
-                      <span className="text-gray-400">0%</span>
-                    ) : (
-                      <span>{product.cb_percent}%</span>
-                    )}
-                  </td>
-                )}
-                <td className="p-4 text-center">
-                  {product.track_inventory ? (
-                    <span className={`text-sm font-medium ${product.stock_quantity <= (product.low_stock_threshold || 0) ? 'text-red-600' : 'text-gray-900'}`}>
-                      {product.stock_quantity <= 0 ? t('pos.outOfStock') : product.stock_quantity}
-                    </span>
-                  ) : (
-                    <span className="text-gray-400 text-sm">—</span>
-                  )}
-                </td>
-                <td className="p-4 text-center">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {product.is_active ? t('common.active') : t('common.inactive')}
-                  </span>
-                  {product.is_active && isCategoryInactive && (
-                    <span className="text-[10px] text-amber-600 font-medium block mt-1">(Hidden on POS)</span>
-                  )}
-                </td>
-                <td className="p-4 text-right">
-                  <div className="flex gap-2 justify-end">
-                    {isOwnerOrManager && (
-                      <>
-                        <button onClick={() => openEdit(product)} className="p-1.5 text-gray-400 hover:text-brand">
-                          <Pencil size={16} />
-                        </button>
-                        <button onClick={() => handleDelete(product.id)} className="p-1.5 text-gray-400 hover:text-red-600">
-                          <Trash2 size={16} />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {products.length === 0 && (
-          <p className="text-center text-gray-500 py-12">{t('products.empty')}</p>
-        )}
-      </div>
+      <ProductsTable
+        products={products}
+        categories={categories}
+        taxCategories={taxCategories}
+        loyaltyEnabled={loyaltyEnabled}
+        globalCashbackPercent={globalCashbackPercent}
+        isOwnerOrManager={isOwnerOrManager}
+        fmt={fmt}
+        t={t}
+        onEdit={openEdit}
+        onDelete={handleDelete}
+      />
 
-      {/* Product Form Modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-            <div className="flex justify-between items-center p-6 border-b border-gray-100 shrink-0">
-              <h2 className="text-lg font-bold">{editingProduct ? t('products.editProductTitle') : t('products.addProductTitle')}</h2>
-              <button onClick={resetForm} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
-            </div>
-            <div className="p-6 overflow-y-auto flex-1">
-              <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.fieldName')}<span className="text-red-500 ml-1">*</span></label>
-                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" required />
-              </div>
-              <div>
-                <label htmlFor="product-description" className="block text-sm font-medium text-gray-700 mb-1">{t('products.categoryDescription')}</label>
-                <textarea id="product-description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" rows={2} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.fieldImage')}</label>
-                <ImageUploader
-                  value={form.image_url}
-                  onChange={(val) => {
-                    setForm({ ...form, image_url: val });
-                    setImageTouched(true);
-                  }}
-                  productId={editingProduct?.id ? String(editingProduct.id) : undefined}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.fieldCategory')}<span className="text-red-500 ml-1">*</span></label>
-                  <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" required>
-                    <option value="">{t('products.selectPlaceholder')}</option>
-                    {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.fieldSku')}</label>
-                  <input type="text" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.fieldBarcode')}</label>
-                <input type="text" value={form.barcode} onChange={(e) => setForm({ ...form, barcode: e.target.value })}
-                  placeholder={t('products.fieldBarcodePlaceholder')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none font-mono" />
-                <p className="text-xs text-gray-400 mt-1">{t('products.fieldBarcodeHint')}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.priceLabel', { currency })}<span className="text-red-500 ml-1">*</span></label>
-                  <input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })}
-                    onWheel={(e) => e.currentTarget.blur()}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" required />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.fieldCostPrice')}</label>
-                  <input type="number" step="0.01" value={form.cost_price} onChange={(e) => setForm({ ...form, cost_price: e.target.value })}
-                    onWheel={(e) => e.currentTarget.blur()}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" />
-                </div>
-              </div>
-              {loyaltyEnabled && (
-                <div className="bg-gray-50 p-4 rounded-xl space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">{t('products.cashbackLabel')}</label>
-                  <div className="flex items-center gap-2">
-                    <input type="number" step="0.1" min="0" max="100" value={form.cb_percent}
-                      onChange={(e) => setForm({ ...form, cb_percent: e.target.value })}
-                      placeholder={String(globalCashbackPercent)}
-                      className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" />
-                    <span className="text-gray-500 font-medium">%</span>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    {form.cb_percent === ''
-                      ? t('products.cashbackUsingGlobal', { rate: globalCashbackPercent })
-                      : t('products.cashbackOverrideHint')}
-                  </p>
-                </div>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tax rate group</label>
-                <select value={form.tax_category_id} onChange={(e) => setForm({ ...form, tax_category_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none">
-                  <option value="">— No tax / exempt —</option>
-                  {taxCategories.map((tc) => <option key={tc.id} value={tc.id}>{taxCategoryOptionLabel(tc)}</option>)}
-                </select>
-                {taxCategories.length === 0 && (
-                  <p className="text-xs text-gray-400 mt-1">No tax groups are available until country taxes are enabled in Settings.</p>
-                )}
-                {taxCategories.length > 0 && (
-                  <p className="text-xs text-gray-400 mt-1">The store default is selected automatically. Change this only when a product legally uses a different rate or is exempt.</p>
-                )}
-              </div>
-              {form.tax_category_id ? (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tax behavior</label>
-                  <select value={form.tax_behavior} onChange={(e) => setForm({ ...form, tax_behavior: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none">
-                    <option value="country_default">Country default</option>
-                    <option value="inclusive">{t('products.taxInclusive')}</option>
-                    <option value="exclusive">{t('products.taxExclusive')}</option>
-                    <option value="exempt">Exempt</option>
-                  </select>
-                  <p className="text-xs text-gray-400 mt-1">The rate is resolved from the active tax profile for this category, not entered manually.</p>
-                </div>
-              ) : (
-                <p className="text-xs text-gray-400 -mt-2">
-                  No tax will be calculated or printed until a tax category is selected.
-                </p>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('products.fieldTags')}</label>
-                {/* Selected tags */}
-                {form.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {form.tags.map((tag) => (
-                      <span key={tag} className="inline-flex items-center gap-1 px-2 py-1 bg-brand/10 text-brand rounded-lg text-xs font-medium">
-                        {t(tagLabel(tag))}
-                        <button type="button" onClick={() => setForm((prev) => ({ ...prev, tags: prev.tags.filter((t) => t !== tag) }))} className="hover:text-red-500">
-                          <X size={11} />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {/* Preset tag chips */}
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {PRESET_TAGS.filter((pt) => !form.tags.includes(pt.key)).map((pt) => (
-                    <button
-                      key={pt.key}
-                      type="button"
-                      onClick={() => setForm((prev) => ({ ...prev, tags: [...prev.tags, pt.key] }))}
-                      className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-600 hover:border-brand hover:text-brand transition-colors"
-                    >
-                      + {t(pt.labelKey)}
-                    </button>
-                  ))}
-                </div>
-                {/* Custom tag input */}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={form.customTag}
-                    onChange={(e) => setForm((prev) => ({ ...prev, customTag: e.target.value }))}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ',') {
-                        e.preventDefault();
-                        const val = form.customTag.trim().toLowerCase().replace(/\s+/g, '_');
-                        if (val && !form.tags.includes(val)) {
-                          setForm((prev) => ({ ...prev, tags: [...prev.tags, val], customTag: '' }));
-                        }
-                      }
-                    }}
-                    placeholder={t('products.tagPlaceholder')}
-                    className="flex-1 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const val = form.customTag.trim().toLowerCase().replace(/\s+/g, '_');
-                      if (val && !form.tags.includes(val)) {
-                        setForm((prev) => ({ ...prev, tags: [...prev.tags, val], customTag: '' }));
-                      }
-                    }}
-                    className="px-3 py-1.5 text-sm bg-gray-100 rounded-lg hover:bg-gray-200 text-gray-600"
-                  >
-                    {t('common.add')}
-                  </button>
-                </div>
-              </div>
-              {isRestaurant && addonGroups.length > 0 && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('products.fieldAddonGroups')}</label>
-                  <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                    {addonGroups.map((group) => {
-                      const isChecked = form.addon_group_ids.includes(group.id);
-                      return (
-                        <div key={group.id} className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            id={`addon-group-${group.id}`}
-                            checked={isChecked}
-                            onChange={(e) => {
-                              const checked = e.target.checked;
-                              setForm((prev) => ({
-                                ...prev,
-                                addon_group_ids: checked
-                                  ? [...prev.addon_group_ids, group.id]
-                                  : prev.addon_group_ids.filter((id) => id !== group.id),
-                              }));
-                            }}
-                            className="rounded border-gray-300 text-brand focus:ring-brand"
-                          />
-                          <label htmlFor={`addon-group-${group.id}`} className="flex items-center gap-2 cursor-pointer select-none">
-                            <span className="text-sm text-gray-700">{group.name}</span>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded ${group.is_required ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-500'}`}>
-                              {group.is_required ? t('products.required') : t('products.optional')}
-                            </span>
-                          </label>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={form.track_inventory} onChange={(e) => setForm({ ...form, track_inventory: e.target.checked })}
-                    className="rounded border-gray-300 text-brand focus:ring-brand" />
-                  <span className="text-sm text-gray-700">{t('products.fieldTrackInventory')}</span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-                    className="rounded border-gray-300 text-brand focus:ring-brand" />
-                  <span className="text-sm text-gray-700">{t('products.fieldActive')}</span>
-                </label>
-              </div>
-              {!!form.track_inventory && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.fieldStock')}<span className="text-red-500 ml-1">*</span></label>
-                    <input type="number" min="0" value={form.stock_quantity} onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" required />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.fieldLowStockThreshold')}</label>
-                    <input type="number" min="0" value={form.low_stock_threshold} onChange={(e) => setForm({ ...form, low_stock_threshold: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" required />
-                  </div>
-                </div>
-              )}
-              <Button type="submit" className="w-full">
-                {editingProduct ? t('products.updateProduct') : t('products.createProduct')}
-              </Button>
-            </form>
-            </div>
-          </div>
-        </div>
-      )}
+      <ProductFormDialog
+        open={activeTab === 'products' && showForm}
+        onOpenChange={(open) => !open && resetForm()}
+        editing={editingProduct}
+        form={form}
+        onFormChange={setForm}
+        onImageTouched={() => setImageTouched(true)}
+        onSubmit={handleSubmit}
+        categories={categories}
+        addonGroups={addonGroups}
+        taxCategories={taxCategories}
+        loyaltyEnabled={loyaltyEnabled}
+        globalCashbackPercent={globalCashbackPercent}
+        isRestaurant={isRestaurant}
+        currency={currency}
+      />
         </>
       )}
 
@@ -901,83 +503,22 @@ export default function ProductsPage() {
               <Plus size={16} className="mr-1" /> {t('products.addCategory')}
             </Button>
           </div>
-          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">{t('products.categoryName')}</th>
-                  <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">{t('products.categoryColor')}</th>
-                  <th className="text-center p-4 text-xs font-medium text-gray-500 uppercase">{t('products.columnStatus')}</th>
-                  <th className="text-right p-4 text-xs font-medium text-gray-500 uppercase">{t('products.columnActions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {categories.map((cat) => {
-                  const colorObj = CATEGORY_COLORS.find((c) => c.key === cat.color);
-                  return (
-                    <tr key={cat.id} className="hover:bg-gray-50">
-                      <td className="p-4 font-medium text-gray-900">{cat.name}</td>
-                      <td className="p-4">
-                        {colorObj ? (
-                          <span className={`inline-flex px-2 py-1 rounded-lg text-xs font-medium ${colorObj.bg} ${colorObj.text}`}>{t(colorObj.labelKey)}</span>
-                        ) : <span className="text-gray-400 text-sm">—</span>}
-                      </td>
-                      <td className="p-4 text-center">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${cat.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                          {cat.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right">
-                        <div className="flex gap-2 justify-end">
-                          {isOwnerOrManager && (
-                            <>
-                              <button onClick={() => openEditCategory(cat)} className="p-1.5 text-gray-400 hover:text-brand"><Pencil size={16} /></button>
-                              <button onClick={() => handleCategoryDelete(cat.id, cat.name)} className="p-1.5 text-gray-400 hover:text-red-600"><Trash2 size={16} /></button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            {categories.length === 0 && <p className="text-center text-gray-500 py-12">{t('products.categoryEmpty')}</p>}
-          </div>
+          <CategoriesTable
+            categories={categories}
+            isOwnerOrManager={isOwnerOrManager}
+            t={t}
+            onEdit={openEditCategory}
+            onDelete={handleCategoryDelete}
+          />
 
-          {showForm && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-lg font-bold">{editingCategory ? t('products.editCategoryTitle') : t('products.addCategoryTitle')}</h2>
-                  <button onClick={resetCategoryForm} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
-                </div>
-                <form onSubmit={handleCategorySubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.fieldName')}<span className="text-red-500 ml-1">*</span></label>
-                    <input type="text" value={categoryForm.name} onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" required />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.categoryDescription')}</label>
-                    <textarea value={categoryForm.description} onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" rows={2} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('products.colorLabel')}</label>
-                    <div className="flex flex-wrap gap-2">
-                      {CATEGORY_COLORS.map((c) => (
-                        <button type="button" key={c.key} onClick={() => setCategoryForm({ ...categoryForm, color: c.key })} className={`px-3 py-1.5 rounded-lg text-xs font-medium border-2 ${c.key === categoryForm.color ? 'border-brand' : 'border-transparent'} ${c.bg} ${c.text}`}>{t(c.labelKey)}</button>
-                      ))}
-                    </div>
-                  </div>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={categoryForm.is_active} onChange={(e) => setCategoryForm({ ...categoryForm, is_active: e.target.checked })} className="rounded border-gray-300 text-brand focus:ring-brand" />
-                    <span className="text-sm text-gray-700">{t('products.fieldActive')}</span>
-                  </label>
-                  <Button type="submit" className="w-full">{editingCategory ? t('common.update') : t('common.create')}</Button>
-                </form>
-              </div>
-            </div>
-          )}
+          <CategoryFormDialog
+            open={showForm}
+            onOpenChange={(open) => !open && resetCategoryForm()}
+            editing={!!editingCategory}
+            form={categoryForm}
+            onFormChange={setCategoryForm}
+            onSubmit={handleCategorySubmit}
+          />
         </>
       )}
 
@@ -991,297 +532,68 @@ export default function ProductsPage() {
               <Plus size={16} className="mr-1" /> {t('products.addAddonGroup')}
             </Button>
           </div>
-          <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="text-left p-4 text-xs font-medium text-gray-500 uppercase">{t('products.categoryName')}</th>
-                  <th className="text-center p-4 text-xs font-medium text-gray-500 uppercase">{t('products.columnRequired')}</th>
-                  <th className="text-center p-4 text-xs font-medium text-gray-500 uppercase">{t('products.columnSelection')}</th>
-                  <th className="text-center p-4 text-xs font-medium text-gray-500 uppercase">{t('products.columnAddons')}</th>
-                  <th className="text-right p-4 text-xs font-medium text-gray-500 uppercase">{t('products.columnActions')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {addonGroups.map((group) => (
-                  <tr key={group.id} className="hover:bg-gray-50">
-                    <td className="p-4 font-medium text-gray-900">{group.name}</td>
-                    <td className="p-4 text-center">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${group.is_required ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}`}>{group.is_required ? t('common.yes') : t('common.no')}</span>
-                    </td>
-                    <td className="p-4 text-center text-sm text-gray-600">{t('products.addonSelectionRange', { min: group.min_selection, max: group.max_selection })}</td>
-                    <td className="p-4 text-center text-sm text-gray-600">{group.addons?.length || 0}</td>
-                    <td className="p-4 text-right">
-                      <div className="flex gap-2 justify-end">
-                        {isOwnerOrManager && (
-                          <>
-                            <button onClick={() => openEditAddonGroup(group)} className="p-1.5 text-gray-400 hover:text-brand"><Pencil size={16} /></button>
-                            <button onClick={() => handleAddonGroupDelete(group.id)} className="p-1.5 text-gray-400 hover:text-red-600"><Trash2 size={16} /></button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {addonGroups.length === 0 && <p className="text-center text-gray-500 py-12">{t('products.addonEmpty')}</p>}
-          </div>
+          <AddonGroupsTable
+            addonGroups={addonGroups}
+            isOwnerOrManager={isOwnerOrManager}
+            t={t}
+            onEdit={openEditAddonGroup}
+            onDelete={handleAddonGroupDelete}
+          />
 
-          {showAddonModal && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-                <div className="flex justify-between items-center p-6 border-b border-gray-100 shrink-0">
-                  <h2 className="text-lg font-bold">{editingAddonGroup ? t('products.editAddonGroupTitle') : t('products.addAddonGroupTitle')}</h2>
-                  <button onClick={resetAddonForm} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
-                </div>
-                <div className="p-6 overflow-y-auto flex-1">
-                  <form onSubmit={handleAddonGroupSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.fieldName')}<span className="text-red-500 ml-1">*</span></label>
-                    <input type="text" value={addonForm.name} onChange={(e) => setAddonForm({ ...addonForm, name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" required />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.categoryDescription')}</label>
-                    <input type="text" value={addonForm.description} onChange={(e) => setAddonForm({ ...addonForm, description: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.addonMin')}</label>
-                      <input type="number" min="0" value={addonForm.min_selection} onChange={(e) => setAddonForm({ ...addonForm, min_selection: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.addonMax')}</label>
-                      <input type="number" min="0" value={addonForm.max_selection} onChange={(e) => setAddonForm({ ...addonForm, max_selection: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" />
-                    </div>
-                  </div>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={addonForm.is_required} onChange={(e) => setAddonForm({ ...addonForm, is_required: e.target.checked })} className="rounded border-gray-300 text-brand focus:ring-brand" />
-                    <span className="text-sm text-gray-700">{t('products.addonRequired')}</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" checked={addonForm.allow_multiple_quantities} onChange={(e) => setAddonForm({ ...addonForm, allow_multiple_quantities: e.target.checked })} className="rounded border-gray-300 text-brand focus:ring-brand" />
-                    <span className="text-sm text-gray-700">Allow multiple quantities per add-on</span>
-                  </label>
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm font-medium text-gray-700">{t('products.addonAddons')}</label>
-                      <button type="button" onClick={addAddonItem} className="text-xs text-brand hover:underline">{t('products.addAddonInline')}</button>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-[minmax(0,1fr)_6rem_1.5rem] gap-2 px-1 text-[11px] font-medium uppercase tracking-wide text-gray-500">
-                        <span>{t('products.nameLabel')}</span>
-                        <span>{t('products.columnPrice')}</span>
-                        <span aria-hidden="true" />
-                      </div>
-                      {addonList.map((addon, idx) => (
-                        <div key={idx} className="grid grid-cols-[minmax(0,1fr)_6rem_1.5rem] gap-2 items-center">
-                          <input type="text" value={addon.name} onChange={(e) => updateAddonItem(idx, 'name', e.target.value)} placeholder={t('common.namePlaceholder')} className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" />
-                          <input type="number" step="0.01" value={addon.price} onChange={(e) => updateAddonItem(idx, 'price', Number(e.target.value))} onWheel={(e) => e.currentTarget.blur()} placeholder={t('common.pricePlaceholder')} aria-label={t('products.columnPrice')} className="w-24 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none" />
-                          <button type="button" onClick={() => removeAddonItem(idx)} className="text-gray-400 hover:text-red-500"><X size={16} /></button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full">{editingAddonGroup ? t('common.update') : t('common.create')}</Button>
-                </form>
-                </div>
-              </div>
-            </div>
-          )}
+          <AddonGroupDialog
+            open={showAddonModal}
+            onOpenChange={(open) => !open && resetAddonForm()}
+            editing={!!editingAddonGroup}
+            form={addonForm}
+            onFormChange={setAddonForm}
+            addonList={addonList}
+            onAddAddonItem={addAddonItem}
+            onUpdateAddonItem={updateAddonItem}
+            onRemoveAddonItem={removeAddonItem}
+            onSubmit={handleAddonGroupSubmit}
+          />
         </>
       )}
 
-      {showBulkTaxModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold">Assign tax category</h2>
-              <button onClick={() => setShowBulkTaxModal(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
-            </div>
-            {legacyProducts.length === 0 ? (
-              <p className="text-sm text-gray-500">Every active product already has a tax category assigned.</p>
-            ) : (
-              <>
-                <p className="text-sm text-gray-600 mb-4">
-                  Apply one tax category to all <span className="font-medium">{legacyProducts.length}</span> active product(s) still on a legacy manual rate. Products with their own category already set are left untouched.
-                </p>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tax category</label>
-                <select value={bulkTaxCategoryId} onChange={(e) => setBulkTaxCategoryId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none mb-5">
-                  <option value="">{t('products.selectPlaceholder')}</option>
-                  {taxCategories.map((tc) => <option key={tc.id} value={tc.id}>{taxCategoryOptionLabel(tc)}</option>)}
-                </select>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setShowBulkTaxModal(false)}>{t('common.cancel')}</Button>
-                  <Button onClick={handleBulkTaxAssign} disabled={!bulkTaxCategoryId || bulkTaxApplying}>
-                    {bulkTaxApplying ? t('products.csvImporting') : `Apply to ${legacyProducts.length} product(s)`}
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      <BulkTaxDialog
+        open={showBulkTaxModal}
+        onOpenChange={setShowBulkTaxModal}
+        legacyProductCount={legacyProducts.length}
+        taxCategories={taxCategories}
+        bulkTaxCategoryId={bulkTaxCategoryId}
+        onBulkTaxCategoryIdChange={setBulkTaxCategoryId}
+        onApply={handleBulkTaxAssign}
+        applying={bulkTaxApplying}
+      />
 
-      {showCsvModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-lg">
-            <div className="flex justify-between items-center mb-5">
-              <h2 className="text-lg font-bold">
-                {t('products.csvModalTitle', { type: csvType === 'categories' ? t('products.tabCategories') : csvType === 'products' ? t('products.tabProducts') : t('products.tabAddonGroups') })}
-              </h2>
-              <button onClick={() => setShowCsvModal(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={20} />
-              </button>
-            </div>
+      <CsvImportDialog
+        open={showCsvModal}
+        onOpenChange={setShowCsvModal}
+        csvType={csvType}
+        csvFile={csvFile}
+        onCsvFileChange={(file) => {
+          setCsvFile(file);
+          setCsvResult(null);
+        }}
+        csvResult={csvResult}
+        csvUploading={csvUploading}
+        onDownload={downloadCsv}
+        onUpload={handleCsvUpload}
+      />
 
-            <div className="space-y-5">
-              {/* Download section */}
-              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                <p className="text-sm font-medium text-gray-700">{t('products.download')}</p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => downloadCsv(`/menu-csv/template/${csvType}`, `${csvType}-template.csv`)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-200 rounded-lg bg-white hover:bg-gray-50 font-medium"
-                  >
-                    <Download size={14} /> {t('products.csvBlankTemplate')}
-                  </button>
-                  <button
-                    onClick={() => downloadCsv(`/menu-csv/export/${csvType}`, `${csvType}-export.csv`)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-200 rounded-lg bg-white hover:bg-gray-50 font-medium"
-                  >
-                    <Download size={14} /> {t('products.csvCurrentData')}
-                  </button>
-                </div>
-                {csvType === 'products' && (
-                  <p className="text-xs text-gray-500">{t('products.csvProductsHelp')}</p>
-                )}
-                {csvType === 'categories' && (
-                  <p className="text-xs text-gray-500">{t('products.csvCategoriesHelp')}</p>
-                )}
-                {csvType === 'addons' && (
-                  <p className="text-xs text-gray-500">{t('products.csvAddonsHelp')}</p>
-                )}
-              </div>
+      <CategoryDeleteDialog
+        open={catDeleteModal.open}
+        onOpenChange={(open) => !open && setCatDeleteModal({ open: false, id: null, name: '', productCount: 0 })}
+        categoryName={catDeleteModal.name}
+        productCount={catDeleteModal.productCount}
+        categories={categories}
+        categoryId={catDeleteModal.id}
+        reassignTo={catReassignTo}
+        onReassignToChange={setCatReassignTo}
+        onReassignDelete={handleCategoryReassignDelete}
+        onForceDelete={handleCategoryForceDelete}
+      />
 
-              {/* Upload section */}
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-gray-700">{t('products.uploadCsv')}</p>
-                <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                  <Upload size={20} className="text-gray-400 mb-1" />
-                  <span className="text-sm text-gray-500">
-                    {csvFile ? csvFile.name : t('products.csvChooseFile')}
-                  </span>
-                  <input
-                    type="file"
-                    accept=".csv,text/csv"
-                    className="hidden"
-                    onChange={(e) => { setCsvFile(e.target.files?.[0] ?? null); setCsvResult(null); }}
-                  />
-                </label>
-                {csvFile && (
-                  <Button onClick={handleCsvUpload} disabled={csvUploading} className="w-full">
-                    {csvUploading ? t('products.csvImporting') : t('common.import')}
-                  </Button>
-                )}
-              </div>
-
-              {/* Result */}
-              {csvResult && (
-                <div className="rounded-xl border border-gray-100 overflow-hidden">
-                  <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border-b border-gray-100">
-                    <CheckCircle size={15} className="text-green-600" />
-                    <span className="text-sm font-medium text-green-800">{t('products.importComplete')}</span>
-                  </div>
-                  <div className="px-4 py-3 text-sm text-gray-700 space-y-1">
-                    {csvType === 'addons' ? (
-                      <>
-                        <p>{t('products.csvGroupsCreated')} <span className="font-medium">{String(csvResult.groups_created ?? 0)}</span></p>
-                        <p>{t('products.csvAddonsCreated')} <span className="font-medium">{String(csvResult.addons_created ?? 0)}</span></p>
-                      </>
-                    ) : (
-                      <p>{t('common.created')} <span className="font-medium">{String(csvResult.created ?? 0)}</span></p>
-                    )}
-                    <p>{t('common.skipped')} <span className="font-medium">{String(csvResult.skipped ?? 0)}</span></p>
-                  </div>
-                  {Array.isArray(csvResult.warnings) && (csvResult.warnings as string[]).length > 0 && (
-                    <div className="px-4 py-3 border-t border-gray-100 bg-amber-50">
-                      <div className="flex items-center gap-2 mb-2">
-                        <AlertCircle size={14} className="text-amber-500" />
-                        <span className="text-xs font-medium text-amber-700">{t('products.csvMissingFields')}</span>
-                      </div>
-                      <ul className="space-y-1">
-                        {(csvResult.warnings as string[]).map((w, i) => (
-                          <li key={i} className="text-xs text-amber-800">{w}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {Array.isArray(csvResult.errors) && (csvResult.errors as string[]).length > 0 && (
-                    <div className="px-4 py-3 border-t border-gray-100">
-                      <div className="flex items-center gap-2 mb-2">
-                        <AlertCircle size={14} className="text-red-500" />
-                        <span className="text-xs font-medium text-red-700">{t('products.csvSkippedErrors')}</span>
-                      </div>
-                      <ul className="space-y-1">
-                        {(csvResult.errors as string[]).map((e, i) => (
-                          <li key={i} className="text-xs text-gray-600">{e}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-      {catDeleteModal.open && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-gray-900">{t('products.deleteCategoryTitle')}</h2>
-              <button onClick={() => setCatDeleteModal({ open: false, id: null, name: '', productCount: 0 })} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
-            </div>
-            <p className="text-sm text-gray-700 mb-5">
-              {t('products.deleteCategoryBody', { name: catDeleteModal.name, count: catDeleteModal.productCount })}
-            </p>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('products.moveProductsTo')}</label>
-                <select
-                  value={catReassignTo}
-                  onChange={(e) => setCatReassignTo(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand outline-none"
-                >
-                  <option value="">{t('products.selectCategoryPlaceholder')}</option>
-                  {categories
-                    .filter((c) => c.name.toLowerCase() === 'uncategorized' && c.id !== catDeleteModal.id)
-                    .map((c) => <option key={c.id} value={String(c.id)}>{t('products.defaultCategoryTag', { name: c.name })}</option>)}
-                  {categories
-                    .filter((c) => c.name.toLowerCase() !== 'uncategorized' && c.id !== catDeleteModal.id)
-                    .map((c) => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
-                </select>
-              </div>
-              <Button onClick={handleCategoryReassignDelete} disabled={!catReassignTo} className="w-full">
-                {t('products.moveAndDelete')}
-              </Button>
-              <div className="relative flex items-center">
-                <div className="flex-grow border-t border-gray-200" />
-                <span className="mx-3 text-xs text-gray-400">{t('common.or')}</span>
-                <div className="flex-grow border-t border-gray-200" />
-              </div>
-              <button
-                onClick={handleCategoryForceDelete}
-                className="w-full px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
-              >
-                {t('products.deleteCategoryAndProducts')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       {ConfirmDialog}
     </div>
   );

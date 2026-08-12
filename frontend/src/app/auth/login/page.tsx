@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
+import { AuthShell } from '@/components/flo';
 import toast from 'react-hot-toast';
 import { useI18n } from '@/hooks/useI18n';
 import { ROLE_LABEL_KEYS, BUSINESS_TYPE_LABEL_KEYS } from '@/lib/i18n-enums';
@@ -53,7 +53,6 @@ function LoginContent() {
     setLoading(true);
     try {
       await selectTenant(tenantId);
-      // useEffect on currentTenant will handle the redirect
     } catch {
       toast.error(t('auth.selectBusinessFailed'));
     } finally {
@@ -91,11 +90,9 @@ function LoginContent() {
       if (status === 401) {
         const remaining = data?.attempts_remaining;
         if (remaining === 0) {
-          // Just got locked out
           const mins = data?.lockout_minutes ?? 15;
           setLoginError(t('auth.lockedOut').replace('{minutes}', String(mins)));
         } else if (typeof remaining === 'number' && remaining < 4) {
-          // Warn only when getting close (≤ 4 remaining to avoid noise on first attempt)
           setLoginError(
             t('auth.invalidCredentials') + ' ' +
             t('auth.attemptsRemaining').replace('{count}', String(remaining))
@@ -104,7 +101,6 @@ function LoginContent() {
           setLoginError(t('auth.invalidCredentials'));
         }
       } else if (status === 429) {
-        // Middleware-level lockout (authRateLimit window exhausted)
         const msg = data?.error || t('auth.lockedOut').replace('{minutes}', '15');
         setLoginError(msg);
       } else {
@@ -116,98 +112,88 @@ function LoginContent() {
     }
   };
 
-
-
   const shouldShowTenantSelect = !!(user && (tenants.length > 1 || searchParams.get('select_tenant') === 'true'));
 
   if (shouldShowTenantSelect) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="w-full max-w-md">
-          <Card>
-            <CardContent className="pt-6">
-              <h2 className="text-2xl font-bold mb-2">{t('auth.selectBusiness')}</h2>
-              <p className="text-muted-foreground text-sm mb-6">{t('auth.selectBusinessHint')}</p>
-              <div className="space-y-3">
-                {tenants.map((tenant) => (
-                  <button
-                    key={tenant.id}
-                    onClick={() => handleTenantSelect(tenant.id)}
-                    disabled={loading}
-                    className="w-full text-left p-4 border rounded-lg hover:border-primary hover:bg-accent transition-colors group"
-                  >
-                    <div className="font-semibold group-hover:text-primary">{tenant.business_name}</div>
-                    <div className="text-sm text-muted-foreground mt-0.5">{t(BUSINESS_TYPE_LABEL_KEYS[tenant.business_type ?? ''] ?? tenant.business_type ?? '')} &middot; {t(ROLE_LABEL_KEYS[tenant.role ?? ''] ?? tenant.role ?? '')}</div>
-                  </button>
-                ))}
+      <AuthShell
+        title={t('auth.selectBusiness')}
+        subtitle={t('auth.selectBusinessHint')}
+      >
+        <div className="space-y-3">
+          {tenants.map((tenant) => (
+            <button
+              key={tenant.id}
+              type="button"
+              onClick={() => handleTenantSelect(tenant.id)}
+              disabled={loading}
+              className="w-full rounded-flo-lg border border-flo-border bg-flo-surface p-4 text-left transition-colors hover:border-flo-brand-500 hover:bg-flo-brand-50/50 disabled:opacity-50 group"
+            >
+              <div className="font-semibold text-flo-text group-hover:text-flo-brand-700">{tenant.business_name}</div>
+              <div className="text-sm text-flo-text-secondary mt-0.5">
+                {t(BUSINESS_TYPE_LABEL_KEYS[tenant.business_type ?? ''] ?? tenant.business_type ?? '')} &middot; {t(ROLE_LABEL_KEYS[tenant.role ?? ''] ?? tenant.role ?? '')}
               </div>
-            </CardContent>
-          </Card>
+            </button>
+          ))}
         </div>
-      </div>
+      </AuthShell>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <img src="/logo.png" alt="Nexora" width={120} height={80} className="mx-auto mb-3" />
-          <p className="text-muted-foreground mt-2">{t('auth.signInTitle')}</p>
-        </div>
-        {dbError && (
-          <div className="mb-4 rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+    <AuthShell
+      subtitle={t('auth.signInTitle')}
+      alert={
+        dbError ? (
+          <div className="rounded-flo-lg border border-flo-danger/30 bg-flo-danger-subtle px-4 py-3 text-sm text-flo-danger">
             <strong>{t('auth.dbErrorPrefix')}</strong> {dbError}
           </div>
+        ) : null
+      }
+    >
+      <form onSubmit={handleLogin} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">{t('auth.email')}</Label>
+          <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('auth.emailPlaceholder')} required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">{t('auth.password')}</Label>
+          <div className="relative">
+            <Input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('auth.passwordPlaceholder')} className="pr-10" required />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-flo-text-muted hover:text-flo-text focus:outline-none"
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
+        </div>
+        <label className="flex items-center gap-2 text-sm text-flo-text-secondary select-none cursor-pointer">
+          <input
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="rounded border-flo-border text-flo-brand-600 focus:ring-flo-brand-500"
+          />
+          {t('auth.rememberMe')}
+        </label>
+        {loginError && (
+          <p className="text-sm text-flo-danger text-center">{loginError}</p>
         )}
-        <Card>
-          <CardContent className="pt-6">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">{t('auth.email')}</Label>
-                <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('auth.emailPlaceholder')} required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">{t('auth.password')}</Label>
-                <div className="relative">
-                  <Input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('auth.passwordPlaceholder')} className="pr-10" required />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-              <label className="flex items-center gap-2 text-sm text-muted-foreground select-none cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-input text-primary focus:ring-primary"
-                />
-                {t('auth.rememberMe')}
-              </label>
-              {loginError && (
-                <p className="text-sm text-destructive text-center">{loginError}</p>
-              )}
-              <Button type="submit" disabled={loading} className="w-full" size="lg">
-                {loading ? t('auth.signingIn') : t('auth.signIn')}
-              </Button>
-              <button
-                type="button"
-                onClick={() => router.push('/auth/recover')}
-                className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {t('auth.forgotPasswordLink')}
-              </button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+        <Button type="submit" disabled={loading} className="w-full" size="lg">
+          {loading ? t('auth.signingIn') : t('auth.signIn')}
+        </Button>
+        <button
+          type="button"
+          onClick={() => router.push('/auth/recover')}
+          className="w-full text-center text-sm text-flo-text-secondary hover:text-flo-text transition-colors"
+        >
+          {t('auth.forgotPasswordLink')}
+        </button>
+      </form>
+    </AuthShell>
   );
 }
 

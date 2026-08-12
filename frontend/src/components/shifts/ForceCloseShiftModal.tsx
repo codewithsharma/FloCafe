@@ -107,10 +107,10 @@ export default function ForceCloseShiftModal({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>
-      <DialogContent className="sm:max-w-md" showCloseButton={!submitting}>
+      <DialogContent className="border-flo-border bg-flo-surface sm:max-w-md" showCloseButton={!submitting}>
         <DialogHeader>
-          <DialogTitle>{t('shift.forceCloseTitle')}</DialogTitle>
-          <DialogDescription>{t('shift.forceCloseDescription')}</DialogDescription>
+          <DialogTitle className="text-flo-text">{t('shift.forceCloseTitle')}</DialogTitle>
+          <DialogDescription className="text-flo-text-secondary">{t('shift.forceCloseDescription')}</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
@@ -155,15 +155,15 @@ export default function ForceCloseShiftModal({
             />
           </div>
           {error && (
-            <p role="alert" className="text-sm text-red-600">{error}</p>
+            <p role="alert" className="text-sm text-flo-danger">{error}</p>
           )}
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
+          <Button type="button" variant="outline" className="min-h-11" onClick={handleClose} disabled={submitting}>
             {t('common.cancel')}
           </Button>
-          <Button type="button" variant="destructive" onClick={() => void handleSubmit()} disabled={submitting || !shift}>
+          <Button type="button" variant="destructive" className="min-h-11" onClick={() => void handleSubmit()} disabled={submitting || !shift}>
             {submitting ? t('common.saving') : t('shift.forceCloseAction')}
           </Button>
         </DialogFooter>

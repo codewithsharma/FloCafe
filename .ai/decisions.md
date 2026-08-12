@@ -25,3 +25,26 @@ M5-G choices (locked):
 - UNIQUE(business_date) → 409; GET returns existing; POST creates once.
 - Owner/manager only; do not block POS after day close.
 - Aggregate CLOSED shifts by `closed_at` in local business-date window; use persisted expected/variance/counted.
+
+UI Phase 11 (Settings):
+
+- Flo-restyle shell + tab bodies on Flo tokens; nested `/settings/*` route split remains optional IA (dirty save bar + Electron deep links).
+- Keep shifts tab + `ShiftHistoryPanel`; add link note to `/operations`.
+
+UI dark mode:
+
+- Persist preference in `localStorage['flo_theme']` as `light` | `dark` | `system`.
+- Apply via `document.documentElement.classList.toggle('dark', …)`; FOUC bootstrap in root layout.
+- Sidebar `ThemeToggle` cycles modes; AppShell listens for system preference changes when `system`.
+
+POS modals Flo migration:
+
+- Replace custom `fixed inset-0 bg-black/*` overlays with shadcn `Dialog`.
+- Flo tokens (`bg-flo-surface`, `border-flo-border`, `text-flo-brand-600`, `min-h-11`) on Payment/Prepaid/Addon/Table/Split/Customer/Printer chrome.
+- Guard: `test:flo-pos-modals` wired into `test:security`.
+
+KDS/shifts/misc Flo components:
+
+- KDS login uses `AuthShell`; `KdsItemModal` and product `ImageUploader` crop UI use shadcn `Dialog`.
+- Shift history/preview/status/modals + UpdateBadge/AuthGuard spinner on Flo tokens; preserve STATUS_CONFIG kitchen colors.
+- Guard: `test:flo-components-complete` greps `pos|kds|shifts|settings|layout|products` for legacy overlays/card shells; wired into `test:security`.

@@ -3,75 +3,80 @@
 import { ChefHat } from 'lucide-react';
 import { useI18n } from '@/hooks/useI18n';
 import type { UseKdsConnectionResult } from '@/hooks/useKdsConnection';
+import { AuthShell } from '@/components/flo';
 
 export function KdsLoginForm({ conn }: { conn: UseKdsConnectionResult }) {
   const { t } = useI18n();
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <ChefHat size={48} className="mx-auto text-brand mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900">{t('kds.title')}</h1>
-          <p className="text-gray-500 mt-2">{t('kds.loginSubtitle')}</p>
+    <AuthShell
+      icon={<ChefHat size={48} className="text-flo-brand-600" />}
+      title={t('kds.title')}
+      subtitle={t('kds.loginSubtitle')}
+      footer={<p className="text-xs text-flo-text-muted text-center">{t('kds.loginHint')}</p>}
+      alert={
+        conn.loginError ? (
+          <div
+            role="alert"
+            aria-live="polite"
+            className="rounded-flo-md border border-flo-danger/30 bg-flo-danger-subtle px-4 py-3 text-sm text-flo-danger"
+          >
+            {conn.loginError}
+          </div>
+        ) : undefined
+      }
+    >
+      <form data-testid="kds-login-form" onSubmit={conn.handleLogin} className="space-y-4">
+        <div>
+          <label htmlFor="kds-login-email" className="mb-1 block text-sm font-medium text-flo-text">
+            {t('auth.email')}
+          </label>
+          <input
+            id="kds-login-email"
+            data-testid="kds-login-email"
+            type="email"
+            value={conn.loginEmail}
+            onChange={(e) => conn.setLoginEmail(e.target.value)}
+            className="w-full min-h-11 rounded-flo-md border border-flo-border bg-flo-surface px-4 py-2 text-flo-text focus:border-flo-brand-500 focus:outline-none focus:ring-2 focus:ring-flo-brand-500"
+            placeholder="chef@flo.local"
+            required
+          />
         </div>
 
-        <form data-testid="kds-login-form" onSubmit={conn.handleLogin} className="space-y-4">
-          {conn.loginError && (
-            <div role="alert" aria-live="polite" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {conn.loginError}
-            </div>
-          )}
-
-          <div>
-            <label htmlFor="kds-login-email" className="block text-sm font-medium text-gray-700 mb-1">{t('auth.email')}</label>
-            <input
-              id="kds-login-email"
-              data-testid="kds-login-email"
-              type="email"
-              value={conn.loginEmail}
-              onChange={(e) => conn.setLoginEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
-              placeholder="chef@flo.local"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="kds-login-password" className="block text-sm font-medium text-gray-700 mb-1">{t('auth.password')}</label>
-            <input
-              id="kds-login-password"
-              data-testid="kds-login-password"
-              type="password"
-              value={conn.loginPassword}
-              onChange={(e) => conn.setLoginPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <label className="flex items-center gap-2 text-sm text-gray-600 select-none cursor-pointer">
-            <input
-              type="checkbox"
-              checked={conn.rememberMe}
-              onChange={(e) => conn.setRememberMe(e.target.checked)}
-              className="rounded border-gray-300 text-brand focus:ring-brand"
-            />
-            {t('auth.rememberMe')}
+        <div>
+          <label htmlFor="kds-login-password" className="mb-1 block text-sm font-medium text-flo-text">
+            {t('auth.password')}
           </label>
+          <input
+            id="kds-login-password"
+            data-testid="kds-login-password"
+            type="password"
+            value={conn.loginPassword}
+            onChange={(e) => conn.setLoginPassword(e.target.value)}
+            className="w-full min-h-11 rounded-flo-md border border-flo-border bg-flo-surface px-4 py-2 text-flo-text focus:border-flo-brand-500 focus:outline-none focus:ring-2 focus:ring-flo-brand-500"
+            placeholder="••••••••"
+            required
+          />
+        </div>
 
-          <button
-            data-testid="kds-login-submit"
-            type="submit"
-            disabled={conn.loginLoading}
-            className="w-full py-3 bg-brand text-white font-semibold rounded-lg hover:bg-brand/90 disabled:opacity-50"
-          >
-            {conn.loginLoading ? t('auth.signingIn') : t('auth.signIn')}
-          </button>
-        </form>
+        <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-flo-text-secondary">
+          <input
+            type="checkbox"
+            checked={conn.rememberMe}
+            onChange={(e) => conn.setRememberMe(e.target.checked)}
+            className="rounded border-flo-border text-flo-brand-600 focus:ring-flo-brand-500"
+          />
+          {t('auth.rememberMe')}
+        </label>
 
-        <p className="text-xs text-gray-400 text-center mt-6">{t('kds.loginHint')}</p>
-      </div>
-    </div>
+        <button
+          data-testid="kds-login-submit"
+          type="submit"
+          disabled={conn.loginLoading}
+          className="w-full min-h-11 rounded-flo-md bg-flo-brand-600 py-3 font-semibold text-white hover:bg-flo-brand-700 disabled:opacity-50"
+        >
+          {conn.loginLoading ? t('auth.signingIn') : t('auth.signIn')}
+        </button>
+      </form>
+    </AuthShell>
   );
 }

@@ -8,12 +8,19 @@ import { useHeldOrdersStore } from '@/store/held-orders';
 import { usePosSettingsStore } from '@/store/pos-settings';
 import { useSidebar } from '@/components/ui/sidebar';
 import toast from 'react-hot-toast';
-import { ShoppingCart, X } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import type { Addon, Category, Product, Table, Bill, Order, CartItem } from '@/lib/types';
 import { useConfirm } from '@/hooks/use-confirm';
 import {
   Drawer, DrawerContent, DrawerTrigger,
 } from '@/components/ui/drawer';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 
 import ProductGrid from '@/components/pos/ProductGrid';
 import CartPanel from '@/components/pos/CartPanel';
@@ -24,6 +31,7 @@ import TableCheckoutModal from '@/components/pos/TableCheckoutModal';
 import PaymentModal from '@/components/pos/PaymentModal';
 import PrepaidCheckoutModal, { type PrepaidPayment, type PrepaidDiscount } from '@/components/pos/PrepaidCheckoutModal';
 import PosTopbar from '@/components/pos/PosTopbar';
+import { PosWorkspace } from '@/components/flo/pos/PosWorkspace';
 import { usePrinterStore } from '@/hooks/usePrinter';
 import { showPrintWarningsToast } from '@/lib/printer/warnings-toast';
 import { useBarcodeScanner } from '@/hooks/useBarcodeScanner';
@@ -757,31 +765,31 @@ export default function POSPage() {
   return (
     <>
       {supportError && (
-        <div className="fixed bottom-4 left-4 z-50 w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-red-200 bg-white p-4 shadow-xl">
+        <div className="fixed bottom-4 left-4 z-50 w-[min(28rem,calc(100vw-2rem))] rounded-flo-lg border border-flo-danger bg-flo-surface p-4 shadow-xl">
           {sentTicketId ? (
             <>
-              <p className="font-semibold text-red-800">{t('support.requestQueued')}</p>
+              <p className="font-semibold text-flo-danger">{t('support.requestQueued')}</p>
               {delivery.status === 'delivered' && delivery.supportCode ? (
                 <>
-                  <p className="mt-1 text-sm font-semibold text-gray-800">{t('support.supportCode')}: <span className="font-mono">{delivery.supportCode}</span></p>
-                  <p className="mt-0.5 text-xs text-gray-500">{t('support.supportCodeHint')}</p>
+                  <p className="mt-1 text-sm font-semibold text-flo-text">{t('support.supportCode')}: <span className="font-mono">{delivery.supportCode}</span></p>
+                  <p className="mt-0.5 text-xs text-flo-text-secondary">{t('support.supportCodeHint')}</p>
                 </>
               ) : (
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-flo-text-secondary">
                   {delivery.status === 'failed' ? t('support.stillQueuedLocally') : t('support.confirmingDelivery')}
                 </p>
               )}
               <div className="mt-3">
-                <button className="rounded border px-3 py-2 text-sm" onClick={() => { setSupportError(null); setSentTicketId(null); }}>Dismiss</button>
+                <button type="button" className="rounded-flo-md border border-flo-border px-3 py-2 text-sm min-h-11 text-flo-text" onClick={() => { setSupportError(null); setSentTicketId(null); }}>Dismiss</button>
               </div>
             </>
           ) : (
             <>
-              <p className="font-semibold text-red-800">Printing failed</p>
-              <p className="mt-1 text-sm text-gray-600">{supportError.message}</p>
-              <details className="mt-2 text-xs text-gray-500">
+              <p className="font-semibold text-flo-danger">Printing failed</p>
+              <p className="mt-1 text-sm text-flo-text-secondary">{supportError.message}</p>
+              <details className="mt-2 text-xs text-flo-text-secondary">
                 <summary className="cursor-pointer">{t('support.showPayload')}</summary>
-                <pre className="mt-2 max-h-32 overflow-auto rounded bg-gray-50 p-2">{JSON.stringify(
+                <pre className="mt-2 max-h-32 overflow-auto rounded-flo-md bg-flo-bg p-2 text-flo-text">{JSON.stringify(
                   diagnosticsPreview
                     ? { ...supportError.payload, diagnostics: { ...(supportError.payload.diagnostics as Record<string, unknown> | undefined), ...diagnosticsPreview } }
                     : supportError.payload,
@@ -790,13 +798,14 @@ export default function POSPage() {
               </details>
               <div className="mt-3 flex gap-2">
                 <button
-                  className="rounded bg-brand px-3 py-2 text-sm font-medium text-white"
+                  type="button"
+                  className="rounded-flo-md bg-flo-brand-600 px-3 py-2 text-sm font-medium text-white min-h-11 hover:bg-flo-brand-700"
                   onClick={async () => {
                     const clientTicketId = crypto.randomUUID();
                     try {
                       const response = await api.post('/support-ticket', {
                         ...supportError.payload,
-                        subject: 'Nexora printing problem',
+                        subject: 'Flo POS printing problem',
                         correlation_id: crypto.randomUUID(),
                         client_ticket_id: clientTicketId,
                       });
@@ -807,18 +816,15 @@ export default function POSPage() {
                     }
                   }}
                 >Get help</button>
-                <button className="rounded border px-3 py-2 text-sm" onClick={() => setSupportError(null)}>Dismiss</button>
+                <button type="button" className="rounded-flo-md border border-flo-border px-3 py-2 text-sm min-h-11 text-flo-text" onClick={() => setSupportError(null)}>Dismiss</button>
               </div>
             </>
           )}
         </div>
       )}
-      <PosTopbar tables={tables} onShowTablePicker={() => setShowTablePicker(true)} />
-
-      {/* Main content area */}
-      <div className="flex flex-1 min-h-0 overflow-hidden p-4 gap-4">
-        {/* Product Grid — full width on mobile, flex-1 on desktop */}
-        <div className="flex-1 min-w-0 h-full flex flex-col">
+      <PosWorkspace
+        toolbar={<PosTopbar tables={tables} onShowTablePicker={() => setShowTablePicker(true)} />}
+        workspace={
           <ProductGrid
             categories={categories}
             products={products}
@@ -830,32 +836,32 @@ export default function POSPage() {
             onProductClick={handleProductClick}
             sidebarOpen={leftSidebarOpen}
           />
-        </div>
-
-        {/* Desktop Cart — always open, hidden on mobile */}
-        <div className="hidden md:flex md:w-80 md:shrink-0 h-full">
-          <CartPanel {...cartPanelProps} />
-        </div>
-      </div>
-
-      {/* Mobile: Floating Cart Button + Bottom Sheet — outside flex container */}
-      <Drawer open={mobileCartOpen} onOpenChange={setMobileCartOpen}>
-        <DrawerTrigger asChild>
-          <button className="fixed bottom-5 right-5 z-40 w-14 h-14 bg-brand text-white rounded-full shadow-lg flex items-center justify-center hover:bg-brand-hover transition-colors md:hidden">
-            <ShoppingCart size={22} />
-            {itemCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                {itemCount}
-              </span>
-            )}
-          </button>
-        </DrawerTrigger>
-        <DrawerContent className="max-h-[85vh]">
-          <div className="overflow-y-auto max-h-[80vh] px-2 pb-2">
-            <CartPanel {...cartPanelProps} variant="drawer" />
-          </div>
-        </DrawerContent>
-      </Drawer>
+        }
+        orderPanel={<CartPanel {...cartPanelProps} />}
+        mobileOrder={
+          <Drawer open={mobileCartOpen} onOpenChange={setMobileCartOpen}>
+            <DrawerTrigger asChild>
+              <button
+                type="button"
+                className="fixed bottom-5 right-5 z-40 size-14 bg-flo-brand-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-flo-brand-700 transition-colors md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500 focus-visible:ring-offset-2"
+                aria-label={t('pos.placeOrderButton')}
+              >
+                <ShoppingCart size={22} aria-hidden />
+                {itemCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-flo-danger text-white text-xs min-w-5 h-5 px-1 rounded-full flex items-center justify-center font-bold tabular-nums">
+                    {itemCount}
+                  </span>
+                )}
+              </button>
+            </DrawerTrigger>
+            <DrawerContent className="max-h-[85vh] border-flo-border">
+              <div className="overflow-y-auto max-h-[80vh] px-2 pb-2">
+                <CartPanel {...cartPanelProps} variant="drawer" />
+              </div>
+            </DrawerContent>
+          </Drawer>
+        }
+      />
 
       {/* Modals */}
       {isRestaurant && showTablePicker && (
@@ -915,20 +921,17 @@ export default function POSPage() {
         />
       )}
 
-      {showCustomerPrompt && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-5 w-full max-w-sm">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold">{t('pos.selectCustomer')}</h3>
-              <button onClick={() => setShowCustomerPrompt(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={20} />
-              </button>
-            </div>
-            <p className="text-sm text-gray-500 mb-4">{t('pos.customerRequiredBeforeOrder')}</p>
-            <CustomerSearch onSelected={() => setShowCustomerPrompt(false)} />
-          </div>
-        </div>
-      )}
+      <Dialog open={showCustomerPrompt} onOpenChange={setShowCustomerPrompt}>
+        <DialogContent className="border-flo-border bg-flo-surface sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-flo-text">{t('pos.selectCustomer')}</DialogTitle>
+            <DialogDescription className="text-flo-text-secondary">
+              {t('pos.customerRequiredBeforeOrder')}
+            </DialogDescription>
+          </DialogHeader>
+          <CustomerSearch onSelected={() => setShowCustomerPrompt(false)} />
+        </DialogContent>
+      </Dialog>
 
       {ConfirmDialog}
 

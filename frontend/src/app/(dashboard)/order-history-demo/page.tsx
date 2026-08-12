@@ -1,5 +1,12 @@
+'use client';
+
 import OrderHistoryGrid from '@/components/orders/OrderHistoryGrid';
+import { Panel } from '@/components/flo';
 
 export default function OrderHistoryDemoPage() {
-  return <OrderHistoryGrid />;
+  return (
+    <Panel className="overflow-hidden p-0">
+      <OrderHistoryGrid />
+    </Panel>
+  );
 }

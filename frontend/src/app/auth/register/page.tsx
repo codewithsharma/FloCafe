@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { AuthShell } from '@/components/flo';
 import toast from 'react-hot-toast';
 import { useI18n } from '@/hooks/useI18n';
 import { Eye, EyeOff } from 'lucide-react';
@@ -42,7 +45,6 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(form);
-      // Auto-select the newly created tenant
       const newTenants = useAuthStore.getState().tenants;
       if (newTenants.length > 0) {
         try {
@@ -67,136 +69,116 @@ export default function RegisterPage() {
     }
   };
 
+  const selectClass =
+    'h-9 w-full rounded-flo-md border border-flo-border bg-flo-surface px-3 text-sm text-flo-text outline-none focus-visible:border-flo-brand-500 focus-visible:ring-2 focus-visible:ring-flo-brand-500/30';
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
-      <div className="w-full max-w-lg">
-        <div className="text-center mb-8">
-          <img src="/logo.png" alt="Nexora" width={120} height={80} className="mx-auto mb-3" />
-          <p className="text-gray-500 mt-2">{t('auth.registerSubtitle')}</p>
-        </div>
+    <AuthShell
+      maxWidth="lg"
+      subtitle={t('auth.registerSubtitle')}
+      footer={
+        <p className="text-center text-sm text-flo-text-secondary">
+          {t('auth.haveAccount')}{' '}
+          <Link href="/auth/login" className="font-medium text-flo-brand-600 hover:text-flo-brand-700">
+            {t('auth.signIn')}
+          </Link>
+        </p>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2 space-y-2">
+            <Label htmlFor="register-name">{t('auth.yourName')}</Label>
+            <Input id="register-name" type="text" name="name" value={form.name} onChange={handleChange} required />
+          </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.yourName')}</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none"
-                  required
-                />
-              </div>
+          <div className="col-span-2 space-y-2">
+            <Label htmlFor="register-email">{t('auth.email')}</Label>
+            <Input id="register-email" type="email" name="email" autoComplete="email" value={form.email} onChange={handleChange} required />
+          </div>
 
-              <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.email')}</label>
-                <input
-                  type="email"
-                  name="email"
-                  autoComplete="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.password')}</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    autoComplete="new-password"
-                    value={form.password}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-gray-700 focus:outline-none"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.confirmPassword')}</label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    name="password_confirmation"
-                    autoComplete="new-password"
-                    value={form.password_confirmation}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-gray-700 focus:outline-none"
-                    tabIndex={-1}
-                  >
-                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              {passwordsEntered && (
-                <div className="col-span-2 -mt-2">
-                  <p className={`text-xs font-medium ${passwordsMatch ? 'text-green-600' : 'text-red-600'}`}>
-                    {passwordsMatch ? t('auth.passwordsMatch') : t('auth.passwordsDoNotMatch')}
-                  </p>
-                </div>
-              )}
-
-              <div className="col-span-2 border-t border-gray-200 pt-5 mt-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.businessNameLabel')}</label>
-                <input
-                  type="text"
-                  name="business_name"
-                  value={form.business_name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none"
-                  placeholder={t('auth.businessNamePlaceholder')}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('auth.countryLabel')}</label>
-                <select
-                  name="country"
-                  value={form.country}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none"
-                >
-                  <option value="IN">{t('auth.countryIndia')}</option>
-                  <option value="TH">{t('auth.countryThailand')}</option>
-                </select>
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="register-password">{t('auth.password')}</Label>
+            <div className="relative">
+              <Input
+                id="register-password"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                autoComplete="new-password"
+                value={form.password}
+                onChange={handleChange}
+                className="pr-10"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-flo-text-muted hover:text-flo-text focus:outline-none"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
+          </div>
 
-            <Button type="submit" disabled={loading || !passwordsMatch} className="w-full" size="lg">
-              {loading ? t('auth.signingIn') : t('auth.createAccount')}
-            </Button>
-          </form>
+          <div className="space-y-2">
+            <Label htmlFor="register-confirm">{t('auth.confirmPassword')}</Label>
+            <div className="relative">
+              <Input
+                id="register-confirm"
+                type={showConfirmPassword ? 'text' : 'password'}
+                name="password_confirmation"
+                autoComplete="new-password"
+                value={form.password_confirmation}
+                onChange={handleChange}
+                className="pr-10"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-flo-text-muted hover:text-flo-text focus:outline-none"
+                tabIndex={-1}
+              >
+                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
 
-          <p className="text-center text-sm text-gray-500 mt-6">
-            {t('auth.haveAccount')}{' '}
-            <Link href="/auth/login" className="text-brand hover:text-brand-hover font-medium">
-              {t('auth.signIn')}
-            </Link>
-          </p>
+          {passwordsEntered && (
+            <div className="col-span-2 -mt-2">
+              <p className={`text-xs font-medium ${passwordsMatch ? 'text-flo-success' : 'text-flo-danger'}`}>
+                {passwordsMatch ? t('auth.passwordsMatch') : t('auth.passwordsDoNotMatch')}
+              </p>
+            </div>
+          )}
+
+          <div className="col-span-2 space-y-2 border-t border-flo-border pt-5 mt-1">
+            <Label htmlFor="register-business">{t('auth.businessNameLabel')}</Label>
+            <Input
+              id="register-business"
+              type="text"
+              name="business_name"
+              value={form.business_name}
+              onChange={handleChange}
+              placeholder={t('auth.businessNamePlaceholder')}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="register-country">{t('auth.countryLabel')}</Label>
+            <select id="register-country" name="country" value={form.country} onChange={handleChange} className={selectClass}>
+              <option value="IN">{t('auth.countryIndia')}</option>
+              <option value="TH">{t('auth.countryThailand')}</option>
+            </select>
+          </div>
         </div>
-      </div>
-    </div>
+
+        <Button type="submit" disabled={loading || !passwordsMatch} className="w-full" size="lg">
+          {loading ? t('auth.signingIn') : t('auth.createAccount')}
+        </Button>
+      </form>
+    </AuthShell>
   );
 }

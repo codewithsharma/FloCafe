@@ -1,10 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useAuthStore } from '@/store/auth';
 import { useI18n } from '@/hooks/useI18n';
 import { dialCodeFor } from '@/lib/phone';
@@ -51,44 +57,49 @@ export default function EditCustomerModal({ customer, onClose, onSaved }: Props)
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-sm p-5">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold text-gray-900">{t('pos.editCustomer', { defaultValue: 'Edit Customer' })}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X size={20} />
-          </button>
-        </div>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="border-flo-border bg-flo-surface sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="text-flo-text">
+            {t('pos.editCustomer', { defaultValue: 'Edit Customer' })}
+          </DialogTitle>
+        </DialogHeader>
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">{t('pos.customerName', { defaultValue: 'Name' })}</label>
+            <label className="block text-xs font-medium text-flo-text-secondary mb-1">
+              {t('pos.customerName', { defaultValue: 'Name' })}
+            </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none"
+              className="w-full px-3 py-2 min-h-11 text-sm border border-flo-border rounded-flo-md bg-flo-surface text-flo-text focus:ring-2 focus:ring-flo-brand-500 focus:border-flo-brand-500 outline-none"
               autoFocus
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">{t('pos.phone')}</label>
+            <label className="block text-xs font-medium text-flo-text-secondary mb-1">
+              {t('pos.phone')}
+            </label>
             <input
               type="tel"
               inputMode="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder={dialCode}
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none"
+              className="w-full px-3 py-2 min-h-11 text-sm border border-flo-border rounded-flo-md bg-flo-surface text-flo-text focus:ring-2 focus:ring-flo-brand-500 focus:border-flo-brand-500 outline-none"
             />
           </div>
         </div>
-        <div className="flex gap-2 mt-5">
-          <Button variant="outline" onClick={onClose} className="flex-1">{t('common.cancel')}</Button>
-          <Button onClick={handleSave} disabled={saving} className="flex-1">
+        <DialogFooter className="gap-2 sm:justify-end">
+          <Button variant="outline" onClick={onClose} className="flex-1 min-h-11">
+            {t('common.cancel')}
+          </Button>
+          <Button onClick={handleSave} disabled={saving} className="flex-1 min-h-11 bg-flo-brand-600 hover:bg-flo-brand-700 text-white">
             {saving ? t('pos.loadingEllipsis') : t('common.save')}
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

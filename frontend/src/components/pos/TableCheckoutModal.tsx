@@ -1,8 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ShoppingCart, Users } from 'lucide-react';
+import { ShoppingCart, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { StatusBadge } from '@/components/flo/StatusBadge';
 import TaxBreakdown from '@/components/pos/TaxBreakdown';
 import api from '@/lib/api';
 import { useI18n } from '@/hooks/useI18n';
@@ -117,132 +124,149 @@ export default function TableCheckoutModal({
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-2xl p-8">
-          <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin mx-auto" />
-        </div>
-      </div>
+      <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+        <DialogContent className="border-flo-border bg-flo-surface sm:max-w-sm" showCloseButton={false}>
+          <div className="py-8">
+            <div className="w-8 h-8 border-4 border-flo-brand-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   if (!order) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-          <p className="text-gray-500 text-center py-4">{t('pos.noActiveOrder')}</p>
-          <Button onClick={onClose} variant="outline" className="w-full">{t('pos.close')}</Button>
-        </div>
-      </div>
+      <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+        <DialogContent className="border-flo-border bg-flo-surface sm:max-w-md">
+          <p className="text-flo-text-secondary text-center py-4">{t('pos.noActiveOrder')}</p>
+          <Button onClick={onClose} variant="outline" className="w-full min-h-11">{t('pos.close')}</Button>
+        </DialogContent>
+      </Dialog>
     );
   }
 
-  // Filter active items (not cancelled)
   const activeItems = (order.items || []).filter((item: OrderItem) => item.status !== 'cancelled');
   const splitBills = (order.bills || []).filter((bill) => Boolean(bill.split_group_id));
+  const isPaid = order.bill?.payment_status === 'paid';
 
   return (
     <>
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col">
-        <div className="flex justify-between items-center p-5 border-b border-gray-100">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-gray-900">{table.name}</h2>
-              <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                order.bill?.payment_status === 'paid' 
-                  ? 'bg-green-100 text-green-700' 
-                  : 'bg-orange-100 text-orange-700'
-              }`}>
-                {order.bill?.payment_status === 'paid' ? t('pos.paid') : t('pos.unpaid')}
-              </span>
+      <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+        <DialogContent className="border-flo-border bg-flo-surface sm:max-w-md max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
+          <DialogHeader className="p-5 border-b border-flo-border">
+            <div className="flex items-center gap-2 pr-6">
+              <DialogTitle className="text-flo-text">{table.name}</DialogTitle>
+              <StatusBadge variant={isPaid ? 'success' : 'warning'}>
+                {isPaid ? t('pos.paid') : t('pos.unpaid')}
+              </StatusBadge>
             </div>
-            <p className="text-sm text-gray-500">{t('pos.orderNumber', { number: order.order_number })}</p>
-          </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X size={20} />
-          </button>
-        </div>
+            <p className="text-sm text-flo-text-secondary">{t('pos.orderNumber', { number: order.order_number })}</p>
+          </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-5">
-          {/* Existing order items - shown as disabled/reference */}
-          <div className="mb-3">
-            <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">{t('pos.previousItems')}</p>
-            <div className="space-y-1">
-              {activeItems.map((item) => (
-                <div key={item.id} className="flex justify-between items-start py-1.5 px-2 bg-gray-50 rounded-lg">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-700 font-medium">
-                      {item.quantity}x {item.product_name}
-                    </p>
-                    {item.special_instructions && (
-                      <p className="text-xs text-gray-400 italic">{item.special_instructions}</p>
+          <div className="flex-1 overflow-y-auto p-5">
+            <div className="mb-3">
+              <p className="text-xs text-flo-text-muted uppercase tracking-wider mb-2">{t('pos.previousItems')}</p>
+              <div className="space-y-1">
+                {activeItems.map((item) => (
+                  <div key={item.id} className="flex justify-between items-start py-1.5 px-2 bg-flo-bg rounded-flo-md">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-flo-text font-medium">
+                        {item.quantity}x {item.product_name}
+                      </p>
+                      {item.special_instructions && (
+                        <p className="text-xs text-flo-text-muted italic">{item.special_instructions}</p>
+                      )}
+                    </div>
+                    <span className="text-xs text-flo-text-secondary ml-2 font-medium">
+                      {formatItemTotal(item.total, item.subtotal)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="p-5 border-t border-flo-border space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-flo-text-secondary">{t('pos.subtotal')}</span>
+              <span className="text-flo-text">{fmt(Number(order.subtotal))}</span>
+            </div>
+            <TaxBreakdown
+              taxAmount={Number(order.tax_amount)}
+              taxBreakdown={order.tax_breakdown}
+              theme="light"
+            />
+            <div className="flex justify-between text-lg font-bold">
+              <span className="text-flo-text">{t('pos.total')}</span>
+              <span className="text-flo-brand-600">{fmt(Number(order.total))}</span>
+            </div>
+            {order.bill && order.bill.payment_status !== 'paid' && Number(order.bill.balance) > 0 && (
+              <div className="flex justify-between text-sm font-medium">
+                <span className="text-flo-warning">{t('pos.balanceDue')}</span>
+                <span className="text-flo-warning">{fmt(Number(order.bill.balance))}</span>
+              </div>
+            )}
+
+            {splitBills.length > 0 && (
+              <div className="space-y-2">
+                {splitBills.map((bill) => (
+                  <div key={bill.id} className="flex items-center justify-between rounded-flo-md border border-flo-border p-2">
+                    <div>
+                      <p className="text-sm font-medium text-flo-text">{bill.split_label}</p>
+                      <p className="text-xs text-flo-text-secondary">{fmt(Number(bill.total))} · {bill.payment_status}</p>
+                    </div>
+                    {bill.payment_status !== 'paid' && (
+                      <Button size="sm" className="min-h-11 bg-flo-brand-600 hover:bg-flo-brand-700" onClick={() => onPayment(bill)}>
+                        {t('pos.pay', { defaultValue: 'Pay' })}
+                      </Button>
                     )}
                   </div>
-                  <span className="text-xs text-gray-600 ml-2 font-medium">
-                    {formatItemTotal(item.total, item.subtotal)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+                ))}
+              </div>
+            )}
 
-        <div className="p-5 border-t border-gray-100 space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-500">{t('pos.subtotal')}</span>
-            <span>{fmt(Number(order.subtotal))}</span>
+            {splitBills.length === 0 && splitChecksEnabled && order.type === 'dine_in' && order.bill?.payment_status !== 'paid' && (
+              <Button variant="outline" onClick={handleSplitCheck} disabled={generating} className="w-full min-h-11">
+                <Users size={15} className="mr-2" />
+                {t('pos.splitCheck', { defaultValue: 'Split check' })}
+              </Button>
+            )}
+            {cartItemCount > 0 ? (
+              <div className="space-y-2">
+                <Button
+                  onClick={handleAddCartToOrder}
+                  disabled={addingItems}
+                  className="w-full min-h-11 bg-flo-brand-600 hover:bg-flo-brand-700"
+                  size="lg"
+                >
+                  <ShoppingCart size={16} className="mr-2" />
+                  {addingItems ? t('pos.adding') : t('pos.addToOrder', { count: cartItemCount })}
+                </Button>
+                <Button onClick={handleCheckout} variant="outline" className="w-full min-h-11" disabled={generating}>
+                  {generating ? t('pos.generating') : t('pos.checkoutInstead')}
+                </Button>
+              </div>
+            ) : splitBills.length === 0 ? (
+              <div className="grid grid-cols-2 gap-3">
+                <Button variant="outline" className="min-h-11" onClick={() => onAddItems(table, order)}>
+                  {t('pos.addItems')}
+                </Button>
+                <Button onClick={handleCheckout} disabled={generating} className="min-h-11 bg-flo-brand-600 hover:bg-flo-brand-700">
+                  {generating ? t('pos.generating') : t('pos.checkout')}
+                </Button>
+              </div>
+            ) : null}
           </div>
-          <TaxBreakdown
-            taxAmount={Number(order.tax_amount)}
-            taxBreakdown={order.tax_breakdown}
-            theme="light"
-          />
-          <div className="flex justify-between text-lg font-bold">
-            <span>{t('pos.total')}</span>
-            <span className="text-brand">{fmt(Number(order.total))}</span>
-          </div>
-          {order.bill && order.bill.payment_status !== 'paid' && Number(order.bill.balance) > 0 && (
-            <div className="flex justify-between text-sm font-medium">
-              <span className="text-orange-600">{t('pos.balanceDue')}</span>
-              <span className="text-orange-600">{fmt(Number(order.bill.balance))}</span>
-            </div>
-          )}
-
-          {splitBills.length > 0 && <div className="space-y-2">{splitBills.map((bill) => <div key={bill.id} className="flex items-center justify-between rounded-lg border p-2"><div><p className="text-sm font-medium">{bill.split_label}</p><p className="text-xs text-gray-500">{fmt(Number(bill.total))} · {bill.payment_status}</p></div>{bill.payment_status !== 'paid' && <Button size="sm" onClick={() => onPayment(bill)}>{t('pos.pay', { defaultValue: 'Pay' })}</Button>}</div>)}</div>}
-
-          {/* Show different buttons based on cart state */}
-          {splitBills.length === 0 && splitChecksEnabled && order.type === 'dine_in' && order.bill?.payment_status !== 'paid' && <Button variant="outline" onClick={handleSplitCheck} disabled={generating} className="w-full"><Users size={15} className="mr-2" />{t('pos.splitCheck', { defaultValue: 'Split check' })}</Button>}
-          {cartItemCount > 0 ? (
-            // Cart has items - show "Add items to order" option
-            <div className="space-y-2">
-              <Button 
-                onClick={handleAddCartToOrder} 
-                disabled={addingItems}
-                className="w-full"
-                size="lg"
-              >
-                <ShoppingCart size={16} className="mr-2" />
-                {addingItems ? t('pos.adding') : t('pos.addToOrder', { count: cartItemCount })}
-              </Button>
-              <Button onClick={handleCheckout} variant="outline" className="w-full" disabled={generating}>
-                {generating ? t('pos.generating') : t('pos.checkoutInstead')}
-              </Button>
-            </div>
-          ) : splitBills.length === 0 ? (
-            // Cart empty - show both options
-            <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" onClick={() => onAddItems(table, order)}>
-                {t('pos.addItems')}
-              </Button>
-              <Button onClick={handleCheckout} disabled={generating}>
-                {generating ? t('pos.generating') : t('pos.checkout')}
-              </Button>
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </div>
-    {splitBill && <SplitCheckModal bill={splitBill} order={order} onClose={() => setSplitBill(null)} onSplit={(bills) => { setOrder({ ...order, bill: bills[0], bills }); setSplitBill(null); }} />}
+        </DialogContent>
+      </Dialog>
+      {splitBill && (
+        <SplitCheckModal
+          bill={splitBill}
+          order={order}
+          onClose={() => setSplitBill(null)}
+          onSplit={(bills) => { setOrder({ ...order, bill: bills[0], bills }); setSplitBill(null); }}
+        />
+      )}
     </>
   );
 }

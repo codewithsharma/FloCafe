@@ -15,6 +15,10 @@ const DAY_CLOSE_CARD = fs.readFileSync(
   path.join(__dirname, '../frontend/src/components/dashboard/DayCloseCard.tsx'),
   'utf8',
 );
+const OPERATIONS_PAGE = fs.readFileSync(
+  path.join(__dirname, '../frontend/src/app/(dashboard)/operations/page.tsx'),
+  'utf8',
+);
 const DASHBOARD_PAGE = fs.readFileSync(
   path.join(__dirname, '../frontend/src/app/(dashboard)/dashboard/page.tsx'),
   'utf8',
@@ -37,8 +41,9 @@ function main(): void {
   assert.ok(DAY_CLOSE_CARD.includes('manager'), 'manager gate');
   console.log('   ✓ DayCloseCard contract');
 
-  assert.ok(DASHBOARD_PAGE.includes('DayCloseCard'), 'dashboard wires DayCloseCard');
-  console.log('   ✓ dashboard wires DayCloseCard');
+  assert.ok(OPERATIONS_PAGE.includes('DayCloseCard'), 'operations wires DayCloseCard');
+  assert.ok(!DASHBOARD_PAGE.includes('DayCloseCard'), 'dashboard no longer wires DayCloseCard');
+  console.log('   ✓ operations wires DayCloseCard (Phase 10)');
 
   console.log('='.repeat(60));
   console.log('✅ M5-G day-close UI contracts passed');

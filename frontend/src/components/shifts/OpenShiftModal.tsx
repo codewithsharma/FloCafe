@@ -84,10 +84,10 @@ export default function OpenShiftModal({ open, onOpenChange, onSuccess }: OpenSh
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>
-      <DialogContent className="sm:max-w-md" showCloseButton={!submitting}>
+      <DialogContent className="border-flo-border bg-flo-surface sm:max-w-md" showCloseButton={!submitting}>
         <DialogHeader>
-          <DialogTitle>{t('shift.openTitle')}</DialogTitle>
-          <DialogDescription>{t('shift.openDescription')}</DialogDescription>
+          <DialogTitle className="text-flo-text">{t('shift.openTitle')}</DialogTitle>
+          <DialogDescription className="text-flo-text-secondary">{t('shift.openDescription')}</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
@@ -115,15 +115,15 @@ export default function OpenShiftModal({ open, onOpenChange, onSuccess }: OpenSh
             />
           </div>
           {error && (
-            <p role="alert" className="text-sm text-red-600">{error}</p>
+            <p role="alert" className="text-sm text-flo-danger">{error}</p>
           )}
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={handleClose} disabled={submitting}>
+          <Button type="button" variant="outline" className="min-h-11" onClick={handleClose} disabled={submitting}>
             {t('common.cancel')}
           </Button>
-          <Button type="button" onClick={() => void handleSubmit()} disabled={submitting}>
+          <Button type="button" className="min-h-11" onClick={() => void handleSubmit()} disabled={submitting}>
             {submitting ? t('common.saving') : t('shift.openAction')}
           </Button>
         </DialogFooter>

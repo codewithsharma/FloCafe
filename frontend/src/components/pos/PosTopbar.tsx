@@ -8,6 +8,7 @@ import { usePosSettingsStore } from '@/store/pos-settings';
 import { LayoutGrid } from 'lucide-react';
 import type { Table } from '@/lib/types';
 import { useI18n } from '@/hooks/useI18n';
+import { cn } from '@/lib/utils';
 
 interface Props {
   tables: Table[];
@@ -23,24 +24,26 @@ export default function PosTopbar({ tables, onShowTablePicker }: Props) {
   const showTableBtn = isRestaurant && cart.orderType === 'dine_in' && tablesRequired;
 
   return (
-    <div className="flex items-center gap-3 border-b bg-white shrink-0 px-4 py-2.5">
+    <header className="flex shrink-0 items-center gap-2 md:gap-3 border-b border-flo-border bg-flo-surface px-3 md:px-4 py-2 min-h-[52px]">
       <div className="flex-1 min-w-0">
         <CustomerSearch variant="topbar" />
       </div>
 
-      {/* Select Table — between customer search and printer */}
       {showTableBtn && (
         <button
+          type="button"
           onClick={onShowTablePicker}
-          className={`h-10 shrink-0 flex items-center gap-1.5 px-3 text-sm rounded-lg border font-medium transition-colors whitespace-nowrap ${
+          className={cn(
+            'min-h-11 shrink-0 flex items-center gap-1.5 px-3 text-sm rounded-flo-md border font-medium transition-colors whitespace-nowrap',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500 focus-visible:ring-offset-2',
             cart.tableId
-              ? 'bg-orange-500 text-white border-orange-500 hover:bg-orange-600'
-              : 'bg-amber-50 border-amber-400 text-amber-700 hover:bg-amber-100'
-          }`}
+              ? 'bg-flo-brand-600 text-white border-flo-brand-600 hover:bg-flo-brand-700'
+              : 'bg-flo-warning-subtle border-flo-warning/40 text-flo-warning hover:border-flo-warning',
+          )}
         >
-          <LayoutGrid size={14} />
+          <LayoutGrid className="size-4" aria-hidden />
           {cart.tableId
-            ? t('pos.tableLabel', { name: tables.find(t => t.id === cart.tableId)?.name || cart.tableId })
+            ? t('pos.tableLabel', { name: tables.find((tbl) => tbl.id === cart.tableId)?.name || cart.tableId })
             : t('pos.selectTable')}
         </button>
       )}
@@ -48,6 +51,6 @@ export default function PosTopbar({ tables, onShowTablePicker }: Props) {
       <div className="shrink-0">
         <PrinterStatus />
       </div>
-    </div>
+    </header>
   );
 }

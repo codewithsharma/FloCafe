@@ -1,0 +1,95 @@
+'use client';
+
+import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import FloSidebar from '@/components/flo/Sidebar';
+import { ContextHeader } from '@/components/flo/ContextHeader';
+import GlobalNotifications from '@/components/layout/GlobalNotifications';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { useI18n } from '@/hooks/useI18n';
+import { getClientTerminalId } from '@/lib/terminal-id';
+import { getRouteTitleKey } from '@/config/navigation';
+import { cn } from '@/lib/utils';
+import { applyTheme, getStoredTheme } from '@/lib/theme';
+
+export interface AppShellProps {
+  children: ReactNode;
+}
+
+/**
+ * Flo POS application shell.
+ * Old pages remain functional inside the new chrome (incremental migration).
+ */
+export function AppShell({ children }: AppShellProps) {
+  const pathname = usePathname();
+  const { t } = useI18n();
+  const [online, setOnline] = useState(
+    typeof navigator !== 'undefined' ? navigator.onLine : true,
+  );
+  const terminalShort = useMemo(() => {
+    if (typeof window === 'undefined') return '—';
+    const id = getClientTerminalId();
+    if (!id) return '—';
+    return id.length <= 8 ? id : `${id.slice(0, 4)}…${id.slice(-4)}`;
+  }, []);
+
+  const isFullBleed = pathname === '/pos' || pathname === '/kds';
+  const titleKey = useMemo(() => getRouteTitleKey(pathname || '/'), [pathname]);
+
+  useEffect(() => {
+    const onOnline = () => setOnline(true);
+    const onOffline = () => setOnline(false);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    const preference = getStoredTheme();
+    applyTheme(preference);
+    if (preference !== 'system') return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => applyTheme('system');
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  return (
+    <SidebarProvider
+      defaultOpen
+      style={
+        {
+          '--sidebar-width': '15rem',
+          '--sidebar-width-icon': '3.5rem',
+        } as CSSProperties
+      }
+    >
+      <FloSidebar />
+      <SidebarInset className="h-screen overflow-hidden flex flex-col bg-flo-bg">
+        {!isFullBleed && (
+          <ContextHeader
+            title={t(titleKey)}
+            context={`${online ? t('flo.shell.online') : t('flo.shell.offline')} · ${t('flo.shell.terminal')} ${terminalShort}`}
+          />
+        )}
+        {!isFullBleed && <GlobalNotifications />}
+        <div
+          className={cn(
+            'flex-1 min-h-0 min-w-0',
+            isFullBleed
+              ? 'flex flex-col overflow-hidden p-0'
+              : 'overflow-auto p-4 md:p-6',
+          )}
+        >
+          {children}
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}
+
+export default AppShell;

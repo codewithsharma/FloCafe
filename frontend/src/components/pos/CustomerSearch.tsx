@@ -27,7 +27,7 @@ const TAG_COLORS: Record<string, string> = {
 };
 
 function tagColor(tag: string) {
-  return TAG_COLORS[tag.toLowerCase()] ?? 'bg-gray-100 text-gray-600';
+  return TAG_COLORS[tag.toLowerCase()] ?? 'bg-flo-bg text-flo-text-secondary';
 }
 
 function digitsOnly(value: string | null | undefined): string {
@@ -201,7 +201,7 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
   const handleClear = () => cart.setCustomer(null);
 
   // ── Shared input classes ───────────────────────────────────────────────────
-  const baseInput = 'px-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand focus:border-brand outline-none text-sm';
+  const baseInput = 'px-3 min-h-11 border border-flo-border rounded-flo-md bg-flo-surface text-flo-text focus:ring-2 focus:ring-flo-brand-500 focus:border-flo-brand-600 outline-none text-sm';
 
   // ── Customer already selected ──────────────────────────────────────────────
   if (customer) {
@@ -210,24 +210,24 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
     if (variant === 'topbar') {
       return (
         <>
-          <div className="h-10 flex items-center gap-2 px-3 bg-brand-light rounded-lg min-w-0 w-full">
+          <div className="h-10 min-h-11 flex items-center gap-2 px-3 bg-flo-brand-50 rounded-flo-md min-w-0 w-full">
             <button
               onClick={() => setEditingCustomer(true)}
               title={t('pos.editCustomer', { defaultValue: 'Edit name / phone' })}
               className="flex-1 min-w-0 flex items-center gap-x-2 flex-wrap text-left group"
             >
-              <span className="font-semibold text-brand text-sm truncate group-hover:underline">{customer.name}</span>
-              <span className="text-brand/70 text-xs shrink-0">{customer.phone}</span>
-              <Pencil size={11} className="text-brand/50 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <span className="font-semibold text-flo-brand-600 text-sm truncate group-hover:underline">{customer.name}</span>
+              <span className="text-flo-brand-600/70 text-xs shrink-0">{customer.phone}</span>
+              <Pencil size={11} className="text-flo-brand-600/50 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
               {!!loyaltyPoints && loyaltyPoints > 0 && (
-                <span className="flex items-center gap-0.5 text-xs font-medium text-brand bg-white/70 rounded-full px-1.5 py-0.5 shrink-0">
+                <span className="flex items-center gap-0.5 text-xs font-medium text-flo-brand-600 bg-flo-surface/70 rounded-full px-1.5 py-0.5 shrink-0">
                   <Gift size={11} />
                   {t('pos.loyaltyPointsShort', { count: loyaltyPoints, defaultValue: '{count} pts' })}
                 </span>
               )}
               {hasTags && <TagBadges counts={customer.tag_counts!} t={t} />}
             </button>
-            <button onClick={handleClear} className="text-brand hover:text-brand-hover shrink-0 ml-auto">
+            <button onClick={handleClear} className="text-flo-brand-600 hover:text-flo-brand-700 shrink-0 ml-auto">
               <X size={14} />
             </button>
           </div>
@@ -244,18 +244,18 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
 
     return (
       <div className="space-y-1">
-        <div className="flex items-center justify-between px-3 py-2 bg-brand-light rounded-lg text-sm">
+        <div className="flex items-center justify-between px-3 py-2 bg-flo-brand-50 rounded-lg text-sm">
           <button onClick={() => setEditingCustomer(true)} className="flex-1 min-w-0 flex items-center gap-2 text-left group">
-            <span className="font-medium text-brand truncate group-hover:underline">{customer.name}</span>
-            {customer.phone && <span className="text-xs text-gray-500">{customer.phone}</span>}
-            <Pencil size={11} className="text-brand/50 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+            <span className="font-medium text-flo-brand-600 truncate group-hover:underline">{customer.name}</span>
+            {customer.phone && <span className="text-xs text-flo-text-secondary">{customer.phone}</span>}
+            <Pencil size={11} className="text-flo-brand-600/50 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
           </button>
-          <button onClick={handleClear} className="text-brand hover:text-brand-hover ml-2 shrink-0">
+          <button onClick={handleClear} className="text-flo-brand-600 hover:text-flo-brand-700 ml-2 shrink-0">
             <X size={14} />
           </button>
         </div>
         {!!loyaltyPoints && loyaltyPoints > 0 && (
-          <span className="inline-flex items-center gap-0.5 text-xs font-medium text-brand bg-brand-light rounded-full px-1.5 py-0.5">
+          <span className="inline-flex items-center gap-0.5 text-xs font-medium text-flo-brand-600 bg-flo-brand-50 rounded-full px-1.5 py-0.5">
             <Gift size={11} />
             {t('pos.loyaltyPointsShort', { count: loyaltyPoints, defaultValue: '{count} pts' })}
           </span>
@@ -301,7 +301,7 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
             placeholder={searched ? (matched ? '' : t('pos.enterName')) : t('pos.nameAutoFills')}
             className={`h-10 w-48 shrink-0 px-3 text-sm border rounded-lg focus:ring-2 outline-none transition-colors duration-150 ${
               matched
-                ? 'border-gray-200 bg-gray-50 cursor-pointer focus:ring-brand/20 focus:border-brand'
+                ? 'border-flo-border bg-flo-bg cursor-pointer focus:ring-flo-brand-500/20 focus:border-flo-brand-600'
                 : 'border-indigo-200 bg-indigo-50 placeholder:text-indigo-400/80 focus:ring-indigo-200 focus:border-indigo-400'
             }`}
             onClick={matched ? handleSelectMatched : undefined}
@@ -309,7 +309,7 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
           {matched && (
             <button
               onClick={handleSelectMatched}
-              className="h-10 shrink-0 px-3 bg-brand text-white text-xs rounded-lg hover:bg-brand-hover whitespace-nowrap"
+              className="h-10 shrink-0 px-3 bg-flo-brand-600 text-white text-xs rounded-lg hover:bg-flo-brand-700 whitespace-nowrap"
             >
               {t('pos.select')}
             </button>
@@ -318,7 +318,7 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
             <button
               onClick={handleCreate}
               disabled={creating}
-              className="h-10 shrink-0 px-3 bg-brand text-white text-xs rounded-lg hover:bg-brand-hover disabled:opacity-50 whitespace-nowrap"
+              className="h-10 shrink-0 px-3 bg-flo-brand-600 text-white text-xs rounded-lg hover:bg-flo-brand-700 disabled:opacity-50 whitespace-nowrap"
             >
               {creating ? t('pos.loadingEllipsis') : t('common.add')}
             </button>
@@ -326,7 +326,7 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
         </div>
 
         {searched && (
-          <div className="absolute left-0 top-full mt-1 z-20 rounded-md border border-gray-100 bg-white px-2 py-1 shadow-sm">
+          <div className="absolute left-0 top-full mt-1 z-20 rounded-md border border-flo-border bg-flo-surface px-2 py-1 shadow-sm">
             {matched ? (
               <span className="text-xs text-green-600 font-medium">{t('pos.customerFound')}</span>
             ) : (
@@ -366,7 +366,7 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
           }}
           readOnly={!!matched}
           placeholder={searched ? (matched ? '' : t('pos.enterName')) : t('pos.nameAutoFills')}
-          className={`${baseInput} w-full py-2 ${matched ? 'bg-gray-50 cursor-pointer' : ''}`}
+          className={`${baseInput} w-full py-2 ${matched ? 'bg-flo-bg cursor-pointer' : ''}`}
           onClick={matched ? handleSelectMatched : undefined}
         />
       </div>
@@ -379,7 +379,7 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
               {matched.tag_counts && <TagBadges counts={matched.tag_counts} t={t} />}
               <button
                 onClick={handleSelectMatched}
-                className="w-full py-1.5 bg-brand text-white text-sm rounded-lg hover:bg-brand-hover"
+                className="w-full py-1.5 bg-flo-brand-600 text-white text-sm rounded-lg hover:bg-flo-brand-700"
               >
                 {t('pos.selectName', { name: matched.name })}
               </button>
@@ -391,7 +391,7 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
                 <button
                   onClick={handleCreate}
                   disabled={creating}
-                  className="w-full py-1.5 bg-brand text-white text-sm rounded-lg hover:bg-brand-hover disabled:opacity-50"
+                  className="w-full py-1.5 bg-flo-brand-600 text-white text-sm rounded-lg hover:bg-flo-brand-700 disabled:opacity-50"
                 >
                   {creating ? t('pos.creating') : t('pos.addName', { name: name.trim() })}
                 </button>

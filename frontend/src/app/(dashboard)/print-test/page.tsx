@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Printer, FileText, MessageCircle, Download, Usb, Globe } from 'lucide-react';
+import { PageHeader, Panel } from '@/components/flo';
 import { Button } from '@/components/ui/button';
 import { usePrinterStore } from '@/hooks/usePrinter';
 import { showPrintWarningsToast } from '@/lib/printer/warnings-toast';
@@ -146,15 +147,18 @@ export default function PrintTestPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-3 mb-6">
-          <Printer size={28} className="text-brand" />
-          <h1 className="text-2xl font-bold text-gray-900">{t('printTest.title')}</h1>
-        </div>
+    <div className="min-h-full bg-flo-bg p-4 md:p-8">
+      <div className="mx-auto max-w-2xl">
+        <PageHeader
+          title={
+            <span className="inline-flex items-center gap-3">
+              <Printer size={28} className="text-flo-brand-600" aria-hidden />
+              {t('printTest.title')}
+            </span>
+          }
+        />
 
-        <div className="bg-white rounded-xl border border-gray-100 p-6 mb-6">
-          <h2 className="font-semibold text-gray-900 mb-4">{t('printTest.selectTestType')}</h2>
+        <Panel title={t('printTest.selectTestType')} className="mb-6">
           <div className="grid grid-cols-2 gap-2">
             {testOptions.map((opt) => {
               const Icon = opt.icon;
@@ -162,10 +166,10 @@ export default function PrintTestPage() {
                 <button
                   key={opt.value}
                   onClick={() => setTestMode(opt.value)}
-                  className={`flex items-center gap-2 p-3 rounded-lg border transition-colors ${
+                  className={`flex items-center gap-2 rounded-flo-md border p-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500 ${
                     effectiveTestMode === opt.value
-                      ? 'border-brand bg-brand/5 text-brand'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-flo-brand-500 bg-flo-brand-50 text-flo-brand-700'
+                      : 'border-flo-border hover:border-flo-text-muted'
                   }`}
                 >
                   <Icon size={16} />
@@ -174,33 +178,31 @@ export default function PrintTestPage() {
               );
             })}
           </div>
-        </div>
+        </Panel>
 
-        <div className="bg-white rounded-xl border border-gray-100 p-6 mb-6">
-          <h2 className="font-semibold text-gray-900 mb-4">{t('printTest.printerSettings')}</h2>
-          
+        <Panel title={t('printTest.printerSettings')} className="mb-6">
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-medium text-flo-text">
                 {t('printTest.paperWidthLabel')}
               </label>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPaperWidth(58)}
-                  className={`px-4 py-2 rounded-lg border transition-colors ${
+                  className={`rounded-flo-md border px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500 ${
                     paperWidth === 58
-                      ? 'border-brand bg-brand/5 text-brand'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-flo-brand-500 bg-flo-brand-50 text-flo-brand-700'
+                      : 'border-flo-border hover:border-flo-text-muted'
                   }`}
                 >
                   {t('printTest.paperWidth58')}
                 </button>
                 <button
                   onClick={() => setPaperWidth(80)}
-                  className={`px-4 py-2 rounded-lg border transition-colors ${
+                  className={`rounded-flo-md border px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500 ${
                     paperWidth === 80
-                      ? 'border-brand bg-brand/5 text-brand'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-flo-brand-500 bg-flo-brand-50 text-flo-brand-700'
+                      : 'border-flo-border hover:border-flo-text-muted'
                   }`}
                 >
                   {t('printTest.paperWidth80')}
@@ -209,16 +211,16 @@ export default function PrintTestPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-medium text-flo-text">
                 {t('printTest.printMethodLabel')}
               </label>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPrintMethod('escpos')}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-flo-md border px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500 ${
                     printMethod === 'escpos'
-                      ? 'border-brand bg-brand/5 text-brand'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-flo-brand-500 bg-flo-brand-50 text-flo-brand-700'
+                      : 'border-flo-border hover:border-flo-text-muted'
                   }`}
                 >
                   <Usb size={16} />
@@ -226,38 +228,38 @@ export default function PrintTestPage() {
                 </button>
                 <button
                   onClick={() => setPrintMethod('browser')}
-                  className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-flo-md border px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500 ${
                     printMethod === 'browser'
-                      ? 'border-brand bg-brand/5 text-brand'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-flo-brand-500 bg-flo-brand-50 text-flo-brand-700'
+                      : 'border-flo-border hover:border-flo-text-muted'
                   }`}
                 >
                   <Globe size={16} />
                   {t('printTest.browserPrint')}
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-2">
-                {printMethod === 'escpos' 
+              <p className="mt-2 text-xs text-flo-text-secondary">
+                {printMethod === 'escpos'
                   ? t('printTest.escposHint', { status })
                   : t('printTest.browserHint')}
               </p>
             </div>
 
             {printMethod === 'escpos' && lastPrintedBytes && (
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600">
+              <div className="rounded-flo-md bg-flo-surface-muted p-3">
+                <p className="text-sm text-flo-text-secondary">
                   {t('printTest.lastPrintedBytes', { bytes: lastPrintedBytes.length })}
                 </p>
                 <button
                   onClick={downloadLastReceipt}
-                  className="mt-2 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                  className="mt-2 flex items-center gap-1 text-sm text-flo-text-muted hover:text-flo-text"
                 >
                   <Download size={14} /> {t('printTest.downloadBin')}
                 </button>
               </div>
             )}
           </div>
-        </div>
+        </Panel>
 
         <div className="flex gap-3">
           <Button
@@ -291,9 +293,8 @@ export default function PrintTestPage() {
           )}
         </div>
 
-        <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-          <h3 className="font-medium text-gray-700 mb-2">{t('printTest.dataPreview')}</h3>
-          <pre className="text-xs text-gray-600 overflow-x-auto">
+        <Panel title={t('printTest.dataPreview')} className="mt-6">
+          <pre className="overflow-x-auto text-xs text-flo-text-secondary">
             {JSON.stringify({
               bill: testBill.bill_number,
               total: testBill.total,
@@ -301,7 +302,7 @@ export default function PrintTestPage() {
               customer: testCustomer.name,
             }, null, 2)}
           </pre>
-        </div>
+        </Panel>
       </div>
     </div>
   );

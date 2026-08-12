@@ -73,47 +73,47 @@ export default function ShiftReconciliationPreviewStrip({
 
   if (loading) {
     return (
-      <p className="text-sm text-gray-500">{t('shift.previewLoading')}</p>
+      <p className="text-sm text-flo-text-secondary">{t('shift.previewLoading')}</p>
     );
   }
 
   if (error) {
     return (
-      <p role="alert" className="text-sm text-red-600">{error}</p>
+      <p role="alert" className="text-sm text-flo-danger">{error}</p>
     );
   }
 
   if (!preview) return null;
 
   return (
-    <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm space-y-2">
+    <div className="space-y-2 rounded-flo-md border border-flo-border bg-flo-bg p-3 text-sm">
       <div className="flex justify-between gap-4">
-        <span className="text-gray-600">{t('shift.openingFloat')}</span>
-        <span className="font-medium text-gray-900">
+        <span className="text-flo-text-secondary">{t('shift.openingFloat')}</span>
+        <span className="font-medium text-flo-text">
           {formatCurrency(preview.opening_float_cents / 100)}
         </span>
       </div>
       <div className="flex justify-between gap-4">
-        <span className="text-gray-600">{t('shift.cashPayments')}</span>
-        <span className="font-medium text-gray-900">
+        <span className="text-flo-text-secondary">{t('shift.cashPayments')}</span>
+        <span className="font-medium text-flo-text">
           {formatCurrency(preview.summary.cash_payment_total_cents / 100)}
         </span>
       </div>
-      <div className="flex justify-between gap-4 border-t border-gray-200 pt-2">
-        <span className="text-gray-700 font-medium">{t('shift.expectedCash')}</span>
-        <span className="font-semibold text-gray-900">
+      <div className="flex justify-between gap-4 border-t border-flo-border pt-2">
+        <span className="font-medium text-flo-text">{t('shift.expectedCash')}</span>
+        <span className="font-semibold text-flo-text">
           {formatCurrency(preview.expected_cash_cents / 100)}
         </span>
       </div>
       {showLiveVariance && liveVarianceCents != null && varianceLabel && (
-        <div className="flex justify-between gap-4 border-t border-gray-200 pt-2">
-          <span className="text-gray-700 font-medium">{t('shift.variance')}</span>
+        <div className="flex justify-between gap-4 border-t border-flo-border pt-2">
+          <span className="font-medium text-flo-text">{t('shift.variance')}</span>
           <span className={
             varianceLabel === 'over'
-              ? 'font-semibold text-emerald-700'
+              ? 'font-semibold text-flo-success'
               : varianceLabel === 'short'
-                ? 'font-semibold text-red-700'
-                : 'font-semibold text-gray-700'
+                ? 'font-semibold text-flo-danger'
+                : 'font-semibold text-flo-text-secondary'
           }>
             {formatCurrency(Math.abs(liveVarianceCents) / 100)}
             {' '}
@@ -126,7 +126,7 @@ export default function ShiftReconciliationPreviewStrip({
         </div>
       )}
       {!showLiveVariance && (
-        <p className="text-xs text-gray-500 border-t border-gray-200 pt-2">
+        <p className="border-t border-flo-border pt-2 text-xs text-flo-text-secondary">
           {t('shift.varianceUnknown')}
         </p>
       )}

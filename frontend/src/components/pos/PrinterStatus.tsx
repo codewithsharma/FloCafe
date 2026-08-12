@@ -43,7 +43,7 @@ const STATUS_CONFIG: Record<
 > = {
   disconnected: {
     labelKey: 'pos.printerNoPrinter',
-    color: 'text-gray-400',
+    color: 'text-flo-text-muted',
     Icon: Printer,
   },
   connecting: {
@@ -110,7 +110,7 @@ export default function PrinterStatus() {
         <Button
           variant="outline"
           size="sm"
-          className={`h-10 flex items-center gap-1.5 ${cfg.color} border-current/30`}
+          className={`h-10 min-h-11 flex items-center gap-1.5 ${cfg.color} border-flo-border`}
         >
           <Icon
             size={16}
@@ -119,18 +119,18 @@ export default function PrinterStatus() {
           <span className="hidden sm:inline text-xs font-medium truncate max-w-[140px]">
             {hardwarePrinter ? hardwarePrinter.name : t(cfg.labelKey)}
           </span>
-          <ChevronDown size={12} className="text-gray-400" />
+          <ChevronDown size={12} className="text-flo-text-muted" />
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuLabel className="text-xs text-gray-500">
+      <DropdownMenuContent align="end" className="w-52 border-flo-border bg-flo-surface">
+        <DropdownMenuLabel className="text-xs text-flo-text-secondary">
           {t('pos.printerSectionLabel')}
         </DropdownMenuLabel>
 
         {hardwarePrinter && (
-          <div className="px-2 py-1.5 text-xs text-gray-500 border-b border-gray-100">
-            <p className="font-medium text-gray-700 truncate flex items-center gap-1.5">
+          <div className="px-2 py-1.5 text-xs text-flo-text-secondary border-b border-flo-border">
+            <p className="font-medium text-flo-text truncate flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
               {hardwarePrinter.name}
             </p>
@@ -145,8 +145,8 @@ export default function PrinterStatus() {
         )}
 
         {isConnected && deviceInfo && (
-          <div className="px-2 py-1.5 text-xs text-gray-500 border-b border-gray-100">
-            <p className="font-medium text-gray-700 truncate">
+          <div className="px-2 py-1.5 text-xs text-flo-text-secondary border-b border-flo-border">
+            <p className="font-medium text-flo-text truncate">
               {deviceInfo.productName ?? t('pos.printerUnknownDevice')}
             </p>
             <p>{deviceInfo.manufacturerName ?? `VID:${deviceInfo.vendorId.toString(16).toUpperCase()}`}</p>
@@ -187,7 +187,7 @@ export default function PrinterStatus() {
         )}
 
         {printMethod === 'browser' && (
-          <div className="px-2 py-1.5 text-xs text-gray-500">
+          <div className="px-2 py-1.5 text-xs text-flo-text-secondary">
             {t('pos.printerBrowserMode')}
           </div>
         )}

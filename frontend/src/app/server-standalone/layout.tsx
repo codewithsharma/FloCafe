@@ -6,8 +6,8 @@ import { Toaster } from 'react-hot-toast';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Nexora Server App',
-  description: 'Tableside ordering for Nexora',
+  title: 'Flo POS Server App',
+  description: 'Tableside ordering for Flo POS',
 };
 
 export default function ServerStandaloneLayout({
@@ -17,7 +17,7 @@ export default function ServerStandaloneLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
-      <body className={`${inter.className} h-full bg-slate-50`}>
+      <body className={`${inter.className} h-full bg-flo-bg text-flo-text`}>
         <Toaster position="top-right" />
         {children}
       </body>

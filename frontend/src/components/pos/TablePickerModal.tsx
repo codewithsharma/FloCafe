@@ -1,9 +1,16 @@
 'use client';
 
-import { X } from 'lucide-react';
 import type { Table } from '@/lib/types';
 import { useHeldOrdersStore } from '@/store/held-orders';
 import { useI18n } from '@/hooks/useI18n';
+import { StatusBadge } from '@/components/flo/StatusBadge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 interface Props {
   tables: Table[];
@@ -16,12 +23,12 @@ interface Props {
   onClose: () => void;
 }
 
-const statusStyles: Record<string, { border: string; badge: string; badgeKey: string | null }> = {
-  available: { border: 'border-gray-200 hover:border-brand/40', badge: '', badgeKey: null },
-  occupied: { border: 'border-orange-300 bg-orange-50', badge: 'bg-orange-500', badgeKey: 'pos.tableOccupied' },
-  reserved: { border: 'border-yellow-300 bg-yellow-50', badge: 'bg-yellow-500', badgeKey: 'pos.tableReserved' },
-  cleaning: { border: 'border-gray-300 bg-gray-100', badge: 'bg-gray-500', badgeKey: 'pos.tableCleaning' },
-  held: { border: 'border-blue-400 bg-blue-50', badge: 'bg-blue-500', badgeKey: 'pos.tableHeld' },
+const statusStyles: Record<string, { border: string; badgeVariant: 'warning' | 'info' | 'secondary' | 'default'; badgeKey: string | null }> = {
+  available: { border: 'border-flo-border hover:border-flo-brand-400', badgeVariant: 'default', badgeKey: null },
+  occupied: { border: 'border-orange-300 bg-orange-50', badgeVariant: 'warning', badgeKey: 'pos.tableOccupied' },
+  reserved: { border: 'border-flo-warning bg-flo-warning-subtle', badgeVariant: 'warning', badgeKey: 'pos.tableReserved' },
+  cleaning: { border: 'border-flo-border bg-flo-bg', badgeVariant: 'secondary', badgeKey: 'pos.tableCleaning' },
+  held: { border: 'border-flo-info bg-flo-info-subtle', badgeVariant: 'info', badgeKey: 'pos.tableHeld' },
 };
 
 export default function TablePickerModal({
@@ -49,14 +56,11 @@ export default function TablePickerModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold">{t('pos.selectTable')}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X size={20} />
-          </button>
-        </div>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="border-flo-border bg-flo-surface sm:max-w-lg max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-flo-text">{t('pos.selectTable')}</DialogTitle>
+        </DialogHeader>
 
         <div className="grid grid-cols-3 gap-3">
           {tables.map((table) => {
@@ -68,30 +72,31 @@ export default function TablePickerModal({
             return (
               <button
                 key={table.id}
+                type="button"
                 onClick={() => !isDisabled && handleClick(table)}
                 disabled={isDisabled}
-                className={`p-4 rounded-xl border-2 text-center transition-colors relative ${
+                className={`p-4 min-h-11 rounded-flo-lg border-2 text-center transition-colors relative ${
                   isSelected
-                    ? 'border-brand bg-brand-light'
+                    ? 'border-flo-brand-600 bg-flo-brand-50'
                     : isHeld
-                      ? 'border-blue-400 bg-blue-50'
+                      ? 'border-flo-info bg-flo-info-subtle'
                       : style.border
                 } ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 {isHeld && (
-                  <span className="absolute -top-2 -right-2 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                  <StatusBadge variant="info" className="absolute -top-2 -right-2 h-5 text-[10px]">
                     {t('pos.tableHeld')}
-                  </span>
+                  </StatusBadge>
                 )}
                 {!isHeld && style.badgeKey && (
-                  <span className={`absolute -top-2 -right-2 ${style.badge} text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold`}>
+                  <StatusBadge variant={style.badgeVariant} className="absolute -top-2 -right-2 h-5 text-[10px]">
                     {t(style.badgeKey)}
-                  </span>
+                  </StatusBadge>
                 )}
-                <p className="font-bold text-gray-900">{table.name}</p>
-                <p className="text-xs text-gray-500">{t('pos.tableSeats', { count: table.capacity })}</p>
+                <p className="font-bold text-flo-text">{table.name}</p>
+                <p className="text-xs text-flo-text-secondary">{t('pos.tableSeats', { count: table.capacity })}</p>
                 {table.status === 'occupied' && (table.current_order || table.activeOrder) && (
-                  <p className="text-xs text-orange-600 font-medium mt-1">
+                  <p className="text-xs text-flo-warning font-medium mt-1">
                     #{(table.current_order || table.activeOrder)?.order_number}
                   </p>
                 )}
@@ -101,29 +106,32 @@ export default function TablePickerModal({
         </div>
 
         {tables.length === 0 && (
-          <p className="text-center text-gray-500 py-8">{t('pos.noTablesFound')}</p>
+          <p className="text-center text-flo-text-secondary py-8">{t('pos.noTablesFound')}</p>
         )}
 
         {selectedTableId && (
-          <div className="flex gap-3 mt-4 pt-4 border-t border-gray-100">
-            <button
+          <div className="flex gap-3 mt-2 pt-4 border-t border-flo-border">
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => onHoldTable(selectedTableId)}
-              className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              className="flex-1 min-h-11"
             >
               {t('pos.holdTable')}
-            </button>
-            <button
+            </Button>
+            <Button
+              type="button"
               onClick={() => {
                 onPlaceOrder();
                 onClose();
               }}
-              className="flex-1 px-4 py-3 rounded-xl bg-brand text-white font-medium hover:bg-brand/90 transition-colors"
+              className="flex-1 min-h-11 bg-flo-brand-600 hover:bg-flo-brand-700 text-white"
             >
               {t('pos.placeOrderButton')}
-            </button>
+            </Button>
           </div>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -4,7 +4,9 @@ Electron desktop POS. `main/` is Express + SQLite (better-sqlite3, WAL, `PRAGMA 
 
 ## Active work
 
-**M5 Cash Reconciliation — GREEN through M5-H.** Schema v71. Preview API, close persistence, reconciliation UI, and day close are shipped and verified. **M6 not started.**
+**M5 Cash Reconciliation — GREEN through M5-H.** Schema v71.
+
+**UI/UX Redesign — complete app migration (Phases 1–12 + completion pass + dark mode + POS modals + KDS/shifts components).** All 23 page routes Flo-migrated; Settings visual complete; Phase 3 modals complete for workspaces; dark mode shipped (`flo_theme`); POS modals use shadcn Dialog + Flo tokens (`test:flo-pos-modals`); KDS/shifts/layout/ImageUploader Flo-migrated. Guards: `test:flo-routes-complete`, `test:flo-settings-complete`, `test:flo-theme`, `test:flo-pos-modals`, `test:flo-components-complete`. **M6 not started.** Settings nested-route split remains optional.
 
 ## Architecture
 
@@ -13,8 +15,10 @@ Electron desktop POS. `main/` is Express + SQLite (better-sqlite3, WAL, `PRAGMA 
 - Day close (M5-G): `main/services/day-close.ts`, routes on `main/routes/reports.ts`
 - Shift enforcement middleware: `main/middleware/shift-enforcement.ts`
 - Shift frontend client: `frontend/src/lib/shifts.ts`, `frontend/src/hooks/useShift.ts`
-- Day close client/UI: `frontend/src/lib/day-close.ts`, `frontend/src/components/dashboard/DayCloseCard.tsx`
-- Shift UI: `frontend/src/components/shifts/*`, integrated in `StatusBar.tsx` and Settings shift history
+- Day close client/UI: `frontend/src/lib/day-close.ts`, `frontend/src/components/dashboard/DayCloseCard.tsx` (surfaced on `/operations`)
+- Shift UI: `frontend/src/components/shifts/*`, history on `/operations` via `ShiftHistoryPanel`
+- Flo shell: `frontend/src/components/flo/*`, nav config `frontend/src/config/navigation.ts`
+- Reports hub: `frontend/src/app/(dashboard)/reports/page.tsx` (analytics APIs)
 - HTTP: `main/routes/shifts.ts`
 - Client terminal identity: `frontend/src/lib/terminal-id.ts` (`localStorage['flo_terminal_id']`)
 - Auth: JWT + `requireRole()` — terminal id is identification only
@@ -35,4 +39,4 @@ Electron desktop POS. `main/` is Express + SQLite (better-sqlite3, WAL, `PRAGMA 
 
 ## Next step
 
-M6 — Refund workflow (do not start until approved).
+Optional Settings nested-route / IA trim refactor, or M6 only if explicitly approved. Dark mode shipped.

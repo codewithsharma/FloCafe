@@ -7,7 +7,7 @@ import { KdsHtmlLang } from '@/components/kds/KdsHtmlLang';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Nexora KDS - Kitchen Display',
+  title: 'Flo POS KDS - Kitchen Display',
   description: 'Kitchen Display System',
 };
 
@@ -18,10 +18,10 @@ export default function KdsStandaloneLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
-      <body className={`${inter.className} h-full bg-gray-100`}>
+      <body className={`${inter.className} h-full bg-flo-bg text-flo-text`}>
         <KdsHtmlLang />
         <Toaster position="top-right" />
-        <div className="h-full flex flex-col p-4">
+        <div className="h-full flex flex-col border-flo-border p-4">
           {children}
         </div>
       </body>
