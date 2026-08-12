@@ -1423,9 +1423,9 @@ export default function SettingsPage() {
     });
 
     api.get('/settings/diagnostics_consent').then((res) => {
-      setDiagnosticsConsent(res.data.setting?.value !== 'false');
+      setDiagnosticsConsent(res.data.setting?.value === 'true');
     }).catch(() => {
-      setDiagnosticsConsent(true);
+      setDiagnosticsConsent(false);
     });
 
     fetchGoogleDriveStatus();

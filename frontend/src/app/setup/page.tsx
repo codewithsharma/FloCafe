@@ -55,6 +55,8 @@ export default function SetupPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [productUpdates, setProductUpdates] = useState(false);
   const [marketing, setMarketing] = useState(false);
+  const [telemetryOptIn, setTelemetryOptIn] = useState(false);
+  const [diagnosticsOptIn, setDiagnosticsOptIn] = useState(false);
   const passwordsEntered = form.password.length > 0 && form.confirmPassword.length > 0;
   const passwordsMatch = !passwordsEntered || form.password === form.confirmPassword;
 
@@ -202,6 +204,8 @@ export default function SetupPage() {
         cloud_server_url: cloudServerUrl.trim() || DEFAULT_CLOUD_SERVER_URL,
         email_product_updates: productUpdates,
         email_marketing: marketing,
+        telemetry_opt_in: telemetryOptIn,
+        diagnostics_opt_in: diagnosticsOptIn,
         ...countryPayload,
       });
       completeSetup();
@@ -537,13 +541,33 @@ export default function SetupPage() {
                     </span>
                   </label>
 
-                  <div className="rounded-lg border border-border bg-muted/30 px-3 py-3 text-sm text-muted-foreground">
-                    <p className="font-medium text-foreground">{t('setup.anonymousDataTitle')}</p>
-                    <p className="mt-1">{t('setup.anonymousDataDescription')}</p>
-                    <details className="mt-2">
-                      <summary className="cursor-pointer text-primary">{t('setup.anonymousDataDetails')}</summary>
-                      <p className="mt-1">{t('setup.anonymousDataFields')}</p>
-                    </details>
+                  <div className="space-y-3 rounded-lg border border-border px-3 py-3 text-sm">
+                    <p className="font-medium text-foreground">{t('setup.privacyDataTitle')}</p>
+                    <p className="text-muted-foreground">{t('setup.privacyDataIntro')}</p>
+                    <label className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        checked={telemetryOptIn}
+                        onChange={(e) => setTelemetryOptIn(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded border-gray-300"
+                      />
+                      <span>
+                        <span className="font-medium text-foreground">{t('setup.telemetryOptInLabel')}</span>
+                        <span className="block text-muted-foreground mt-0.5">{t('setup.telemetryOptInHint')}</span>
+                      </span>
+                    </label>
+                    <label className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        checked={diagnosticsOptIn}
+                        onChange={(e) => setDiagnosticsOptIn(e.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded border-gray-300"
+                      />
+                      <span>
+                        <span className="font-medium text-foreground">{t('setup.diagnosticsOptInLabel')}</span>
+                        <span className="block text-muted-foreground mt-0.5">{t('setup.diagnosticsOptInHint')}</span>
+                      </span>
+                    </label>
                   </div>
 
                   <div className="space-y-3 rounded-lg border border-border px-3 py-3 text-sm">

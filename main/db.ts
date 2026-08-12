@@ -505,22 +505,28 @@ export function ensureTelemetryAnonId(): string {
 }
 
 /**
- * Anonymous usage telemetry is on by default for new installs and is switched
- * off in Settings > Privacy. First-run setup discloses it rather than asking:
- * a pre-ticked consent box is not valid consent, so we do not present one.
- * Tier 2 store-attributed diagnostics is a separate, explicit opt-in and is
- * never bundled into this stream.
+ * Anonymous usage telemetry requires explicit opt-in (M2).
+ * Returns true only when telemetry_enabled === 'true'.
  */
 export function isTelemetryEnabled(): boolean {
-  return getSettingValue('telemetry_enabled') === 'true';
+  const value = getSettingValue('telemetry_enabled');
+  if (value !== 'true' && value !== 'false') {
+    return false;
+  }
+  return value === 'true';
 }
 
 /**
- * Tier 2 store-attributed diagnostics, kept separate from anonymous telemetry.
- * New installs default to enabled; an owner can switch it off in Settings.
+ * Store-attributed diagnostics requires explicit opt-in (M2).
+ * Returns true only when diagnostics_consent === 'true'.
+ * Missing, 'pending', or any other value → fail closed (no transmission).
  */
 export function isDiagnosticsConsentEnabled(): boolean {
-  return getSettingValue('diagnostics_consent') !== 'false';
+  const value = getSettingValue('diagnostics_consent');
+  if (value !== 'true' && value !== 'false') {
+    return false;
+  }
+  return value === 'true';
 }
 
 /**
@@ -3562,6 +3568,34 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       insert.run('bill_footer_message', '', now());
     },
   },
+  {
+    version: 67,
+    name: 'm2_explicit_privacy_consent_defaults',
+    up: () => {
+      // M2: New/pending installs must not transmit before explicit consent.
+      // Operational installs (owner exists + onboarding complete) keep all stored
+      // preferences — including legacy default-on 'true' (grandfathering).
+      const userCount = (db.prepare('SELECT COUNT(*) AS count FROM users').get() as { count: number }).count;
+      const onboardingCompleted = getSettingValue('onboarding_completed') === 'true';
+      if (userCount > 0 && onboardingCompleted) {
+        return;
+      }
+      const t = now();
+      const resetDefaultOn = (key: string) => {
+        const existing = getSettingValue(key);
+        if (existing === 'false') {
+          return;
+        }
+        db.prepare(`
+          INSERT INTO settings (key, value, updated_at) VALUES (?, 'pending', ?)
+          ON CONFLICT(key) DO UPDATE SET value = 'pending', updated_at = excluded.updated_at
+        `).run(key, t);
+      };
+      resetDefaultOn('telemetry_enabled');
+      resetDefaultOn('diagnostics_consent');
+      resetDefaultOn('anonymous_data_consent');
+    },
+  },
 ];
 
 function syncBackupBeforeMigration(fromVersion: number, toVersion: number): void {
@@ -4296,10 +4330,9 @@ function seedInstallDefaults(): void {
   insert('cloud_reports_enabled', '1');
   insert('cloud_command_polling_enabled', '1');
   insert('cloud_registration_status', 'unregistered');
-  insert('anonymous_data_consent', 'true');
-  insert('telemetry_enabled', 'true');
   insert('telemetry_scope', 'usage_stats,country,app_version,platform,session_duration,feature_usage,error_diagnostics');
-  insert('diagnostics_consent', 'true');
+  // M2: telemetry_enabled and diagnostics_consent are NOT seeded — NOT_DECIDED
+  // until the owner explicitly opts in during setup or Settings → Privacy.
   insert('kds_enabled', 'true');
   insert('server_app_enabled', 'true');
   insert('kot_printing_enabled', 'true');

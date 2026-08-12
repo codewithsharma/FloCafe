@@ -185,8 +185,10 @@ Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webus
 | Anonymous telemetry | [BUILT] | `main/services/telemetry.ts` | Medium |
 | Store diagnostics | [BUILT] | `store_diagnostics_outbox`, `diagnostics_consent` setting | Medium |
 
-### Privacy note (CURRENT STATE)
+### Privacy note (CURRENT STATE — post-M2)
 
-**VERIFIED:** `seedInstallDefaults()` sets `telemetry_enabled='true'` and `diagnostics_consent='true'` for new installs (`main/db.ts`). Owners can disable anonymous telemetry in Settings → Privacy. This is **default-on**, not opt-in.
+**VERIFIED:** New installs do **not** transmit telemetry or diagnostics until the owner explicitly opts in during setup or Settings → Privacy. Setting values `'pending'`, missing, or legacy `'false'` (migration v28) all fail closed. Explicit `'true'` required to send.
 
-**TARGET STATE (PROPOSED):** Explicit consent before first telemetry/diagnostics transmission; document jurisdiction-specific requirements in `07-security/security-requirements.md`.
+**Operational upgrades:** Installs with completed onboarding keep stored preferences (grandfathering); explicit opt-outs (`'false'`) are preserved through migration v67.
+
+**TARGET (future):** Jurisdiction-specific re-consent if required by legal review. See [`07-security/privacy-and-consent.md`](../07-security/privacy-and-consent.md).

@@ -5,7 +5,8 @@ import { googleDrive } from '../services/google-drive';
 import { requireRole } from '../middleware/security';
 import { requireMasterPin } from '../middleware/master-pin';
 import { validateTaxRegistrationNumber } from '../services/tax';
-import { sendEvent } from '../services/telemetry';
+import { sendEvent, telemetry } from '../services/telemetry';
+import { recordDiagnosticsConsent, recordTelemetryConsent } from '../services/privacy-consent';
 
 const router = Router();
 
@@ -751,27 +752,22 @@ router.put('/:key', requireRole('owner', 'manager'), (req: Request, res: Respons
       }
     }
 
-    db.prepare(`
-      INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
-      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-    `).run(req.params.key, value, now());
-
-    // Keep the legacy setting as a compatibility mirror. The canonical runtime
-    // switch is telemetry_enabled; this route is the only user-facing writer,
-    // so both stay aligned whenever the owner changes the toggle.
     if (req.params.key === 'telemetry_enabled') {
+      const enabled = boolFlag(value) === 'true';
+      recordTelemetryConsent(enabled);
+      if (enabled) telemetry.start();
+      else telemetry.stop();
+    } else if (req.params.key === 'diagnostics_consent') {
+      const enabled = boolFlag(value) === 'true';
+      recordDiagnosticsConsent(enabled);
+      void cloudSync.setDiagnosticsConsent(enabled);
+    } else {
       db.prepare(`
-        INSERT INTO settings (key, value, updated_at) VALUES ('anonymous_data_consent', ?, ?)
+        INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-      `).run(value, now());
+      `).run(req.params.key, value, now());
     }
 
-    // Tell FloAdmin the merchant's current choice so stores.diagnostics_consent
-    // matches in both directions, not just inferred from "an event arrived."
-    // Best-effort — never blocks the setting save on cloud reachability.
-    if (req.params.key === 'diagnostics_consent') {
-      void cloudSync.setDiagnosticsConsent(boolFlag(value) === 'true');
-    }
     if (req.params.key === 'split_checks_enabled' && boolFlag(value) === 'true') {
       void sendEvent('feature_used', { feature: 'split_checks', action: 'enabled' });
     }

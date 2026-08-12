@@ -25,9 +25,9 @@ Based on `docs/security-audit-2.7.0.md` and code review.
 | SEC-04 | LOW | Incomplete repo scanning (CodeQL) |
 | SEC-05 | LOW | WhatsApp credentials not OS-encrypted |
 
-### Privacy defaults (CURRENT STATE)
+### Privacy defaults (CURRENT STATE — post-M2)
 
-**VERIFIED:** New installs seed `telemetry_enabled='true'` and `diagnostics_consent='true'` (`main/db.ts` `seedInstallDefaults()`). Owners can disable in Settings → Privacy. This is **default-on**, not opt-in — a product/privacy concern for strict-consent jurisdictions.
+**VERIFIED:** Explicit opt-in required before telemetry/diagnostics send. See [`privacy-and-consent.md`](privacy-and-consent.md).
 
 ## TARGET STATE
 - TLS for LAN or documented VPN-only deployment

@@ -21,6 +21,12 @@
 **Target:** Explicit consent before telemetry/diagnostics transmission (TARGET behavior)  
 **Exit criteria:** Fresh-install consent test; opt-out persistence; legal sign-off
 
+## M2 — Privacy & consent ✅
+
+**Target:** Explicit consent before telemetry/diagnostics transmission  
+**Exit criteria:** Fail-closed; setup opt-in; tests pass; migration v67  
+**Report:** [`m2-privacy-consent.md`](m2-privacy-consent.md)
+
 ## M3 — Audit log foundation
 
 **Target:** Central immutable audit trail  

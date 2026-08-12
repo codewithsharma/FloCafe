@@ -23,7 +23,7 @@
 
 ## Phase 1 — P1 Product (M2–M8)
 
-- [ ] M2: Privacy consent UX (telemetry + diagnostics)
+- [x] M2: Privacy consent UX (telemetry + diagnostics)
 - [ ] M3: Design + implement `audit_logs` schema + API
 - [ ] M4: Shift open/close UI + API
 - [ ] M5: Cash reconciliation + day close

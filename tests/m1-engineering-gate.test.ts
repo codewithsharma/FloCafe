@@ -34,7 +34,7 @@ function run() {
   const maxVersion = Math.max(
     ...versionMatch.map((entry) => Number(entry.replace(/\D/g, ''))),
   );
-  assert.equal(maxVersion, 66, 'M1 baseline expects schema migration v66 (no v67 yet)');
+  assert.equal(maxVersion, 67, 'M2 adds migration v67 for explicit privacy consent defaults');
 
   console.log('✅ M1 engineering gate checks passed');
 }

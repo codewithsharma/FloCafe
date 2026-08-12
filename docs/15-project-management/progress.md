@@ -32,8 +32,20 @@
 
 No product behavior or schema changes (v66 unchanged).
 
+## M2 — Privacy & consent ✅
+
+| Task | Status |
+|------|--------|
+| Explicit telemetry opt-in | ✅ Complete |
+| Explicit diagnostics opt-in | ✅ Complete |
+| Migration v67 | ✅ Complete |
+| Fail-closed transmission | ✅ Complete |
+| Setup + Settings UI | ✅ Complete |
+
+**Report:** [`m2-privacy-consent.md`](m2-privacy-consent.md) — **GREEN**
+
 ## Next steps
 
-1. Team review of M1 report
-2. **M2:** Privacy & consent (requires product/legal sign-off)
-3. Do not start M2 until explicitly approved
+1. Legal/product review of grandfathering policy
+2. **M3:** Audit log foundation (when approved)
+3. Do not start M3 until explicitly approved

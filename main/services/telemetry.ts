@@ -1,29 +1,26 @@
 /**
- * Anonymous usage telemetry — independent of cloud sync (sends whether or
- * not this store has cloud sync configured, since it's a separate concern).
- * Enabled by default for new installs. The owner can switch it off at any
- * time in Settings > Privacy. Tier 2 store diagnostics is a separate,
- * explicit opt-in and is never bundled into this stream.
+ * Anonymous usage telemetry — independent of cloud sync.
+ * M2: Requires explicit opt-in (telemetry_enabled === 'true') before any send.
  *
  * anon_id is a random UUID persisted locally (see db.ensureTelemetryAnonId),
  * never a store id, device id, or anything else that ties back to a business.
- * See specs/floadmin.md § Anonymous telemetry for the endpoint contract.
  */
 
 import { app } from 'electron';
 import log from 'electron-log';
-import { ensureTelemetryAnonId, isTelemetryEnabled, getSettingValue, parseDbTimestamp, upsertTelemetryLastPing } from '../db';
+import { ensureTelemetryAnonId, getSettingValue, parseDbTimestamp, upsertTelemetryLastPing } from '../db';
+import { isTelemetryTransmissionAllowed } from './privacy-consent';
 
 export const TELEMETRY_URL = 'https://telemetry.flopos.com/collect';
 
 const REQUEST_TIMEOUT_MS = 8_000;
-const DAILY_PING_INTERVAL_MS = 60 * 60_000; // check hourly, send at most once/24h
+const DAILY_PING_INTERVAL_MS = 60 * 60_000;
 const DAILY_PING_MIN_GAP_MS = 24 * 60 * 60_000;
 
 let dailyPingTimer: ReturnType<typeof setInterval> | null = null;
 
 export async function sendEvent(eventType: string, payload?: Record<string, unknown>): Promise<boolean> {
-  if (!isTelemetryEnabled()) return false;
+  if (!isTelemetryTransmissionAllowed()) return false;
 
   try {
     const anonId = ensureTelemetryAnonId();
@@ -49,14 +46,13 @@ export async function sendEvent(eventType: string, payload?: Record<string, unkn
     }
     return true;
   } catch (e) {
-    // Telemetry must never disrupt the app or surface to the user.
     log.debug('[Flo] telemetry send failed (non-fatal):', e);
     return false;
   }
 }
 
 function maybeSendDailyPing(): void {
-  if (!isTelemetryEnabled()) return;
+  if (!isTelemetryTransmissionAllowed()) return;
 
   const lastPingAt = getSettingValue('telemetry_last_ping_at');
   const lastPingMs = lastPingAt ? parseDbTimestamp(lastPingAt).getTime() : NaN;
@@ -73,6 +69,9 @@ export const telemetry = {
     if (dailyPingTimer) {
       clearInterval(dailyPingTimer);
       dailyPingTimer = null;
+    }
+    if (!isTelemetryTransmissionAllowed()) {
+      return;
     }
     void sendEvent('app_launch');
     maybeSendDailyPing();

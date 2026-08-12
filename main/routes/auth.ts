@@ -9,6 +9,7 @@ import { authorizeMasterPin, isMasterPinAvailable, setMasterPin } from '../servi
 import { authRateLimit, validatePassword, revokeToken, isTokenRevoked, isTokenStale, invalidateUserAuthCache } from '../middleware/security';
 import { getCurrencySymbol, getCountryByCode } from '../countries';
 import { cloudSync, DEFAULT_CLOUD_SERVER_URL, normalizeCloudServerUrl } from '../services/cloud-sync';
+import { applySetupDiagnosticsOptIn, applySetupTelemetryOptIn } from '../services/privacy-consent';
 
 const router = Router();
 
@@ -746,6 +747,8 @@ router.post('/setup/initialize', (req: Request, res: Response) => {
       cloud_server_url,
       email_product_updates,
       email_marketing,
+      telemetry_opt_in,
+      diagnostics_opt_in,
     } = req.body;
     const email = normalizeEmail(req.body.email);
     const displayName = String(name || '').trim();
@@ -855,8 +858,6 @@ router.post('/setup/initialize', (req: Request, res: Response) => {
         service_model: normalizedServiceModel,
         setup_profile: normalizedSetupProfile,
         onboarding_completed: 'true',
-        anonymous_data_consent: 'true',
-        telemetry_enabled: 'true',
         telemetry_scope: 'usage_stats,country,app_version,platform,session_duration,feature_usage,error_diagnostics',
         split_checks_enabled: 'false',
         // '1'/'0', not 'true'/'false' — mirrors FloAdmin's own `stores` table and
@@ -870,6 +871,9 @@ router.post('/setup/initialize', (req: Request, res: Response) => {
 
       seedSetupProfile(db, normalizedSetupProfile, normalizedServiceModel, language, country);
     })();
+
+    applySetupTelemetryOptIn(telemetry_opt_in === true);
+    applySetupDiagnosticsOptIn(diagnostics_opt_in === true);
 
     // Pick up the cloud settings just written without requiring a restart —
     // mirrors PUT /api/settings/cloud's own reload() call. Cloud coordination
