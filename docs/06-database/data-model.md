@@ -56,6 +56,7 @@ Do **not** assume all 40 tables are defined in `createSchema()` alone.
 | HeldOrder | `held_orders` | TEXT | table_id, items (JSON blob) |
 | LoyaltyLedger | `loyalty_ledger` | INTEGER | customer_id, bill_id, type, **amount** |
 | PrintLog | `print_logs` | — | bill_id, user_id, action, timestamp |
+| AuditLog | `audit_logs` | INTEGER | actor_user_id, action, entity_type, entity_id, result, metadata_json, terminal_id, request_id, created_at |
 
 ### Tax engine
 
@@ -112,7 +113,7 @@ See `main/db.ts` `createSchema()` — key chains:
 | Supplier | Vendor master |
 | PurchaseOrder | Stock procurement |
 | StockMovement | Inventory ledger |
-| AuditLog | General action audit |
+| AuditLog | General action audit — **IMPLEMENTED** (M3, `audit_logs`) |
 | Refund | Payment reversal record |
 
 ## Identifiers
@@ -122,7 +123,7 @@ See `main/db.ts` `createSchema()` — key chains:
 | ID style | Tables |
 |----------|--------|
 | TEXT (short random or UUID-style via `uuid` / `generateShortId`) | categories, products, users, customers, tables, printers, most config entities |
-| **INTEGER AUTOINCREMENT** | **orders**, **order_items**, **bills**, loyalty_ledger, tax_config_audit |
+| **INTEGER AUTOINCREMENT** | **orders**, **order_items**, **bills**, loyalty_ledger, tax_config_audit, **audit_logs** |
 
 Human-readable sequences: `order_number`, `bill_number` via `sequences` table.
 

@@ -49,7 +49,7 @@
     "test:static-routes": "node tests/run-electron-node-test.cjs tests/static-route-resolution.test.ts",
     "test:notes-validation": "ts-node --transpile-only -P tests/tsconfig.json tests/order-notes-validation.test.ts",
     "test:first-run": "node tests/run-electron-node-test.cjs tests/first-run-setup.test.ts && node tests/run-electron-node-test.cjs tests/setup-failure-recovery.test.ts",
-    "test:security": "node tests/run-electron-node-test.cjs tests/security-hardening.test.ts",
+    "test:security": "node tests/run-electron-node-test.cjs tests/security-hardening.test.ts && node tests/run-electron-node-test.cjs tests/audit-log.test.ts",
     "test:staff-authz": "node tests/run-electron-node-test.cjs tests/staff-authz.test.ts",
     "test:orders-authz": "node tests/run-electron-node-test.cjs tests/orders-authz.test.ts",
     "test:authz-phase3": "node tests/run-electron-node-test.cjs tests/authz-matrix-phase3.test.ts",

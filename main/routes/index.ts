@@ -29,6 +29,9 @@ import { taxPackRoutes } from './tax-packs';
 import { heldOrderRoutes } from './held-orders';
 import { whatsappRoutes } from './whatsapp';
 import { supportTicketRoutes } from './support-ticket';
+import { auditLogRoutes } from './audit-logs';
+import { logAuditEvent } from '../services/audit-log';
+import { correlationId } from '../errors';
 import { getDatabase, now, parseItemJson, attachEffectiveAddons, withTxn, getSettingValue, getCachedPairingCode, setCachedPairingCode, verifyPin } from '../db';
 import { checkPinRateLimit } from './orders';
 import {
@@ -97,6 +100,7 @@ export function registerRoutes(app: Express): void {
   app.use('/api/held-orders', heldOrderRoutes);
   app.use('/api/whatsapp', whatsappRoutes);
   app.use('/api/support-ticket', supportTicketRoutes);
+  app.use('/api/audit-logs', auditLogRoutes);
 
   // Tax preview
   app.post('/api/tax/preview', async (req, res) => {
@@ -282,6 +286,7 @@ export function registerRoutes(app: Express): void {
       const isInProgressVoid = ['preparing', 'ready'].includes(item.status);
       const isPrivilegedRole = ['owner', 'manager'].includes(userRole);
       const canUseOverride = ['cashier', 'waiter'].includes(userRole) && isInProgressVoid;
+      let pinApproverId: string | null = null;
       if (!isPrivilegedRole && !canUseOverride) {
         return res.status(403).json({ error: 'Only owner or manager can cancel this item' });
       }
@@ -316,7 +321,14 @@ export function registerRoutes(app: Express): void {
         if (!pinUser) {
           return res.status(403).json({ error: 'Invalid manager PIN' });
         }
+        pinApproverId = pinUser.id;
       }
+
+      const auditContext = {
+        requestId: correlationId(),
+        clientIp: req.ip || req.socket.remoteAddress || null,
+      };
+      const actorUserId = (req as any).user?.userId ?? null;
 
       // BUG #17 FIX: Wrap cancel + total recalc in transaction
       const result = withTxn(() => {
@@ -466,6 +478,26 @@ export function registerRoutes(app: Express): void {
 
         const updatedOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any;
         const items = attachEffectiveAddons(db, db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(orderId).map(parseItemJson) as any[]);
+
+        logAuditEvent({
+          actorUserId,
+          action: orderCancelled
+            ? 'order.cancelled'
+            : (isInProgressVoid ? 'order.item_voided' : 'order.item_cancelled'),
+          entityType: 'order_item',
+          entityId: itemId,
+          result: 'success',
+          metadata: {
+            order_id: orderId,
+            product_id: item.product_id,
+            product_name: item.product_name,
+            previous_status: item.status,
+            order_cancelled: orderCancelled,
+            ...(pinApproverId ? { pin_approved_by: pinApproverId } : {}),
+          },
+          context: auditContext,
+        });
+
         return { updatedOrder, items, orderCancelled };
       });
 

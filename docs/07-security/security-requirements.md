@@ -12,6 +12,7 @@
 | SR-C-06 | Destructive ops require master PIN | master-pin tests |
 | SR-C-07 | Auth rate limited | security middleware |
 | SR-C-08 | Explicit consent before telemetry/diagnostics transmission | privacy-consent.test.ts |
+| SR-C-09 | Business audit log for auth/staff/void actions | audit-log.test.ts |
 
 ## TARGET STATE
 
@@ -21,4 +22,4 @@
 | SR-T-02 | Enable Electron renderer sandbox | P2 |
 | SR-T-03 | Encrypt WhatsApp credentials with safeStorage | P2 |
 | SR-T-04 | Enable GitHub CodeQL + secret scanning | P2 |
-| SR-T-05 | Audit log for payment/refund/void actions | P1 |
+| SR-T-05 | Audit log for payment/refund/void actions | P1 — **partial** (M3: auth/staff/void; M7: full void; M5: refunds) |

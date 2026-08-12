@@ -27,10 +27,11 @@
 **Exit criteria:** Fail-closed; setup opt-in; tests pass; migration v67  
 **Report:** [`m2-privacy-consent.md`](m2-privacy-consent.md)
 
-## M3 — Audit log foundation
+## M3 — Audit log foundation ✅
 
 **Target:** Central immutable audit trail  
-**Exit criteria:** `audit_logs` table; owner read API; integration test for action → audit row
+**Exit criteria:** `audit_logs` table; owner read API; integration test for action → audit row  
+**Report:** [`m3-audit-log.md`](m3-audit-log.md)
 
 ## M4 — Shift open/close
 

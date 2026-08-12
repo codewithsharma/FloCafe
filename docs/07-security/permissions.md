@@ -20,7 +20,11 @@ No separate permissions table — authorization is **role-based**, not attribute
 ### IPC allowlist
 `ALLOWED_IPC_KEYS` in preload/ipc restricts renderer settings writes.
 
-See `05-api/authorization.md` for route-level matrix.
+### Audit log access (M3)
+- **Read:** `owner`, `manager` — `GET /api/audit-logs`
+- **Write:** internal service only (`logAuditEvent`) — no user-facing create/update/delete
+
+See `05-api/authorization.md` for route-level matrix and [`audit-logging.md`](audit-logging.md).
 
 ## TARGET STATE (PROPOSED)
 - Optional fine-grained permissions table if enterprise customers require it

@@ -9,6 +9,8 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase, now } from '../db';
 import { requireRole, validatePassword, authRateLimit, invalidateUserAuthCache } from '../middleware/security';
+import { logAuditEvent } from '../services/audit-log';
+import { correlationId } from '../errors';
 
 const router = Router();
 
@@ -28,6 +30,13 @@ function isOperationalRole(role: string): boolean {
 
 function hasNonEmptyPin(pin: unknown): boolean {
   return pin !== undefined && pin !== null && String(pin).length > 0;
+}
+
+function auditStaffContext(req: Request) {
+  return {
+    requestId: correlationId(),
+    clientIp: req.ip || req.socket.remoteAddress || null,
+  };
 }
 
 function isValidPin(pin: unknown): boolean {
@@ -144,6 +153,16 @@ router.post('/', requireRole('owner', 'manager'), authRateLimit(), (req: Request
       `SELECT ${STAFF_SELECT_FIELDS} FROM users WHERE id = ?`
     ).get(id);
 
+    logAuditEvent({
+      actorUserId: (req as any).user?.userId ?? null,
+      action: 'staff.created',
+      entityType: 'user',
+      entityId: id,
+      result: 'success',
+      metadata: { role, name },
+      context: auditStaffContext(req),
+    });
+
     res.status(201).json({ staff: member });
   } catch (error: any) {
     console.error("[API] Internal error:", error);
@@ -242,6 +261,26 @@ router.put('/:id', requireRole('owner', 'manager'), authRateLimit(), (req: Reque
       `SELECT ${STAFF_SELECT_FIELDS} FROM users WHERE id = ?`
     ).get(req.params.id);
 
+    logAuditEvent({
+      actorUserId: (req as any).user?.userId ?? null,
+      action: 'staff.updated',
+      entityType: 'user',
+      entityId: String(req.params.id),
+      result: 'success',
+      metadata: {
+        role: targetRole,
+        fields_changed: [
+          name !== undefined ? 'name' : null,
+          email !== undefined ? 'email' : null,
+          role !== undefined ? 'role' : null,
+          password ? 'password' : null,
+          pin !== undefined ? 'pin' : null,
+        ].filter(Boolean),
+        credentials_changed: credentialsChanged,
+      },
+      context: auditStaffContext(req),
+    });
+
     res.json({ staff: updated });
   } catch (error: any) {
     console.error("[API] Internal error:", error);
@@ -278,6 +317,15 @@ router.post('/:id/deactivate', requireRole('owner', 'manager'), (req: Request, r
     const updated = db.prepare(
       `SELECT ${STAFF_SELECT_FIELDS} FROM users WHERE id = ?`
     ).get(req.params.id);
+    logAuditEvent({
+      actorUserId: (req as any).user?.userId ?? null,
+      action: 'staff.deactivated',
+      entityType: 'user',
+      entityId: String(req.params.id),
+      result: 'success',
+      metadata: { role: member.role },
+      context: auditStaffContext(req),
+    });
     res.json({ staff: updated });
   } catch (error: any) {
     console.error("[API] Internal error:", error);
@@ -301,6 +349,15 @@ router.post('/:id/reactivate', requireRole('owner', 'manager'), (req: Request, r
     const updated = db.prepare(
       `SELECT ${STAFF_SELECT_FIELDS} FROM users WHERE id = ?`
     ).get(req.params.id);
+    logAuditEvent({
+      actorUserId: (req as any).user?.userId ?? null,
+      action: 'staff.reactivated',
+      entityType: 'user',
+      entityId: String(req.params.id),
+      result: 'success',
+      metadata: { role: member.role },
+      context: auditStaffContext(req),
+    });
     res.json({ staff: updated });
   } catch (error: any) {
     console.error("[API] Internal error:", error);

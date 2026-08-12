@@ -44,8 +44,21 @@ No product behavior or schema changes (v66 unchanged).
 
 **Report:** [`m2-privacy-consent.md`](m2-privacy-consent.md) — **GREEN**
 
+## M3 — Audit log foundation ✅
+
+| Task | Status |
+|------|--------|
+| `audit_logs` schema (migration v68) | ✅ Complete |
+| Central audit service | ✅ Complete |
+| Sensitive metadata sanitization | ✅ Complete |
+| Owner/manager read API | ✅ Complete |
+| Auth + staff + void integrations | ✅ Complete |
+| Tests + upgrade path | ✅ Complete |
+
+**Report:** [`m3-audit-log.md`](m3-audit-log.md) — **GREEN**
+
 ## Next steps
 
-1. Legal/product review of grandfathering policy
-2. **M3:** Audit log foundation (when approved)
-3. Do not start M3 until explicitly approved
+1. Legal/product review of grandfathering policy (M2)
+2. **M4:** Shift management (when approved)
+3. Do not start M4 until explicitly approved

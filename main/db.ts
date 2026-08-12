@@ -3596,6 +3596,33 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       resetDefaultOn('anonymous_data_consent');
     },
   },
+  {
+    version: 68,
+    name: 'm3_audit_logs_table',
+    up: () => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS audit_logs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          actor_user_id TEXT,
+          action TEXT NOT NULL,
+          entity_type TEXT,
+          entity_id TEXT,
+          result TEXT NOT NULL DEFAULT 'success',
+          reason TEXT,
+          metadata_json TEXT,
+          terminal_id TEXT,
+          request_id TEXT,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (actor_user_id) REFERENCES users(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
+        CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
+        CREATE INDEX IF NOT EXISTS idx_audit_logs_actor ON audit_logs(actor_user_id);
+        CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+      `);
+    },
+  },
 ];
 
 function syncBackupBeforeMigration(fromVersion: number, toVersion: number): void {

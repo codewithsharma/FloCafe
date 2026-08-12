@@ -29,8 +29,12 @@ Based on `docs/security-audit-2.7.0.md` and code review.
 
 **VERIFIED:** Explicit opt-in required before telemetry/diagnostics send. See [`privacy-and-consent.md`](privacy-and-consent.md).
 
+### Business audit log (CURRENT STATE — post-M3)
+
+**VERIFIED:** Central append-only `audit_logs` table (schema v68). Auth, staff, and order void/cancel events recorded. Owner/manager read API. See [`audit-logging.md`](audit-logging.md).
+
 ## TARGET STATE
 - TLS for LAN or documented VPN-only deployment
 - Renderer sandbox enabled
 - Code signing mandatory for Windows releases
-- General audit log for financial operations
+- Full audit coverage for all financial operations (partial in M3)

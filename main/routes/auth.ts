@@ -10,6 +10,8 @@ import { authRateLimit, validatePassword, revokeToken, isTokenRevoked, isTokenSt
 import { getCurrencySymbol, getCountryByCode } from '../countries';
 import { cloudSync, DEFAULT_CLOUD_SERVER_URL, normalizeCloudServerUrl } from '../services/cloud-sync';
 import { applySetupDiagnosticsOptIn, applySetupTelemetryOptIn } from '../services/privacy-consent';
+import { logAuditEvent } from '../services/audit-log';
+import { correlationId } from '../errors';
 
 const router = Router();
 
@@ -369,6 +371,14 @@ router.post('/login', authRateLimit(), async (req: Request, res: Response) => {
 
     if (!user || !passwordMatches) {
       const attemptsRemaining = incrementFailedLogin(ip);
+      logAuditEvent({
+        action: 'auth.login.failure',
+        entityType: 'auth',
+        result: 'failure',
+        reason: 'invalid_credentials',
+        metadata: { attempts_remaining: attemptsRemaining },
+        context: { requestId: correlationId(), clientIp: ip },
+      });
       return res.status(401).json({
         error: 'Invalid credentials',
         attempts_remaining: attemptsRemaining,
@@ -384,6 +394,16 @@ router.post('/login', authRateLimit(), async (req: Request, res: Response) => {
       getJWTSecret(),
       { expiresIn: expiresInFor(remember) }
     );
+
+    logAuditEvent({
+      actorUserId: user.id,
+      action: 'auth.login.success',
+      entityType: 'user',
+      entityId: user.id,
+      result: 'success',
+      metadata: { role: user.role, remember },
+      context: { requestId: correlationId(), clientIp: ip },
+    });
 
     const tenant = buildLocalTenant(db, user.role);
 

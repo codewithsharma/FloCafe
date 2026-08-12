@@ -41,6 +41,15 @@ Staff creation: **`POST /api/staff`** or **`POST /api/users`** (same router). Th
 | /api/db, /api/db-tools | Database management |
 | /api/held-orders | Held carts |
 | /api/whatsapp | WhatsApp integration |
+| /api/audit-logs | Business audit trail (owner/manager read) |
+
+### GET /api/audit-logs
+
+**Auth:** Bearer, `owner` or `manager`
+
+**Query:** `limit` (1–500, default 100), `offset`, `action`, `entity_type`, `entity_id`, `actor_user_id`, `since`
+
+**Response:** `{ audit: AuditLogEntry[] }` — newest first
 
 Full endpoint list: see `03-architecture/backend-architecture.md` and source files in `main/routes/`.
 

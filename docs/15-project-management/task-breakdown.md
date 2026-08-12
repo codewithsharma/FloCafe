@@ -24,11 +24,11 @@
 ## Phase 1 — P1 Product (M2–M8)
 
 - [x] M2: Privacy consent UX (telemetry + diagnostics)
-- [ ] M3: Design + implement `audit_logs` schema + API
+- [x] M3: Design + implement `audit_logs` schema + API
 - [ ] M4: Shift open/close UI + API
 - [ ] M5: Cash reconciliation + day close
 - [ ] M6: Refund workflow
-- [ ] M7: Wire audit into void/cancel paths
+- [ ] M7: Wire audit into remaining void/cancel paths (partial: item cancel in M3)
 - [ ] M8: Cash drawer kick
 
 ## Eng P1 — Maintainability (parallel, not blocking Phase 1)
