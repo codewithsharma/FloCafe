@@ -387,9 +387,20 @@ async function api(
     headers?: Record<string, string>;
   } = {}
 ): Promise<{ status: number; data: any }> {
-  const fetchOptions: any = {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-  };
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  const method = String(options.method || 'GET').toUpperCase();
+  // Production payment UI always sends Idempotency-Key. Integration tests that
+  // omit it get a unique key so mandatory-key enforcement does not break fixtures.
+  // Pass Idempotency-Key: '' to assert the missing-key rejection path.
+  const isPaymentMutation = method === 'POST' && /\/api\/bills\/[^/]+\/payments?(?:\?|$)/.test(urlPath);
+  if (
+    isPaymentMutation
+    && headers['Idempotency-Key'] === undefined
+    && headers['idempotency-key'] === undefined
+  ) {
+    headers['Idempotency-Key'] = `test-pay-${crypto.randomUUID()}`;
+  }
+  const fetchOptions: any = { headers };
   if (options.method) fetchOptions.method = options.method;
   if (options.body !== undefined) fetchOptions.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
 

@@ -29,14 +29,21 @@ import {
   PrintConfirmDialog,
   CancelOrderDialog,
   VoidItemDialog,
+  RefundDialog,
   DiscountDialog,
   AddItemsDialog,
   type OrdersFilters,
   type CancelOrderState,
   type VoidItemState,
+  type RefundDialogState,
   type DiscountState,
   type SelectedAddItem,
 } from '@/components/orders';
+import {
+  createRefundIdempotencyKey,
+  extractRefundErrorMessage,
+  postBillRefund,
+} from '@/lib/refunds';
 
 type FilterType = 'all' | 'active' | 'unpaid' | 'held';
 
@@ -80,6 +87,10 @@ export default function OrdersPage() {
   // Void (in-progress item) modal state
   const [voidItemModal, setVoidItemModal] = useState<VoidItemState | null>(null);
   const [voidingItem, setVoidingItem] = useState(false);
+
+  // Refund modal state (M6.1)
+  const [refundModal, setRefundModal] = useState<RefundDialogState | null>(null);
+  const [refunding, setRefunding] = useState(false);
 
   // Consolidated discount modal state
   const [discountModal, setDiscountModal] = useState<DiscountState | null>(null);
@@ -240,13 +251,33 @@ export default function OrdersPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setTablesRequired]);
 
-  const isOrderPaid = (order: Order) => order.bill?.payment_status === 'paid';
+  const isOrderPaid = (order: Order) => {
+    const status = order.bill?.payment_status;
+    return status === 'paid' || status === 'partially_refunded' || status === 'refunded';
+  };
 
-  const paymentStatusOf = (order: Order): 'paid' | 'partial' | 'unpaid' | null => {
+  const paymentStatusOf = (
+    order: Order,
+  ): 'paid' | 'partial' | 'unpaid' | 'partially_refunded' | 'refunded' | null => {
     if (order.status === 'cancelled') return null;
-    if (order.bill?.payment_status === 'paid') return 'paid';
-    if (order.bill?.payment_status === 'partial') return 'partial';
+    const status = order.bill?.payment_status;
+    if (
+      status === 'paid' ||
+      status === 'partial' ||
+      status === 'partially_refunded' ||
+      status === 'refunded'
+    ) {
+      return status;
+    }
     return 'unpaid';
+  };
+
+  const canRefundOrder = (order: Order): boolean => {
+    const status = order.bill?.payment_status;
+    return (
+      (status === 'paid' || status === 'partially_refunded') &&
+      Number(order.bill?.paid_amount) > 0
+    );
   };
 
   const getTimeSince = (dateStr: string) => {
@@ -503,6 +534,30 @@ export default function OrdersPage() {
       toast.error(axiosErr.response?.data?.error || t('orders.voidItemFailed'));
     } finally {
       setVoidingItem(false);
+    }
+  };
+
+  const handleRefund = async () => {
+    if (!refundModal) return;
+    setRefunding(true);
+    try {
+      const amountTrim = refundModal.amount.trim();
+      await postBillRefund(
+        refundModal.billId,
+        {
+          ...(amountTrim ? { amount: amountTrim } : {}),
+          reason: refundModal.reason.trim(),
+          override_pin: refundModal.overridePin,
+        },
+        { idempotencyKey: createRefundIdempotencyKey() },
+      );
+      toast.success(t('orders.refundSuccess'));
+      setRefundModal(null);
+      fetchOrders();
+    } catch (err: unknown) {
+      toast.error(extractRefundErrorMessage(err) || t('orders.refundFailed'));
+    } finally {
+      setRefunding(false);
     }
   };
 
@@ -869,6 +924,19 @@ export default function OrdersPage() {
                   [order.bill!.id]: !prev[order.bill!.id],
                 }));
               }}
+              canRefund={canRefundOrder(order)}
+              refunding={refunding && refundModal?.billId === order.bill?.id}
+              onRefund={() => {
+                if (!order.bill) return;
+                setRefundModal({
+                  billId: order.bill.id,
+                  orderNumber: order.order_number,
+                  paidAmount: Number(order.bill.paid_amount),
+                  overridePin: '',
+                  reason: '',
+                  amount: '',
+                });
+              }}
             />
           ))}
         </div>
@@ -911,6 +979,15 @@ export default function OrdersPage() {
         onChange={setVoidItemModal}
         onConfirm={handleVoidItem}
         voiding={voidingItem}
+      />
+
+      <RefundDialog
+        open={refundModal !== null}
+        onOpenChange={(open) => !open && setRefundModal(null)}
+        state={refundModal}
+        onChange={setRefundModal}
+        onConfirm={handleRefund}
+        refunding={refunding}
       />
 
       <DiscountDialog

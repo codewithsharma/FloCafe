@@ -29,9 +29,31 @@ import {
   resolveActiveShiftForTerminal,
 } from '../services/shift';
 import { isQualifyingCashPaymentLineCents } from '../services/payment-cash';
+import { logAuditEvent } from '../services/audit-log';
 
 
 const router = Router();
+
+function paymentDetailsGrossCents(details: unknown): number {
+  let lines: unknown[] = [];
+  if (Array.isArray(details)) {
+    lines = details;
+  } else if (typeof details === 'string' && details.trim()) {
+    try {
+      const parsed = JSON.parse(details);
+      lines = Array.isArray(parsed) ? parsed : parsed && typeof parsed === 'object' ? [parsed] : [];
+    } catch {
+      lines = [];
+    }
+  } else if (details && typeof details === 'object') {
+    lines = [details];
+  }
+  return lines.reduce((sum: number, line: any) => {
+    const amount = Number(line?.amount);
+    if (!Number.isFinite(amount)) return sum;
+    return sum + Math.round(amount * 100);
+  }, 0);
+}
 
 function getOrderWithItems(db: ReturnType<typeof getDatabase>, orderId: number, billId?: number): any {
   const order = parseRowJson(db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId));
@@ -191,7 +213,7 @@ router.post('/generate', requireRole('owner', 'manager', 'cashier'), (req: Reque
         const { total: roundedOrderTotal, adjustment: orderRoundOff } = applyPayableRounding(orderTotal, pack);
 
         const totalsChanged =
-          existingBill.payment_status !== 'paid' && (
+          (existingBill.payment_status === 'unpaid' || existingBill.payment_status === 'partial') && (
             existingBill.discount_amount !== orderDiscountAmt ||
             existingBill.subtotal        !== orderSubtotal    ||
             existingBill.total           !== roundedOrderTotal
@@ -382,11 +404,19 @@ function paymentRequestHash(billId: string, payments: unknown, customerId: unkno
     .digest('hex');
 }
 
-function paymentIdempotencyKey(req: Request): string | null {
+function paymentIdempotencyKey(req: Request): string {
   const supplied = req.get('Idempotency-Key')?.trim();
-  if (!supplied) return null;
+  if (!supplied) {
+    throw Object.assign(new Error('Idempotency-Key is required'), {
+      statusCode: 400,
+      code: 'PAYMENT_IDEMPOTENCY_REQUIRED',
+    });
+  }
   if (supplied.length > MAX_IDEMPOTENCY_KEY_LENGTH || !/^[\x21-\x7e]+$/.test(supplied)) {
-    throw Object.assign(new Error('Idempotency-Key is invalid or too long'), { statusCode: 400 });
+    throw Object.assign(new Error('Idempotency-Key is invalid or too long'), {
+      statusCode: 400,
+      code: 'PAYMENT_IDEMPOTENCY_INVALID',
+    });
   }
   return supplied;
 }
@@ -548,8 +578,28 @@ function preparePaymentBatch(
     }
     if (key) seenTransactionKeys.add(key);
   }
+  if (bill.payment_status === 'refunded') {
+    throw Object.assign(
+      new Error('Bill is already refunded; create a new bill to collect payment'),
+      { statusCode: 400, code: 'BILL_ALREADY_REFUNDED' },
+    );
+  }
   if (bill.payment_status === 'paid') throw Object.assign(new Error('Bill is already paid'), { statusCode: 400 });
+  const totalCents = Math.round(Number(bill.total || 0) * 100);
   const remainingCents = Math.max(0, Math.round((Number(bill.total) - Number(bill.paid_amount || 0)) * 100));
+  // Gross tender (payment_details) is never reduced by refunds. If the bill was
+  // already fully tendered, any remaining net gap is refund outflow — not unpaid
+  // balance — so re-collection on this bill is forbidden.
+  const grossCents = Math.max(
+    paymentDetailsGrossCents(bill.payment_details),
+    paymentDetailsGrossCents(existingPayments),
+  );
+  if (grossCents >= totalCents) {
+    throw Object.assign(
+      new Error('Bill has no outstanding balance; create a new bill to collect payment'),
+      { statusCode: 400, code: 'BILL_NO_OUTSTANDING_BALANCE' },
+    );
+  }
   if (remainingCents <= 0) throw Object.assign(new Error('Bill is already fully paid'), { statusCode: 400 });
   const raw = resolvedPayments.map((payment) => {
     // Preserve omitted/null compatibility for the legacy single-line contracts.
@@ -701,10 +751,33 @@ function applyPaymentBatch(
   }
 
   if (!bill.customer_id && effectiveCustomerId) db.prepare('UPDATE bills SET customer_id = ?, updated_at = ? WHERE id = ?').run(effectiveCustomerId, changedAt, billId);
+  const previousPaymentStatus = String(bill.payment_status || 'unpaid');
+  const previousPaidAmount = Number(bill.paid_amount || 0);
   db.prepare(`UPDATE bills SET paid_amount = ?, balance = ?, payment_status = ?, payment_details = ?, paid_at = CASE WHEN ? = 'paid' THEN ? ELSE paid_at END, updated_at = ? WHERE id = ?`).run(newPaidCents / 100, newBalanceCents / 100, paymentStatus, JSON.stringify(allPayments), paymentStatus, paymentStatus === 'paid' ? changedAt : null, changedAt, billId);
+  const updatedBillRow = parseRowJson(db.prepare('SELECT * FROM bills WHERE id = ?').get(billId)) as any;
+  logAuditEvent({
+    actorUserId: idempotencyUserId || null,
+    action: 'payment.received',
+    entityType: 'bill',
+    entityId: billId,
+    result: 'success',
+    metadata: {
+      bill_id: billId,
+      order_id: bill.order_id,
+      amount_cents: totalAppliedCents,
+      payment_methods: prepared.map((line) => line.payment.method),
+      shift_id: updatedBillRow?.shift_id ?? bill.shift_id ?? null,
+      previous_paid_amount: previousPaidAmount,
+      new_paid_amount: newPaidCents / 100,
+      previous_payment_status: previousPaymentStatus,
+      new_payment_status: paymentStatus,
+      timestamp: changedAt,
+    },
+    context: { terminalId: terminalIdHeader || null },
+  });
   let loyaltyPointsEarned = 0;
   if (paymentStatus === 'paid') {
-    const unpaidSibling = db.prepare(`SELECT 1 FROM bills WHERE order_id = ? AND id != ? AND payment_status != 'paid' LIMIT 1`).get(bill.order_id, bill.id);
+    const unpaidSibling = db.prepare(`SELECT 1 FROM bills WHERE order_id = ? AND id != ? AND payment_status IN ('unpaid', 'partial') LIMIT 1`).get(bill.order_id, bill.id);
     const orderFullyPaid = !unpaidSibling;
     if (orderFullyPaid) {
       db.prepare("UPDATE orders SET status = 'completed', completed_at = ?, updated_at = ? WHERE id = ?").run(changedAt, changedAt, bill.order_id);
@@ -722,7 +795,7 @@ function applyPaymentBatch(
       }
     }
   }
-  const result = { bill: parseRowJson(db.prepare('SELECT * FROM bills WHERE id = ?').get(billId)), walletDebited, loyaltyPointsEarned };
+  const result = { bill: updatedBillRow, walletDebited, loyaltyPointsEarned };
   if (idempotencyKey && requestHash && idempotencyUserId) {
     db.prepare('INSERT INTO payment_idempotency (user_id, idempotency_key, bill_id, request_hash, response_json, created_at) VALUES (?, ?, ?, ?, ?, ?)')
       .run(idempotencyUserId, idempotencyKey, billId, requestHash, JSON.stringify(result), changedAt);
@@ -752,7 +825,11 @@ router.post('/:id/payment', requireRole('owner', 'manager', 'cashier'), (req: Re
   } catch (error: any) {
     const statusCode = error.statusCode || 500;
     console.error('[API] Bill payment failed:', error);
-    res.status(statusCode).json({ error: statusCode >= 500 ? 'Bill payment failed' : error.message });
+    const payload: { error: string; code?: string } = {
+      error: statusCode >= 500 ? 'Bill payment failed' : error.message,
+    };
+    if (error.code) payload.code = error.code;
+    res.status(statusCode).json(payload);
   }
 });
 
@@ -788,7 +865,11 @@ router.post('/:id/payments', requireRole('owner', 'manager', 'cashier'), (req: R
 
     const statusCode = error.statusCode || 500;
     console.error('[API] Batch bill payment failed:', error);
-    res.status(statusCode).json({ error: statusCode >= 500 ? 'Bill payment failed' : error.message });
+    const payload: { error: string; code?: string } = {
+      error: statusCode >= 500 ? 'Bill payment failed' : error.message,
+    };
+    if (error.code) payload.code = error.code;
+    res.status(statusCode).json(payload);
   }
 });
 

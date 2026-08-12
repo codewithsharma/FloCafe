@@ -1,47 +1,51 @@
 # Tasks
 
-- [x] M4-A Shift design
-- [x] M4-B Shift schema v69
-- [x] M4-C Shift service + API
-- [x] M4-D1 Terminal identity & client attribution
-- [x] M4-D2 Order `shift_id`
-- [x] M4-D3 Bill/payment `shift_id`
-- [x] M4-D4 Cash payment gate
-- [x] M4-E Shift UI (E1–E3)
-- [x] M5-A Cash reconciliation design
-- [x] M5-B Reconciliation schema v70
-- [x] M5-C Expected cash computation (read-only service)
-- [x] M5-D Close integration (persist expected + variance on close/force-close)
-- [x] M5-E Reconciliation API (preview + extended responses)
-- [x] M5-F Reconciliation UI
-- [x] M5-G Day close
-- [x] M5-H Documentation sync + production verification gate
-- [ ] M6 Refund workflow
+## Mandate
 
-## UI Redesign (post-M5)
+Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical failures**.
 
-- [x] Phase 1 — Frontend audit (`docs/15-project-management/ui-redesign-audit.md`)
-- [x] Phase 1 — Design system spec (`docs/15-project-management/flo-ui-design-system.md`)
-- [x] Phase 2 — Application shell (AppShell, Sidebar, ContextHeader)
-- [x] Phase 3 — Shared Flo primitives (Panel, StatusBadge, MoneyDisplay, Modal migration)
-- [x] Phase 4 — HOME command center
-- [x] Phase 5 — POS layout redesign
-- [x] Phase 6 — Tables workspace
-- [x] Phase 7 — Orders/Bills workspace
-- [x] Phase 8 — Menu/Inventory
-- [x] Phase 9 — Customers/Team
-- [x] Phase 10 — Reports + Operations hubs
-- [x] Phase 11 — Settings visual complete (nested routes / IA trim optional)
-- [x] Phase 12 — Responsive/a11y/performance pass
-- [x] Dark mode — `.dark` tokens + ThemeToggle + `flo_theme` persistence (`test:flo-theme`)
-- [x] Final report (`docs/15-project-management/ui-redesign-final-report.md`)
-- [x] Complete app pass — Settings bodies, modals, WhatsApp/Auth/Support, KDS/standalone, `test:flo-routes-complete`
-- [x] Complete component pass — POS modals, Settings tokens, KDS/shifts, `test:flo-components-complete` / `test:flo-pos-modals`
-- [x] Dark mode — `.dark` tokens + Sidebar theme toggle + `test:flo-theme`
-- [x] POS modals Flo migration — Payment/Prepaid/Addon/Table/Split/Customer/Printer + pos page overlays (`test:flo-pos-modals`)
-- [x] KDS/shifts/layout/ImageUploader Flo component pass (`test:flo-components-complete`)
-- [x] Phase 2 report (`docs/15-project-management/ui-redesign-phase2-report.md`)
-- [x] Phase 7 report (`docs/15-project-management/ui-redesign-phase7-report.md`)
-- [x] Phase 10 report (`docs/15-project-management/ui-redesign-phase10-report.md`)
-- [x] Phase 11 report (`docs/15-project-management/ui-redesign-phase11-report.md`)
-- [x] Phase 12 report (`docs/15-project-management/ui-redesign-phase12-report.md`)
+## Completed (M4–M5 + UI)
+
+- [x] M4 Shift management (A–E)
+- [x] M5 Cash reconciliation + day close (A–H)
+- [x] Flo UI redesign Phases 1–12 + dark mode + component/route guards
+
+## P0 — Production blockers (Nexora POS v1.0)
+
+- [x] P0.1 M6 Refund workflow (API + UI green; print deferred)
+- [x] P0.2 Financial-ops audit — YELLOW (`docs/15-project-management/p0.2-financial-ops-audit.md`)
+- [x] P0.2 follow-up hardening (approved): block re-pay on refunded; reporting Gross/Refunds/Net; `payment.received` audit; mandatory payment Idempotency-Key
+- [x] P0.2 day-close cash − cash refunds (reuse `getShiftPaymentSummary`; Cash In / Cash Refunds / Net Cash)
+- [ ] P0.3 Money representation migration design + implementation (plan in P0.2 §F; documentation only until approved)
+- [ ] Optional refund receipt print
+- [ ] P0.4 LAN security — practical deployment model (TLS / trusted LAN / guest Wi‑Fi guidance)
+- [ ] P0.5 JWT secret design (safeStorage/keychain, rotation, backup/restore/migration)
+- [ ] P0.6 Electron security — sandbox:false justify or migrate; IPC/permissions review
+- [ ] P0.7 Documentation truth — roadmap/feature-list/production-readiness match code; Nexora POS vs RestaurantOS identity
+
+## P1 — Pilot reliability
+
+- [ ] P1.1 Cash drawer kick (ESC/POS) + permissions + audit
+- [ ] P1.2 Backup → destroy DB → restore → verify continuity (orders/customers/products/staff/shifts/payments/config/audit)
+- [ ] P1.3 Failure/recovery testing matrix (offline, printer, crash, power, duplicate pay/order, token expiry)
+- [ ] P1.4 Critical E2E workflows for money paths
+- [ ] P1.5 Pilot pack — install, backup/restore, recovery, troubleshooting, operator guide, support process
+- [ ] P1.6 Deploy 3 real café pilots and feed production issue loop
+
+## P2 — After successful pilots (RestaurantOS foundation)
+
+- [ ] Inventory stock ledger (movements + adjustments) before BOM/procurement
+- [ ] Recipes/BOM, wastage (after ledger)
+- [ ] Suppliers / PO / receiving
+- [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet
+- [ ] ADR-006 Multi-Location Architecture (design only; no code until approved)
+- [ ] Analytics/accounting export
+
+## P3 — Explicitly frozen
+
+- [ ] Payment terminals
+- [ ] Aggregators (Swiggy/Zomato/ONDC)
+- [ ] AI / LLM features
+- [ ] Bluetooth printing
+- [ ] Multi-tenant SaaS
+- [ ] Microservices / K8s / large rewrites

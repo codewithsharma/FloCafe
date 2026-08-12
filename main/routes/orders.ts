@@ -780,7 +780,7 @@ router.post('/:id/items', requireRole('owner', 'manager', 'cashier', 'waiter'), 
       }
 
       // BUG #4 FIX: Sync bill if it exists (add-items didn't update the bill)
-      const existingBill = db.prepare("SELECT * FROM bills WHERE order_id = ? AND payment_status != 'paid'").get(req.params.id) as any;
+      const existingBill = db.prepare("SELECT * FROM bills WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')").get(req.params.id) as any;
       if (existingBill) {
         const pack = getActiveCountryPack(tenantInfo.country);
         const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(total, pack);
@@ -959,8 +959,8 @@ router.patch('/:id/customer', requireRole('owner', 'manager'), (req: Request, re
       db.prepare('UPDATE orders SET customer_id = ?, updated_at = ? WHERE id = ?')
         .run(customer_id || null, nowStr, req.params.id);
 
-      // Keep every unpaid guest check attached to the same customer.
-      db.prepare("UPDATE bills SET customer_id = ?, updated_at = ? WHERE order_id = ? AND payment_status != 'paid'")
+      // Keep every open (unpaid/partial) guest check attached to the same customer.
+      db.prepare("UPDATE bills SET customer_id = ?, updated_at = ? WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')")
         .run(customer_id || null, nowStr, req.params.id);
 
       return parseRowJson(db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)) as any;
@@ -1410,7 +1410,7 @@ router.patch('/:id/items/:itemId/discount', requireRole('owner', 'manager'), (re
       `).run(orderSubtotal, taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, newOrderDiscount, orderTotal, roundOff, now(), req.params.id);
 
       // BUG #15 FIX: Sync item-level discount to bill
-      const existingBill = db.prepare("SELECT * FROM bills WHERE order_id = ? AND payment_status != 'paid'").get(req.params.id) as any;
+      const existingBill = db.prepare("SELECT * FROM bills WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')").get(req.params.id) as any;
       if (existingBill) {
         const pack = getActiveCountryPack(tenantInfo.country);
         const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(orderTotal, pack);

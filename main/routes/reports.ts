@@ -105,6 +105,12 @@ function bucketByLocalHourAndWeekday(timestamps: string[], timeZone: string): { 
  * Return payment lines in a UTC half-open range using SQLite JSON1. Keeping
  * expansion in SQL avoids loading every bill and tolerates both the current
  * array shape, legacy top-level objects, and invalid JSON.
+ *
+ * Semantics: this is Payments Received (gross tender from payment_details),
+ * not Net Sales. See docs/15-project-management/reporting-financial-semantics.md.
+ *
+ * When paidOnly is true, include bills that settled at least once
+ * (paid / partially_refunded / refunded) so refunds do not erase tender history.
  */
 function paymentMethodBreakdown(
   db: ReturnType<typeof getDatabase>,
@@ -128,7 +134,10 @@ function paymentMethodBreakdown(
       WHERE b.payment_details IS NOT NULL
         AND b.created_at < ?
         AND (b.paid_at IS NULL OR b.paid_at >= ?)
-        AND (? = 0 OR b.payment_status = 'paid')
+        AND (
+          ? = 0
+          OR b.payment_status IN ('paid', 'partially_refunded', 'refunded')
+        )
         AND json_type(je.value) = 'object'
     ), normalized AS (
       SELECT
@@ -149,6 +158,36 @@ function paymentMethodBreakdown(
     GROUP BY COALESCE(pm.name, normalized.method)
     ORDER BY total DESC
   `).all(end, start, paidOnly ? 1 : 0, start, end);
+}
+
+/** Day-window sales truth: Gross / Refunds / Net. paid_amount alone is Net Sales. */
+function daySalesSemantics(
+  db: ReturnType<typeof getDatabase>,
+  start: string,
+  end: string,
+): { grossSales: number; refunds: number; netSales: number } {
+  const settled = db.prepare(`
+    SELECT
+      COALESCE(SUM(total), 0) AS grossSales,
+      COALESCE(SUM(paid_amount), 0) AS netSales
+    FROM bills
+    WHERE created_at >= ? AND created_at < ?
+      AND payment_status IN ('paid', 'partially_refunded', 'refunded')
+  `).get(start, end) as { grossSales: number; netSales: number };
+
+  const refundsRow = db.prepare(`
+    SELECT COALESCE(SUM(amount_cents), 0) AS refundsCents
+    FROM refunds
+    WHERE status = 'completed'
+      AND created_at >= ? AND created_at < ?
+  `).get(start, end) as { refundsCents: number };
+
+  const refunds = Number(refundsRow.refundsCents || 0) / 100;
+  return {
+    grossSales: Number(settled.grossSales || 0),
+    refunds,
+    netSales: Number(settled.netSales || 0),
+  };
 }
 
 /** argmax/argmin over counts, restricted to indices where include(count) is true. Returns null if nothing qualifies. */
@@ -172,6 +211,7 @@ router.get('/daily-stats', requireRole('owner', 'manager'), (req: Request, res: 
       SELECT COALESCE(SUM(paid_amount), 0) AS sales
       FROM bills WHERE created_at >= ? AND created_at < ?
     `).get(start, end) as { sales: number };
+    const { grossSales, refunds, netSales } = daySalesSemantics(db, start, end);
     const paymentMethodsToday = paymentMethodBreakdown(db, today) as { total: number }[];
 
     const runningOrders = db.prepare(`
@@ -187,10 +227,15 @@ router.get('/daily-stats', requireRole('owner', 'manager'), (req: Request, res: 
     `).get() as { count: number };
 
     res.json({
+      // `sales` remains SUM(paid_amount) across all bills (legacy net collected).
       sales: salesToday.sales,
+      grossSales,
+      refunds,
+      netSales,
       runningOrders: runningOrders.count,
       pendingOrders: pendingOrders.count,
       tablesOccupied: tablesOccupied.count,
+      // Payments Received (gross tender by method) — not Net Sales.
       paymentMethods: paymentMethodsToday,
     });
   } catch (error: any) {
@@ -217,6 +262,7 @@ router.get('/summary', requireRole('owner', 'manager'), (req: Request, res: Resp
         COALESCE(SUM(paid_amount), 0) as collected
       FROM bills WHERE created_at >= ? AND created_at < ?
     `).get(start, end) as { count: number; total: number; collected: number };
+    const { grossSales, refunds, netSales } = daySalesSemantics(db, start, end);
     const paymentMethodsToday = paymentMethodBreakdown(db, date);
 
     const customersToday = db.prepare(`
@@ -231,9 +277,18 @@ router.get('/summary', requireRole('owner', 'manager'), (req: Request, res: Resp
       summary: {
         date,
         orders: { count: ordersToday.count, total: ordersToday.total },
-        bills: { count: billsToday.count, total: billsToday.total, collected: billsToday.collected },
+        bills: {
+          count: billsToday.count,
+          total: billsToday.total,
+          // Legacy: all-bills SUM(paid_amount). Prefer netSales for settled truth.
+          collected: billsToday.collected,
+          grossSales,
+          refunds,
+          netSales,
+        },
         customers: { new: customersToday.count },
         ordersByStatus,
+        // Payments Received (gross tender by method).
         paymentMethods: paymentMethodsToday,
       }
     });

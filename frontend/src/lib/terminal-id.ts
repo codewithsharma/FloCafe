@@ -38,6 +38,7 @@ export function shouldAttachTerminalId(url?: string, method?: string): boolean {
   const verb = (method || 'get').toLowerCase();
   if (verb === 'post' && path === '/orders') return true;
   if (verb === 'post' && /^\/bills\/[^/]+\/payments?$/.test(path)) return true;
+  if (verb === 'post' && /^\/bills\/[^/]+\/refund$/.test(path)) return true;
   if (verb === 'get' && path === '/shifts/active') return true;
   if (verb === 'post' && path === '/shifts/open') return true;
   if (verb === 'post' && /^\/shifts\/[^/]+\/close$/.test(path)) return true;

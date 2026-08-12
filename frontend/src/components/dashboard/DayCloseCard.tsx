@@ -125,8 +125,16 @@ export default function DayCloseCard({ businessDate }: DayCloseCardProps) {
               <VarianceIndicator cents={summary.variance_cents_total} />
             </div>
             <div>
-              <p className="text-caption text-flo-text-muted mb-1">{t('dayClose.cashCollected')}</p>
+              <p className="text-caption text-flo-text-muted mb-1">{t('dayClose.cashIn')}</p>
               <MoneyDisplay cents={summary.cash_payment_total_cents} size="lg" />
+            </div>
+            <div>
+              <p className="text-caption text-flo-text-muted mb-1">{t('dayClose.cashRefunds')}</p>
+              <MoneyDisplay cents={summary.cash_refund_total_cents ?? 0} size="lg" />
+            </div>
+            <div>
+              <p className="text-caption text-flo-text-muted mb-1">{t('dayClose.netCash')}</p>
+              <MoneyDisplay cents={summary.net_cash_movement_cents ?? summary.cash_payment_total_cents} size="lg" />
             </div>
           </div>
           <p className="text-caption text-flo-text-muted">

@@ -100,26 +100,61 @@ function insertClosedShift(opts: {
   return Number(info.lastInsertRowid);
 }
 
-function insertBillForShift(shiftId: number, paymentDetails: unknown): void {
+function insertBillForShift(shiftId: number, paymentDetails: unknown): number {
   const db = getDatabase();
   const t = now();
   const orderInfo = db.prepare(`
     INSERT INTO orders (order_number, status, subtotal, total, shift_id, created_at, updated_at)
     VALUES (?, 'pending', 100, 100, ?, ?, ?)
   `).run(`ORD-${randomUUID()}`, shiftId, t, t);
-  db.prepare(`
+  const orderId = Number(orderInfo.lastInsertRowid);
+  const billInfo = db.prepare(`
     INSERT INTO bills (
       bill_number, order_id, total, paid_amount, balance, payment_status,
       payment_details, shift_id, created_at, updated_at
     ) VALUES (?, ?, 100, 100, 0, 'paid', ?, ?, ?, ?)
   `).run(
     `BILL-${randomUUID()}`,
-    Number(orderInfo.lastInsertRowid),
+    orderId,
     JSON.stringify(paymentDetails),
     shiftId,
     t,
     t,
   );
+  return Number(billInfo.lastInsertRowid);
+}
+
+function insertRefundForShift(opts: {
+  shiftId: number;
+  billId: number;
+  orderId?: number | null;
+  amountCents: number;
+  method: string;
+  userId: string;
+}): number {
+  const db = getDatabase();
+  const t = now();
+  const amount = opts.amountCents / 100;
+  const info = db.prepare(`
+    INSERT INTO refunds (
+      bill_id, order_id, amount, amount_cents, method, original_method,
+      reason, status, shift_id, approved_by, created_by, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, ?)
+  `).run(
+    opts.billId,
+    opts.orderId ?? null,
+    amount,
+    opts.amountCents,
+    opts.method,
+    opts.method,
+    'day-close refund fixture',
+    opts.shiftId,
+    opts.userId,
+    opts.userId,
+    t,
+    t,
+  );
+  return Number(info.lastInsertRowid);
 }
 
 function countDayCloses(): number {
@@ -167,8 +202,8 @@ async function main(): Promise<void> {
   initDatabase();
   const db = getDatabase();
 
-  // 1. Migration v71 creates day_closes; fresh install user_version 71
-  assert.equal(db.pragma('user_version', { simple: true }), 71);
+  // 1. Fresh install reaches latest schema (v72+) with day_closes
+  assert.equal(db.pragma('user_version', { simple: true }), 72);
   assert.ok(
     db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'day_closes'`).get(),
     'day_closes table exists',
@@ -177,7 +212,7 @@ async function main(): Promise<void> {
   for (const col of ['id', 'business_date', 'closed_by_user_id', 'summary_json', 'created_at']) {
     assert.ok(cols.includes(col), `day_closes.${col}`);
   }
-  console.log('   ✓ migration v71 creates day_closes; user_version 71');
+  console.log('   ✓ migration reaches v72; user_version 72');
 
   // Timezone helpers
   {
@@ -232,7 +267,11 @@ async function main(): Promise<void> {
     assert.equal(result.summary.variance_cents_total, -100);
     assert.equal(result.summary.cash_payment_total_cents, 2500);
     assert.equal(result.summary.cash_payment_count, 1);
+    assert.equal(result.summary.cash_refund_total_cents, 0, 'no refunds → cash refunds 0');
+    assert.equal(result.summary.cash_refund_count, 0);
+    assert.equal(result.summary.net_cash_movement_cents, 2500, 'net cash = cash in');
     assert.equal(result.summary.shifts[0].expected_cash_cents, 7500);
+    assert.equal(result.summary.shifts[0].cash_refund_total_cents, 0);
     assert.equal(result.day_close.business_date, businessDate);
     const stored = getDayClose(businessDate);
     assert.ok(stored);
@@ -275,6 +314,8 @@ async function main(): Promise<void> {
     assert.equal(result.summary.variance_cents_total, 0);
     assert.equal(result.summary.cash_payment_total_cents, 2000);
     assert.equal(result.summary.cash_payment_count, 2);
+    assert.equal(result.summary.cash_refund_total_cents, 0);
+    assert.equal(result.summary.net_cash_movement_cents, 2000);
     console.log('   ✓ multiple shifts/terminals aggregated');
   }
 
@@ -396,6 +437,8 @@ async function main(): Promise<void> {
     assert.equal(result.summary.shift_count, 0);
     assert.deepEqual(result.summary.shifts, []);
     assert.equal(result.summary.cash_payment_total_cents, 0);
+    assert.equal(result.summary.cash_refund_total_cents, 0);
+    assert.equal(result.summary.net_cash_movement_cents, 0);
     console.log('   ✓ empty day allowed');
   }
 
@@ -454,7 +497,255 @@ async function main(): Promise<void> {
     assert.equal(result.summary.variance_cents_total, -999);
     assert.equal(result.summary.shifts[0].expected_cash_cents, 9999);
     assert.equal(result.summary.cash_payment_total_cents, 5000, 'cash still recomputed from bills');
+    assert.equal(result.summary.cash_refund_total_cents, 0);
+    assert.equal(result.summary.net_cash_movement_cents, 5000);
     console.log('   ✓ uses persisted expected/variance columns');
+  }
+
+  // 12b–21. Cash refunds in day-close summary (reuse shift payment summary; no second formula)
+  {
+    const { getShiftPaymentSummary, computeExpectedCashCents } = require('../main/services/shift');
+
+    // 12b. Day close with cash refund (Cash In 1000, Refund 300, Net 700)
+    {
+      const businessDate = '2026-07-26';
+      const shiftId = insertClosedShift({
+        terminalId: uniqueTerminal('dc-cash-ref'),
+        userId: cashierId,
+        closedAt: '2026-07-26 05:00:00',
+        openingFloatCents: 0,
+        expectedCashCents: 700,
+        countedCashCents: 700,
+        varianceCents: 0,
+      });
+      const billId = insertBillForShift(shiftId, [{ method: 'cash', amount: 10 }]);
+      insertRefundForShift({
+        shiftId,
+        billId,
+        amountCents: 300,
+        method: 'cash',
+        userId: managerId,
+      });
+      const result = closeBusinessDay({ actor: actor(managerId, 'manager'), businessDate });
+      assert.equal(result.summary.cash_payment_total_cents, 1000, 'Cash In ₹10.00');
+      assert.equal(result.summary.cash_refund_total_cents, 300, 'Cash Refunds ₹3.00');
+      assert.equal(result.summary.cash_refund_count, 1);
+      assert.equal(result.summary.net_cash_movement_cents, 700, 'Net Cash ₹7.00');
+      assert.equal(result.summary.shifts[0].cash_payment_total_cents, 1000);
+      assert.equal(result.summary.shifts[0].cash_refund_total_cents, 300);
+      assert.equal(result.summary.shifts[0].net_cash_movement_cents, 700);
+      console.log('   ✓ day close with cash refund: In 1000 − Refund 300 = Net 700');
+    }
+
+    // 13. Multiple cash refunds
+    {
+      const businessDate = '2026-07-25';
+      const shiftId = insertClosedShift({
+        terminalId: uniqueTerminal('dc-multi-ref'),
+        userId: cashierId,
+        closedAt: '2026-07-25 05:00:00',
+        openingFloatCents: 0,
+        expectedCashCents: 400,
+        countedCashCents: 400,
+        varianceCents: 0,
+      });
+      const billId = insertBillForShift(shiftId, [{ method: 'cash', amount: 10 }]);
+      insertRefundForShift({ shiftId, billId, amountCents: 200, method: 'cash', userId: managerId });
+      insertRefundForShift({ shiftId, billId, amountCents: 400, method: 'cash', userId: managerId });
+      const result = closeBusinessDay({ actor: actor(ownerId, 'owner'), businessDate });
+      assert.equal(result.summary.cash_payment_total_cents, 1000);
+      assert.equal(result.summary.cash_refund_total_cents, 600);
+      assert.equal(result.summary.cash_refund_count, 2);
+      assert.equal(result.summary.net_cash_movement_cents, 400);
+      console.log('   ✓ day close with multiple cash refunds');
+    }
+
+    // 14. Card refund does not reduce cash
+    {
+      const businessDate = '2026-07-24';
+      const shiftId = insertClosedShift({
+        terminalId: uniqueTerminal('dc-card-ref'),
+        userId: cashierId,
+        closedAt: '2026-07-24 05:00:00',
+        openingFloatCents: 0,
+        expectedCashCents: 1000,
+        countedCashCents: 1000,
+        varianceCents: 0,
+      });
+      const billId = insertBillForShift(shiftId, [{ method: 'cash', amount: 10 }]);
+      insertRefundForShift({ shiftId, billId, amountCents: 300, method: 'card', userId: managerId });
+      const result = closeBusinessDay({ actor: actor(managerId, 'manager'), businessDate });
+      assert.equal(result.summary.cash_payment_total_cents, 1000);
+      assert.equal(result.summary.cash_refund_total_cents, 0, 'card refund → Cash Refund = 0');
+      assert.equal(result.summary.net_cash_movement_cents, 1000);
+      console.log('   ✓ card refund does not reduce day-close cash');
+    }
+
+    // 15. Wallet refund does not reduce cash
+    {
+      const businessDate = '2026-07-23';
+      const shiftId = insertClosedShift({
+        terminalId: uniqueTerminal('dc-wallet-ref'),
+        userId: cashierId,
+        closedAt: '2026-07-23 05:00:00',
+        openingFloatCents: 0,
+        expectedCashCents: 1000,
+        countedCashCents: 1000,
+        varianceCents: 0,
+      });
+      const billId = insertBillForShift(shiftId, [{ method: 'cash', amount: 10 }]);
+      insertRefundForShift({ shiftId, billId, amountCents: 500, method: 'wallet', userId: managerId });
+      const result = closeBusinessDay({ actor: actor(managerId, 'manager'), businessDate });
+      assert.equal(result.summary.cash_refund_total_cents, 0);
+      assert.equal(result.summary.net_cash_movement_cents, 1000);
+      console.log('   ✓ wallet refund does not reduce day-close cash');
+    }
+
+    // 16. Mixed cash + card refunds
+    {
+      const businessDate = '2026-07-22';
+      const shiftId = insertClosedShift({
+        terminalId: uniqueTerminal('dc-mixed-ref'),
+        userId: cashierId,
+        closedAt: '2026-07-22 05:00:00',
+        openingFloatCents: 0,
+        expectedCashCents: 700,
+        countedCashCents: 700,
+        varianceCents: 0,
+      });
+      const billId = insertBillForShift(shiftId, [{ method: 'cash', amount: 10 }]);
+      insertRefundForShift({ shiftId, billId, amountCents: 300, method: 'cash', userId: managerId });
+      insertRefundForShift({ shiftId, billId, amountCents: 200, method: 'card', userId: managerId });
+      const result = closeBusinessDay({ actor: actor(ownerId, 'owner'), businessDate });
+      assert.equal(result.summary.cash_refund_total_cents, 300);
+      assert.equal(result.summary.cash_refund_count, 1);
+      assert.equal(result.summary.net_cash_movement_cents, 700);
+      console.log('   ✓ mixed cash/card refunds: only cash counts');
+    }
+
+    // 17–18. Late refund on new open shift; closed shift expected immutable
+    {
+      upsertSettings({ shifts_enabled: 'true', require_open_shift_for_cash: 'false' });
+      const termA = uniqueTerminal('dc-late-a');
+      const termB = uniqueTerminal('dc-late-b');
+      const shiftA = openShift({
+        actor: actor(cashierId, 'cashier'),
+        terminalId: termA,
+        openingFloatCents: 0,
+      });
+      const billId = insertBillForShift(shiftA.id, [{ method: 'cash', amount: 10 }]);
+      const expectedBeforeClose = computeExpectedCashCents(shiftA.id);
+      assert.equal(expectedBeforeClose, 1000);
+      closeShift({
+        actor: actor(cashierId, 'cashier'),
+        shiftId: shiftA.id,
+        terminalId: termA,
+        countedCashCents: 1000,
+      });
+      const closedA = getDatabase().prepare(
+        'SELECT expected_cash_cents, status FROM shifts WHERE id = ?',
+      ).get(shiftA.id) as { expected_cash_cents: number; status: string };
+      assert.equal(closedA.status, 'closed');
+      assert.equal(closedA.expected_cash_cents, 1000);
+
+      const shiftB = openShift({
+        actor: actor(cashierId, 'cashier'),
+        terminalId: termB,
+        openingFloatCents: 0,
+      });
+      // Late cash refund attributed to current open shift B (M6 rule), not A.
+      insertRefundForShift({
+        shiftId: shiftB.id,
+        billId,
+        amountCents: 300,
+        method: 'cash',
+        userId: managerId,
+      });
+      const aAfterLate = getDatabase().prepare(
+        'SELECT expected_cash_cents FROM shifts WHERE id = ?',
+      ).get(shiftA.id) as { expected_cash_cents: number };
+      assert.equal(aAfterLate.expected_cash_cents, 1000, 'closed shift expected unchanged');
+
+      closeShift({
+        actor: actor(cashierId, 'cashier'),
+        shiftId: shiftB.id,
+        terminalId: termB,
+        countedCashCents: null,
+      });
+      const closedB = getDatabase().prepare(
+        'SELECT expected_cash_cents FROM shifts WHERE id = ?',
+      ).get(shiftB.id) as { expected_cash_cents: number };
+      assert.equal(closedB.expected_cash_cents, -300);
+
+      // Force both into the same business-date window for day close.
+      const businessDate = '2026-07-21';
+      getDatabase().prepare(`UPDATE shifts SET closed_at = ?, opened_at = ? WHERE id = ?`).run(
+        '2026-07-21 05:00:00', '2026-07-21 04:00:00', shiftA.id,
+      );
+      getDatabase().prepare(`UPDATE shifts SET closed_at = ?, opened_at = ? WHERE id = ?`).run(
+        '2026-07-21 06:00:00', '2026-07-21 05:30:00', shiftB.id,
+      );
+
+      const result = closeBusinessDay({ actor: actor(managerId, 'manager'), businessDate });
+      assert.equal(result.summary.shift_count, 2);
+      assert.equal(result.summary.cash_payment_total_cents, 1000, 'cash in from shift A');
+      assert.equal(result.summary.cash_refund_total_cents, 300, 'late refund on shift B');
+      assert.equal(result.summary.net_cash_movement_cents, 700);
+      assert.equal(result.summary.expected_cash_cents_total, 1000 + (-300), 'persisted expected sum');
+      const shiftASummary = result.summary.shifts.find((s: { id: number }) => s.id === shiftA.id);
+      assert.equal(shiftASummary.expected_cash_cents, 1000, 'day close keeps closed A expected');
+      console.log('   ✓ late refund on new shift; closed shift expected immutable');
+    }
+
+    // 19. Day-close totals equal shift-level getShiftPaymentSummary sums
+    {
+      const businessDate = '2026-07-20';
+      const shiftId = insertClosedShift({
+        terminalId: uniqueTerminal('dc-eq'),
+        userId: cashierId,
+        closedAt: '2026-07-20 05:00:00',
+        openingFloatCents: 0,
+        expectedCashCents: 700,
+        countedCashCents: 700,
+        varianceCents: 0,
+      });
+      const billId = insertBillForShift(shiftId, [{ method: 'cash', amount: 10 }]);
+      insertRefundForShift({ shiftId, billId, amountCents: 300, method: 'cash', userId: managerId });
+      const shiftSum = getShiftPaymentSummary(shiftId);
+      const result = closeBusinessDay({ actor: actor(ownerId, 'owner'), businessDate });
+      assert.equal(result.summary.cash_payment_total_cents, shiftSum.cash_payment_total_cents);
+      assert.equal(result.summary.cash_refund_total_cents, shiftSum.cash_refund_total_cents);
+      assert.equal(
+        result.summary.net_cash_movement_cents,
+        shiftSum.cash_payment_total_cents - shiftSum.cash_refund_total_cents,
+      );
+      console.log('   ✓ day-close totals equal shift-level payment summary');
+    }
+
+    // 20. Refund cannot be counted twice
+    {
+      const businessDate = '2026-07-19';
+      const shiftId = insertClosedShift({
+        terminalId: uniqueTerminal('dc-once'),
+        userId: cashierId,
+        closedAt: '2026-07-19 05:00:00',
+        openingFloatCents: 0,
+        expectedCashCents: 700,
+        countedCashCents: 700,
+        varianceCents: 0,
+      });
+      const billId = insertBillForShift(shiftId, [{ method: 'cash', amount: 10 }]);
+      insertRefundForShift({ shiftId, billId, amountCents: 300, method: 'cash', userId: managerId });
+      const result = closeBusinessDay({ actor: actor(managerId, 'manager'), businessDate });
+      assert.equal(result.summary.cash_refund_count, 1);
+      assert.equal(result.summary.cash_refund_total_cents, 300);
+      const refundRows = (getDatabase().prepare(
+        `SELECT COUNT(*) AS c FROM refunds WHERE shift_id = ? AND method = 'cash' AND status = 'completed'`,
+      ).get(shiftId) as { c: number }).c;
+      assert.equal(refundRows, 1);
+      assert.equal(result.summary.cash_refund_total_cents, 300, 'not double-counted');
+      console.log('   ✓ refund counted once in day close');
+    }
   }
 
   // 12. shifts_enabled=false still allows day close for manager

@@ -121,8 +121,8 @@ async function main() {
   console.log('='.repeat(60));
 
   const latestMigration = MIGRATIONS[MIGRATIONS.length - 1];
-  assert.equal(latestMigration.version, 71, 'latest migration is v71');
-  assert.equal(latestMigration.name, 'm5_day_closes');
+  assert.equal(latestMigration.version, 72, 'latest migration is v72');
+  assert.equal(latestMigration.name, 'm6_refunds');
 
   const v70 = MIGRATIONS.find((m: { version: number }) => m.version === 70);
   assert.ok(v70, 'v70 m5_cash_reconciliation_columns migration exists');
@@ -131,10 +131,10 @@ async function main() {
   const v69 = MIGRATIONS.find((m: { version: number }) => m.version === 69);
   assert.ok(v69, 'v69 m4_shift_foundation migration exists');
 
-  // ── Fresh install v0 → v71 ───────────────────────────────────────────────
+  // ── Fresh install v0 → v72 ───────────────────────────────────────────────
   initDatabase();
   const db = getDatabase();
-  assert.equal(db.pragma('user_version', { simple: true }), 71);
+  assert.equal(db.pragma('user_version', { simple: true }), 72);
 
   assert.ok(
     db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'shifts'`).get(),
@@ -143,6 +143,14 @@ async function main() {
   assert.ok(
     db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'day_closes'`).get(),
     'day_closes table exists on fresh install',
+  );
+  assert.ok(
+    db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'refunds'`).get(),
+    'refunds table exists on fresh install',
+  );
+  assert.ok(
+    db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'refund_idempotency'`).get(),
+    'refund_idempotency table exists on fresh install',
   );
 
   const shiftColumns = tableColumns(db, 'shifts');
@@ -273,7 +281,7 @@ async function main() {
 
   initDatabase();
   const upgradedFrom68 = getDatabase();
-  assert.equal(upgradedFrom68.pragma('user_version', { simple: true }), 71);
+  assert.equal(upgradedFrom68.pragma('user_version', { simple: true }), 72);
   assert.ok(tableColumns(upgradedFrom68, 'shifts').includes('expected_cash_cents'));
   assert.ok(tableColumns(upgradedFrom68, 'shifts').includes('variance_cents'));
 
@@ -286,9 +294,9 @@ async function main() {
     upgradedFrom68.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'day_closes'`).get(),
     'day_closes exists after upgrade from v68',
   );
-  console.log('   ✓ v68 → v71 upgrade preserves existing orders/bills with NULL shift_id');
+  console.log('   ✓ v68 → v72 upgrade preserves existing orders/bills with NULL shift_id');
 
-  // ── Upgrade v69 → v71 with existing open/closed shifts ────────────────────
+  // ── Upgrade v69 → v72 with existing open/closed shifts ────────────────────
   const upgradeUser = seedUser(upgradedFrom68, 'upgrade-user-001');
   const openShiftId = insertShift(upgradedFrom68, 'terminal-upgrade-open', upgradeUser, {
     status: 'open',
@@ -310,7 +318,7 @@ async function main() {
 
   initDatabase();
   const upgradedFrom69 = getDatabase();
-  assert.equal(upgradedFrom69.pragma('user_version', { simple: true }), 71);
+  assert.equal(upgradedFrom69.pragma('user_version', { simple: true }), 72);
   assert.ok(tableColumns(upgradedFrom69, 'shifts').includes('expected_cash_cents'));
   assert.ok(tableColumns(upgradedFrom69, 'shifts').includes('variance_cents'));
 
@@ -341,16 +349,16 @@ async function main() {
   closeDatabase();
   initDatabase();
   const reopened = getDatabase();
-  assert.equal(reopened.pragma('user_version', { simple: true }), 71);
+  assert.equal(reopened.pragma('user_version', { simple: true }), 72);
   const shiftCountAfter = (reopened.prepare('SELECT COUNT(*) AS count FROM shifts').get() as { count: number }).count;
-  assert.equal(shiftCountAfter, shiftCountBefore, 'reopening DB at v71 does not duplicate shift rows');
-  console.log('   ✓ migration runner is idempotent at v71');
+  assert.equal(shiftCountAfter, shiftCountBefore, 'reopening DB at v72 does not duplicate shift rows');
+  console.log('   ✓ migration runner is idempotent at v72');
 
   closeDatabase();
 
   // ── Ideal schema parity ───────────────────────────────────────────────────
   const idealDb = buildIdealSchemaDb();
-  assert.equal(idealDb.pragma('user_version', { simple: true }), 71);
+  assert.equal(idealDb.pragma('user_version', { simple: true }), 72);
   assert.ok(
     idealDb.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'shifts'`).get(),
     'ideal schema includes shifts',
@@ -362,7 +370,7 @@ async function main() {
   assert.ok(tableColumns(idealDb, 'shifts').includes('expected_cash_cents'));
   assert.ok(tableColumns(idealDb, 'shifts').includes('variance_cents'));
   idealDb.close();
-  console.log('   ✓ ideal schema at v71 includes M5 reconciliation + day_closes');
+  console.log('   ✓ ideal schema at v72 includes M5 reconciliation + day_closes');
 
   console.log('='.repeat(60));
   console.log('✅ M4-B / M5-B / M5-G shift schema tests passed');

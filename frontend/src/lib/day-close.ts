@@ -25,6 +25,11 @@ export interface DayCloseShiftSummary {
   expected_cash_cents: number | null;
   counted_cash_cents: number | null;
   variance_cents: number | null;
+  cash_payment_total_cents: number;
+  cash_payment_count: number;
+  cash_refund_total_cents: number;
+  cash_refund_count: number;
+  net_cash_movement_cents: number;
   opened_at: string;
   closed_at: string | null;
 }
@@ -39,8 +44,14 @@ export interface DayCloseSummary {
   expected_cash_cents_total: number;
   counted_cash_cents_total: number | null;
   variance_cents_total: number | null;
+  /** Cash In (gross qualifying cash tender). */
   cash_payment_total_cents: number;
   cash_payment_count: number;
+  /** Cash Refunds (method === cash only). */
+  cash_refund_total_cents: number;
+  cash_refund_count: number;
+  /** Cash In − Cash Refunds. */
+  net_cash_movement_cents: number;
   shifts: DayCloseShiftSummary[];
 }
 

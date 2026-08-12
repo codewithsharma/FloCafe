@@ -3702,6 +3702,45 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       `);
     },
   },
+  {
+    version: 72,
+    name: 'm6_refunds',
+    up: () => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS refunds (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          bill_id INTEGER NOT NULL REFERENCES bills(id),
+          order_id INTEGER REFERENCES orders(id),
+          amount REAL NOT NULL,
+          amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+          method TEXT NOT NULL,
+          original_method TEXT NOT NULL,
+          payment_method_id INTEGER,
+          reason TEXT NOT NULL,
+          status TEXT NOT NULL CHECK (status IN ('completed')),
+          shift_id INTEGER REFERENCES shifts(id),
+          approved_by TEXT NOT NULL REFERENCES users(id),
+          created_by TEXT NOT NULL REFERENCES users(id),
+          idempotency_key TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_refunds_bill_id ON refunds(bill_id);
+        CREATE INDEX IF NOT EXISTS idx_refunds_shift_id ON refunds(shift_id);
+        CREATE INDEX IF NOT EXISTS idx_refunds_created_at ON refunds(created_at);
+
+        CREATE TABLE IF NOT EXISTS refund_idempotency (
+          user_id TEXT NOT NULL,
+          idempotency_key TEXT NOT NULL,
+          bill_id INTEGER NOT NULL,
+          request_hash TEXT NOT NULL,
+          response_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          PRIMARY KEY (user_id, idempotency_key)
+        );
+      `);
+    },
+  },
 ];
 
 function syncBackupBeforeMigration(fromVersion: number, toVersion: number): void {

@@ -113,6 +113,8 @@ async function main(): Promise<void> {
     ['post', '/bills/12/payments', true],
     ['post', '/bills/12/payment', true],
     ['post', '/api/bills/99/payments', true],
+    ['post', '/bills/12/refund', true],
+    ['post', '/api/bills/99/refund', true],
     ['get', '/shifts/active', true],
     ['post', '/shifts/open', true],
     ['post', '/shifts/7/close', true],

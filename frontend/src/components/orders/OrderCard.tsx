@@ -18,6 +18,7 @@ import {
   Send,
   Loader2,
   Ban,
+  Undo2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Panel } from '@/components/flo/Panel';
@@ -31,7 +32,7 @@ import { useI18n } from '@/hooks/useI18n';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
 
-export type PaymentStatus = 'paid' | 'partial' | 'unpaid';
+export type PaymentStatus = 'paid' | 'partial' | 'unpaid' | 'partially_refunded' | 'refunded';
 
 export interface PrintHistoryEntry {
   id: number;
@@ -75,6 +76,9 @@ export interface OrderCardProps {
   onVoidItem: (itemId: number, productName: string) => void;
   onRestoreItem: (itemId: number) => void;
   onTogglePrintHistory: () => void;
+  canRefund?: boolean;
+  onRefund?: () => void;
+  refunding?: boolean;
 }
 
 function paymentStatusVariant(status: PaymentStatus): StatusBadgeVariant {
@@ -82,7 +86,10 @@ function paymentStatusVariant(status: PaymentStatus): StatusBadgeVariant {
     case 'paid':
       return 'success';
     case 'partial':
+    case 'partially_refunded':
       return 'warning';
+    case 'refunded':
+      return 'secondary';
     case 'unpaid':
     default:
       return 'danger';
@@ -93,6 +100,8 @@ const PAYMENT_LABEL_KEYS: Record<PaymentStatus, string> = {
   paid: 'orders.paid',
   partial: 'orders.partiallyPaid',
   unpaid: 'orders.unpaidBadge',
+  partially_refunded: 'orders.partiallyRefunded',
+  refunded: 'orders.refunded',
 };
 
 function toCents(major: number): number {
@@ -134,6 +143,9 @@ export function OrderCard({
   onVoidItem,
   onRestoreItem,
   onTogglePrintHistory,
+  canRefund = false,
+  onRefund,
+  refunding = false,
 }: OrderCardProps) {
   const { t } = useI18n();
   const fmt = useFormatCurrency();
@@ -193,6 +205,17 @@ export function OrderCard({
               ) : (
                 <MessageCircle size={14} />
               )}
+            </button>
+          ) : null}
+          {canRefund && onRefund ? (
+            <button
+              type="button"
+              onClick={onRefund}
+              disabled={refunding}
+              className="p-1.5 rounded-flo-md border border-flo-border text-flo-text-secondary hover:bg-flo-bg disabled:opacity-50 transition-colors min-h-11 min-w-11 inline-flex items-center justify-center"
+              title={t('orders.refund')}
+            >
+              {refunding ? <Loader2 className="size-4 animate-spin" /> : <Undo2 size={14} />}
             </button>
           ) : null}
           {order.bill ? (

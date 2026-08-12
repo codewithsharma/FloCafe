@@ -5,3 +5,12 @@
 - Typed `*ServiceError` with `statusCode`; routes map to `{ error }` without SQL/stack leakage.
 - Feature flags live in `settings` (`'true'` / `'false'` strings).
 - POS client identity: origin-scoped `localStorage` UUID (`flo_terminal_id`) sent as `X-Flo-Terminal-Id` on selected POS routes only. Not an auth credential.
+
+## Mandate patterns (2026-08-12)
+
+- **Local-first / offline billing:** cloud and optional services must never block order create, pay, or kitchen fulfillment.
+- Money-critical workflows (payments, refunds, shifts, day close): require authz + audit + idempotency + reconciliation tests before “production ready.”
+- Refunds: `RefundServiceError` + `{ error, code }`; idempotency mirrors payments; PIN always via `verifyPin` + rate limit; cash gate via `assertOpenShiftForCashPayment`.
+- **Complete ≠ Pilot validated:** Implemented → Functional → Tested → Production ready → Pilot validated — do not interchange.
+- **Refactor-on-touch:** when changing billing/payments for refunds, improve that slice’s boundaries/validation; do not rewrite the monolith.
+- **Status vocabulary in docs:** COMPLETE / PARTIAL / PLACEHOLDER / PLANNED / NOT FOUND — code is source of truth.

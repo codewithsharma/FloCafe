@@ -13,8 +13,8 @@ import {
   now,
   withTxn,
 } from '../db';
-import { aggregatePaymentsFromPaymentDetailsJson } from './payment-cash';
 import { logAuditEvent, type AuditContext } from './audit-log';
+import { getShiftPaymentSummary } from './shift';
 
 const DAY_CLOSE_ROLES = new Set(['owner', 'manager']);
 const BUSINESS_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -48,6 +48,14 @@ export interface DayCloseShiftSummary {
   expected_cash_cents: number | null;
   counted_cash_cents: number | null;
   variance_cents: number | null;
+  /** Cash In (gross tender) for this shift — same source as shift reconciliation. */
+  cash_payment_total_cents: number;
+  cash_payment_count: number;
+  /** Qualifying cash refunds only (method === 'cash'). */
+  cash_refund_total_cents: number;
+  cash_refund_count: number;
+  /** Cash In − Cash Refunds (excludes opening float). */
+  net_cash_movement_cents: number;
   opened_at: string;
   closed_at: string | null;
 }
@@ -62,8 +70,14 @@ export interface DayCloseSummary {
   expected_cash_cents_total: number;
   counted_cash_cents_total: number | null;
   variance_cents_total: number | null;
+  /** Cash In — gross qualifying cash tender on closed shifts. */
   cash_payment_total_cents: number;
   cash_payment_count: number;
+  /** Cash Refunds — completed cash refunds attributed to those shifts. */
+  cash_refund_total_cents: number;
+  cash_refund_count: number;
+  /** Cash In − Cash Refunds (excludes opening float). */
+  net_cash_movement_cents: number;
   shifts: DayCloseShiftSummary[];
 }
 
@@ -156,41 +170,12 @@ function countOpenShifts(): number {
   return Number(row.count) || 0;
 }
 
-function aggregateCashPaymentsForShiftIds(
-  shiftIds: number[],
-): Map<number, { totalCents: number; count: number }> {
-  const byShift = new Map<number, { totalCents: number; count: number }>();
-  for (const id of shiftIds) {
-    byShift.set(id, { totalCents: 0, count: 0 });
-  }
-  if (shiftIds.length === 0) return byShift;
-
-  const placeholders = shiftIds.map(() => '?').join(',');
-  const rows = getDatabase().prepare(`
-    SELECT shift_id, payment_details
-    FROM bills
-    WHERE shift_id IN (${placeholders})
-      AND payment_details IS NOT NULL
-      AND payment_details != ''
-  `).all(...shiftIds) as { shift_id: number; payment_details: string }[];
-
-  for (const row of rows) {
-    const bucket = byShift.get(Number(row.shift_id));
-    if (!bucket) continue;
-    const aggregated = aggregatePaymentsFromPaymentDetailsJson(row.payment_details);
-    bucket.totalCents += aggregated.cashTotalCents;
-    bucket.count += aggregated.cashCount;
-  }
-  return byShift;
-}
-
 function buildDayCloseSummary(
   businessDate: string,
   timezone: string,
   closedShifts: ClosedShiftRow[],
   openShiftCount: number,
 ): DayCloseSummary {
-  const cashByShift = aggregateCashPaymentsForShiftIds(closedShifts.map((s) => Number(s.id)));
   let openingFloatTotal = 0;
   let expectedTotal = 0;
   let countedTotal = 0;
@@ -199,6 +184,8 @@ function buildDayCloseSummary(
   let varianceAny = false;
   let cashPaymentTotal = 0;
   let cashPaymentCount = 0;
+  let cashRefundTotal = 0;
+  let cashRefundCount = 0;
 
   const shifts: DayCloseShiftSummary[] = closedShifts.map((row) => {
     const id = Number(row.id);
@@ -206,7 +193,10 @@ function buildDayCloseSummary(
     const expected = row.expected_cash_cents == null ? null : Number(row.expected_cash_cents);
     const counted = row.counted_cash_cents == null ? null : Number(row.counted_cash_cents);
     const variance = row.variance_cents == null ? null : Number(row.variance_cents);
-    const cash = cashByShift.get(id) || { totalCents: 0, count: 0 };
+    // Reuse approved shift payment summary (cash in + cash refunds). Do not
+    // recompute expected — closed shifts stay on persisted columns.
+    const payment = getShiftPaymentSummary(id);
+    const netCash = payment.cash_payment_total_cents - payment.cash_refund_total_cents;
 
     openingFloatTotal += opening;
     expectedTotal += expected ?? 0;
@@ -218,8 +208,10 @@ function buildDayCloseSummary(
       varianceTotal += variance;
       varianceAny = true;
     }
-    cashPaymentTotal += cash.totalCents;
-    cashPaymentCount += cash.count;
+    cashPaymentTotal += payment.cash_payment_total_cents;
+    cashPaymentCount += payment.cash_payment_count;
+    cashRefundTotal += payment.cash_refund_total_cents;
+    cashRefundCount += payment.cash_refund_count;
 
     return {
       id,
@@ -230,6 +222,11 @@ function buildDayCloseSummary(
       expected_cash_cents: expected,
       counted_cash_cents: counted,
       variance_cents: variance,
+      cash_payment_total_cents: payment.cash_payment_total_cents,
+      cash_payment_count: payment.cash_payment_count,
+      cash_refund_total_cents: payment.cash_refund_total_cents,
+      cash_refund_count: payment.cash_refund_count,
+      net_cash_movement_cents: netCash,
       opened_at: String(row.opened_at),
       closed_at: row.closed_at == null ? null : String(row.closed_at),
     };
@@ -247,6 +244,9 @@ function buildDayCloseSummary(
     variance_cents_total: varianceAny ? varianceTotal : null,
     cash_payment_total_cents: cashPaymentTotal,
     cash_payment_count: cashPaymentCount,
+    cash_refund_total_cents: cashRefundTotal,
+    cash_refund_count: cashRefundCount,
+    net_cash_movement_cents: cashPaymentTotal - cashRefundTotal,
     shifts,
   };
 }
@@ -297,6 +297,9 @@ export function closeBusinessDay(input: {
           shift_count: summary.shift_count,
           expected_cash_cents_total: summary.expected_cash_cents_total,
           variance_cents_total: summary.variance_cents_total,
+          cash_payment_total_cents: summary.cash_payment_total_cents,
+          cash_refund_total_cents: summary.cash_refund_total_cents,
+          net_cash_movement_cents: summary.net_cash_movement_cents,
           open_shifts_warning: summary.open_shifts_warning,
         },
         context: input.context || null,

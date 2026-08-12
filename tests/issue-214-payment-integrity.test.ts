@@ -203,6 +203,16 @@ async function main() {
     assertEqual(secondReplay.data.bill.paid_amount, 100, 'replay does not inflate paid amount');
     assertEqual(secondReplay.data.bill.payment_details.length, 1, 'replay does not duplicate payment history');
 
+    // P1 — Idempotency-Key is mandatory for payment mutations.
+    const missingKeyBill = await newBill();
+    const missingKey = await api(baseUrl, `/api/bills/${missingKeyBill.id}/payment`, {
+      method: 'POST',
+      body: { method: 'card', amount: 100 },
+      headers: { ...authHeader, 'Idempotency-Key': '' },
+    });
+    assertEqual(missingKey.status, 400, 'missing Idempotency-Key is rejected');
+    assertEqual(missingKey.data.code, 'PAYMENT_IDEMPOTENCY_REQUIRED', 'stable PAYMENT_IDEMPOTENCY_REQUIRED code');
+
     const globalTransactionA = await newBill();
     const globalTransactionFirst = await api(baseUrl, `/api/bills/${globalTransactionA.id}/payment`, {
       method: 'POST', body: { method: 'card', amount: 100, transaction_id: 'tx-214-global' }, headers: authHeader,

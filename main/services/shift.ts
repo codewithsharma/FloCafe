@@ -46,6 +46,8 @@ export interface ShiftPaymentSummary {
   cash_payment_count: number;
   cash_payment_total_cents: number;
   non_cash_payment_total_cents: number;
+  cash_refund_count: number;
+  cash_refund_total_cents: number;
 }
 
 export interface ShiftReconciliationPreview {
@@ -706,14 +708,35 @@ function aggregateCashPaymentsForShift(shiftId: number): { totalCents: number; c
 }
 
 /**
- * M5-E — Payment breakdown for a shift (read-only; bills.shift_id attribution).
+ * M5-E / M6 — Payment breakdown for a shift (read-only; bills.shift_id attribution).
+ * Cash refunds attributed via refunds.shift_id (method === 'cash' only).
  */
 export function getShiftPaymentSummary(shiftId: number): ShiftPaymentSummary {
   const aggregated = aggregatePaymentsForShift(shiftId);
+  const cashRefunds = sumCashRefundsForShift(shiftId);
   return {
     cash_payment_count: aggregated.cashCount,
     cash_payment_total_cents: aggregated.cashTotalCents,
     non_cash_payment_total_cents: aggregated.nonCashTotalCents,
+    cash_refund_count: cashRefunds.count,
+    cash_refund_total_cents: cashRefunds.totalCents,
+  };
+}
+
+function sumCashRefundsForShift(shiftId: number): { totalCents: number; count: number } {
+  const row = getDatabase().prepare(`
+    SELECT
+      COALESCE(SUM(amount_cents), 0) AS total_cents,
+      COUNT(*) AS count
+    FROM refunds
+    WHERE shift_id = ?
+      AND status = 'completed'
+      AND method = 'cash'
+  `).get(shiftId) as { total_cents: number; count: number } | undefined;
+  if (!row) return { totalCents: 0, count: 0 };
+  return {
+    totalCents: Number(row.total_cents) || 0,
+    count: Number(row.count) || 0,
   };
 }
 
@@ -735,7 +758,8 @@ export function getShiftReconciliationPreview(input: {
   }
   assertCashierTerminalAccess(input.actor, shift, input.terminalId);
   const summary = getShiftPaymentSummary(shift.id);
-  const liveExpectedCashCents = shift.opening_float_cents + summary.cash_payment_total_cents;
+  const liveExpectedCashCents =
+    shift.opening_float_cents + summary.cash_payment_total_cents - summary.cash_refund_total_cents;
 
   if (shift.status === 'closed') {
     return {
@@ -759,11 +783,11 @@ export function getShiftReconciliationPreview(input: {
 }
 
 /**
- * M5-D — Compute close-time reconciliation for a shift (read + derive; no writes).
+ * M5-D / M6 — Compute close-time reconciliation for a shift (read + derive; no writes).
  *
- * expected = opening_float + cash payment total
+ * expected = opening_float + cash payment total - cash refund total
  * variance = counted === null ? null : counted - expected
- * Refunds contribute zero until M6.
+ * Only method === 'cash' refunds (isResolvedCashPaymentMethod) affect expected cash.
  */
 function computeShiftReconciliation(
   shiftId: number,
@@ -774,7 +798,8 @@ function computeShiftReconciliation(
     throw new ShiftServiceError(404, 'Shift not found', 'SHIFT_NOT_FOUND');
   }
   const cash = aggregateCashPaymentsForShift(shiftId);
-  const expectedCashCents = shift.opening_float_cents + cash.totalCents;
+  const cashRefunds = sumCashRefundsForShift(shiftId);
+  const expectedCashCents = shift.opening_float_cents + cash.totalCents - cashRefunds.totalCents;
   return {
     expectedCashCents,
     varianceCents: countedCashCents === null ? null : countedCashCents - expectedCashCents,
@@ -784,10 +809,13 @@ function computeShiftReconciliation(
 }
 
 /**
- * M5-C — Compute expected drawer cash for a shift (read-only).
+ * M5-C / M6 — Compute expected drawer cash for a shift (read-only).
  *
- * Formula: opening_float_cents + SUM(qualifying cash applied amounts on bills WHERE shift_id = shift).
- * Attribution uses bills.shift_id only; NULL bill shift_id contributes zero.
+ * Formula:
+ *   opening_float_cents
+ *   + SUM(qualifying cash applied amounts on bills WHERE shift_id = shift)
+ *   - SUM(completed cash refunds WHERE refunds.shift_id = shift)
+ * Attribution uses bills.shift_id for payments and refunds.shift_id for refunds.
  * Does not write expected_cash_cents or variance_cents (M5-D persists those at close).
  *
  * Concurrent payment writes may change the result between calls; close-time persistence is M5-D.
@@ -797,6 +825,8 @@ export function computeExpectedCashCents(shiftId: number): number {
   if (!shift) {
     throw new ShiftServiceError(404, 'Shift not found', 'SHIFT_NOT_FOUND');
   }
-  return shift.opening_float_cents + aggregateCashPaymentsForShift(shiftId).totalCents;
+  const cash = aggregateCashPaymentsForShift(shiftId);
+  const cashRefunds = sumCashRefundsForShift(shiftId);
+  return shift.opening_float_cents + cash.totalCents - cashRefunds.totalCents;
 }
 

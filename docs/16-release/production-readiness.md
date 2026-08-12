@@ -1,6 +1,8 @@
 # Production Readiness
 
-## CURRENT STATE assessment (FloCafe v3.0.5)
+> Canonical direction: [`STRATEGY.md`](../../STRATEGY.md). Current product: **Nexora POS**. KPI: 3 cafés × 30 days × zero critical failures.
+
+## CURRENT STATE assessment (Nexora POS / FloCafe v3.0.5)
 
 | Area | Status | Notes |
 |------|--------|-------|
@@ -12,8 +14,9 @@
 | Backup | ✅ Ready | Tested restore |
 | Migrations | ✅ Ready | Upgrade path tested |
 | Monitoring | ❌ Gap | No centralized ops |
-| Shifts/refunds | ❌ Gap | Not built |
-| Multi-location | ❌ Gap | Not built |
+| Shifts / cash / day close | ✅ Ready | M4–M5 (schema v71); opt-in settings |
+| Refunds | ❌ Gap | M6 not built — P0 blocker |
+| Multi-location | ❌ Gap | PLANNED; ADR-006 first; frozen until pilots |
 
 ## RestaurantOS production criteria (TARGET)
 

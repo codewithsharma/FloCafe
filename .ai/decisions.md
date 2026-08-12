@@ -1,5 +1,33 @@
 # Decisions
 
+## 2026-08-12 — Day-close cash refunds (Accepted)
+
+Day-close summary reuses `getShiftPaymentSummary` from `shift.ts` (no second refund formula). Exposes `cash_payment_total_cents` (Cash In), `cash_refund_total_cents`, `net_cash_movement_cents`. Persisted shift `expected_cash_cents` remain authoritative for drawer expected; closed shifts stay immutable; late cash refunds stay on the open shift.
+
+## 2026-08-12 — P0.2 financial hardening (Accepted)
+
+CEO+CTO approved after YELLOW P0.2 audit. M6 refund architecture unchanged.
+
+- **Re-pay:** `payment_status=refunded` → reject `BILL_ALREADY_REFUNDED`. Fully tendered bills (gross `payment_details` ≥ total) reject `BILL_NO_OUTSTANDING_BALANCE` even if net `paid_amount` dropped after refund. No bill reopen — new bill/order required.
+- **Reporting:** Gross Sales / Refunds / Net Sales / Payments Received / Net Cash Movement documented in `docs/15-project-management/reporting-financial-semantics.md`. `paid_amount` = net; `payment_details` = gross tender.
+- **Audit:** successful payments emit `payment.received` inside the same `withTxn` as the mutation.
+- **Idempotency:** `Idempotency-Key` mandatory on payment mutations (`PAYMENT_IDEMPOTENCY_REQUIRED`). Frontend already sent keys.
+
+## 2026-08-12 — M6 Refund model (Accepted)
+
+See `docs/14-decisions/ADR-009-refund-model.md` (Accepted) and `docs/15-project-management/m6-refund-architecture.md` (APPROVED).
+Locked: always PIN; cash refunds only affect recon; card = record-only; no cashback clawback; print/UI deferred; method must match payment line; refundable from original collected − completed refunds.
+
+## 2026-08-12 — Nexora POS mandate (CEO + CTO)
+
+- **Current product name:** Nexora POS (local-first café POS). **Future platform:** Nexora RestaurantOS. Do not conflate.
+- **North-star KPI:** 3 cafés × 30 days × zero critical failures before RestaurantOS depth.
+- **Freeze until pilots:** AI, aggregators, multi-tenant SaaS, multi-location implementation, ERP inventory, payment terminals, Bluetooth print, microservices/K8s, architecture rewrites.
+- **Keep architecture:** Electron + SQLite per store + Express monolith + optional cloud that never blocks billing.
+- **Refactor rule:** improve service boundaries only when touching a domain (e.g. refunds → billing paths); no giant rewrite.
+- **Branding:** prefer Nexora / Nexora POS / Nexora RestaurantOS; no new product names; no mass rename without migration plan.
+- **Canonical docs:** `STRATEGY.md`; execution backlog in `.ai/tasks.md`.
+
 See `docs/14-decisions/ADR-007-shift-model.md` (per-terminal shift).
 
 M4-C choices:

@@ -39,6 +39,11 @@ function main(): void {
   assert.ok(DAY_CLOSE_CARD.includes('open_shifts_warning'), 'card shows open-shift warning');
   assert.ok(DAY_CLOSE_CARD.includes("role === 'owner'") || DAY_CLOSE_CARD.includes("role === \"owner\""), 'owner gate');
   assert.ok(DAY_CLOSE_CARD.includes('manager'), 'manager gate');
+  assert.ok(DAY_CLOSE_CLIENT.includes('cash_refund_total_cents'), 'client types cash refunds');
+  assert.ok(DAY_CLOSE_CLIENT.includes('net_cash_movement_cents'), 'client types net cash');
+  assert.ok(DAY_CLOSE_CARD.includes('dayClose.cashIn'), 'card shows Cash In');
+  assert.ok(DAY_CLOSE_CARD.includes('dayClose.cashRefunds'), 'card shows Cash Refunds');
+  assert.ok(DAY_CLOSE_CARD.includes('dayClose.netCash'), 'card shows Net Cash');
   console.log('   ✓ DayCloseCard contract');
 
   assert.ok(OPERATIONS_PAGE.includes('DayCloseCard'), 'operations wires DayCloseCard');

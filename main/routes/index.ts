@@ -31,6 +31,7 @@ import { whatsappRoutes } from './whatsapp';
 import { supportTicketRoutes } from './support-ticket';
 import { auditLogRoutes } from './audit-logs';
 import { shiftRoutes } from './shifts';
+import { refundRoutes } from './refunds';
 import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
 import { getDatabase, now, parseItemJson, attachEffectiveAddons, withTxn, getSettingValue, getCachedPairingCode, setCachedPairingCode, verifyPin } from '../db';
@@ -80,6 +81,8 @@ export function registerRoutes(app: Express): void {
   app.use('/api/order-items', orderItemRoutes);
   app.use('/api/kitchen', kitchenRoutes);
   app.use('/api/bills', billRoutes);
+  app.use('/api/bills', refundRoutes);
+  app.use('/api/refunds', refundRoutes);
   app.use('/api/tables', tableRoutes);
   app.use('/api/kitchen-stations', kitchenStationRoutes);
   app.use('/api/customers', customerRoutes);
@@ -468,8 +471,8 @@ export function registerRoutes(app: Express): void {
           `).run(subtotal, taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, newDiscountAmount, total, roundOff, now(), orderId);
         }
 
-        // Sync bill if it exists
-        const existingBill = db.prepare("SELECT * FROM bills WHERE order_id = ? AND payment_status != 'paid'").get(orderId) as any;
+        // Sync bill if it exists (open unpaid/partial only — never rewrite refunded bills)
+        const existingBill = db.prepare("SELECT * FROM bills WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')").get(orderId) as any;
         if (existingBill) {
           const pack = getActiveCountryPack(tenantInfo.country);
           const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(total, pack);
@@ -627,8 +630,8 @@ export function registerRoutes(app: Express): void {
           UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?, updated_at = ? WHERE id = ?
         `).run(subtotal, taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, newDiscountAmount, total, roundOff, now(), orderId);
 
-        // Sync bill if it exists
-        const existingBill = db.prepare("SELECT * FROM bills WHERE order_id = ? AND payment_status != 'paid'").get(orderId) as any;
+        // Sync bill if it exists (open unpaid/partial only — never rewrite refunded bills)
+        const existingBill = db.prepare("SELECT * FROM bills WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')").get(orderId) as any;
         if (existingBill) {
           const pack = getActiveCountryPack(tenantInfo.country);
           const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(total, pack);

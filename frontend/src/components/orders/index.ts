@@ -9,6 +9,8 @@ export { CancelOrderDialog } from './CancelOrderDialog';
 export type { CancelOrderState } from './CancelOrderDialog';
 export { VoidItemDialog } from './VoidItemDialog';
 export type { VoidItemState } from './VoidItemDialog';
+export { RefundDialog } from './RefundDialog';
+export type { RefundDialogState } from './RefundDialog';
 export { DiscountDialog } from './DiscountDialog';
 export type { DiscountState } from './DiscountDialog';
 export { AddItemsDialog } from './AddItemsDialog';

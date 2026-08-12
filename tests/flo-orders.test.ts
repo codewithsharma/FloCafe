@@ -49,6 +49,12 @@ function main(): void {
   assert.ok(ordersPage.includes('PrintConfirmDialog'), 'orders page uses PrintConfirmDialog');
   assert.ok(ordersPage.includes('CancelOrderDialog'), 'orders page uses CancelOrderDialog');
   assert.ok(ordersPage.includes('VoidItemDialog'), 'orders page uses VoidItemDialog');
+  assert.ok(ordersPage.includes('RefundDialog'), 'orders page uses RefundDialog');
+  assert.ok(ordersPage.includes('handleRefund'), 'orders page includes handleRefund');
+  assert.ok(
+    ordersPage.includes('postBillRefund') || ordersPage.includes("'/bills/") || ordersPage.includes('/bills/'),
+    'orders page refunds via /bills/ path',
+  );
   assert.ok(ordersPage.includes('DiscountDialog'), 'orders page uses DiscountDialog');
   assert.ok(ordersPage.includes('AddItemsDialog'), 'orders page uses AddItemsDialog');
   assert.ok(ordersPage.includes('Idempotency-Key'), 'add items idempotency key preserved');
@@ -59,6 +65,7 @@ function main(): void {
   assert.ok(fs.existsSync(path.join(FRONTEND, 'components/orders/HeldOrderCard.tsx')), 'HeldOrderCard exists');
   assert.ok(fs.existsSync(path.join(FRONTEND, 'components/orders/index.ts')), 'orders index exists');
   assert.ok(fs.existsSync(path.join(FRONTEND, 'components/orders/AddItemsDialog.tsx')), 'AddItemsDialog exists');
+  assert.ok(fs.existsSync(path.join(FRONTEND, 'components/orders/RefundDialog.tsx')), 'RefundDialog exists');
   console.log('   ✓ orders components exist');
 
   const printDialog = read('components/orders/PrintConfirmDialog.tsx');
@@ -72,7 +79,17 @@ function main(): void {
   assert.ok(orderCard.includes('StatusBadge'), 'OrderCard uses StatusBadge');
   assert.ok(orderCard.includes('MoneyDisplay') || orderCard.includes('orderStatusVariant'), 'OrderCard uses Flo money or status helpers');
   assert.ok(orderCard.includes('orderStatusVariant'), 'OrderCard uses orderStatusVariant');
+  assert.ok(orderCard.includes('onRefund'), 'OrderCard includes onRefund');
+  assert.ok(orderCard.includes('canRefund'), 'OrderCard includes canRefund');
   console.log('   ✓ OrderCard flo styling');
+
+  const refundDialog = read('components/orders/RefundDialog.tsx');
+  assert.ok(refundDialog.includes('Dialog'), 'RefundDialog uses Dialog');
+  assert.ok(refundDialog.includes('border-flo-border'), 'RefundDialog uses flo tokens');
+  assert.ok(refundDialog.includes('min-h-11'), 'RefundDialog uses min-h-11 buttons');
+  assert.ok(refundDialog.includes('overridePin'), 'RefundDialog has overridePin');
+  assert.ok(refundDialog.includes('reason'), 'RefundDialog has reason');
+  console.log('   ✓ RefundDialog flo styling');
 
   const heldCard = read('components/orders/HeldOrderCard.tsx');
   assert.ok(heldCard.includes('Panel'), 'HeldOrderCard uses Panel');
