@@ -271,7 +271,7 @@ export function registerIpcHandlers(): void {
     activeKdsWindow = new BrowserWindow({
       width: 1200,
       height: 800,
-      title: 'Flo - Kitchen Display',
+      title: 'Nexora - Kitchen Display',
       webPreferences: {
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true,

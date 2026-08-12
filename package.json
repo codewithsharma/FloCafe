@@ -49,7 +49,13 @@
     "test:static-routes": "node tests/run-electron-node-test.cjs tests/static-route-resolution.test.ts",
     "test:notes-validation": "ts-node --transpile-only -P tests/tsconfig.json tests/order-notes-validation.test.ts",
     "test:first-run": "node tests/run-electron-node-test.cjs tests/first-run-setup.test.ts && node tests/run-electron-node-test.cjs tests/setup-failure-recovery.test.ts",
-    "test:security": "node tests/run-electron-node-test.cjs tests/security-hardening.test.ts && node tests/run-electron-node-test.cjs tests/audit-log.test.ts",
+    "test:security": "node tests/run-electron-node-test.cjs tests/security-hardening.test.ts && node tests/run-electron-node-test.cjs tests/audit-log.test.ts && node tests/run-electron-node-test.cjs tests/shift-schema.test.ts && node tests/run-electron-node-test.cjs tests/shift-service.test.ts && npm run test:terminal-identity && npm run test:shift-client && npm run test:shift-ui && npm run test:shift-e3 && node tests/run-electron-node-test.cjs tests/cash-payment-gate.test.ts && node tests/run-electron-node-test.cjs tests/shift-enforcement.test.ts",
+    "test:shift-client": "ts-node --transpile-only -P tests/tsconfig.json tests/shift-client.test.ts",
+    "test:shift-ui": "ts-node --transpile-only -P tests/tsconfig.json tests/shift-ui.test.ts",
+    "test:shift-e3": "ts-node --transpile-only -P tests/tsconfig.json tests/shift-e3.test.ts",
+    "test:cash-payment-gate": "node tests/run-electron-node-test.cjs tests/cash-payment-gate.test.ts",
+    "test:shift-enforcement": "node tests/run-electron-node-test.cjs tests/shift-enforcement.test.ts",
+    "test:terminal-identity": "ts-node --transpile-only -P tests/tsconfig.json tests/terminal-identity.test.ts",
     "test:staff-authz": "node tests/run-electron-node-test.cjs tests/staff-authz.test.ts",
     "test:orders-authz": "node tests/run-electron-node-test.cjs tests/orders-authz.test.ts",
     "test:authz-phase3": "node tests/run-electron-node-test.cjs tests/authz-matrix-phase3.test.ts",
@@ -126,7 +132,7 @@
     "test:m1-gate": "ts-node --transpile-only -P tests/tsconfig.json tests/m1-engineering-gate.test.ts"
   },
   "author": {
-    "name": "Flo",
+    "name": "Nexora",
     "email": "support@flo.local"
   },
   "homepage": "https://flopos.com",
@@ -182,7 +188,7 @@
   },
   "build": {
     "appId": "com.flo.desktop",
-    "productName": "Flo Cafe",
+    "productName": "Nexora",
     "icon": "assets/icon-512.png",
     "afterPack": "scripts/afterPack.js",
     "asar": true,
@@ -228,7 +234,7 @@
       "publisherDisplayName": "Codify Apps Private Limited",
       "identityName": "CodifyAppsPrivateLimited.FloCafe",
       "publisher": "CN=34AFD24D-EC88-44B8-B309-08BB8A6BB5F7",
-      "displayName": "Flo Cafe",
+      "displayName": "Nexora",
       "languages": [
         "en-US"
       ]
@@ -332,7 +338,7 @@
       ],
       "desktop": {
         "entry": {
-          "Name": "Flo Cafe",
+          "Name": "Nexora",
           "Comment": "Free, open-source POS for cafes and restaurants",
           "GenericName": "Point of Sale",
           "Keywords": "pos;point of sale;restaurant;cafe;billing;invoice;",

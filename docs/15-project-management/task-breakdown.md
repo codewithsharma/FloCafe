@@ -25,7 +25,17 @@
 
 - [x] M2: Privacy consent UX (telemetry + diagnostics)
 - [x] M3: Design + implement `audit_logs` schema + API
-- [ ] M4: Shift open/close UI + API
+- [x] M4-A: Shift management RFC / design
+- [x] M4-B: Shift schema migration (v69) + settings seeds
+- [x] M4-C: Shift service + API
+- [x] M4-D1: Terminal identity & client attribution
+- [x] M4-D2: Order shift integration
+- [x] M4-D3: Bill payment shift integration
+- [x] M4-D4: Cash payment gate
+- [x] M4-D5: Shift enforcement foundation
+- [x] M4-E1: Shift UI client foundation
+- [x] M4-E2: Shift status & open/close UI
+- [x] M4-E3: Shift UI polish (stale warnings + history)
 - [ ] M5: Cash reconciliation + day close
 - [ ] M6: Refund workflow
 - [ ] M7: Wire audit into remaining void/cancel paths (partial: item cancel in M3)

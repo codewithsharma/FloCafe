@@ -387,7 +387,7 @@ export function TaxConfigurationPanel({ isOwner }: { isOwner: boolean }) {
   // plugin exists for this country. An already-installed pack (even inactive)
   // answers this without a network call; otherwise we ask the catalog once.
   // A failed/offline catalog check leaves it `null` (unknown) rather than
-  // wrongly disabled — FloCafe must keep working without internet access.
+  // wrongly disabled — Nexora must keep working without internet access.
   const officialPackInstalled = useMemo(
     () => packs.some((pack) => pack.country === storeCountry && pack.publisher !== 'local'),
     [packs, storeCountry],
@@ -727,7 +727,7 @@ export function TaxConfigurationPanel({ isOwner }: { isOwner: boolean }) {
         <div>
           <h2 className="text-xl font-semibold text-gray-900">Tax configuration</h2>
           <p className="mt-1 text-sm text-gray-500">
-            Enable the verified tax rules for your store country. FloCafe applies the standard
+            Enable the verified tax rules for your store country. Nexora applies the standard
             product tax group automatically; exceptions can be changed per product.
           </p>
         </div>
@@ -788,15 +788,15 @@ export function TaxConfigurationPanel({ isOwner }: { isOwner: boolean }) {
           </button>
         </div>
         <p className="mt-3 text-sm text-gray-600">
-          {taxMode === 'off' && 'FloCafe is using the generic no-tax profile. No tax is calculated or printed.'}
-          {taxMode === 'official' && `FloCafe is using the verified plugin for ${storeCountry}.`}
-          {taxMode === 'manual' && `FloCafe is using your manual tax configuration for ${storeCountry}.`}
+          {taxMode === 'off' && 'Nexora is using the generic no-tax profile. No tax is calculated or printed.'}
+          {taxMode === 'official' && `Nexora is using the verified plugin for ${storeCountry}.`}
+          {taxMode === 'manual' && `Nexora is using your manual tax configuration for ${storeCountry}.`}
           {manualBuilderOpen && taxMode !== 'manual' && ' Not saved yet — configure your rates below, then save to activate.'}
         </p>
         {countryPackUnavailable && (
           <p role="status" className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
             Tax support for {storeCountry} is not available yet. We have requested the plugin
-            from the FloCafe team and will build it soon. Taxes remain off until it is ready.
+            from the Nexora team and will build it soon. Taxes remain off until it is ready.
             {pluginRequested && ' Your request is queued for the team.'}
           </p>
         )}
@@ -970,7 +970,7 @@ export function TaxConfigurationPanel({ isOwner }: { isOwner: boolean }) {
             <ShieldCheck size={20} className="text-brand" />
             <h3 className="font-semibold text-gray-900">Installed country packs</h3>
           </div>
-          <span className="text-xs text-gray-500">FloCafe selects the plugin for {storeCountry} automatically.</span>
+          <span className="text-xs text-gray-500">Nexora selects the plugin for {storeCountry} automatically.</span>
         </div>
 
         {selectedPack && detail ? (

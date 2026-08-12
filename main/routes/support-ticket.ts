@@ -129,7 +129,7 @@ router.post('/', requireRole(...supportRoles), async (req: Request, res: Respons
     ...queued,
     status: queued.queued ? 'queued' : 'unavailable',
     message: queued.queued
-      ? 'Your request is queued and will be sent when FloCafe is online.'
+      ? 'Your request is queued and will be sent when Nexora is online.'
       : 'Cloud data deletion is in progress; please try again later.',
   });
 });

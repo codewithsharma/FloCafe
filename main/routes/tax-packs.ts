@@ -378,7 +378,7 @@ export function validationChecklist(
     && pack.version === version.version && pack.effectiveFrom === version.effective_from,
   'Valid, internally consistent version and effective-date range');
   add(4, semverAtLeast(APP_VERSION, pack.minFloVersion),
-    `FloCafe ${APP_VERSION} satisfies minimum compatible version ${pack.minFloVersion}`);
+    `Nexora ${APP_VERSION} satisfies minimum compatible version ${pack.minFloVersion}`);
   add(5, version.digest === createHash('sha256').update(version.pack_json).digest('hex'), 'Stored artifact digest matches');
   const bundledDefinition = BUNDLED_PACKS_BY_ID.get(pack.id);
   const legacyTrustedDigest = LEGACY_TRUSTED_PACK_DIGESTS[pack.id];

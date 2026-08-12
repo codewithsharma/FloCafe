@@ -21,6 +21,7 @@ import { InitializeDatabaseDialog } from '@/components/settings/InitializeDataba
 import { WhatsAppEnableCard } from '@/components/settings/WhatsAppEnableCard';
 import { TaxConfigurationPanel } from '@/components/settings/TaxConfigurationPanel';
 import { PaymentMethodsSettings } from '@/components/settings/PaymentMethodsSettings';
+import ShiftHistoryPanel from '@/components/shifts/ShiftHistoryPanel';
 import type { HealthCheckReport } from '@/types/electron';
 import { useI18n } from '@/hooks/useI18n';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -2053,6 +2054,9 @@ export default function SettingsPage() {
               <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400">{t('settings.navGroupOperations')}</p>
             </div>
             <SettingsNavItem label={t('settings.posWorkflow')} value="pos" active={activeTab} onClick={setActiveTab} />
+            {canViewTaxConfiguration && (
+              <SettingsNavItem label={t('settings.tabShifts')} value="shifts" active={activeTab} onClick={setActiveTab} />
+            )}
             <SettingsNavItem label={t('settings.tabKds')} value="kds" active={activeTab} onClick={setActiveTab} />
             <SettingsNavItem label={t('settings.tablesideOrdering')} value="server-app" active={activeTab} onClick={setActiveTab} />
             {/* WhatsApp opt-in lives under Operations because the receive-bill
@@ -2382,6 +2386,12 @@ export default function SettingsPage() {
         {canViewTaxConfiguration && (
           <TabsContent value="tax">
             <TaxConfigurationPanel isOwner={currentTenant?.role === 'owner'} />
+          </TabsContent>
+        )}
+
+        {canViewTaxConfiguration && (
+          <TabsContent value="shifts">
+            <ShiftHistoryPanel />
           </TabsContent>
         )}
 
@@ -3185,7 +3195,7 @@ export default function SettingsPage() {
                 )}
                 <div className="mt-4 flex flex-wrap gap-3">
                   <Button variant="outline" onClick={async () => {
-                    if (!await confirm('Stop all FloCafe cloud services, identified diagnostics, and future anonymous telemetry on this device? Local POS data will remain available.')) return;
+                    if (!await confirm('Stop all Nexora cloud services, identified diagnostics, and future anonymous telemetry on this device? Local POS data will remain available.')) return;
                     try {
                       const { data } = await api.post('/settings/cloud/stop-all');
                       setCloudStatus({
@@ -4121,7 +4131,7 @@ export default function SettingsPage() {
                       {cloudStatus.cloud_registration_status === 'deletion_pending' && (cloudStatus.cloud_last_error || cloudStatus.cloud_deletion_status === 'failed') && 'The deletion request failed. You can refresh its status or retry the request from the privacy controls below.'}
                       {cloudStatus.cloud_registration_status === 'deletion_pending' && cloudStatus.cloud_deletion_status === 'processing' && 'Cloud deletion is being processed. Refresh its status or cancel it if cancellation is available.'}
                       {cloudStatus.cloud_registration_status === 'deletion_pending' && !cloudStatus.cloud_last_error && cloudStatus.cloud_deletion_status !== 'failed' && cloudStatus.cloud_deletion_status !== 'processing' && 'Cloud services remain stopped until the deletion request is resolved.'}
-                      {cloudStatus.cloud_registration_status === 'deleted' && 'Cloud data has been deleted from FloCafe servers. Cloud services cannot be re-enabled on this installation.'}
+                      {cloudStatus.cloud_registration_status === 'deleted' && 'Cloud data has been deleted from Nexora servers. Cloud services cannot be re-enabled on this installation.'}
                       {cloudStatus.cloud_registration_status === 'unregistered' && t('settings.registrationRegisterHelp')}
                     </p>
                   </div>
@@ -4329,7 +4339,7 @@ export default function SettingsPage() {
         <TabsContent value="about">
           <div className="pb-6 max-w-3xl space-y-6">
             <div className="bg-white rounded-xl border border-gray-100 p-6">
-              <h2 className="font-semibold text-gray-900 mb-4">{t('settings.aboutFloCafe')}</h2>
+              <h2 className="font-semibold text-gray-900 mb-4">{t('settings.aboutNexora')}</h2>
               <p className="text-sm text-gray-600 mb-6">
                 {t('settings.aboutDescription')}
               </p>

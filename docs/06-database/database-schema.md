@@ -1,11 +1,11 @@
 # Database Schema
 
-Schema version **68**. Authoritative sources: `main/db.ts` (`createSchema()`, `MIGRATIONS[]`, helper schema functions).
+Schema version **69**. Authoritative sources: `main/db.ts` (`createSchema()`, `MIGRATIONS[]`, helper schema functions).
 
-## Table count: 41 live tables
+## Table count: 42 live tables
 
 - **23 tables** created by `createSchema()` on fresh install (migration v1)
-- **18 additional tables** added by later migrations and helpers (`createCloudSyncSchema()`, `createWhatsAppSchema()`, migration v68 `audit_logs`, etc.)
+- **19 additional tables** added by later migrations and helpers (`createCloudSyncSchema()`, `createWhatsAppSchema()`, migration v68 `audit_logs`, migration v69 `shifts`, etc.)
 
 See `06-database/data-model.md` for the full entity list.
 

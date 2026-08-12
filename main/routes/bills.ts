@@ -23,6 +23,12 @@ import {
 } from '../services/tax';
 import { applyPayableRounding } from '../services/tax-engine';
 import { sendEvent } from '../services/telemetry';
+import {
+  assertOpenShiftForCashPayment,
+  readTerminalIdHeaderFromRequest,
+  resolveActiveShiftForTerminal,
+} from '../services/shift';
+
 
 const router = Router();
 
@@ -621,6 +627,7 @@ function applyPaymentBatch(
   idempotencyKey?: string | null,
   requestHash?: string,
   idempotencyUserId?: string,
+  terminalIdHeader?: string,
 ): { bill: any; walletDebited: boolean; loyaltyPointsEarned: number } {
   if (idempotencyKey && idempotencyUserId) {
     // `legacy` is an append-only compatibility owner for pre-user-scoped
@@ -649,6 +656,9 @@ function applyPaymentBatch(
   );
   if (idempotentReplay) {
     return { bill: parseRowJson(db.prepare('SELECT * FROM bills WHERE id = ?').get(billId)), walletDebited: false, loyaltyPointsEarned: 0 };
+  }
+  if (prepared.some((line) => line.payment.method === 'cash' && line.amountCents > 0)) {
+    assertOpenShiftForCashPayment(terminalIdHeader);
   }
   const totalAppliedCents = prepared.reduce((sum, line) => sum + line.amountCents, 0);
   const oldPaidCents = Math.round(Number(bill.paid_amount || 0) * 100);
@@ -679,6 +689,16 @@ function applyPaymentBatch(
       insertTransactionRef.run(methodKey, line.payment.transaction_id, billId, changedAt);
     }
   }
+
+  // M4-D3 — First payment establishes bill.shift_id attribution.
+  // Never overwrite an already populated bills.shift_id (e.g. from prior partial payments).
+  if (bill.shift_id === null || bill.shift_id === undefined) {
+    const activeShiftId = resolveActiveShiftForTerminal(terminalIdHeader);
+    if (activeShiftId !== null) {
+      db.prepare('UPDATE bills SET shift_id = ?, updated_at = ? WHERE id = ?').run(activeShiftId, changedAt, billId);
+    }
+  }
+
   if (!bill.customer_id && effectiveCustomerId) db.prepare('UPDATE bills SET customer_id = ?, updated_at = ? WHERE id = ?').run(effectiveCustomerId, changedAt, billId);
   db.prepare(`UPDATE bills SET paid_amount = ?, balance = ?, payment_status = ?, payment_details = ?, paid_at = CASE WHEN ? = 'paid' THEN ? ELSE paid_at END, updated_at = ? WHERE id = ?`).run(newPaidCents / 100, newBalanceCents / 100, paymentStatus, JSON.stringify(allPayments), paymentStatus, paymentStatus === 'paid' ? changedAt : null, changedAt, billId);
   let loyaltyPointsEarned = 0;
@@ -720,6 +740,7 @@ router.post('/:id/payment', requireRole('owner', 'manager', 'cashier'), (req: Re
     const result = withTxn(() => applyPaymentBatch(
       db, req.params.id as string, [payment], payment.customer_id, true,
       paymentIdempotencyKey(req), requestHash, String((req as any).user.userId),
+      readTerminalIdHeaderFromRequest(req),
     ));
 
     const billStatus = (result.bill as any)?.payment_status;
@@ -754,6 +775,7 @@ router.post('/:id/payments', requireRole('owner', 'manager', 'cashier'), (req: R
     const result = withTxn(() => applyPaymentBatch(
       db, req.params.id as string, payments, bodyCustomerId, false,
       paymentIdempotencyKey(req), requestHash, String((req as any).user.userId),
+      readTerminalIdHeaderFromRequest(req),
     ));
 
     const billStatus = (result.bill as any)?.payment_status;
@@ -762,6 +784,7 @@ router.post('/:id/payments', requireRole('owner', 'manager', 'cashier'), (req: R
 
     res.json(result);
   } catch (error: any) {
+
     const statusCode = error.statusCode || 500;
     console.error('[API] Batch bill payment failed:', error);
     res.status(statusCode).json({ error: statusCode >= 500 ? 'Bill payment failed' : error.message });

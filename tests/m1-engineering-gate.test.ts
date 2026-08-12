@@ -34,7 +34,7 @@ function run() {
   const maxVersion = Math.max(
     ...versionMatch.map((entry) => Number(entry.replace(/\D/g, ''))),
   );
-  assert.equal(maxVersion, 68, 'M3 adds migration v68 for audit_logs table');
+  assert.equal(maxVersion, 69, 'M4-B adds migration v69 for shift foundation');
 
   console.log('✅ M1 engineering gate checks passed');
 }

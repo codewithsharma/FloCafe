@@ -6,8 +6,8 @@ import { Toaster } from 'react-hot-toast';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Flo Server App',
-  description: 'Tableside ordering for FloCafe',
+  title: 'Nexora Server App',
+  description: 'Tableside ordering for Nexora',
 };
 
 export default function ServerStandaloneLayout({

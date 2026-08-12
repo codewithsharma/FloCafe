@@ -15,6 +15,7 @@
 - Database tools: owner + master PIN
 - Tax config: owner, manager
 - Product/stock changes: owner, manager
+- Shifts (M4-C): open/close/active — owner, manager, cashier; list/get/force-close — owner, manager. Waiter/chef denied. Cashier close requires matching `terminal_id`.
 
 ### Manager PIN
 Required for:

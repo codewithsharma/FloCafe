@@ -25,7 +25,7 @@ FloCafe maintains a centralized **append-only** business audit log in SQLite (`a
 | `result` | TEXT | `success` or `failure` |
 | `reason` | TEXT | Optional short reason |
 | `metadata_json` | TEXT | Bounded JSON context (sanitized) |
-| `terminal_id` | TEXT | POS/terminal when known (`cloud_pos_id` setting) |
+| `terminal_id` | TEXT | POS/terminal when known (shift `terminal_id` when provided; otherwise `cloud_pos_id`) |
 | `request_id` | TEXT | Correlation id for cross-log lookup |
 | `created_at` | TEXT | UTC timestamp |
 
@@ -71,6 +71,7 @@ For business mutations wrapped in `withTxn()`:
 | `auth.login.failure` | Failed login (no password stored) |
 | `staff.created` / `staff.updated` / `staff.deactivated` / `staff.reactivated` | Staff mutations |
 | `order.item_voided` / `order.item_cancelled` / `order.cancelled` | Item cancel endpoint |
+| `shift.opened` / `shift.closed` / `shift.force_closed` | M4-C shift service (inside the same `withTxn()` as the mutation) |
 
 ### Retention
 
@@ -80,6 +81,7 @@ No automatic purge in M3. Operational guidance: monitor `audit_logs` row count; 
 
 - UI audit viewer in Settings (owner)
 - Full void/cancel/order-level coverage (M7)
-- Payment/refund/shift audit entries (M4–M6)
+- Payment/refund audit entries (M5–M6)
+- Shift POS enforcement and UI (M4-D/E)
 - Optional export for accountants
 - Configurable retention policy

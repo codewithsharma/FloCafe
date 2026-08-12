@@ -221,7 +221,7 @@ export default function SetupPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted px-4 py-12">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
-          <img src="/logo.png" alt="Flo" width={80} height={52} className="mx-auto mb-4" />
+          <img src="/logo.png" alt="Nexora" width={80} height={53} className="mx-auto mb-4" />
           <h1 className="text-3xl font-bold">{t('setup.welcome')}</h1>
           <p className="text-muted-foreground mt-2">{t('setup.tagline')}</p>
         </div>
@@ -672,7 +672,7 @@ export default function SetupPage() {
                   />
                   <span>
                     <span className="font-medium text-foreground">Cloud Services are enabled automatically</span>
-                    <span className="block text-sm text-muted-foreground mt-1">FloCafe connects automatically so RevFlo pairing and support work without a manual approval step.</span>
+                    <span className="block text-sm text-muted-foreground mt-1">Nexora connects automatically so RevFlo pairing and support work without a manual approval step.</span>
                   </span>
                 </label>
 

@@ -35,8 +35,37 @@
 
 ## M4 — Shift open/close
 
-**Target:** Cashier session tracking with opening float  
+**Target:** Cashier session tracking with opening float
+
 **Exit criteria:** Shift lifecycle integration test; single active shift policy enforced
+
+**Design:** [`m4-shift-management-rfc.md`](m4-shift-management-rfc.md) — **DESIGN READY** (M4-A)
+
+**Schema:** Migration v69 — **COMPLETE** (M4-B)
+
+**Service + API:** **COMPLETE** (M4-C)
+
+**Terminal identity:** **COMPLETE** (M4-D1) — per-origin `flo_terminal_id` + `X-Flo-Terminal-Id` on POS order/payment/shift requests. Host `settings.terminal_id` unchanged.
+
+**Order shift integration:** **COMPLETE** (M4-D2) — initial `POST /api/orders` assigns `orders.shift_id` when active shift exists for request terminal. Immutable on subsequent order updates.
+
+**Bill payment shift integration:** **COMPLETE** (M4-D3) — initial payment on bill assigns `bills.shift_id` when active shift exists for payment terminal. Immutable on subsequent partial payments; independent from `orders.shift_id`.
+
+**Cash payment gate:** **COMPLETE** (M4-D4) — when `shifts_enabled=true` and `require_open_shift_for_cash=true`, cash payments require an open shift for `X-Flo-Terminal-Id`. HTTP 409 when blocked. Non-cash unaffected. Default off.
+
+**Shift enforcement foundation:** **COMPLETE** (M4-D5) — `assertOpenShiftForPosTerminal()` + `requireOpenShiftForTerminal()` middleware for opt-in POS mutations. Active only when `shifts_enabled=true`. Not wired to orders/payments (soft attribution unchanged). No host fallback.
+
+**Shift UI client foundation:** **COMPLETE** (M4-E1) — `frontend/src/lib/shifts.ts` + `useShift()` hook. Fetches `GET /api/shifts/active` via browser terminal header. No polling. No visible UI yet.
+
+**Shift status & open/close UI:** **COMPLETE** (M4-E2) — StatusBar shift indicator, open/close modals, role-gated controls, integer-cent money inputs, `refresh()` after mutations. No M5 reconciliation.
+
+**Shift UI polish:** **COMPLETE** (M4-E3) — Stale-shift banner (`shift_stale_hours`), manager force-close modal, owner/manager shift history in Settings.
+
+**M5:** **NOT STARTED**
+
+**ADR:** [`ADR-007-shift-model.md`](../14-decisions/ADR-007-shift-model.md)
+
+
 
 ## M5 — Cash reconciliation & day close
 

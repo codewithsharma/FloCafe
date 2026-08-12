@@ -3623,6 +3623,55 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       `);
     },
   },
+  {
+    version: 69,
+    name: 'm4_shift_foundation',
+    up: () => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS shifts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          terminal_id TEXT NOT NULL,
+          status TEXT NOT NULL CHECK (status IN ('open', 'closed')),
+          opened_by_user_id TEXT NOT NULL,
+          closed_by_user_id TEXT,
+          opening_float_cents INTEGER NOT NULL DEFAULT 0 CHECK (opening_float_cents >= 0),
+          opening_note TEXT,
+          closing_note TEXT,
+          counted_cash_cents INTEGER CHECK (counted_cash_cents IS NULL OR counted_cash_cents >= 0),
+          opened_at TEXT NOT NULL,
+          closed_at TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (opened_by_user_id) REFERENCES users(id),
+          FOREIGN KEY (closed_by_user_id) REFERENCES users(id)
+        );
+
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_shifts_one_open_per_terminal
+          ON shifts(terminal_id) WHERE status = 'open';
+
+        CREATE INDEX IF NOT EXISTS idx_shifts_terminal_id ON shifts(terminal_id);
+        CREATE INDEX IF NOT EXISTS idx_shifts_opened_by ON shifts(opened_by_user_id);
+        CREATE INDEX IF NOT EXISTS idx_shifts_status ON shifts(status);
+        CREATE INDEX IF NOT EXISTS idx_shifts_opened_at ON shifts(opened_at);
+        CREATE INDEX IF NOT EXISTS idx_shifts_closed_at ON shifts(closed_at);
+        CREATE INDEX IF NOT EXISTS idx_shifts_terminal_closed ON shifts(terminal_id, closed_at);
+      `);
+
+      if (!getColumns(db, 'orders').includes('shift_id')) {
+        db.exec('ALTER TABLE orders ADD COLUMN shift_id INTEGER REFERENCES shifts(id)');
+      }
+      if (!getColumns(db, 'bills').includes('shift_id')) {
+        db.exec('ALTER TABLE bills ADD COLUMN shift_id INTEGER REFERENCES shifts(id)');
+      }
+      db.exec('CREATE INDEX IF NOT EXISTS idx_orders_shift_id ON orders(shift_id)');
+      db.exec('CREATE INDEX IF NOT EXISTS idx_bills_shift_id ON bills(shift_id)');
+
+      insertSettingIfMissing('shifts_enabled', 'false');
+      insertSettingIfMissing('require_open_shift_for_cash', 'false');
+      insertSettingIfMissing('shift_stale_hours', '24');
+      insertSettingIfMissing('terminal_id', '');
+    },
+  },
 ];
 
 function syncBackupBeforeMigration(fromVersion: number, toVersion: number): void {
@@ -3691,7 +3740,7 @@ export class SchemaVersionMismatchError extends Error {
     super(
       `Database schema (v${dbVersion}) is newer than this app version supports (v${appVersion}). ` +
       `This usually means another device or a previous update already upgraded this database. ` +
-      `Please update Flo Cafe to the latest version before continuing.`
+      `Please update Nexora to the latest version before continuing.`
     );
     this.name = 'SchemaVersionMismatchError';
   }

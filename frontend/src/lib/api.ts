@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { applyTerminalIdHeader } from './terminal-id';
 
 let authRedirectInProgress = false;
 
@@ -16,13 +17,15 @@ const api = axios.create({
   },
 });
 
-// Attach JWT token to every request
+// Attach JWT token to every request. Terminal id is identification only
+// (not auth) and is limited to POS order/payment/shift routes.
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    applyTerminalIdHeader(config);
   }
   return config;
 });

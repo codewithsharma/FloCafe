@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>FloCafe</h1>
+  <h1>Nexora</h1>
   <p><strong>Free, open-source, offline-first point of sale for cafés, restaurants, and small kitchens.</strong></p>
   <p>
     <a href="https://flopos.com">Website</a> ·

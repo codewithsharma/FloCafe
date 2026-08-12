@@ -112,8 +112,10 @@ async function main() {
 
   // ── Migration / schema ────────────────────────────────────────────────────
   const latestMigration = MIGRATIONS[MIGRATIONS.length - 1];
-  assert.equal(latestMigration.version, 68, 'latest migration is v68');
-  assert.equal(latestMigration.name, 'm3_audit_logs_table');
+  const m3 = MIGRATIONS.find((migration: { version: number; name: string }) => migration.version === 68);
+  assert.ok(m3, 'v68 audit log migration exists');
+  assert.equal(m3.name, 'm3_audit_logs_table');
+  assert.equal(latestMigration.version, 69, 'latest migration is v69');
 
   initDatabase();
   const db = getDatabase();
@@ -151,7 +153,7 @@ async function main() {
 
   initDatabase();
   const upgraded = getDatabase();
-  assert.equal(upgraded.pragma('user_version', { simple: true }), 68);
+  assert.equal(upgraded.pragma('user_version', { simple: true }), 69);
   assert.ok(
     upgraded.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'audit_logs'`).get(),
     'audit_logs exists after upgrade from v67',

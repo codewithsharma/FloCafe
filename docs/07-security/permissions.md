@@ -26,6 +26,19 @@ No separate permissions table — authorization is **role-based**, not attribute
 
 See `05-api/authorization.md` for route-level matrix and [`audit-logging.md`](audit-logging.md).
 
+### Shifts (M4-C)
+
+Uses existing `requireRole()` — no new permissions table.
+
+| Action | Roles |
+|--------|-------|
+| Open / get active / host terminal id | `owner`, `manager`, `cashier` |
+| Close terminal shift | `owner`, `manager`, `cashier` (cashier: `terminal_id` must match the shift) |
+| Force-close (reason required) | `owner`, `manager` |
+| List history / get by id | `owner`, `manager` |
+
+Waiters and chefs have no shift API access. POS order/payment routes are **not** shift-gated in M4-C.
+
 ## TARGET STATE (PROPOSED)
 - Optional fine-grained permissions table if enterprise customers require it
 - Keep role-based as default for simplicity

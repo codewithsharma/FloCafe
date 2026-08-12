@@ -1,11 +1,11 @@
-const CACHE_NAME = 'flo-v17';
+const CACHE_NAME = 'nexora-v1';
 const PRECACHE_URLS = [
   '/dashboard',
   '/pos',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
-  '/logo.svg',
+  '/logo.png',
 ];
 
 self.addEventListener('install', (event) => {

@@ -7,7 +7,7 @@ import { KdsHtmlLang } from '@/components/kds/KdsHtmlLang';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Flo KDS - Kitchen Display',
+  title: 'Nexora KDS - Kitchen Display',
   description: 'Kitchen Display System',
 };
 

@@ -244,6 +244,25 @@ export interface KitchenStation {
   sort_order: number;
 }
 
+/** M4-E1 — shift lifecycle record (matches backend ShiftRecord). */
+export type ShiftStatus = 'open' | 'closed';
+
+export interface Shift {
+  id: number;
+  terminal_id: string;
+  status: ShiftStatus;
+  opened_by_user_id: string;
+  closed_by_user_id: string | null;
+  opening_float_cents: number;
+  opening_note: string | null;
+  closing_note: string | null;
+  counted_cash_cents: number | null;
+  opened_at: string;
+  closed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Cart types for POS
 export interface CartItem {
   id: string;

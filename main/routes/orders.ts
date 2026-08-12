@@ -13,6 +13,7 @@ import { notifyKdsUpdate, notifyOrderUpdated } from '../services/kds';
 import { cloudSync } from '../services/cloud-sync';
 import { validateOrderNotes, validateItemNotes } from './orders-validation';
 import { requireRole } from '../middleware/security';
+import { readTerminalIdHeaderFromRequest, resolveActiveShiftForOrder } from '../services/shift';
 
 const router = Router();
 const MAX_ORDER_IDEMPOTENCY_KEY_LENGTH = 128;
@@ -319,6 +320,7 @@ router.post('/', requireRole('owner', 'manager', 'cashier', 'waiter'), (req: Req
     // waiters to `user_id = <their id>`, which NULL can never match) and any
     // per-staff sales attribution.
     const authenticatedUserId = (req as any).user.userId;
+    const terminalIdHeader = readTerminalIdHeaderFromRequest(req);
 
     if (!items || items.length === 0) {
       return res.status(400).json({ error: 'At least one item is required' });
@@ -371,6 +373,10 @@ router.post('/', requireRole('owner', 'manager', 'cashier', 'waiter'), (req: Req
           }
         }
       }
+
+      // Resolve operational shift association for the request terminal
+      const shiftId = resolveActiveShiftForOrder(terminalIdHeader);
+
       // Generate order number inside transaction to prevent race conditions
       const orderNumber = generateOrderNumber();
 
@@ -399,12 +405,13 @@ router.post('/', requireRole('owner', 'manager', 'cashier', 'waiter'), (req: Req
       const orderResult = db.prepare(`
         INSERT INTO orders (order_number, table_id, customer_id, user_id, type, guest_count, special_instructions,
           packaging_charge, delivery_charge, packaging_tax_category_id, delivery_tax_category_id,
-          service_charge_tax_category_id, status, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+          service_charge_tax_category_id, status, shift_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
       `).run(orderNumber, table_id || null, customer_id || null, authenticatedUserId, type, guest_count || null,
         special_instructions || null, packaging_charge || 0, delivery_charge || 0,
         chargeContext.packaging_tax_category_id, chargeContext.delivery_tax_category_id,
-        chargeContext.service_charge_tax_category_id, now(), now());
+        chargeContext.service_charge_tax_category_id, shiftId, now(), now());
+
 
       const orderId = orderResult.lastInsertRowid;
 

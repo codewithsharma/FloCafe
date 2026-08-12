@@ -48,15 +48,16 @@ Do **not** assume all 40 tables are defined in `createSchema()` alone.
 
 | Entity | Table | PK type | Key fields |
 |--------|-------|---------|------------|
-| Order | `orders` | **INTEGER AUTOINCREMENT** | order_number, type, table_id, customer_id, user_id, status, packaging_charge, delivery_charge |
+| Order | `orders` | **INTEGER AUTOINCREMENT** | order_number, type, table_id, customer_id, user_id, **shift_id** (nullable, M4-B), status, packaging_charge, delivery_charge |
 | OrderItem | `order_items` | **INTEGER AUTOINCREMENT** | order_id, product_id, quantity, unit_price, voided_at |
 | OrderItemAddon | `order_item_addons` | — | order_item_id, addon_id, quantity, price snapshot |
-| Bill | `bills` | **INTEGER AUTOINCREMENT** | bill_number, order_id, total, **payment_status**, paid_amount, balance, split_group_id |
+| Bill | `bills` | **INTEGER AUTOINCREMENT** | bill_number, order_id, total, **payment_status**, paid_amount, balance, split_group_id, **shift_id** (nullable, M4-B) |
 | BillItem | `bill_items` | — | bill_id, order_item_id, quantity (split-check allocation) |
 | HeldOrder | `held_orders` | TEXT | table_id, items (JSON blob) |
 | LoyaltyLedger | `loyalty_ledger` | INTEGER | customer_id, bill_id, type, **amount** |
 | PrintLog | `print_logs` | — | bill_id, user_id, action, timestamp |
 | AuditLog | `audit_logs` | INTEGER | actor_user_id, action, entity_type, entity_id, result, metadata_json, terminal_id, request_id, created_at |
+| Shift | `shifts` | INTEGER | terminal_id, status, opened_by_user_id, closed_by_user_id, opening_float_cents, counted_cash_cents, opened_at, closed_at |
 
 ### Tax engine
 
@@ -94,6 +95,8 @@ See `main/db.ts` `createSchema()` — key chains:
 - `orders.user_id` → `users`
 - `order_items.order_id` → `orders`
 - `bills.order_id` → `orders`
+- `shifts.opened_by_user_id` / `closed_by_user_id` → `users`
+- `orders.shift_id` / `bills.shift_id` → `shifts` (nullable; **not written by M4-C**)
 - `bill_items` → `bills`, `order_items`
 - `station_users` → `users`, `kitchen_stations`
 
@@ -107,7 +110,7 @@ See `main/db.ts` `createSchema()` — key chains:
 |--------|---------|
 | Location | Multi-store scoping |
 | Terminal | Register/device identity |
-| Shift | Cash drawer sessions |
+| Shift | Cashier register session (per terminal) — **schema M4-B; service/API M4-C**. Order/bill `shift_id` writes and POS UI are **not** implemented (M4-D/E). |
 | Ingredient | Recipe components |
 | Recipe | BOM linking products to ingredients |
 | Supplier | Vendor master |
@@ -123,7 +126,7 @@ See `main/db.ts` `createSchema()` — key chains:
 | ID style | Tables |
 |----------|--------|
 | TEXT (short random or UUID-style via `uuid` / `generateShortId`) | categories, products, users, customers, tables, printers, most config entities |
-| **INTEGER AUTOINCREMENT** | **orders**, **order_items**, **bills**, loyalty_ledger, tax_config_audit, **audit_logs** |
+| **INTEGER AUTOINCREMENT** | **orders**, **order_items**, **bills**, loyalty_ledger, tax_config_audit, **audit_logs**, **shifts** |
 
 Human-readable sequences: `order_number`, `bill_number` via `sequences` table.
 
@@ -139,3 +142,6 @@ Values include `unpaid`, **`partial`**, and `paid` (`main/routes/bills.ts`). Tra
 
 ### Table status
 Updated via `PATCH /api/tables/:id/status`.
+
+### Shift status (M4-C)
+`open` → `closed` via `POST /api/shifts/:id/close` or `POST /api/shifts/:id/force-close`. At most one `open` row per `terminal_id`. Closed shifts are not reopened in M4.
