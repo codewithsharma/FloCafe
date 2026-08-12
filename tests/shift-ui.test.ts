@@ -7,6 +7,7 @@ import * as assert from 'node:assert/strict';
 import * as fs from 'node:fs';
 import {
   canManageShifts,
+  formatVarianceLabel,
   mapShiftMutationError,
 } from '../frontend/src/lib/shifts';
 import {
@@ -22,6 +23,10 @@ const OPEN_MODAL_SOURCE = fs.readFileSync(
 );
 const CLOSE_MODAL_SOURCE = fs.readFileSync(
   `${__dirname}/../frontend/src/components/shifts/CloseShiftModal.tsx`,
+  'utf8',
+);
+const PREVIEW_STRIP_SOURCE = fs.readFileSync(
+  `${__dirname}/../frontend/src/components/shifts/ShiftReconciliationPreviewStrip.tsx`,
   'utf8',
 );
 const STATUS_SOURCE = fs.readFileSync(
@@ -118,7 +123,20 @@ async function main(): Promise<void> {
   {
     assert.ok(CLOSE_MODAL_SOURCE.includes('DialogTitle'));
     assert.ok(CLOSE_MODAL_SOURCE.includes('counted_cash_cents'));
-    console.log('   ✓ close shift modal structure present');
+    assert.ok(CLOSE_MODAL_SOURCE.includes('ShiftReconciliationPreviewStrip'));
+    assert.ok(PREVIEW_STRIP_SOURCE.includes('fetchReconciliationPreview'));
+    assert.ok(PREVIEW_STRIP_SOURCE.includes('expected_cash_cents'));
+    assert.ok(PREVIEW_STRIP_SOURCE.includes('formatVarianceLabel'));
+    assert.ok(PREVIEW_STRIP_SOURCE.includes('shift.varianceOver'));
+    console.log('   ✓ close shift modal structure present with reconciliation preview');
+  }
+
+  {
+    assert.equal(formatVarianceLabel(500), 'over');
+    assert.equal(formatVarianceLabel(-300), 'short');
+    assert.equal(formatVarianceLabel(0), 'balanced');
+    assert.equal(formatVarianceLabel(null), null);
+    console.log('   ✓ formatVarianceLabel maps cents to over/short/balanced');
   }
 
   {

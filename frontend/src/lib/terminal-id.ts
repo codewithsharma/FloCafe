@@ -41,6 +41,7 @@ export function shouldAttachTerminalId(url?: string, method?: string): boolean {
   if (verb === 'get' && path === '/shifts/active') return true;
   if (verb === 'post' && path === '/shifts/open') return true;
   if (verb === 'post' && /^\/shifts\/[^/]+\/close$/.test(path)) return true;
+  if (verb === 'get' && /^\/shifts\/[^/]+\/reconciliation-preview$/.test(path)) return true;
   return false;
 }
 

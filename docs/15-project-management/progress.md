@@ -83,7 +83,7 @@ No application code modified.
 | Settings seeds (`shifts_enabled=false`, etc.) | ✅ Complete |
 | Schema tests (`tests/shift-schema.test.ts`) | ✅ Complete |
 
-**Schema version:** 69
+**Schema version:** 70 (M5-B adds `expected_cash_cents`, `variance_cents` on `shifts`)
 **Behavior:** Unchanged — `shifts_enabled` defaults to `false`; no shift API/UI/service.
 
 ## M4-C — Shift service + API ✅
@@ -217,9 +217,113 @@ No application code modified.
 | i18n en/es/pt | ✅ Complete |
 | Tests (`tests/shift-e3.test.ts`) | ✅ Complete |
 
-**M4-E3 = IMPLEMENTED.** M5 is **not** implemented.
+**M4-E3 = IMPLEMENTED.** M5 implementation **not** started.
+
+## M5-A — Cash Reconciliation Design ✅
+
+| Task | Status |
+|------|--------|
+| Current-state analysis (code-verified) | ✅ Complete |
+| Expected cash / variance model | ✅ Complete |
+| Day close design | ✅ Complete |
+| Database / API / UI proposals | ✅ Complete |
+| Audit + RBAC design | ✅ Complete |
+| Edge cases + test strategy | ✅ Complete |
+| Implementation slice plan (M5-B → M5-H) | ✅ Complete |
+| ADR-008 | ✅ Complete |
+
+**RFC:** [`m5-cash-reconciliation-rfc.md`](m5-cash-reconciliation-rfc.md) — **DESIGN READY**
+**Impact analysis:** [`m5-cash-reconciliation-impact-analysis.md`](m5-cash-reconciliation-impact-analysis.md)
+**ADR:** [`ADR-008-cash-reconciliation-model.md`](../14-decisions/ADR-008-cash-reconciliation-model.md)
+
+No application code modified.
+
+## M5-B — Reconciliation Database Foundation ✅
+
+| Task | Status |
+|------|--------|
+| Migration v70 (`m5_cash_reconciliation_columns`) | ✅ Complete |
+| `shifts.expected_cash_cents` nullable column | ✅ Complete |
+| `shifts.variance_cents` nullable column | ✅ Complete |
+| v69 → v70 upgrade-path test | ✅ Complete |
+| Fresh install schema v70 | ✅ Complete |
+| No backfill of historical reconciliation values | ✅ Complete |
+| No application writes to new columns | ✅ Complete |
+| Tests (`tests/shift-schema.test.ts`) | ✅ Complete |
+
+**M5-B = IMPLEMENTED.** **M5-C = IMPLEMENTED.** **M5-D = IMPLEMENTED.** **M5-E = IMPLEMENTED** (preview API + extended close/GET responses). **M5-F = IMPLEMENTED** (reconciliation UI). **M5-G = IMPLEMENTED** (day close). **M5-H = COMPLETE** (docs sync + full verification gate). M6 **not** started.
+
+### M5-C — Expected cash computation (2026-08-12)
+
+| Item | Status |
+|------|--------|
+| `computeExpectedCashCents(shiftId)` in `main/services/shift.ts` | ✅ Complete |
+| Shared cash classification `main/services/payment-cash.ts` (M4-D4 + M5-C) | ✅ Complete |
+| Formula: `opening_float_cents + SUM(cash applied on bills WHERE shift_id = shift)` | ✅ Complete |
+| Attribution: `bills.shift_id` only (not `orders.shift_id`) | ✅ Complete |
+| Read-only until close (M5-D writes columns) | ✅ Complete |
+| Refunds deferred (hardcoded zero contribution) | ✅ Complete |
+| Tests (`tests/shift-reconciliation.test.ts`) | ✅ Complete |
+
+### M5-D — Close reconciliation persistence (2026-08-12)
+
+| Item | Status |
+|------|--------|
+| `computeShiftReconciliation` inside close/force-close `withTxn` | ✅ Complete |
+| Persist `expected_cash_cents` + `variance_cents` on UPDATE | ✅ Complete |
+| Counted cash optional → `variance_cents` NULL when omitted | ✅ Complete |
+| Audit metadata: expected, variance, cash_payment_total_cents, cash_payment_count | ✅ Complete |
+| Atomicity: audit failure rolls back close (columns stay NULL) | ✅ Complete |
+| No new migration / no frontend / no preview API | ✅ Complete |
+| Tests (`tests/shift-reconciliation.test.ts` M5-D + `tests/shift-service.test.ts`) | ✅ Complete |
+
+### M5-E — Reconciliation preview API (2026-08-12)
+
+| Item | Status |
+|------|--------|
+| `GET /api/shifts/:id/reconciliation-preview` | ✅ Complete |
+| `getShiftReconciliationPreview` (read-only; no counted input) | ✅ Complete |
+| `getShiftPaymentSummary` (cash + non_cash totals) | ✅ Complete |
+| Non-cash aggregation in `main/services/payment-cash.ts` | ✅ Complete |
+| Close / force-close / GET `/:id` return `{ shift, summary }` | ✅ Complete |
+| Open shifts: live expected; `variance_cents` / `counted_cash_cents` null | ✅ Complete |
+| Closed shifts: persisted expected/variance/count; summary recomputed | ✅ Complete |
+| Cashier terminal scoping; owner/manager any shift | ✅ Complete |
+| No frontend / no new migration / no variance_note column | ✅ Complete |
+| Tests (`tests/shift-reconciliation.test.ts` M5-E + `tests/shift-service.test.ts`) | ✅ Complete |
+
+### M5-F — Reconciliation UI (2026-08-12)
+
+| Item | Status |
+|------|--------|
+| `fetchReconciliationPreview` + `formatVarianceLabel` in `frontend/src/lib/shifts.ts` | ✅ Complete |
+| `Shift` type extended with `expected_cash_cents`, `variance_cents` | ✅ Complete |
+| Terminal header on GET reconciliation-preview | ✅ Complete |
+| `CloseShiftModal` preview strip + live variance (counted required) | ✅ Complete |
+| `ForceCloseShiftModal` preview strip (counted optional) | ✅ Complete |
+| `ShiftHistoryPanel` expected + variance columns | ✅ Complete |
+| i18n keys (en, es, pt) | ✅ Complete |
+| `closeShift` / `forceCloseShift` parse `{ shift, summary }` | ✅ Complete |
+| Tests (`shift-ui.test.ts`, `shift-e3.test.ts`, `shift-client.test.ts`) | ✅ Complete |
+| No new migration / no M5-G / no M5-H | ✅ Complete (as of M5-F ship) |
+
+### M5-G — Day close (2026-08-12)
+
+| Item | Status |
+|------|--------|
+| Migration v71 `day_closes` + UNIQUE(business_date) | ✅ Complete |
+| `businessDateInTimezone` / `localDayBoundsUtc` (OD-M5-5) | ✅ Complete |
+| `DayCloseService` + open-shift warn (OD-M5-6) | ✅ Complete |
+| POST/GET `/api/reports/day-close` owner/manager; 409 duplicate | ✅ Complete |
+| Dashboard `DayCloseCard` + i18n (en/es/pt) | ✅ Complete |
+| Audit `day.closed` in withTxn; no audit on 409 | ✅ Complete |
+| Does not block POS after day close | ✅ Complete |
+| Tests (`day-close.test.ts`, `day-close-ui.test.ts`) | ✅ Complete |
+| M5-H documentation sync (API, schema, PM, RFC status) | ✅ Complete |
+| M5-H full production verification gate | ✅ Complete |
+| M6 | ❌ Not started |
 
 ## Next steps
 
-1. **M5:** Cash reconciliation (only when explicitly approved)
-2. Do not start M5 until explicitly approved
+1. **M6:** Refund workflow — only after explicit approval
+2. Do not start M6 until explicitly approved

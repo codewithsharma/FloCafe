@@ -57,7 +57,8 @@ Do **not** assume all 40 tables are defined in `createSchema()` alone.
 | LoyaltyLedger | `loyalty_ledger` | INTEGER | customer_id, bill_id, type, **amount** |
 | PrintLog | `print_logs` | — | bill_id, user_id, action, timestamp |
 | AuditLog | `audit_logs` | INTEGER | actor_user_id, action, entity_type, entity_id, result, metadata_json, terminal_id, request_id, created_at |
-| Shift | `shifts` | INTEGER | terminal_id, status, opened_by_user_id, closed_by_user_id, opening_float_cents, counted_cash_cents, opened_at, closed_at |
+| Shift | `shifts` | INTEGER | terminal_id, status, opened_by_user_id, closed_by_user_id, opening_float_cents, counted_cash_cents, expected_cash_cents (NULL while open; written at close/force-close by M5-D), variance_cents (NULL while open or when counted cash omitted; written at close), opened_at, closed_at |
+| DayClose | `day_closes` | INTEGER AUTOINCREMENT | business_date (UNIQUE, YYYY-MM-DD in `settings.timezone`), closed_by_user_id (FK users), summary_json (immutable snapshot of shift totals + open-shift warning), created_at; migration **v71** (M5-G); does not block POS |
 
 ### Tax engine
 

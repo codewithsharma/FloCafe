@@ -28,6 +28,7 @@ import {
   readTerminalIdHeaderFromRequest,
   resolveActiveShiftForTerminal,
 } from '../services/shift';
+import { isQualifyingCashPaymentLineCents } from '../services/payment-cash';
 
 
 const router = Router();
@@ -657,7 +658,7 @@ function applyPaymentBatch(
   if (idempotentReplay) {
     return { bill: parseRowJson(db.prepare('SELECT * FROM bills WHERE id = ?').get(billId)), walletDebited: false, loyaltyPointsEarned: 0 };
   }
-  if (prepared.some((line) => line.payment.method === 'cash' && line.amountCents > 0)) {
+  if (prepared.some((line) => isQualifyingCashPaymentLineCents(line.payment.method, line.amountCents))) {
     assertOpenShiftForCashPayment(terminalIdHeader);
   }
   const totalAppliedCents = prepared.reduce((sum, line) => sum + line.amountCents, 0);

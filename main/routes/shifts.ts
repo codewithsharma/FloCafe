@@ -12,6 +12,8 @@ import {
   getActiveShift,
   getOrCreateHostTerminalId,
   getShift,
+  getShiftPaymentSummary,
+  getShiftReconciliationPreview,
   listShifts,
   openShift,
   parseShiftId,
@@ -109,6 +111,19 @@ router.post('/open', requireRole(...SHIFT_OPERATORS), (req: Request, res: Respon
   }
 });
 
+router.get('/:id/reconciliation-preview', requireRole(...SHIFT_OPERATORS), (req: Request, res: Response) => {
+  try {
+    const preview = getShiftReconciliationPreview({
+      actor: actorFrom(req),
+      shiftId: parseShiftId(req.params.id),
+      terminalId: requestTerminalId(req),
+    });
+    res.json(preview);
+  } catch (error) {
+    sendShiftError(res, error);
+  }
+});
+
 router.get('/:id', requireRole(...SHIFT_MANAGERS), (req: Request, res: Response) => {
   try {
     assertShiftsEnabled();
@@ -116,7 +131,7 @@ router.get('/:id', requireRole(...SHIFT_MANAGERS), (req: Request, res: Response)
     if (!shift) {
       return res.status(404).json({ error: 'Shift not found' });
     }
-    res.json({ shift });
+    res.json({ shift, summary: getShiftPaymentSummary(shift.id) });
   } catch (error) {
     sendShiftError(res, error);
   }
@@ -133,7 +148,7 @@ router.post('/:id/close', requireRole(...SHIFT_OPERATORS), (req: Request, res: R
       closingNote: req.body?.closing_note,
       context: auditContext(req, terminalId),
     });
-    res.json({ shift });
+    res.json({ shift, summary: getShiftPaymentSummary(shift.id) });
   } catch (error) {
     sendShiftError(res, error);
   }
@@ -149,7 +164,7 @@ router.post('/:id/force-close', requireRole(...SHIFT_MANAGERS), (req: Request, r
       closingNote: req.body?.closing_note,
       context: auditContext(req),
     });
-    res.json({ shift });
+    res.json({ shift, summary: getShiftPaymentSummary(shift.id) });
   } catch (error) {
     sendShiftError(res, error);
   }

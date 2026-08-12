@@ -3,8 +3,70 @@ import Decimal from 'decimal.js';
 import { getDatabase, getSettingValue, parseDbTimestamp, parseItemJson, utcDayBounds, utcTodayDate } from '../db';
 import { requireRole } from '../middleware/security';
 import { aggregateTaxComponents } from '../services/tax-components';
+import {
+  DayCloseServiceError,
+  closeBusinessDay,
+  getDayClose,
+} from '../services/day-close';
+import { correlationId } from '../errors';
 
 const router = Router();
+
+const DAY_CLOSE_ROLES = ['owner', 'manager'] as const;
+
+function dayCloseActorFrom(req: Request): { userId: string; role: string } {
+  const user = (req as Request & { user: { userId: string; role: string } }).user;
+  return { userId: String(user.userId), role: String(user.role) };
+}
+
+function dayCloseAuditContext(req: Request) {
+  return {
+    requestId: correlationId(),
+    clientIp: req.ip || req.socket.remoteAddress || null,
+    terminalId: null,
+  };
+}
+
+function sendDayCloseError(res: Response, error: unknown): void {
+  if (error instanceof DayCloseServiceError) {
+    res.status(error.statusCode).json({ error: error.message });
+    return;
+  }
+  console.error('[DayClose] Internal error:', error);
+  res.status(500).json({ error: 'Internal server error' });
+}
+
+router.post('/day-close', requireRole(...DAY_CLOSE_ROLES), (req: Request, res: Response) => {
+  try {
+    const result = closeBusinessDay({
+      actor: dayCloseActorFrom(req),
+      businessDate: req.body?.business_date,
+      context: dayCloseAuditContext(req),
+    });
+    res.status(201).json(result);
+  } catch (error) {
+    sendDayCloseError(res, error);
+  }
+});
+
+router.get('/day-close/:date', requireRole(...DAY_CLOSE_ROLES), (req: Request, res: Response) => {
+  try {
+    const date = String(req.params.date || '');
+    const dayClose = getDayClose(date);
+    if (!dayClose) {
+      return res.status(404).json({ error: 'Day close not found' });
+    }
+    let summary: unknown;
+    try {
+      summary = JSON.parse(dayClose.summary_json);
+    } catch {
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+    res.json({ day_close: dayClose, summary });
+  } catch (error) {
+    sendDayCloseError(res, error);
+  }
+});
 
 const WEEKDAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 

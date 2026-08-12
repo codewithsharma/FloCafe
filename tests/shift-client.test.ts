@@ -153,6 +153,20 @@ async function main(): Promise<void> {
   }
 
   {
+    assert.ok(SHIFTS_SOURCE.includes('fetchReconciliationPreview'));
+    assert.ok(SHIFTS_SOURCE.includes('reconciliation-preview'));
+    assert.ok(SHIFTS_SOURCE.includes('ShiftMutationResult'));
+    assert.ok(SHIFTS_SOURCE.includes('formatVarianceLabel'));
+    console.log('   ✓ M5-F reconciliation preview client and variance helper present');
+  }
+
+  {
+    const { shouldAttachTerminalId } = await import('../frontend/src/lib/terminal-id');
+    assert.ok(shouldAttachTerminalId('/shifts/42/reconciliation-preview', 'get'));
+    console.log('   ✓ reconciliation preview GET attaches terminal header');
+  }
+
+  {
     installBrowser();
     const id1 = getClientTerminalId();
     const id2 = getClientTerminalId();

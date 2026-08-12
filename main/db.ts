@@ -3672,6 +3672,36 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       insertSettingIfMissing('terminal_id', '');
     },
   },
+  {
+    version: 70,
+    name: 'm5_cash_reconciliation_columns',
+    up: () => {
+      if (!getColumns(db, 'shifts').includes('expected_cash_cents')) {
+        db.exec('ALTER TABLE shifts ADD COLUMN expected_cash_cents INTEGER');
+      }
+      if (!getColumns(db, 'shifts').includes('variance_cents')) {
+        db.exec('ALTER TABLE shifts ADD COLUMN variance_cents INTEGER');
+      }
+    },
+  },
+  {
+    version: 71,
+    name: 'm5_day_closes',
+    up: () => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS day_closes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          business_date TEXT NOT NULL,
+          closed_by_user_id TEXT NOT NULL,
+          summary_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          UNIQUE(business_date),
+          FOREIGN KEY (closed_by_user_id) REFERENCES users(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_day_closes_created_at ON day_closes(created_at);
+      `);
+    },
+  },
 ];
 
 function syncBackupBeforeMigration(fromVersion: number, toVersion: number): void {
@@ -4562,6 +4592,68 @@ export function utcDayBounds(date: string): [string, string] {
   const end = new Date(start.getTime() + 24 * 3600 * 1000);
   const fmt = (dt: Date) => dt.toISOString().replace('T', ' ').replace(/\..*$/, '');
   return [fmt(start), fmt(end)];
+}
+
+/**
+ * Business calendar date (`YYYY-MM-DD`) for an instant in an IANA timezone.
+ * Used by M5-G day close (OD-M5-5) — not UTC day boundaries.
+ */
+export function businessDateInTimezone(timezone: string, when: Date = new Date()): string {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(when);
+  } catch {
+    return when.toISOString().slice(0, 10);
+  }
+}
+
+/** Offset ms such that `utcMs + offset ≈ wall time in zone interpreted as UTC`. */
+function timezoneOffsetMsAt(utcMs: number, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(utcMs));
+  const get = (type: string): number => Number(parts.find((p) => p.type === type)?.value ?? NaN);
+  const asUtc = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'));
+  return asUtc - utcMs;
+}
+
+/** Local midnight (00:00:00) of `YYYY-MM-DD` in `timeZone`, as UTC epoch ms. Two-pass DST-safe. */
+function localMidnightUtcMs(businessDate: string, timeZone: string): number {
+  const [y, m, d] = businessDate.split('-').map(Number);
+  const wallAsUtc = Date.UTC(y, m - 1, d, 0, 0, 0);
+  let guess = wallAsUtc - timezoneOffsetMsAt(wallAsUtc, timeZone);
+  guess = wallAsUtc - timezoneOffsetMsAt(guess, timeZone);
+  return guess;
+}
+
+function addOneCalendarDay(businessDate: string): string {
+  const [y, m, d] = businessDate.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10);
+}
+
+function formatUtcWallTimestamp(ms: number): string {
+  return new Date(ms).toISOString().replace('T', ' ').replace(/\..*$/, '');
+}
+
+/**
+ * Half-open `[start, end)` UTC wall timestamps for a local business date in an
+ * IANA timezone. Query with `closed_at >= start AND closed_at < end`.
+ */
+export function localDayBoundsUtc(businessDate: string, timezone: string): [string, string] {
+  const startMs = localMidnightUtcMs(businessDate, timezone);
+  const endMs = localMidnightUtcMs(addOneCalendarDay(businessDate), timezone);
+  return [formatUtcWallTimestamp(startMs), formatUtcWallTimestamp(endMs)];
 }
 
 /** Verify a user PIN against the stored pin_hash. */

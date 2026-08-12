@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { useI18n } from '@/hooks/useI18n';
 import { parseCurrencyInputToCents } from '@/lib/money';
 import { closeShift, mapShiftMutationError, type Shift } from '@/lib/shifts';
+import ShiftReconciliationPreviewStrip from './ShiftReconciliationPreviewStrip';
 
 const MAX_NOTE_LENGTH = 500;
 
@@ -92,6 +93,12 @@ export default function CloseShiftModal({ open, shift, onOpenChange, onSuccess }
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
+          <ShiftReconciliationPreviewStrip
+            shiftId={shift?.id ?? null}
+            active={open}
+            countedCash={countedCash}
+            showLiveVariance
+          />
           <div className="grid gap-2">
             <Label htmlFor="shift-counted-cash">{t('shift.countedCash')}</Label>
             <Input

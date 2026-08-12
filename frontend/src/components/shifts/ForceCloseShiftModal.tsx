@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { useI18n } from '@/hooks/useI18n';
 import { parseCurrencyInputToCents } from '@/lib/money';
 import { forceCloseShift, mapShiftMutationError, type Shift } from '@/lib/shifts';
+import ShiftReconciliationPreviewStrip from './ShiftReconciliationPreviewStrip';
 
 const MAX_NOTE_LENGTH = 500;
 const MAX_REASON_LENGTH = 500;
@@ -102,6 +103,8 @@ export default function ForceCloseShiftModal({
     }
   };
 
+  const hasCountedCash = countedCash.trim().length > 0;
+
   return (
     <Dialog open={open} onOpenChange={(next) => !next && handleClose()}>
       <DialogContent className="sm:max-w-md" showCloseButton={!submitting}>
@@ -111,6 +114,12 @@ export default function ForceCloseShiftModal({
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
+          <ShiftReconciliationPreviewStrip
+            shiftId={shift?.id ?? null}
+            active={open}
+            countedCash={countedCash}
+            showLiveVariance={hasCountedCash}
+          />
           <div className="grid gap-2">
             <Label htmlFor="shift-force-close-reason">{t('shift.forceCloseReason')}</Label>
             <Input

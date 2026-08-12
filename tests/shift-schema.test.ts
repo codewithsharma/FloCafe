@@ -1,5 +1,5 @@
 /**
- * M4-B Shift Schema Foundation Tests
+ * M4-B / M5-B Shift Schema Foundation Tests
  *
  * Usage: node tests/run-electron-node-test.cjs tests/shift-schema.test.ts
  */
@@ -51,14 +51,38 @@ function seedUser(db: any, id = 'shift-user-001', email?: string): string {
   return id;
 }
 
-function insertOpenShift(db: any, terminalId: string, userId: string, status = 'open'): number {
+function insertShift(
+  db: any,
+  terminalId: string,
+  userId: string,
+  opts: {
+    status?: string;
+    openingFloatCents?: number;
+    countedCashCents?: number | null;
+    closedByUserId?: string | null;
+    closedAt?: string | null;
+  } = {},
+): number {
   const t = now();
+  const status = opts.status ?? 'open';
   const info = db.prepare(`
     INSERT INTO shifts (
-      terminal_id, status, opened_by_user_id, opening_float_cents,
-      opened_at, created_at, updated_at
-    ) VALUES (?, ?, ?, 50000, ?, ?, ?)
-  `).run(terminalId, status, userId, t, t, t);
+      terminal_id, status, opened_by_user_id, closed_by_user_id,
+      opening_float_cents, counted_cash_cents, opened_at, closed_at,
+      created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    terminalId,
+    status,
+    userId,
+    opts.closedByUserId ?? null,
+    opts.openingFloatCents ?? 50000,
+    opts.countedCashCents ?? null,
+    t,
+    opts.closedAt ?? (status === 'closed' ? t : null),
+    t,
+    t,
+  );
   return Number(info.lastInsertRowid);
 }
 
@@ -82,35 +106,65 @@ function dropShiftArtifacts(db: any): void {
   );
 }
 
+function dropM5ShiftColumns(db: any): void {
+  const cols = tableColumns(db, 'shifts');
+  if (cols.includes('expected_cash_cents')) {
+    db.exec('ALTER TABLE shifts DROP COLUMN expected_cash_cents');
+  }
+  if (cols.includes('variance_cents')) {
+    db.exec('ALTER TABLE shifts DROP COLUMN variance_cents');
+  }
+}
+
 async function main() {
-  console.log('M4-B Shift Schema Tests');
+  console.log('M4-B / M5-B Shift Schema Tests');
   console.log('='.repeat(60));
 
   const latestMigration = MIGRATIONS[MIGRATIONS.length - 1];
-  assert.equal(latestMigration.version, 69, 'latest migration is v69');
-  assert.equal(latestMigration.name, 'm4_shift_foundation');
+  assert.equal(latestMigration.version, 71, 'latest migration is v71');
+  assert.equal(latestMigration.name, 'm5_day_closes');
 
-  // ── Fresh install v0 → v69 ───────────────────────────────────────────────
+  const v70 = MIGRATIONS.find((m: { version: number }) => m.version === 70);
+  assert.ok(v70, 'v70 m5_cash_reconciliation_columns migration exists');
+  assert.equal(v70.name, 'm5_cash_reconciliation_columns');
+
+  const v69 = MIGRATIONS.find((m: { version: number }) => m.version === 69);
+  assert.ok(v69, 'v69 m4_shift_foundation migration exists');
+
+  // ── Fresh install v0 → v71 ───────────────────────────────────────────────
   initDatabase();
   const db = getDatabase();
-  assert.equal(db.pragma('user_version', { simple: true }), 69);
+  assert.equal(db.pragma('user_version', { simple: true }), 71);
 
   assert.ok(
     db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'shifts'`).get(),
     'shifts table exists on fresh install',
+  );
+  assert.ok(
+    db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'day_closes'`).get(),
+    'day_closes table exists on fresh install',
   );
 
   const shiftColumns = tableColumns(db, 'shifts');
   for (const col of [
     'id', 'terminal_id', 'status', 'opened_by_user_id', 'closed_by_user_id',
     'opening_float_cents', 'opening_note', 'closing_note', 'counted_cash_cents',
+    'expected_cash_cents', 'variance_cents',
     'opened_at', 'closed_at', 'created_at', 'updated_at',
   ]) {
     assert.ok(shiftColumns.includes(col), `shifts.${col} exists`);
   }
-  assert.ok(!shiftColumns.includes('expected_cash_cents'), 'M5 field expected_cash_cents not in M4-B');
-  assert.ok(!shiftColumns.includes('variance_cents'), 'M5 field variance_cents not in M4-B');
-  console.log('   ✓ fresh install has shifts table with required columns');
+  console.log('   ✓ fresh install has shifts table with M5 reconciliation columns');
+
+  const expectedCol = db.prepare(`PRAGMA table_info(shifts)`).all()
+    .find((row: any) => row.name === 'expected_cash_cents') as { notnull: number } | undefined;
+  const varianceCol = db.prepare(`PRAGMA table_info(shifts)`).all()
+    .find((row: any) => row.name === 'variance_cents') as { notnull: number } | undefined;
+  assert.ok(expectedCol, 'expected_cash_cents column metadata exists');
+  assert.ok(varianceCol, 'variance_cents column metadata exists');
+  assert.equal(expectedCol!.notnull, 0, 'expected_cash_cents is nullable');
+  assert.equal(varianceCol!.notnull, 0, 'variance_cents is nullable');
+  console.log('   ✓ expected_cash_cents and variance_cents are nullable');
 
   assert.ok(tableColumns(db, 'orders').includes('shift_id'), 'orders.shift_id exists');
   assert.ok(tableColumns(db, 'bills').includes('shift_id'), 'bills.shift_id exists');
@@ -140,31 +194,31 @@ async function main() {
   // ── Status constraint ─────────────────────────────────────────────────────
   const userId = seedUser(db);
   assert.throws(
-    () => insertOpenShift(db, 'terminal-invalid-status', userId, 'opening'),
+    () => insertShift(db, 'terminal-invalid-status', userId, { status: 'opening' }),
     /CHECK constraint failed|constraint failed/i,
     'invalid status rejected',
   );
   console.log('   ✓ status CHECK constraint enforced');
 
   // ── One open shift per terminal ───────────────────────────────────────────
-  insertOpenShift(db, 'terminal-a', userId);
+  insertShift(db, 'terminal-a', userId);
   assert.throws(
-    () => insertOpenShift(db, 'terminal-a', userId),
+    () => insertShift(db, 'terminal-a', userId),
     /UNIQUE constraint failed|constraint failed/i,
     'duplicate open shift on same terminal rejected',
   );
   console.log('   ✓ one open shift per terminal enforced');
 
   // ── Multiple terminals may have open shifts ───────────────────────────────
-  insertOpenShift(db, 'terminal-b', userId);
+  insertShift(db, 'terminal-b', userId);
   const openCount = (db.prepare(`SELECT COUNT(*) AS count FROM shifts WHERE status = 'open'`).get() as { count: number }).count;
   assert.equal(openCount, 2, 'two terminals can each have an open shift');
   console.log('   ✓ multiple terminals can have independent open shifts');
 
   // ── Closed shifts do not violate unique-open rule ─────────────────────────
-  insertOpenShift(db, 'terminal-c', userId, 'closed');
-  insertOpenShift(db, 'terminal-c', userId, 'closed');
-  insertOpenShift(db, 'terminal-c', userId, 'open');
+  insertShift(db, 'terminal-c', userId, { status: 'closed' });
+  insertShift(db, 'terminal-c', userId, { status: 'closed' });
+  insertShift(db, 'terminal-c', userId, { status: 'open' });
   console.log('   ✓ closed shifts do not block additional closed/open rows per terminal');
 
   // ── NULL shift_id valid on orders/bills ───────────────────────────────────
@@ -182,6 +236,23 @@ async function main() {
   assert.equal(orderRow.shift_id, null);
   assert.equal(billRow.shift_id, null);
   console.log('   ✓ NULL shift_id valid on new orders and bills');
+
+  // ── M5 columns default NULL on new shifts ─────────────────────────────────
+  const freshShiftId = insertShift(db, 'terminal-m5-null', userId);
+  const freshShift = db.prepare(`
+    SELECT opening_float_cents, counted_cash_cents, expected_cash_cents, variance_cents
+    FROM shifts WHERE id = ?
+  `).get(freshShiftId) as {
+    opening_float_cents: number;
+    counted_cash_cents: null;
+    expected_cash_cents: null;
+    variance_cents: null;
+  };
+  assert.equal(freshShift.opening_float_cents, 50000);
+  assert.equal(freshShift.counted_cash_cents, null);
+  assert.equal(freshShift.expected_cash_cents, null);
+  assert.equal(freshShift.variance_cents, null);
+  console.log('   ✓ new shifts have NULL expected_cash_cents and variance_cents');
 
   // ── Upgrade v68 → v69 with existing transactional data ────────────────────
   const legacyUser = seedUser(db, 'legacy-user-001');
@@ -201,46 +272,100 @@ async function main() {
   closeDatabase();
 
   initDatabase();
-  const upgraded = getDatabase();
-  assert.equal(upgraded.pragma('user_version', { simple: true }), 69);
-  assert.ok(
-    upgraded.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'shifts'`).get(),
-    'shifts table exists after v68 upgrade',
-  );
-  assert.ok(tableColumns(upgraded, 'orders').includes('shift_id'));
-  assert.ok(tableColumns(upgraded, 'bills').includes('shift_id'));
+  const upgradedFrom68 = getDatabase();
+  assert.equal(upgradedFrom68.pragma('user_version', { simple: true }), 71);
+  assert.ok(tableColumns(upgradedFrom68, 'shifts').includes('expected_cash_cents'));
+  assert.ok(tableColumns(upgradedFrom68, 'shifts').includes('variance_cents'));
 
-  const preservedOrder = upgraded.prepare('SELECT id, shift_id FROM orders WHERE id = ?').get(legacyOrderId) as any;
-  const preservedBill = upgraded.prepare('SELECT id, shift_id FROM bills WHERE id = ?').get(legacyBillId) as any;
+  const preservedOrder = upgradedFrom68.prepare('SELECT id, shift_id FROM orders WHERE id = ?').get(legacyOrderId) as any;
+  const preservedBill = upgradedFrom68.prepare('SELECT id, shift_id FROM bills WHERE id = ?').get(legacyBillId) as any;
   assert.equal(preservedOrder.shift_id, null, 'existing order shift_id is NULL after upgrade');
   assert.equal(preservedBill.shift_id, null, 'existing bill shift_id is NULL after upgrade');
-  assert.equal(getSetting(upgraded, 'shifts_enabled'), 'false');
-  console.log('   ✓ v68 → v69 upgrade preserves existing orders/bills with NULL shift_id');
+  assert.equal(getSetting(upgradedFrom68, 'shifts_enabled'), 'false');
+  assert.ok(
+    upgradedFrom68.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'day_closes'`).get(),
+    'day_closes exists after upgrade from v68',
+  );
+  console.log('   ✓ v68 → v71 upgrade preserves existing orders/bills with NULL shift_id');
 
-  // ── Migration idempotency (re-open at v69 does not re-run) ───────────────
-  const shiftCountBefore = (upgraded.prepare('SELECT COUNT(*) AS count FROM shifts').get() as { count: number }).count;
+  // ── Upgrade v69 → v71 with existing open/closed shifts ────────────────────
+  const upgradeUser = seedUser(upgradedFrom68, 'upgrade-user-001');
+  const openShiftId = insertShift(upgradedFrom68, 'terminal-upgrade-open', upgradeUser, {
+    status: 'open',
+    openingFloatCents: 75000,
+  });
+  const closedShiftId = insertShift(upgradedFrom68, 'terminal-upgrade-closed', upgradeUser, {
+    status: 'closed',
+    openingFloatCents: 100000,
+    countedCashCents: 98765,
+    closedByUserId: upgradeUser,
+    closedAt: now(),
+  });
+
+  dropM5ShiftColumns(upgradedFrom68);
+  upgradedFrom68.pragma('user_version = 69');
+  assert.ok(!tableColumns(upgradedFrom68, 'shifts').includes('expected_cash_cents'));
+  assert.ok(!tableColumns(upgradedFrom68, 'shifts').includes('variance_cents'));
+  closeDatabase();
+
+  initDatabase();
+  const upgradedFrom69 = getDatabase();
+  assert.equal(upgradedFrom69.pragma('user_version', { simple: true }), 71);
+  assert.ok(tableColumns(upgradedFrom69, 'shifts').includes('expected_cash_cents'));
+  assert.ok(tableColumns(upgradedFrom69, 'shifts').includes('variance_cents'));
+
+  const preservedOpen = upgradedFrom69.prepare(`
+    SELECT status, opening_float_cents, counted_cash_cents, expected_cash_cents, variance_cents
+    FROM shifts WHERE id = ?
+  `).get(openShiftId) as any;
+  const preservedClosed = upgradedFrom69.prepare(`
+    SELECT status, opening_float_cents, counted_cash_cents, expected_cash_cents, variance_cents
+    FROM shifts WHERE id = ?
+  `).get(closedShiftId) as any;
+
+  assert.equal(preservedOpen.status, 'open');
+  assert.equal(preservedOpen.opening_float_cents, 75000);
+  assert.equal(preservedOpen.counted_cash_cents, null);
+  assert.equal(preservedOpen.expected_cash_cents, null, 'no backfill on open shift');
+  assert.equal(preservedOpen.variance_cents, null, 'no backfill on open shift');
+
+  assert.equal(preservedClosed.status, 'closed');
+  assert.equal(preservedClosed.opening_float_cents, 100000);
+  assert.equal(preservedClosed.counted_cash_cents, 98765, 'counted_cash_cents preserved');
+  assert.equal(preservedClosed.expected_cash_cents, null, 'no historical expected backfill');
+  assert.equal(preservedClosed.variance_cents, null, 'no historical variance backfill');
+  console.log('   ✓ v69 → v70 upgrade preserves shifts; reconciliation columns NULL');
+
+  // ── Migration idempotency (re-open at v70 does not re-run) ───────────────
+  const shiftCountBefore = (upgradedFrom69.prepare('SELECT COUNT(*) AS count FROM shifts').get() as { count: number }).count;
   closeDatabase();
   initDatabase();
   const reopened = getDatabase();
-  assert.equal(reopened.pragma('user_version', { simple: true }), 69);
+  assert.equal(reopened.pragma('user_version', { simple: true }), 71);
   const shiftCountAfter = (reopened.prepare('SELECT COUNT(*) AS count FROM shifts').get() as { count: number }).count;
-  assert.equal(shiftCountAfter, shiftCountBefore, 'reopening DB at v69 does not duplicate shift rows');
-  console.log('   ✓ migration runner is idempotent at v69');
+  assert.equal(shiftCountAfter, shiftCountBefore, 'reopening DB at v71 does not duplicate shift rows');
+  console.log('   ✓ migration runner is idempotent at v71');
 
   closeDatabase();
 
   // ── Ideal schema parity ───────────────────────────────────────────────────
   const idealDb = buildIdealSchemaDb();
-  assert.equal(idealDb.pragma('user_version', { simple: true }), 69);
+  assert.equal(idealDb.pragma('user_version', { simple: true }), 71);
   assert.ok(
     idealDb.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'shifts'`).get(),
     'ideal schema includes shifts',
   );
+  assert.ok(
+    idealDb.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'day_closes'`).get(),
+    'ideal schema includes day_closes',
+  );
+  assert.ok(tableColumns(idealDb, 'shifts').includes('expected_cash_cents'));
+  assert.ok(tableColumns(idealDb, 'shifts').includes('variance_cents'));
   idealDb.close();
-  console.log('   ✓ ideal schema at v69 includes shifts');
+  console.log('   ✓ ideal schema at v71 includes M5 reconciliation + day_closes');
 
   console.log('='.repeat(60));
-  console.log('✅ M4-B shift schema tests passed');
+  console.log('✅ M4-B / M5-B / M5-G shift schema tests passed');
 }
 
 main().catch((error) => {

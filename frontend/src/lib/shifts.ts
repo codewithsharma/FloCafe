@@ -44,6 +44,36 @@ export interface CloseShiftInput {
   terminal_id?: string;
 }
 
+export interface ShiftPaymentSummary {
+  cash_payment_count: number;
+  cash_payment_total_cents: number;
+  non_cash_payment_total_cents: number;
+}
+
+export interface ReconciliationPreview {
+  shift: Shift;
+  opening_float_cents: number;
+  expected_cash_cents: number;
+  counted_cash_cents: number | null;
+  variance_cents: number | null;
+  summary: ShiftPaymentSummary;
+}
+
+export interface ShiftMutationResult {
+  shift: Shift;
+  summary: ShiftPaymentSummary;
+}
+
+export type VarianceLabel = 'over' | 'short' | 'balanced';
+
+/** Map integer variance cents to Over / Short / Balanced (null when unknown). */
+export function formatVarianceLabel(varianceCents: number | null): VarianceLabel | null {
+  if (varianceCents === null) return null;
+  if (varianceCents > 0) return 'over';
+  if (varianceCents < 0) return 'short';
+  return 'balanced';
+}
+
 /** Map GET /shifts/active JSON to client outcome. Backend returns 200 with shift:null when none. */
 export function normalizeActiveShiftResponse(data: { shift: Shift | null }): ShiftFetchOutcome {
   if (!data.shift) return { kind: 'no_shift' };
@@ -116,9 +146,15 @@ export async function openShift(input: OpenShiftInput): Promise<Shift> {
   return data.shift;
 }
 
+/** Read-only reconciliation preview before close (M5-F). */
+export async function fetchReconciliationPreview(shiftId: number): Promise<ReconciliationPreview> {
+  const { data } = await api.get<ReconciliationPreview>(`/shifts/${shiftId}/reconciliation-preview`);
+  return data;
+}
+
 /** Typed wrapper for POST /shifts/:id/close (M4-E2+ UI). */
 export async function closeShift(shiftId: number, input: CloseShiftInput = {}): Promise<Shift> {
-  const { data } = await api.post<{ shift: Shift }>(`/shifts/${shiftId}/close`, input);
+  const { data } = await api.post<ShiftMutationResult>(`/shifts/${shiftId}/close`, input);
   return data.shift;
 }
 
@@ -188,7 +224,7 @@ export async function listShifts(
 
 /** Manager/owner force-close with required reason (M4-C). */
 export async function forceCloseShift(shiftId: number, input: ForceCloseShiftInput): Promise<Shift> {
-  const { data } = await api.post<{ shift: Shift }>(`/shifts/${shiftId}/force-close`, input);
+  const { data } = await api.post<ShiftMutationResult>(`/shifts/${shiftId}/force-close`, input);
   return data.shift;
 }
 

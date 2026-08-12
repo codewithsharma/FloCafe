@@ -257,6 +257,8 @@ export interface Shift {
   opening_note: string | null;
   closing_note: string | null;
   counted_cash_cents: number | null;
+  expected_cash_cents: number | null;
+  variance_cents: number | null;
   opened_at: string;
   closed_at: string | null;
   created_at: string;

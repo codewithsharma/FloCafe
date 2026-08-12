@@ -87,10 +87,29 @@ async function main(): Promise<void> {
   }
 
   {
+    assert.ok(SHIFTS_SOURCE.includes('fetchReconciliationPreview'));
+    assert.ok(SHIFTS_SOURCE.includes('/reconciliation-preview'));
+    assert.ok(SHIFTS_SOURCE.includes('ShiftMutationResult'));
+    assert.ok(SHIFTS_SOURCE.includes('return data.shift'));
+    console.log('   ✓ shift client exposes reconciliation preview and parses { shift, summary }');
+  }
+
+  {
+    assert.ok(FORCE_CLOSE_SOURCE.includes('ShiftReconciliationPreviewStrip'));
+    assert.ok(FORCE_CLOSE_SOURCE.includes('showLiveVariance={hasCountedCash}'));
+    console.log('   ✓ force-close modal includes optional-counted preview strip');
+  }
+
+  {
     assert.ok(HISTORY_SOURCE.includes('listShifts'));
     assert.ok(HISTORY_SOURCE.includes('shift.historyTitle'));
     assert.ok(HISTORY_SOURCE.includes('historyLoadMore'));
-    console.log('   ✓ shift history panel loads paginated shifts');
+    assert.ok(HISTORY_SOURCE.includes('historyColExpected'));
+    assert.ok(HISTORY_SOURCE.includes('historyColVariance'));
+    assert.ok(HISTORY_SOURCE.includes('expected_cash_cents'));
+    assert.ok(HISTORY_SOURCE.includes('variance_cents'));
+    assert.ok(HISTORY_SOURCE.includes('colSpan={9}'));
+    console.log('   ✓ shift history panel loads paginated shifts with expected/variance columns');
   }
 
   console.log('='.repeat(60));

@@ -16,3 +16,12 @@ M4-D1 choices:
 - Same-origin Electron renderer + localhost tab share the key (one register). LAN IP origin gets its own UUID.
 - `X-Flo-Terminal-Id` is attached only to POST `/orders`, POST `/bills/:id/payment(s)`, GET `/shifts/active`, POST `/shifts/open`, POST `/shifts/:id/close`.
 - Server App does not send a terminal header.
+
+M5-G choices (locked):
+
+- OD-M5-5: business date = calendar day in `settings.timezone` (default Asia/Kolkata), not UTC.
+- OD-M5-6: day close with open shifts = WARN in summary, still allow.
+- Schema version **v71** for `day_closes` (v70 shipped without day_closes).
+- UNIQUE(business_date) → 409; GET returns existing; POST creates once.
+- Owner/manager only; do not block POS after day close.
+- Aggregate CLOSED shifts by `closed_at` in local business-date window; use persisted expected/variance/counted.

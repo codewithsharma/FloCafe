@@ -237,8 +237,8 @@ async function main() {
   assert.ok(opened.opened_at);
   assert.ok(opened.created_at);
   assert.ok(opened.updated_at);
-  assert.equal('expected_cash_cents' in opened, false);
-  assert.equal('variance_cents' in opened, false);
+  assert.equal(opened.expected_cash_cents, null);
+  assert.equal(opened.variance_cents, null);
   console.log('   ✓ authorized cashier can open a shift');
 
   assert.equal(countAudit('shift.opened', opened.id), 1);
@@ -606,6 +606,10 @@ async function main() {
   });
   assert.equal(getOk.status, 200);
   assert.equal(getOk.data.shift.id, httpShiftId);
+  assert.ok(getOk.data.summary);
+  assert.equal(typeof getOk.data.summary.cash_payment_count, 'number');
+  assert.equal(typeof getOk.data.summary.cash_payment_total_cents, 'number');
+  assert.equal(typeof getOk.data.summary.non_cash_payment_total_cents, 'number');
 
   const cashierGetDenied = await request(baseUrl, `/api/shifts/${httpShiftId}`, {
     headers: authHeader(cashierId, 'cashier'),
@@ -661,6 +665,10 @@ async function main() {
   assert.equal(httpClose.status, 200, `close should succeed (got ${httpClose.status}: ${JSON.stringify(httpClose.data)})`);
   assert.equal(httpClose.data.shift.status, 'closed');
   assert.equal(httpClose.data.shift.counted_cash_cents, 1200);
+  assert.ok(httpClose.data.summary);
+  assert.equal(httpClose.data.summary.cash_payment_count, 0);
+  assert.equal(httpClose.data.summary.cash_payment_total_cents, 0);
+  assert.equal(httpClose.data.summary.non_cash_payment_total_cents, 0);
 
   const alreadyClosed = await request(baseUrl, `/api/shifts/${httpShiftId}/close`, {
     method: 'POST',
@@ -699,6 +707,35 @@ async function main() {
   });
   assert.equal(forceOk.status, 200);
   assert.equal(forceOk.data.shift.status, 'closed');
+  assert.ok(forceOk.data.summary);
+
+  const previewDenied = await request(baseUrl, `/api/shifts/${httpShiftId}/reconciliation-preview`, {
+    headers: authHeader(waiterId, 'waiter'),
+  });
+  assert.equal(previewDenied.status, 403);
+
+  const previewWrongTerm = await request(baseUrl, `/api/shifts/${forceOpen.data.shift.id}/reconciliation-preview`, {
+    headers: authHeader(cashierId, 'cashier'),
+    // forceOpen shift is on forceTerminal; no matching terminal header/body
+  });
+  assert.equal(previewWrongTerm.status, 400);
+
+  const reopenForPreview = await request(baseUrl, '/api/shifts/open', {
+    method: 'POST',
+    headers: authHeader(cashierId, 'cashier'),
+    body: JSON.stringify({ terminal_id: httpTerminal, opening_float_cents: 500 }),
+  });
+  assert.equal(reopenForPreview.status, 201);
+  const previewShiftId = reopenForPreview.data.shift.id;
+
+  const previewOk = await request(baseUrl, `/api/shifts/${previewShiftId}/reconciliation-preview`, {
+    headers: { ...authHeader(cashierId, 'cashier'), 'X-Flo-Terminal-Id': httpTerminal },
+  });
+  assert.equal(previewOk.status, 200);
+  assert.equal(previewOk.data.expected_cash_cents, 500);
+  assert.equal(previewOk.data.variance_cents, null);
+  assert.equal(previewOk.data.counted_cash_cents, null);
+  assert.ok(previewOk.data.summary);
 
   const terminalRes = await request(baseUrl, '/api/shifts/terminal-id', {
     headers: authHeader(cashierId, 'cashier'),

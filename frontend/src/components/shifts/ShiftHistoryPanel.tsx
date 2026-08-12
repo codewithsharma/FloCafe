@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useI18n } from '@/hooks/useI18n';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { listShifts, type Shift } from '@/lib/shifts';
+import { listShifts, formatVarianceLabel, type Shift } from '@/lib/shifts';
 
 const PAGE_SIZE = 25;
 
@@ -120,19 +120,21 @@ export default function ShiftHistoryPanel() {
               <th className="px-4 py-3">{t('shift.historyColOpened')}</th>
               <th className="px-4 py-3">{t('shift.historyColClosed')}</th>
               <th className="px-4 py-3 text-right">{t('shift.historyColFloat')}</th>
+              <th className="px-4 py-3 text-right">{t('shift.historyColExpected')}</th>
               <th className="px-4 py-3 text-right">{t('shift.historyColCounted')}</th>
+              <th className="px-4 py-3 text-right">{t('shift.historyColVariance')}</th>
             </tr>
           </thead>
           <tbody>
             {loading && shifts.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
                   {t('shift.loading')}
                 </td>
               </tr>
             ) : shifts.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
                   {t('shift.historyEmpty')}
                 </td>
               </tr>
@@ -160,9 +162,23 @@ export default function ShiftHistoryPanel() {
                     {formatCurrency(shift.opening_float_cents / 100)}
                   </td>
                   <td className="px-4 py-3 text-right text-gray-900">
+                    {shift.expected_cash_cents != null
+                      ? formatCurrency(shift.expected_cash_cents / 100)
+                      : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-right text-gray-900">
                     {shift.counted_cash_cents != null
                       ? formatCurrency(shift.counted_cash_cents / 100)
                       : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-right text-gray-900">
+                    {shift.variance_cents != null ? (() => {
+                      const label = formatVarianceLabel(shift.variance_cents);
+                      const amount = formatCurrency(Math.abs(shift.variance_cents) / 100);
+                      if (label === 'over') return `${amount} ${t('shift.varianceOver')}`;
+                      if (label === 'short') return `${amount} ${t('shift.varianceShort')}`;
+                      return t('shift.varianceBalanced');
+                    })() : '—'}
                   </td>
                 </tr>
               ))

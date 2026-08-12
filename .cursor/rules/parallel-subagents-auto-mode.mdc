@@ -1,0 +1,57 @@
+---
+description: Always use multiple parallel subagents in Auto/Agent mode
+alwaysApply: true
+---
+
+# Parallel Subagents in Auto Mode
+
+In Auto/Agent mode, **default to multiple subagents in parallel**. Do not do all exploration, implementation, and verification sequentially in the main thread when work can be split.
+
+## Default behavior
+
+1. **Decompose** the task into 2+ independent workstreams before acting.
+2. **Dispatch subagents in parallel** — multiple Task calls in a single response run concurrently.
+3. **Integrate** results in the main thread: resolve conflicts, run verification, ship the final answer.
+
+## When to dispatch (mandatory in Auto mode)
+
+| Workstream | Subagent type |
+| --- | --- |
+| Codebase search / "where is X?" / broad discovery | `explore` |
+| Shell, git, builds, test runs | `shell` |
+| Implementation, multi-step fixes, refactors | `generalPurpose` |
+| PR CI failure diagnosis | `ci-investigator` |
+| Explicit code review request | `bugbot` or `security-review` |
+
+Launch at least two subagents when the task touches more than one of: discovery, implementation, tests, docs, or verification.
+
+## Parallel dispatch pattern
+
+```
+# Same response — runs in parallel
+Task (explore): map files and patterns for feature X
+Task (explore): find existing tests and API routes for X
+Task (generalPurpose): implement service layer for X  # after discovery returns, or with enough context upfront
+```
+
+Prefer parallel over sequential unless output B is required input for task A.
+
+## Subagent prompt quality
+
+Each subagent prompt must be self-contained:
+
+- Goal and acceptance criteria
+- Relevant paths, errors, or constraints
+- Expected return format (summary, file list, root cause, diff scope)
+
+## Exceptions (single-thread OK)
+
+- One-line edits or a single known file with no discovery
+- User explicitly asks for no subagents
+- Subagents would edit the same files or share mutable state (then use one agent or sequential steps)
+
+## Anti-patterns
+
+- Running five grep/read rounds in the main thread before delegating exploration
+- One subagent for a large task that clearly splits into explore + implement + test
+- Sequential Task calls when workstreams are independent

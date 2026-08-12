@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { getCountryByCode } from '@/lib/countries';
 import { PAYMENT_METHODS } from '@/lib/payment-methods';
-
+import DayCloseCard from '@/components/dashboard/DayCloseCard';
 interface PaymentMethodBreakdown {
   method: string | null;
   count: number;
@@ -289,6 +289,8 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
+          <DayCloseCard businessDate={selectedDate} />
+
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             {tiles.map((tile) => (
               <Link

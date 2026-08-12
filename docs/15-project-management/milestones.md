@@ -61,15 +61,36 @@
 
 **Shift UI polish:** **COMPLETE** (M4-E3) — Stale-shift banner (`shift_stale_hours`), manager force-close modal, owner/manager shift history in Settings.
 
-**M5:** **NOT STARTED**
+**M5-A design:** **COMPLETE** — [`m5-cash-reconciliation-rfc.md`](m5-cash-reconciliation-rfc.md) **DESIGN READY**; [`ADR-008`](../14-decisions/ADR-008-cash-reconciliation-model.md)
 
-**ADR:** [`ADR-007-shift-model.md`](../14-decisions/ADR-007-shift-model.md)
+**M5-B schema:** **COMPLETE** — migration v70 adds nullable `expected_cash_cents`, `variance_cents` on `shifts`
+
+**M5-C expected cash computation:** **COMPLETE** — read-only `computeExpectedCashCents(shiftId)`; shared cash classification in `payment-cash.ts`
+
+**M5-D close integration:** **COMPLETE** — `closeShift` / `forceCloseShift` persist expected + variance atomically with audit; counted cash still optional
+
+**M5-E reconciliation API:** **COMPLETE** — `GET /:id/reconciliation-preview` (read-only); close/force-close/GET `/:id` include payment summary; no new migration
+
+**M5-F reconciliation UI:** **COMPLETE** — close/force-close modals fetch preview with live variance; history columns for expected/variance; client parses `{ shift, summary }`
+
+**M5-G day close:** **COMPLETE** — migration v71 `day_closes`, service + reports API, dashboard card; OD-M5-5/6 locked
+
+**M5-H documentation sync:** **COMPLETE** — API/schema/PM/RFC docs match shipped M5-E–G
+
+**M5-H full verification gate:** **COMPLETE** — `npm test`, `test:security`, `test:upgrade-path`, `test:coverage:baseline`, `build`, `build:frontend`, `lint`, `test:e2e`, `git diff --check` green
+
+**M6:** **NOT STARTED**
+
+**M6:** **NOT STARTED**
+
+**ADR:** [`ADR-007-shift-model.md`](../14-decisions/ADR-007-shift-model.md), [`ADR-008-cash-reconciliation-model.md`](../14-decisions/ADR-008-cash-reconciliation-model.md)
 
 
 
 ## M5 — Cash reconciliation & day close
 
 **Target:** End-of-day accountability  
+**Design:** [`m5-cash-reconciliation-rfc.md`](m5-cash-reconciliation-rfc.md) — **DESIGN READY** (M5-A)
 **Exit criteria:** Expected vs counted cash variance recorded; day close snapshot test
 
 ## M6 — Refund workflow

@@ -1,13 +1,14 @@
 /**
  * M4-C — centralized shift lifecycle (open / close / force-close).
  *
- * Does not attach shifts to orders or payments (M4-D) and does not
- * compute expected cash or variance (M5).
+ * M5-C: read-only expected cash computation.
+ * M5-D: close/force-close persist expected_cash_cents + variance_cents.
  */
 
 import { randomUUID } from 'node:crypto';
 import { getDatabase, getSettingValue, now, upsertSettings, withTxn } from '../db';
 import { logAuditEvent, type AuditContext } from './audit-log';
+import { aggregatePaymentsFromPaymentDetailsJson } from './payment-cash';
 
 export type ShiftStatus = 'open' | 'closed';
 
@@ -26,10 +27,34 @@ export interface ShiftRecord {
   opening_note: string | null;
   closing_note: string | null;
   counted_cash_cents: number | null;
+  expected_cash_cents: number | null;
+  variance_cents: number | null;
   opened_at: string;
   closed_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+interface ShiftReconciliation {
+  expectedCashCents: number;
+  varianceCents: number | null;
+  cashPaymentTotalCents: number;
+  cashPaymentCount: number;
+}
+
+export interface ShiftPaymentSummary {
+  cash_payment_count: number;
+  cash_payment_total_cents: number;
+  non_cash_payment_total_cents: number;
+}
+
+export interface ShiftReconciliationPreview {
+  shift: ShiftRecord;
+  opening_float_cents: number;
+  expected_cash_cents: number;
+  counted_cash_cents: number | null;
+  variance_cents: number | null;
+  summary: ShiftPaymentSummary;
 }
 
 export interface ShiftListQuery {
@@ -56,6 +81,7 @@ const MAX_LIST_LIMIT = 100;
 const SHIFT_COLUMNS = `
   id, terminal_id, status, opened_by_user_id, closed_by_user_id,
   opening_float_cents, opening_note, closing_note, counted_cash_cents,
+  expected_cash_cents, variance_cents,
   opened_at, closed_at, created_at, updated_at
 `;
 
@@ -241,6 +267,7 @@ export function closeShift(input: {
 
   try {
     return withTxn(() => {
+      const reconciliation = computeShiftReconciliation(shift.id, countedCashCents);
       const timestamp = now();
       const updated = getDatabase().prepare(`
         UPDATE shifts
@@ -249,6 +276,8 @@ export function closeShift(input: {
             closed_at = ?,
             counted_cash_cents = ?,
             closing_note = ?,
+            expected_cash_cents = ?,
+            variance_cents = ?,
             updated_at = ?
         WHERE id = ? AND status = 'open'
       `).run(
@@ -256,6 +285,8 @@ export function closeShift(input: {
         timestamp,
         countedCashCents,
         closingNote,
+        reconciliation.expectedCashCents,
+        reconciliation.varianceCents,
         timestamp,
         shift.id,
       );
@@ -273,6 +304,10 @@ export function closeShift(input: {
           counted_cash_cents: countedCashCents,
           closing_note: closingNote,
           opened_by_user_id: shift.opened_by_user_id,
+          expected_cash_cents: reconciliation.expectedCashCents,
+          variance_cents: reconciliation.varianceCents,
+          cash_payment_total_cents: reconciliation.cashPaymentTotalCents,
+          cash_payment_count: reconciliation.cashPaymentCount,
         },
         context: withTerminalContext(input.context, shift.terminal_id),
       });
@@ -300,6 +335,7 @@ export function forceCloseShift(input: {
 
   try {
     return withTxn(() => {
+      const reconciliation = computeShiftReconciliation(shift.id, countedCashCents);
       const timestamp = now();
       const updated = getDatabase().prepare(`
         UPDATE shifts
@@ -308,6 +344,8 @@ export function forceCloseShift(input: {
             closed_at = ?,
             counted_cash_cents = ?,
             closing_note = ?,
+            expected_cash_cents = ?,
+            variance_cents = ?,
             updated_at = ?
         WHERE id = ? AND status = 'open'
       `).run(
@@ -315,6 +353,8 @@ export function forceCloseShift(input: {
         timestamp,
         countedCashCents,
         closingNote,
+        reconciliation.expectedCashCents,
+        reconciliation.varianceCents,
         timestamp,
         shift.id,
       );
@@ -334,6 +374,10 @@ export function forceCloseShift(input: {
           counted_cash_cents: countedCashCents,
           opened_by_user_id: shift.opened_by_user_id,
           closed_by_user_id: input.actor.userId,
+          expected_cash_cents: reconciliation.expectedCashCents,
+          variance_cents: reconciliation.varianceCents,
+          cash_payment_total_cents: reconciliation.cashPaymentTotalCents,
+          cash_payment_count: reconciliation.cashPaymentCount,
         },
         context: withTerminalContext(input.context, shift.terminal_id),
       });
@@ -514,6 +558,8 @@ function toShiftRecord(row: Record<string, unknown>): ShiftRecord {
     opening_note: row.opening_note == null ? null : String(row.opening_note),
     closing_note: row.closing_note == null ? null : String(row.closing_note),
     counted_cash_cents: row.counted_cash_cents == null ? null : Number(row.counted_cash_cents),
+    expected_cash_cents: row.expected_cash_cents == null ? null : Number(row.expected_cash_cents),
+    variance_cents: row.variance_cents == null ? null : Number(row.variance_cents),
     opened_at: String(row.opened_at),
     closed_at: row.closed_at == null ? null : String(row.closed_at),
     created_at: String(row.created_at),
@@ -627,5 +673,130 @@ export function assertOpenShiftForCashPayment(terminalIdHeader: string | undefin
       'OPEN_SHIFT_REQUIRED',
     );
   }
+}
+
+function aggregatePaymentsForShift(shiftId: number): {
+  cashTotalCents: number;
+  cashCount: number;
+  nonCashTotalCents: number;
+} {
+  const rows = getDatabase().prepare(`
+    SELECT payment_details
+    FROM bills
+    WHERE shift_id = ?
+      AND payment_details IS NOT NULL
+      AND payment_details != ''
+  `).all(shiftId) as { payment_details: string }[];
+
+  let cashTotalCents = 0;
+  let cashCount = 0;
+  let nonCashTotalCents = 0;
+  for (const row of rows) {
+    const aggregated = aggregatePaymentsFromPaymentDetailsJson(row.payment_details);
+    cashTotalCents += aggregated.cashTotalCents;
+    cashCount += aggregated.cashCount;
+    nonCashTotalCents += aggregated.nonCashTotalCents;
+  }
+  return { cashTotalCents, cashCount, nonCashTotalCents };
+}
+
+function aggregateCashPaymentsForShift(shiftId: number): { totalCents: number; count: number } {
+  const aggregated = aggregatePaymentsForShift(shiftId);
+  return { totalCents: aggregated.cashTotalCents, count: aggregated.cashCount };
+}
+
+/**
+ * M5-E — Payment breakdown for a shift (read-only; bills.shift_id attribution).
+ */
+export function getShiftPaymentSummary(shiftId: number): ShiftPaymentSummary {
+  const aggregated = aggregatePaymentsForShift(shiftId);
+  return {
+    cash_payment_count: aggregated.cashCount,
+    cash_payment_total_cents: aggregated.cashTotalCents,
+    non_cash_payment_total_cents: aggregated.nonCashTotalCents,
+  };
+}
+
+/**
+ * M5-E — Read-only reconciliation preview (does not accept counted cash or mutate DB).
+ *
+ * Open shifts: expected computed live; counted/variance null.
+ * Closed shifts: persisted expected/variance/count when present; summary recomputed from bills.
+ */
+export function getShiftReconciliationPreview(input: {
+  actor: ShiftActor;
+  shiftId: number;
+  terminalId?: string | null;
+}): ShiftReconciliationPreview {
+  assertShiftsEnabled();
+  const shift = getShift(input.shiftId);
+  if (!shift) {
+    throw new ShiftServiceError(404, 'Shift not found', 'SHIFT_NOT_FOUND');
+  }
+  assertCashierTerminalAccess(input.actor, shift, input.terminalId);
+  const summary = getShiftPaymentSummary(shift.id);
+  const liveExpectedCashCents = shift.opening_float_cents + summary.cash_payment_total_cents;
+
+  if (shift.status === 'closed') {
+    return {
+      shift,
+      opening_float_cents: shift.opening_float_cents,
+      expected_cash_cents: shift.expected_cash_cents ?? liveExpectedCashCents,
+      counted_cash_cents: shift.counted_cash_cents,
+      variance_cents: shift.variance_cents,
+      summary,
+    };
+  }
+
+  return {
+    shift,
+    opening_float_cents: shift.opening_float_cents,
+    expected_cash_cents: liveExpectedCashCents,
+    counted_cash_cents: null,
+    variance_cents: null,
+    summary,
+  };
+}
+
+/**
+ * M5-D — Compute close-time reconciliation for a shift (read + derive; no writes).
+ *
+ * expected = opening_float + cash payment total
+ * variance = counted === null ? null : counted - expected
+ * Refunds contribute zero until M6.
+ */
+function computeShiftReconciliation(
+  shiftId: number,
+  countedCashCents: number | null,
+): ShiftReconciliation {
+  const shift = getShift(shiftId);
+  if (!shift) {
+    throw new ShiftServiceError(404, 'Shift not found', 'SHIFT_NOT_FOUND');
+  }
+  const cash = aggregateCashPaymentsForShift(shiftId);
+  const expectedCashCents = shift.opening_float_cents + cash.totalCents;
+  return {
+    expectedCashCents,
+    varianceCents: countedCashCents === null ? null : countedCashCents - expectedCashCents,
+    cashPaymentTotalCents: cash.totalCents,
+    cashPaymentCount: cash.count,
+  };
+}
+
+/**
+ * M5-C — Compute expected drawer cash for a shift (read-only).
+ *
+ * Formula: opening_float_cents + SUM(qualifying cash applied amounts on bills WHERE shift_id = shift).
+ * Attribution uses bills.shift_id only; NULL bill shift_id contributes zero.
+ * Does not write expected_cash_cents or variance_cents (M5-D persists those at close).
+ *
+ * Concurrent payment writes may change the result between calls; close-time persistence is M5-D.
+ */
+export function computeExpectedCashCents(shiftId: number): number {
+  const shift = getShift(shiftId);
+  if (!shift) {
+    throw new ShiftServiceError(404, 'Shift not found', 'SHIFT_NOT_FOUND');
+  }
+  return shift.opening_float_cents + aggregateCashPaymentsForShift(shiftId).totalCents;
 }
 

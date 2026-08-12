@@ -36,7 +36,15 @@
 - [x] M4-E1: Shift UI client foundation
 - [x] M4-E2: Shift status & open/close UI
 - [x] M4-E3: Shift UI polish (stale warnings + history)
-- [ ] M5: Cash reconciliation + day close
+- [x] M5-A: Cash reconciliation design / RFC
+- [x] M5-B: Reconciliation database foundation (v70)
+- [x] M5-C: Reconciliation service (expected cash computation)
+- [x] M5-D: Close / force-close integration
+- [x] M5-E: Reconciliation API (preview + extended responses)
+- [x] M5-F: Reconciliation UI (close wizard + history)
+- [x] M5-G: Day close + reporting snapshot
+- [x] M5-H: Documentation sync (API, schema, PM, RFC status)
+- [x] M5-H: Full production verification gate
 - [ ] M6: Refund workflow
 - [ ] M7: Wire audit into remaining void/cancel paths (partial: item cancel in M3)
 - [ ] M8: Cash drawer kick
