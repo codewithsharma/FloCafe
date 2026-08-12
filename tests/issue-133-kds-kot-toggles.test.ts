@@ -135,6 +135,9 @@ async function main() {
 
     // ── Both features on: existing KDS endpoints work normally ─────────────
     console.log('\n2. KDS enabled — endpoints reachable');
+    // LAN KDS pairing QR requires network_mode=kds_lan|lan (P0.1)
+    const enableLanKds = await request(app).put('/api/settings/network_mode').set(ownerAuth).send({ value: 'kds_lan' });
+    assertEqual(enableLanKds.status, 200, 'PUT /api/settings/network_mode kds_lan succeeds');
     assertEqual((await request(app).get('/api/kds/orders').set(chefAuth)).status, 200, 'GET /api/kds/orders 200 when enabled');
     assertEqual((await request(app).get('/api/kds/display?station_id=none').set(chefAuth)).status, 404, 'GET /api/kds/display 404 for unknown station (not gated — reaches the handler)');
     assertEqual((await request(app).get('/api/kitchen/orders').set(chefAuth)).status, 200, 'GET /api/kitchen/orders 200 when enabled');

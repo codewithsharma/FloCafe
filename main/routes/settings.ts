@@ -54,6 +54,7 @@ const OPTIONAL_SETTING_DEFAULTS: Record<string, string> = {
   bill_footer_message: '',
   printer_trim_decimals: 'false',
   split_checks_enabled: 'false',
+  network_mode: 'localhost',
 };
 
 function maskSetting(key: string, value: string): string {
@@ -692,6 +693,7 @@ const ALLOWED_WILDCARD_KEYS = new Set([
   'diagnostics_consent',
   'kds_enabled', 'server_app_enabled', 'kot_printing_enabled',
   'split_checks_enabled',
+  'network_mode',
 ]);
 
 function isAllowedWildcardKey(key: string): boolean {
@@ -750,6 +752,26 @@ router.put('/:key', requireRole('owner', 'manager'), (req: Request, res: Respons
       if (wasEnabled && turningOff) {
         db.prepare('DELETE FROM kds_pairing_tokens').run();
       }
+    }
+
+    if (req.params.key === 'network_mode') {
+      const normalized = String(value ?? '').trim().toLowerCase();
+      if (!['localhost', 'kds_lan', 'lan'].includes(normalized)) {
+        return res.status(400).json({
+          error: 'network_mode must be localhost, kds_lan, or lan',
+          code: 'INVALID_NETWORK_MODE',
+        });
+      }
+      db.prepare(`
+        INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+      `).run(req.params.key, normalized, now());
+      const setting = db.prepare('SELECT * FROM settings WHERE key = ?').get(req.params.key);
+      return res.json({
+        setting,
+        restart_required: true,
+        message: 'Network mode changes apply after restarting Nexora POS.',
+      });
     }
 
     if (req.params.key === 'telemetry_enabled') {

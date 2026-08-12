@@ -4,7 +4,7 @@
 **Vision (future):** Nexora RestaurantOS — inventory, multi-location, integrations, AI (not the current product).  
 **Canonical strategy:** `STRATEGY.md` (2026-08-12 CEO+CTO mandate).
 
-Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v72**) + statically exported Next.js (`frontend/`).
+Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v73**) + statically exported Next.js (`frontend/`).
 
 ## Stage
 
@@ -18,8 +18,8 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 1. M6 Refunds API + Orders refund UI — **GREEN** (print deferred)
 2. P0.2 financial hardening — **implemented** (re-pay block, reporting semantics, payment audit, mandatory payment Idempotency-Key, day-close Cash In − Cash Refunds)
 3. Money-path REAL→cents migration — **documentation only** until approved
-4. LAN security deployment model
-5. JWT secret storage design (safeStorage/keychain + upgrade/backup)
+4. LAN security / HTTP exposure — **IMPLEMENTED** (`network_mode` localhost|kds_lan|lan; audit `p0.1-lan-security-audit.md` → GREEN WITH HARDENING)
+5. JWT secret storage design (safeStorage/keychain + upgrade/backup) — Phase 2 next
 6. Electron sandbox justification or migration plan
 
 **Frozen until pilots prove reliability:** AI, aggregators (Swiggy/Zomato/ONDC), multi-tenant SaaS, multi-location implementation, ERP inventory, payment terminals, Bluetooth print, microservices.
@@ -45,4 +45,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**M6 follow-up:** optional refund receipt print. Then P0.2 financial-ops audit coverage.
+Phase 2 JWT secret storage design (safeStorage/keychain + upgrade/backup). Do not start until requested. Optional: runbook port matrix by `network_mode`.

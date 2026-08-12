@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { Bonjour } from 'bonjour-service';
 import { initDatabase, closeDatabase, SchemaVersionMismatchError } from './db';
-import { startServer, stopServer, getLocalIP, isServerRunning } from './server';
+import { startServer, stopServer, getLocalIP, isServerRunning, getServerPort } from './server';
 import { cloudSync } from './services/cloud-sync';
 import { telemetry, sendEvent as sendTelemetryEvent } from './services/telemetry';
 import { googleDrive } from './services/google-drive';
@@ -13,6 +13,14 @@ import { startServerApp, stopServerApp, getServerAppPort, isServerAppRunning } f
 import { initPrinter, printReceipt, printKOT } from './printers/thermal';
 import { registerIpcHandlers } from './ipc';
 import { initFromDb as initWhatsAppFromDb, shutdown as shutdownWhatsApp } from './services/whatsapp';
+import {
+  getNetworkMode,
+  isLanKdsEnabled,
+  isLanPosEnabled,
+  isLanServerAppEnabled,
+  mdnsPrimaryPort,
+  shouldAdvertiseMdns,
+} from './services/network-mode';
 import log from 'electron-log/main';
 import { autoUpdater } from 'electron-updater';
 import { isAllowedLocalWindowUrl, isSafeExternalUrl } from './security/url-allowlist';
@@ -232,7 +240,7 @@ function createWindow(): void {
 
   // Always load from the embedded Express server (serves static Next.js export).
   // This avoids file:// protocol issues and keeps dev/prod behaviour identical.
-  mainWindow.loadURL(`http://localhost:${PORT}`);
+  mainWindow.loadURL(`http://localhost:${getServerPort()}`);
 
   // Allow target="_blank" links to open new windows for local URLs (e.g. the KDS page).
   // External URLs are sent to the system browser instead.
@@ -411,18 +419,43 @@ function createTray(): void {
 
 function startMdns(): void {
   try {
+    const mode = getNetworkMode();
+    if (!shouldAdvertiseMdns(mode)) {
+      console.log(`[mDNS] Skipped (network_mode=${mode}; LAN advertising disabled)`);
+      return;
+    }
+
+    const primaryPort = mdnsPrimaryPort(mode, {
+      pos: getServerPort(),
+      kds: getKdsPort(),
+      serverApp: getServerAppPort(),
+    });
+
     bonjour = new Bonjour();
     bonjour.publish({
       name: 'Flo',
       type: 'http',
-      port: PORT,
+      port: primaryPort,
       host: 'flo',   // resolves as flo.local on the LAN
-      txt: { version: app.getVersion(), kds: `/kds`, kds_port: String(getKdsPort()), server_app: '/server-standalone', server_app_port: String(getServerAppPort()) },
+      txt: {
+        version: app.getVersion(),
+        network_mode: mode,
+        kds: `/kds`,
+        kds_port: String(getKdsPort()),
+        ...(isLanPosEnabled(mode) ? { pos_port: String(getServerPort()) } : {}),
+        ...(isLanServerAppEnabled(mode)
+          ? { server_app: '/server-standalone', server_app_port: String(getServerAppPort()) }
+          : {}),
+      },
     });
     const ip = getLocalIP();
-    console.log(`[mDNS] Advertising flo.local:${PORT}  (IP fallback: http://${ip}:${PORT})`);
-    console.log(`[mDNS] KDS available at http://flo.local:${getKdsPort()}  (IP fallback: http://${ip}:${getKdsPort()})`);
-    console.log(`[mDNS] Server App available at http://flo.local:${getServerAppPort()}  (IP fallback: http://${ip}:${getServerAppPort()})`);
+    console.log(`[mDNS] Advertising flo.local:${primaryPort} (mode=${mode}, IP fallback: http://${ip}:${primaryPort})`);
+    if (isLanKdsEnabled(mode)) {
+      console.log(`[mDNS] KDS available at http://flo.local:${getKdsPort()}  (IP fallback: http://${ip}:${getKdsPort()})`);
+    }
+    if (isLanServerAppEnabled(mode)) {
+      console.log(`[mDNS] Server App available at http://flo.local:${getServerAppPort()}  (IP fallback: http://${ip}:${getServerAppPort()})`);
+    }
   } catch (err) {
     console.warn('[mDNS] Could not start Bonjour:', err);
   }

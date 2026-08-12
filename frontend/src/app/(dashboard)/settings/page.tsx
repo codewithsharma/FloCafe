@@ -650,12 +650,34 @@ export default function SettingsPage() {
   // than being set synchronously inside that effect (fetchKdsInfo, used by the manual
   // "refresh" button, still sets it explicitly for that path).
   const [kdsInfoLoading, setKdsInfoLoading] = useState(true);
+  const [kdsNetworkModeMsg, setKdsNetworkModeMsg] = useState<string | null>(null);
+
+  const networkModeBlockedMessage = (err: unknown): string | null => {
+    const error = err as { response?: { status?: number; data?: { code?: string } } };
+    if (error.response?.status !== 403) return null;
+    const code = error.response?.data?.code;
+    if (code === 'NETWORK_MODE_REQUIRES_KDS_LAN') {
+      return t('settings.networkModeRequiresKdsLan');
+    }
+    if (typeof code === 'string' && code.startsWith('NETWORK_MODE_')) {
+      return t('settings.networkModeRequiresLan');
+    }
+    return null;
+  };
 
   const fetchKdsInfo = () => {
     setKdsInfoLoading(true);
     api.get('/kds-info').then((res) => {
       setKdsInfo(res.data);
-    }).catch(() => {
+      setKdsNetworkModeMsg(null);
+    }).catch((err) => {
+      const blocked = networkModeBlockedMessage(err);
+      setKdsInfo(null);
+      if (blocked) {
+        setKdsNetworkModeMsg(blocked);
+        return;
+      }
+      setKdsNetworkModeMsg(null);
       toast.error(t('settings.kdsInfoFetchFailed'));
     }).finally(() => setKdsInfoLoading(false));
   };
@@ -669,12 +691,21 @@ export default function SettingsPage() {
     ips_data?: { ip: string; url: string; qr_data: string | null }[];
   } | null>(null);
   const [serverAppInfoLoading, setServerAppInfoLoading] = useState(false);
+  const [serverAppNetworkModeMsg, setServerAppNetworkModeMsg] = useState<string | null>(null);
 
   const fetchServerAppInfo = () => {
     setServerAppInfoLoading(true);
     api.get('/server-app-info').then((res) => {
       setServerAppInfo(res.data);
-    }).catch(() => {
+      setServerAppNetworkModeMsg(null);
+    }).catch((err) => {
+      const blocked = networkModeBlockedMessage(err);
+      setServerAppInfo(null);
+      if (blocked) {
+        setServerAppNetworkModeMsg(blocked);
+        return;
+      }
+      setServerAppNetworkModeMsg(null);
       toast.error(t('settings.serverAppInfoFetchFailed', { defaultValue: 'Could not load Server App info' }));
     }).finally(() => setServerAppInfoLoading(false));
   };
@@ -688,12 +719,21 @@ export default function SettingsPage() {
     ips_data?: { ip: string; url: string; qr_data: string | null }[];
   } | null>(null);
   const [posInfoLoading, setPosInfoLoading] = useState(false);
+  const [posNetworkModeMsg, setPosNetworkModeMsg] = useState<string | null>(null);
 
   const fetchPosInfo = () => {
     setPosInfoLoading(true);
     api.get('/pos-info').then((res) => {
       setPosInfo(res.data);
-    }).catch(() => {
+      setPosNetworkModeMsg(null);
+    }).catch((err) => {
+      const blocked = networkModeBlockedMessage(err);
+      setPosInfo(null);
+      if (blocked) {
+        setPosNetworkModeMsg(blocked);
+        return;
+      }
+      setPosNetworkModeMsg(null);
       toast.error(t('settings.posInfoFetchFailed'));
     }).finally(() => setPosInfoLoading(false));
   };
@@ -1246,6 +1286,11 @@ export default function SettingsPage() {
   const [backingUpGoogleDrive, setBackingUpGoogleDrive] = useState(false);
   const [savingGoogleDrivePrefs, setSavingGoogleDrivePrefs] = useState(false);
 
+  // P0.1 deployment modes — staff-LAN only; restart required after change.
+  type NetworkMode = 'localhost' | 'kds_lan' | 'lan';
+  const [networkMode, setNetworkMode] = useState<NetworkMode>('localhost');
+  const [savingNetworkMode, setSavingNetworkMode] = useState(false);
+
   // Kitchen workflow toggles (issue #133) — independent on/off switches,
   // default true to match pre-toggle always-on behavior.
   const [kdsEnabledSetting, setKdsEnabledSetting] = useState(true);
@@ -1384,8 +1429,20 @@ export default function SettingsPage() {
     // Inlined rather than calling fetchKdsInfo() (used by the manual "refresh" button too) —
     // kdsInfoLoading already starts true for this initial fetch.
     api.get('/kds-info')
-      .then((res) => setKdsInfo(res.data))
-      .catch(() => toast.error(t('settings.kdsInfoFetchFailed')))
+      .then((res) => {
+        setKdsInfo(res.data);
+        setKdsNetworkModeMsg(null);
+      })
+      .catch((err) => {
+        const blocked = networkModeBlockedMessage(err);
+        setKdsInfo(null);
+        if (blocked) {
+          setKdsNetworkModeMsg(blocked);
+          return;
+        }
+        setKdsNetworkModeMsg(null);
+        toast.error(t('settings.kdsInfoFetchFailed'));
+      })
       .finally(() => setKdsInfoLoading(false));
     fetchStations();
     fetchStationCategories();
@@ -1437,6 +1494,13 @@ export default function SettingsPage() {
       const enabled = res.data.setting?.value !== 'false';
       setKdsEnabledSetting(enabled);
       posSettings.setKdsEnabled(enabled);
+    }).catch(() => {});
+
+    api.get('/settings/network_mode').then((res) => {
+      const value = res.data.setting?.value;
+      if (value === 'localhost' || value === 'kds_lan' || value === 'lan') {
+        setNetworkMode(value);
+      }
     }).catch(() => {});
 
     api.get('/settings/server_app_enabled').then((res) => {
@@ -1725,6 +1789,21 @@ export default function SettingsPage() {
       toast.error(error.response?.data?.error || t('settings.googleDriveSavePreferencesFailed'));
     } finally {
       setSavingGoogleDrivePrefs(false);
+    }
+  };
+
+  const saveNetworkMode = async (mode: NetworkMode) => {
+    const previous = networkMode;
+    setNetworkMode(mode);
+    setSavingNetworkMode(true);
+    try {
+      const res = await api.put('/settings/network_mode', { value: mode });
+      toast.success(res.data?.message || t('settings.networkModeSaved'));
+    } catch {
+      setNetworkMode(previous);
+      toast.error(t('settings.saveFailed'));
+    } finally {
+      setSavingNetworkMode(false);
     }
   };
 
@@ -2471,6 +2550,25 @@ export default function SettingsPage() {
                 {t('settings.posPairingHint')}
               </p>
 
+              <div className="mb-5 pb-5 border-b border-flo-border space-y-2">
+                <p className="font-medium text-flo-text">{t('settings.networkMode')}</p>
+                <p className="text-sm text-flo-text-secondary">{t('settings.networkModeHint')}</p>
+                <select
+                  value={networkMode}
+                  disabled={savingNetworkMode}
+                  onChange={(e) => {
+                    const next = e.target.value as NetworkMode;
+                    if (next === networkMode) return;
+                    void saveNetworkMode(next);
+                  }}
+                  className="w-full max-w-md px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-surface text-flo-text"
+                >
+                  <option value="localhost">{t('settings.networkModeLocalhost')}</option>
+                  <option value="kds_lan">{t('settings.networkModeKdsLan')}</option>
+                  <option value="lan">{t('settings.networkModeLan')}</option>
+                </select>
+              </div>
+
               {posInfoLoading && (
                 <div className="flex items-center justify-center py-10">
                   <div className="w-6 h-6 border-2 border-flo-brand-600 border-t-transparent rounded-full animate-spin" />
@@ -2555,7 +2653,7 @@ export default function SettingsPage() {
               {!posInfo && !posInfoLoading && (
                 <>
                   <p className="text-sm text-flo-text-secondary mb-3">
-                    {t('settings.posLoadHint')}
+                    {posNetworkModeMsg || t('settings.posLoadHint')}
                   </p>
                   <button onClick={fetchPosInfo}
                     className="px-4 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 font-medium">
@@ -2689,7 +2787,7 @@ export default function SettingsPage() {
               {!kdsInfo && !kdsInfoLoading && (
                 <>
                   <p className="text-sm text-flo-text-secondary mb-3">
-                    {t('settings.kdsLoadHint', { defaultValue: 'Load connection details to pair kitchen display devices on your local network.' })}
+                    {kdsNetworkModeMsg || t('settings.kdsLoadHint', { defaultValue: 'Load connection details to pair kitchen display devices on your local network.' })}
                   </p>
                   <button onClick={fetchKdsInfo}
                     className="px-4 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 font-medium">
@@ -2944,7 +3042,7 @@ export default function SettingsPage() {
                 {!serverAppInfo && !serverAppInfoLoading && (
                   <>
                     <p className="text-sm text-flo-text-secondary mb-3">
-                      {t('settings.serverAppLoadHint', { defaultValue: 'Load connection details to pair tableside ordering devices on your local network.' })}
+                      {serverAppNetworkModeMsg || t('settings.serverAppLoadHint', { defaultValue: 'Load connection details to pair tableside ordering devices on your local network.' })}
                     </p>
                     <button onClick={fetchServerAppInfo}
                       className="px-4 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 font-medium">

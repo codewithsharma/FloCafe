@@ -5,6 +5,7 @@
 - Typed `*ServiceError` with `statusCode`; routes map to `{ error }` without SQL/stack leakage.
 - Feature flags live in `settings` (`'true'` / `'false'` strings).
 - POS client identity: origin-scoped `localStorage` UUID (`flo_terminal_id`) sent as `X-Flo-Terminal-Id` on selected POS routes only. Not an auth credential.
+- LAN exposure: `settings.network_mode` = `localhost` | `kds_lan` | `lan` (default `localhost`). Bind hosts derived via `main/services/network-mode.ts`. Restart required.
 
 ## Mandate patterns (2026-08-12)
 

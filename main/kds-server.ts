@@ -10,11 +10,13 @@ import { databaseMaintenanceMiddleware, getDatabase, getKdsStationCategoryIds, g
 import { setupKdsWebSocket, notifyKdsUpdate } from './services/kds';
 import { getJWTSecret, parseCategoryIds } from './routes/auth';
 import { rateLimit, authRateLimit, corsOptions, isTokenRevoked, isTokenStale, revokeToken } from './middleware/security';
+import { getNetworkMode, resolveListenHost, type ListenHost } from './services/network-mode';
 
 let kdsServer: http.Server | null = null;
 let kdsWss: WebSocketServer | null = null;
 const KDS_PORT = parseInt(process.env.KDS_PORT || '3002', 10);
 let activeKdsPort = KDS_PORT;
+let activeKdsListenHost: ListenHost = '127.0.0.1';
 
 type KdsRequestUser = {
   userId: string;
@@ -546,10 +548,12 @@ export function startKdsServer(): Promise<void> {
 
     let currentKdsPort = KDS_PORT;
     let attempts = 0;
+    const listenHost = resolveListenHost(getNetworkMode(), 'kds');
+    activeKdsListenHost = listenHost;
 
     const onListening = () => {
       activeKdsPort = currentKdsPort;
-      console.log(`[KDS Server] HTTP server running on http://localhost:${activeKdsPort}`);
+      console.log(`[KDS Server] HTTP server running on http://localhost:${activeKdsPort} (bind ${listenHost}, mode ${getNetworkMode()})`);
 
       if (kdsServer) {
         // noServer + a manual 'upgrade' handler so a disabled KDS can 404 the
@@ -595,7 +599,7 @@ export function startKdsServer(): Promise<void> {
       resolve();
     };
 
-    kdsServer = app.listen(currentKdsPort, '0.0.0.0', onListening);
+    kdsServer = app.listen(currentKdsPort, listenHost, onListening);
 
     kdsServer?.on('error', (err: NodeJS.ErrnoException) => {
       if (err.code === 'EADDRINUSE') {
@@ -608,7 +612,7 @@ export function startKdsServer(): Promise<void> {
         }
         currentKdsPort++;
         console.log(`[KDS Server] Port ${currentKdsPort - 1} in use, trying ${currentKdsPort}`);
-        kdsServer?.listen(currentKdsPort, '0.0.0.0', onListening);
+        kdsServer?.listen(currentKdsPort, listenHost, onListening);
       } else {
         reject(err);
       }
@@ -631,4 +635,8 @@ export function stopKdsServer(): void {
 
 export function getKdsPort(): number {
   return activeKdsPort;
+}
+
+export function getKdsListenHost(): ListenHost {
+  return activeKdsListenHost;
 }

@@ -3741,6 +3741,16 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       `);
     },
   },
+  {
+    version: 73,
+    name: 'p0_1_network_mode',
+    up: () => {
+      // Default localhost: Electron standalone works; LAN clients require an
+      // explicit operator choice (kds_lan | lan). Invalid values are coerced
+      // to localhost at read time — never silently bind 0.0.0.0.
+      insertSettingIfMissing('network_mode', 'localhost');
+    },
+  },
 ];
 
 function syncBackupBeforeMigration(fromVersion: number, toVersion: number): void {

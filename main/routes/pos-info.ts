@@ -3,14 +3,32 @@
  * Returns the POS access URLs (mDNS + local IP) so the app can render a QR code.
  * A second cashier scans this from Settings → POS Workflow to open the same
  * POS on another device on the local network.
+ *
+ * Requires network_mode=lan (staff LAN). Localhost / kds_lan do not advertise
+ * unreachable LAN POS URLs.
  */
 import { Router, Request, Response } from 'express';
 import QRCode from 'qrcode';
 import { getLocalIP, getAllLocalIPs, getServerPort } from '../server';
+import {
+  getNetworkMode,
+  isLanPosEnabled,
+  networkModeRequiresRestartMessage,
+} from '../services/network-mode';
 
 const router = Router();
 
 router.get('/', async (_req: Request, res: Response) => {
+  const mode = getNetworkMode();
+  if (!isLanPosEnabled(mode)) {
+    return res.status(403).json({
+      error: 'LAN POS pairing requires network_mode=lan on a staff-only network. Guest Wi-Fi is unsupported.',
+      code: 'NETWORK_MODE_REQUIRES_LAN',
+      network_mode: mode,
+      hint: networkModeRequiresRestartMessage(),
+    });
+  }
+
   const port = getServerPort();
   const ip = getLocalIP();
   const allIps = getAllLocalIPs();
@@ -37,6 +55,7 @@ router.get('/', async (_req: Request, res: Response) => {
   }
 
   res.json({
+    network_mode: mode,
     mdns_url:    mdnsUrl,
     ip_url:      ipUrl,
     qr_url:      qrUrl,

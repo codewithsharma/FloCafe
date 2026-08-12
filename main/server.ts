@@ -12,6 +12,7 @@ import { databaseMaintenanceMiddleware, getDbHealth, isDatabaseMaintenanceActive
 import { setupKdsWebSocket } from './services/kds';
 import { rateLimit, corsOptions, getUserAuthStatus, isTokenRevoked, isTokenStale } from './middleware/security';
 import { initFromDb as initWhatsAppFromDb } from './services/whatsapp';
+import { getNetworkMode, resolveListenHost, type ListenHost } from './services/network-mode';
 
 let server: http.Server | null = null;
 let app: Express;
@@ -19,6 +20,7 @@ let wss: WebSocketServer;
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
 let activePort = PORT;
+let activeListenHost: ListenHost = '127.0.0.1';
 
 /**
  * JWT verification middleware. Skips health check and auth routes (those
@@ -80,6 +82,10 @@ export function isServerRunning(): boolean {
 
 export function getServerPort(): number {
   return activePort;
+}
+
+export function getServerListenHost(): ListenHost {
+  return activeListenHost;
 }
 
 /**
@@ -251,10 +257,12 @@ export function startServer(): Promise<void> {
 
     let currentPort = PORT;
     let attempts = 0;
+    const listenHost = resolveListenHost(getNetworkMode(), 'pos');
+    activeListenHost = listenHost;
 
-    server = app.listen(currentPort, '0.0.0.0', () => {
+    server = app.listen(currentPort, listenHost, () => {
       activePort = currentPort;
-      console.log(`[Server] HTTP server running on http://localhost:${currentPort}`);
+      console.log(`[Server] HTTP server running on http://localhost:${currentPort} (bind ${listenHost}, mode ${getNetworkMode()})`);
 
       if (server) {
         // noServer + a manual 'upgrade' handler (rather than passing `server`
@@ -322,7 +330,7 @@ export function startServer(): Promise<void> {
         }
         currentPort++;
         console.log(`[Server] Port ${currentPort - 1} in use, trying ${currentPort}`);
-        server?.listen(currentPort, '0.0.0.0');
+        server?.listen(currentPort, listenHost);
       } else {
         reject(err);
       }

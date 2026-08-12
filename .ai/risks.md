@@ -2,7 +2,7 @@
 
 ## Production blockers (P0)
 
-- 🔒 SEC: Cleartext HTTP binds `0.0.0.0` — JWTs/business data sniffable on guest Wi‑Fi. Need practical LAN deployment model (P0.4).
+- 🔒 SEC: LAN exposure is mode-gated (`network_mode`; default `localhost`). Cleartext HTTP/WS still applies on staff LAN when `kds_lan`/`lan` selected — guest Wi‑Fi unsupported; TLS deferred. See `p0.1-lan-security-audit.md` (GREEN WITH HARDENING).
 - 🔒 SEC: `jwt_secret` stored in SQLite `settings` — backup/OS-user leak ⇒ token forgery. Needs safeStorage/keychain design with upgrade/restore story (P0.5).
 - 🔒 SEC: Electron `sandbox: false` — justify or migrate (P0.6).
 - 🔒 SEC: `terminal_id` is identification, not authentication; knowing the string + JWT role can close a shift.
@@ -13,6 +13,7 @@
 
 ## Operational
 
+- ⚠️ RISK: Upgrades seed `network_mode=localhost`. Existing LAN KDS/POS/waiter setups need Settings → `kds_lan` or `lan` + restart before tablets reconnect.
 - ⚠️ RISK: Electron renderer `flo_terminal_id` and host `settings.terminal_id` may differ. POS requests send the client id; header-less `openShift` still uses the host id.
 - ⚠️ RISK: Lost `terminal_id` (cleared localStorage) orphans an open shift; managers must force-close.
 - ⚠️ RISK: Doc drift — roadmap/feature-list still mark shifts/day-close as NOT BUILT while code has M4–M5 (P0.7).

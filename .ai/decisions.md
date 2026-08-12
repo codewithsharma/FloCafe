@@ -1,5 +1,21 @@
 # Decisions
 
+## 2026-08-12 — LAN security Phase 1 implementation (Accepted)
+
+CEO+CTO approved Model D+E hybrid. Implemented `settings.network_mode`:
+
+| Mode | POS | KDS | Server App |
+|------|-----|-----|------------|
+| `localhost` (default) | 127.0.0.1 | 127.0.0.1 | 127.0.0.1 |
+| `kds_lan` | 127.0.0.1 | 0.0.0.0 | 127.0.0.1 |
+| `lan` | 0.0.0.0 | 0.0.0.0 | 0.0.0.0 |
+
+Invalid/missing → `localhost`. Restart required. Guest Wi‑Fi unsupported. mDNS/QR gated. Schema v73. TLS deferred. See `docs/15-project-management/p0.1-lan-security-audit.md`.
+
+## 2026-08-12 — LAN security Phase 1 discovery (Superseded by implementation)
+
+Audit captured baseline always-`0.0.0.0` bind. Verdict was YELLOW; implementation closed Phase 1.1.
+
 ## 2026-08-12 — Day-close cash refunds (Accepted)
 
 Day-close summary reuses `getShiftPaymentSummary` from `shift.ts` (no second refund formula). Exposes `cash_payment_total_cents` (Cash In), `cash_refund_total_cents`, `net_cash_movement_cents`. Persisted shift `expected_cash_cents` remain authoritative for drawer expected; closed shifts stay immutable; late cash refunds stay on the open shift.

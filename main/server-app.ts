@@ -10,9 +10,11 @@ import { getJWTSecret } from './routes/auth';
 import { authRateLimit, corsOptions, isTokenRevoked, isTokenStale, rateLimit, revokeToken } from './middleware/security';
 import { getServerPort } from './server';
 import { getDefaultServerAppPort, getServerAppPort as getActiveServerAppPort, setServerAppPort } from './server-app-state';
+import { getNetworkMode, resolveListenHost, type ListenHost } from './services/network-mode';
 
 let serverApp: http.Server | null = null;
 const SERVER_APP_PORT = getDefaultServerAppPort();
+let activeServerAppListenHost: ListenHost = '127.0.0.1';
 
 type ServerAppUser = {
   userId: string;
@@ -260,13 +262,15 @@ export function startServerApp(): Promise<void> {
     let currentPort = SERVER_APP_PORT;
     let attempts = 0;
     serverApp = http.createServer(app);
+    const listenHost = resolveListenHost(getNetworkMode(), 'server_app');
+    activeServerAppListenHost = listenHost;
 
     const tryListen = () => {
       const attemptedPort = currentPort;
       const onListening = () => {
         serverApp?.off('error', onError);
         setServerAppPort(attemptedPort);
-        console.log(`[Server App] HTTP server running on http://localhost:${getActiveServerAppPort()}`);
+        console.log(`[Server App] HTTP server running on http://localhost:${getActiveServerAppPort()} (bind ${listenHost}, mode ${getNetworkMode()})`);
         resolve();
       };
       const onError = (err: NodeJS.ErrnoException) => {
@@ -289,7 +293,7 @@ export function startServerApp(): Promise<void> {
 
       serverApp?.once('listening', onListening);
       serverApp?.once('error', onError);
-      serverApp?.listen(attemptedPort, '0.0.0.0');
+      serverApp?.listen(attemptedPort, listenHost);
     };
 
     tryListen();
@@ -306,4 +310,8 @@ export function stopServerApp(): void {
 
 export function getServerAppPort(): number {
   return getActiveServerAppPort();
+}
+
+export function getServerAppListenHost(): ListenHost {
+  return activeServerAppListenHost;
 }

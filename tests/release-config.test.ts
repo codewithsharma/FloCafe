@@ -52,8 +52,8 @@ function run() {
   );
   assert.ok(
     snapsPlugs.includes('network-bind'),
-    'plugs must include "network-bind" — the local Express server binds 0.0.0.0:3001 and the ' +
-    'KDS server binds 0.0.0.0:3002; without this both fail under strict confinement'
+    'plugs must include "network-bind" — when network_mode is lan or kds_lan the ' +
+    'Express/KDS servers may bind 0.0.0.0; without this those modes fail under strict confinement'
   );
   const linuxEnv = build?.snapcraft?.core24?.environment || {};
   assert.ok(

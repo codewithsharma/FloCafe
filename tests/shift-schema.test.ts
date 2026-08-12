@@ -121,8 +121,12 @@ async function main() {
   console.log('='.repeat(60));
 
   const latestMigration = MIGRATIONS[MIGRATIONS.length - 1];
-  assert.equal(latestMigration.version, 72, 'latest migration is v72');
-  assert.equal(latestMigration.name, 'm6_refunds');
+  assert.equal(latestMigration.version, 73, 'latest migration is v73');
+  assert.equal(latestMigration.name, 'p0_1_network_mode');
+
+  const v72 = MIGRATIONS.find((m: { version: number }) => m.version === 72);
+  assert.ok(v72, 'v72 m6_refunds migration exists');
+  assert.equal(v72.name, 'm6_refunds');
 
   const v70 = MIGRATIONS.find((m: { version: number }) => m.version === 70);
   assert.ok(v70, 'v70 m5_cash_reconciliation_columns migration exists');
@@ -131,10 +135,10 @@ async function main() {
   const v69 = MIGRATIONS.find((m: { version: number }) => m.version === 69);
   assert.ok(v69, 'v69 m4_shift_foundation migration exists');
 
-  // ── Fresh install v0 → v72 ───────────────────────────────────────────────
+  // ── Fresh install v0 → v73 ───────────────────────────────────────────────
   initDatabase();
   const db = getDatabase();
-  assert.equal(db.pragma('user_version', { simple: true }), 72);
+  assert.equal(db.pragma('user_version', { simple: true }), 73);
 
   assert.ok(
     db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'shifts'`).get(),
@@ -152,6 +156,8 @@ async function main() {
     db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'refund_idempotency'`).get(),
     'refund_idempotency table exists on fresh install',
   );
+  const networkMode = db.prepare(`SELECT value FROM settings WHERE key = 'network_mode'`).get() as { value: string } | undefined;
+  assert.equal(networkMode?.value, 'localhost', 'fresh install defaults network_mode=localhost');
 
   const shiftColumns = tableColumns(db, 'shifts');
   for (const col of [
@@ -281,7 +287,7 @@ async function main() {
 
   initDatabase();
   const upgradedFrom68 = getDatabase();
-  assert.equal(upgradedFrom68.pragma('user_version', { simple: true }), 72);
+  assert.equal(upgradedFrom68.pragma('user_version', { simple: true }), 73);
   assert.ok(tableColumns(upgradedFrom68, 'shifts').includes('expected_cash_cents'));
   assert.ok(tableColumns(upgradedFrom68, 'shifts').includes('variance_cents'));
 
@@ -318,7 +324,7 @@ async function main() {
 
   initDatabase();
   const upgradedFrom69 = getDatabase();
-  assert.equal(upgradedFrom69.pragma('user_version', { simple: true }), 72);
+  assert.equal(upgradedFrom69.pragma('user_version', { simple: true }), 73);
   assert.ok(tableColumns(upgradedFrom69, 'shifts').includes('expected_cash_cents'));
   assert.ok(tableColumns(upgradedFrom69, 'shifts').includes('variance_cents'));
 
@@ -349,7 +355,7 @@ async function main() {
   closeDatabase();
   initDatabase();
   const reopened = getDatabase();
-  assert.equal(reopened.pragma('user_version', { simple: true }), 72);
+  assert.equal(reopened.pragma('user_version', { simple: true }), 73);
   const shiftCountAfter = (reopened.prepare('SELECT COUNT(*) AS count FROM shifts').get() as { count: number }).count;
   assert.equal(shiftCountAfter, shiftCountBefore, 'reopening DB at v72 does not duplicate shift rows');
   console.log('   ✓ migration runner is idempotent at v72');
@@ -358,7 +364,7 @@ async function main() {
 
   // ── Ideal schema parity ───────────────────────────────────────────────────
   const idealDb = buildIdealSchemaDb();
-  assert.equal(idealDb.pragma('user_version', { simple: true }), 72);
+  assert.equal(idealDb.pragma('user_version', { simple: true }), 73);
   assert.ok(
     idealDb.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'shifts'`).get(),
     'ideal schema includes shifts',

@@ -2,18 +2,36 @@
  * GET /api/server-app-info
  * Returns Server App access URLs so Settings can render QR codes for tablets
  * and phones on the same local network.
+ *
+ * Requires network_mode=lan (staff LAN). kds_lan / localhost do not advertise
+ * unreachable waiter URLs.
  */
 import { Router, Request, Response } from 'express';
 import QRCode from 'qrcode';
 import { getLocalIP, getAllLocalIPs } from '../server';
 import { getServerAppPort } from '../server-app-state';
 import { isServerAppEnabled } from '../db';
+import {
+  getNetworkMode,
+  isLanServerAppEnabled,
+  networkModeRequiresRestartMessage,
+} from '../services/network-mode';
 
 const router = Router();
 
 router.get('/', async (_req: Request, res: Response) => {
   if (!isServerAppEnabled()) {
     return res.status(404).json({ error: 'Not found' });
+  }
+
+  const mode = getNetworkMode();
+  if (!isLanServerAppEnabled(mode)) {
+    return res.status(403).json({
+      error: 'LAN Server App pairing requires network_mode=lan on a staff-only network.',
+      code: 'NETWORK_MODE_REQUIRES_LAN',
+      network_mode: mode,
+      hint: networkModeRequiresRestartMessage(),
+    });
   }
 
   try {
@@ -36,6 +54,7 @@ router.get('/', async (_req: Request, res: Response) => {
     const primaryIpData = ipsData.find((entry) => entry.ip === ip);
 
     res.json({
+      network_mode: mode,
       mdns_url: mdnsUrl,
       ip_url: ipUrl,
       qr_url: ipUrl,

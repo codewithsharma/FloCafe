@@ -2,12 +2,19 @@
  * GET /api/kds-info
  * Returns the KDS access URLs (mDNS + local IP) so the POS UI can render a QR code.
  * The tablet/display on the same network opens either URL in a browser.
+ *
+ * Requires network_mode=kds_lan or lan. Localhost mode does not advertise LAN KDS.
  */
 import { Router, Request, Response } from 'express';
 import QRCode from 'qrcode';
 import { getLocalIP, getAllLocalIPs } from '../server';
 import { getKdsPort } from '../kds-server';
 import { requireKdsEnabled } from '../middleware/security';
+import {
+  getNetworkMode,
+  isLanKdsEnabled,
+  networkModeRequiresRestartMessage,
+} from '../services/network-mode';
 
 const router = Router();
 
@@ -15,6 +22,16 @@ router.use(requireKdsEnabled);
 
 router.get('/', async (_req: Request, res: Response) => {
   try {
+    const mode = getNetworkMode();
+    if (!isLanKdsEnabled(mode)) {
+      return res.status(403).json({
+        error: 'LAN KDS pairing requires network_mode=kds_lan or lan on a staff-only network.',
+        code: 'NETWORK_MODE_REQUIRES_KDS_LAN',
+        network_mode: mode,
+        hint: networkModeRequiresRestartMessage(),
+      });
+    }
+
     const kdsPort = getKdsPort();
     const ip = getLocalIP();
     const allIps = getAllLocalIPs();
@@ -37,6 +54,7 @@ router.get('/', async (_req: Request, res: Response) => {
     const qrDataUrl = primaryIpData?.qr_data ?? null;
 
     res.json({
+      network_mode: mode,
       mdns_url:    mdnsUrl,
       ip_url:      ipUrl,
       qr_url:      qrUrl,
@@ -50,4 +68,3 @@ router.get('/', async (_req: Request, res: Response) => {
 });
 
 export const kdsInfoRoutes = router;
-

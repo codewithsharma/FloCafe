@@ -18,7 +18,8 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P0.2 day-close cash − cash refunds (reuse `getShiftPaymentSummary`; Cash In / Cash Refunds / Net Cash)
 - [ ] P0.3 Money representation migration design + implementation (plan in P0.2 §F; documentation only until approved)
 - [ ] Optional refund receipt print
-- [ ] P0.4 LAN security — practical deployment model (TLS / trusted LAN / guest Wi‑Fi guidance)
+- [x] P0.4 / P0.1 LAN security — IMPLEMENTED → GREEN WITH HARDENING (`docs/15-project-management/p0.1-lan-security-audit.md`)
+  - [x] P0.4.1 LAN hardening: `network_mode` bind hosts, mDNS/QR gates, Settings UI, `tests/network-mode.test.ts`; TLS deferred P2
 - [ ] P0.5 JWT secret design (safeStorage/keychain, rotation, backup/restore/migration)
 - [ ] P0.6 Electron security — sandbox:false justify or migrate; IPC/permissions review
 - [ ] P0.7 Documentation truth — roadmap/feature-list/production-readiness match code; Nexora POS vs RestaurantOS identity
