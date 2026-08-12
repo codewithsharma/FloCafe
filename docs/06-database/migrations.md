@@ -15,7 +15,10 @@ Current: **66** (`seed_bill_template_settings`)
 4. Auto-backup before pending batch
 
 ### Fresh install
-v1 `initial_schema` calls `createSchema()` + `seedInstallDefaults()`.
+v1 `initial_schema` calls `createSchema()` (**23 base tables**) + `seedInstallDefaults()`.
+
+### Subsequent schema growth
+**17 additional live tables** are created by later migrations and helpers (e.g. `createCloudSyncSchema()`, `createWhatsAppSchema()`). Total live tables after all migrations: **40**.
 
 ### Upgrade testing
 - `tests/upgrade-path.test.ts` — from v1.5.0 fixture

@@ -9,6 +9,7 @@ mas-build-output/
 # regression test (tests/upgrade-path.test.ts, specs/DatabaseMigrations.md).
 !tests/fixtures/upgrade-snapshots/*.db
 backups/
+coverage/
 .env
 .env.local
 .env.*.local

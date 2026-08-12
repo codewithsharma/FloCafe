@@ -1,5 +1,7 @@
 # Flo API Documentation
 
+> **Staleness warning:** This file predates the RestaurantOS documentation system. Verify all endpoints against `main/routes/` before use. Known error: staff creation uses **`POST /api/staff`** (or `POST /api/users`), not `/api/auth/register`. Prefer `docs/05-api/api-specification.md` and route source files.
+
 ## Base URL
 
 **Local:** `http://flo.local:3001` or `http://<local-ip>:3001`
@@ -44,8 +46,10 @@ Authenticate user and receive JWT token.
 
 ---
 
-### POST `/api/auth/register`
-Register new user (owner/admin only).
+### POST `/api/staff` (also mounted at `/api/users`)
+Create a new staff user (owner/manager only).
+
+**Headers:** `Authorization: Bearer <token>`
 
 **Request:**
 ```json
@@ -64,6 +68,8 @@ Register new user (owner/admin only).
   "user_id": "user-xxx"
 }
 ```
+
+**Note:** `POST /api/auth/register` does **not** exist. Use this endpoint instead (`main/routes/staff.ts`).
 
 ---
 

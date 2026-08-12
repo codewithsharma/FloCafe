@@ -5,7 +5,7 @@
 | Secret | Storage | Evidence |
 |--------|---------|----------|
 | JWT secret | `settings.jwt_secret` (random per install) | auth.ts |
-| Password hashes | `users.password_hash` (bcrypt) | staff routes |
+| Password hashes | `users.password` column (bcrypt) | `main/routes/staff.ts` |
 | PIN hashes | `users.pin_hash` (bcrypt) | staff routes |
 | Master PIN | Electron safeStorage | master-pin.ts |
 | Google Drive tokens | OS-encrypted file | google-drive.ts |

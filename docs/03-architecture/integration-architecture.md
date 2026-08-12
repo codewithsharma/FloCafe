@@ -8,7 +8,7 @@
 | Google Drive | Outbound OAuth | `google-drive.ts` | Manual backup still works |
 | WhatsApp | Outbound (Baileys) | `whatsapp.ts` | Queue messages locally |
 | RevFlo mobile | Pairing code | cloud-sync + `/api/mobile/*` | Pairing requires LAN/cloud |
-| Telemetry | Outbound opt-in | `telemetry.ts` | Silently skips |
+| Telemetry | Outbound; **enabled by default** on new installs (`telemetry_enabled='true'` in `seedInstallDefaults()`). Owner can disable in Settings → Privacy. | `telemetry.ts` | Silently skips when disabled |
 | mDNS | LAN broadcast | bonjour-service | Local only |
 | Tax pack catalog | Outbound fetch | `tax-packs.ts` | Bundled packs work offline |
 

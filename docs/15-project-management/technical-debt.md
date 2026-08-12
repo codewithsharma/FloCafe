@@ -11,7 +11,7 @@
 | TD-05 | Security | Electron renderer sandbox disabled | MEDIUM | SEC-02 |
 | TD-06 | Security | Windows installer unsigned without cert | MEDIUM | SEC-03, `release.yml` |
 | TD-07 | Dependencies | WhatsApp via Baileys RC | MEDIUM | `package.json` |
-| TD-08 | Testing | No code coverage measurement | LOW | No nyc/c8 |
+| TD-08 | Testing | No code coverage measurement | LOW | **M1:** c8 baseline added; no threshold gate |
 | TD-09 | Testing | Some tests not in default `npm test` | LOW | `integration-inclusive-tax.test.ts` |
 | TD-10 | Schema | Partial FK coverage; logical refs without constraints | LOW | `main/db.ts` |
 | TD-11 | Docs | API.md may drift from actual routes | LOW | `docs/API.md` vs `main/routes/` |
@@ -29,8 +29,9 @@
 
 | Priority | Item | Approach |
 |----------|------|----------|
-| P0 | TD-01 | Extract migrations to separate module files (no behavior change) |
+| Eng P1 / Product P3 | TD-01 | Extract migrations to separate module files (no behavior change) |
 | P1 | TD-04 | Document LAN trust model; plan TLS for shared Wi-Fi |
+| P1 | Privacy | Review telemetry/diagnostics default consent behavior |
 | P1 | TD-02 | Extract order/bill services with existing test coverage |
 | P2 | TD-05 | Sandbox enablement spike on main + KDS windows |
 | P2 | TD-08 | Add coverage reporting for critical paths |

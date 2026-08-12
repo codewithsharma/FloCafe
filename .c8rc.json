@@ -1,0 +1,15 @@
+{
+  "include": [
+    "main/routes/auth.ts",
+    "main/routes/bills.ts",
+    "main/services/tax-engine.ts",
+    "main/middleware/security.ts"
+  ],
+  "exclude": [
+    "tests/**",
+    "dist/**",
+    "frontend/**"
+  ],
+  "reports-dir": "coverage",
+  "reporter": ["text", "json-summary", "lcov"]
+}

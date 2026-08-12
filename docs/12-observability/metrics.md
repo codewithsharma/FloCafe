@@ -8,8 +8,8 @@
 ### Application metrics
 **NOT IMPLEMENTED** — no Prometheus/statsd integration.
 
-### Telemetry (anonymous, opt-in)
-`main/services/telemetry.ts` — app version, OS, feature flags
+### Telemetry (anonymous; default-on for new installs)
+`main/services/telemetry.ts` — sends when `telemetry_enabled='true'` (default in `seedInstallDefaults()`). Owner disables in Settings → Privacy. Separate from store-attributed diagnostics (`diagnostics_consent`).
 
 ## TARGET STATE (PROPOSED)
 - Local counters: orders/hour, print failures, WS reconnects

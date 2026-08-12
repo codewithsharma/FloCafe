@@ -45,7 +45,7 @@ This `docs/` tree is the **RestaurantOS documentation system**. It supplements (
 | Observability | [12-observability/](12-observability/) | Logging, metrics (gaps documented) |
 | Operations | [13-operations/](13-operations/) | Runbooks, backup, disaster recovery |
 | Decisions | [14-decisions/](14-decisions/) | Architecture Decision Records |
-| Project mgmt | [15-project-management/](15-project-management/) | Gaps, risks, debt, implementation plan |
+| Project mgmt | [15-project-management/](15-project-management/) | Gaps, risks, debt, **[master implementation plan](15-project-management/master-implementation-plan.md)** |
 | Release | [16-release/](16-release/) | Checklists, production readiness |
 
 ## Current project state (FloCafe)
@@ -56,7 +56,7 @@ This `docs/` tree is the **RestaurantOS documentation system**. It supplements (
 
 **Key gaps for RestaurantOS:** shift management, refunds, inventory ledger/recipes, multi-location, payment terminals, general audit logging, LAN encryption.
 
-Start here: [feature-list.md](00-product/feature-list.md) · [architecture.md](03-architecture/architecture.md) · [implementation-plan.md](15-project-management/implementation-plan.md)
+Start here: [feature-list.md](00-product/feature-list.md) · [architecture.md](03-architecture/architecture.md) · **[master-implementation-plan.md](15-project-management/master-implementation-plan.md)**
 
 ## Target state (RestaurantOS)
 
@@ -76,7 +76,7 @@ See [vision.md](00-product/vision.md) and [roadmap.md](00-product/roadmap.md).
 1. [problem-statement.md](00-product/problem-statement.md) — why RestaurantOS
 2. [feature-list.md](00-product/feature-list.md) — what exists vs planned
 3. [roadmap.md](00-product/roadmap.md) — priorities
-4. [implementation-plan.md](15-project-management/implementation-plan.md) — gap analysis
+4. [master-implementation-plan.md](15-project-management/master-implementation-plan.md) — full roadmap, milestones, acceptance criteria
 
 ### For engineers
 1. [architecture.md](03-architecture/architecture.md) — system overview
@@ -84,6 +84,7 @@ See [vision.md](00-product/vision.md) and [roadmap.md](00-product/roadmap.md).
 3. [data-model.md](06-database/data-model.md) — entities and relationships
 4. [development-guide.md](08-development/development-guide.md) — local setup
 5. [test-strategy.md](09-testing/test-strategy.md) — verification approach
+6. [master-implementation-plan.md](15-project-management/master-implementation-plan.md) — what to build, when, and how to validate
 
 ### For security review
 1. [security.md](07-security/security.md)

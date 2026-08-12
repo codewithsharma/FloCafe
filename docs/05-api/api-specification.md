@@ -4,7 +4,7 @@
 
 FloCafe exposes a REST JSON API on port **3001** (default).
 
-**Existing reference:** `docs/API.md` (may drift — verify against `main/routes/`)
+**Legacy reference:** `docs/API.md` — contains known stale endpoints; verify against source before use.
 
 **Route registry:** `main/routes/index.ts`
 
@@ -16,7 +16,10 @@ FloCafe exposes a REST JSON API on port **3001** (default).
 | POST | /api/auth/refresh | Bearer |
 | GET | /api/auth/me | Bearer |
 | POST | /api/auth/setup/initialize | Public (first-run) |
+| GET | /api/auth/setup/status | Public (first-run) |
 | GET | /api/health | Public |
+
+Staff creation: **`POST /api/staff`** or **`POST /api/users`** (same router). There is **no** `POST /api/auth/register`.
 
 ### Core resource groups
 | Prefix | Module |
@@ -25,13 +28,13 @@ FloCafe exposes a REST JSON API on port **3001** (default).
 | /api/products | Products + images + stock |
 | /api/addon-groups | Modifiers |
 | /api/orders | Order lifecycle |
-| /api/bills | Billing and payments |
+| /api/bills | Billing and payments (incl. partial via `payment_status`) |
 | /api/tables | Table management |
 | /api/customers | CRM |
 | /api/staff, /api/users | Staff management |
 | /api/kitchen-stations | KDS stations |
 | /api/kds | Kitchen display |
-| /api/printers | Printing |
+| /api/printers | Printing (network, usb, webusb) |
 | /api/reports | Analytics |
 | /api/settings | Configuration |
 | /api/tax-packs | Tax configuration |
@@ -39,7 +42,7 @@ FloCafe exposes a REST JSON API on port **3001** (default).
 | /api/held-orders | Held carts |
 | /api/whatsapp | WhatsApp integration |
 
-Full endpoint list: see backend architecture report in `03-architecture/backend-architecture.md` and source files in `main/routes/`.
+Full endpoint list: see `03-architecture/backend-architecture.md` and source files in `main/routes/`.
 
 ## TARGET STATE
 - Auto-generated OpenAPI 3.1 spec (PROPOSED)

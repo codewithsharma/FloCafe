@@ -1,6 +1,18 @@
 # Data Model — Current State
 
-Schema version **66**. All tables defined in `main/db.ts` `createSchema()`.
+Schema version **66**. Authoritative source: `main/db.ts`.
+
+## Schema initialization
+
+**VERIFIED:** Fresh installs run migration v1, which calls `createSchema()` then `seedInstallDefaults()`. Subsequent migrations (v2–v66) append tables, columns, and indexes.
+
+| Layer | Table count | Origin |
+|-------|-------------|--------|
+| Base schema | **23** | `createSchema()` in `main/db.ts` |
+| Additional live tables | **17** | Later migrations and helpers (`createCloudSyncSchema()`, `createWhatsAppSchema()`, etc.) |
+| **Total live tables** | **40** | Excludes backup-only `_flo_meta` |
+
+Do **not** assume all 40 tables are defined in `createSchema()` alone.
 
 ## Entity inventory (40 live tables)
 
@@ -8,40 +20,42 @@ Schema version **66**. All tables defined in `main/db.ts` `createSchema()`.
 
 | Entity | Table | Key fields |
 |--------|-------|------------|
-| Category | `categories` | id, name, parent_id, sort_order, deleted_at |
-| Product | `products` | id, category_id, name, price, cost, tax_*, track_inventory, stock_quantity, tags |
-| AddonGroup | `addon_groups` | id, name, min/max selection, required |
-| Addon | `addons` | id, addon_group_id, name, price |
+| Category | `categories` | id (TEXT), name, parent_id, sort_order, deleted_at |
+| Product | `products` | id (TEXT), category_id, name, price, cost, tax_*, track_inventory, stock_quantity, tags |
+| AddonGroup | `addon_groups` | id (TEXT), name, min/max selection, required |
+| Addon | `addons` | id (TEXT), addon_group_id, name, price |
 | AddonGroupProduct | `addon_group_product` | product_id, addon_group_id (M:N) |
-| KitchenStation | `kitchen_stations` | id, name, category_ids, printer_id |
-| Printer | `printers` | id, name, type, connection, paper_width |
+| KitchenStation | `kitchen_stations` | id (TEXT), name, category_ids, printer_id |
+| Printer | `printers` | id (TEXT), name, connection_type, ip_address, port, paper_width |
+
+`printers.connection_type` CHECK: `network`, `usb`, `webusb` only (`main/db.ts`).
 
 ### Floor
 
 | Entity | Table | Key fields |
 |--------|-------|------------|
-| Table | `tables` | id, number (unique), capacity, status, floor, section, kitchen_station_id |
+| Table | `tables` | id (TEXT), number (unique), capacity, status, floor, section, kitchen_station_id |
 | StationUser | `station_users` | user_id, station_id (M:N) |
 
 ### People
 
 | Entity | Table | Key fields |
 |--------|-------|------------|
-| User (Staff) | `users` | id, email, password_hash, role, pin_hash, category_ids, tokens_valid_after |
-| Customer | `customers` | id, name, phone, phone_digits (generated), tag_counts |
+| User (Staff) | `users` | id (TEXT), email, **password** (bcrypt hash), role, pin_hash, category_ids, tokens_valid_after |
+| Customer | `customers` | id (TEXT), name, phone, phone_digits, tag_counts |
 
 ### Transactions
 
-| Entity | Table | Key fields |
-|--------|-------|------------|
-| Order | `orders` | id, order_number, type, table_id, customer_id, user_id, status, charges |
-| OrderItem | `order_items` | id, order_id, product_id, quantity, price, tax, voided_at |
-| OrderItemAddon | `order_item_addons` | order_item_id, addon_id, quantity, price snapshot |
-| Bill | `bills` | id, bill_number, order_id, total, paid_status, split_group_id |
-| BillItem | `bill_items` | bill_id, order_item_id, quantity (split-check allocation) |
-| HeldOrder | `held_orders` | table_id, items (JSON blob) |
-| LoyaltyLedger | `loyalty_ledger` | customer_id, bill_id, type, points |
-| PrintLog | `print_logs` | bill_id, user_id, action, timestamp |
+| Entity | Table | PK type | Key fields |
+|--------|-------|---------|------------|
+| Order | `orders` | **INTEGER AUTOINCREMENT** | order_number, type, table_id, customer_id, user_id, status, packaging_charge, delivery_charge |
+| OrderItem | `order_items` | **INTEGER AUTOINCREMENT** | order_id, product_id, quantity, unit_price, voided_at |
+| OrderItemAddon | `order_item_addons` | — | order_item_id, addon_id, quantity, price snapshot |
+| Bill | `bills` | **INTEGER AUTOINCREMENT** | bill_number, order_id, total, **payment_status**, paid_amount, balance, split_group_id |
+| BillItem | `bill_items` | — | bill_id, order_item_id, quantity (split-check allocation) |
+| HeldOrder | `held_orders` | TEXT | table_id, items (JSON blob) |
+| LoyaltyLedger | `loyalty_ledger` | INTEGER | customer_id, bill_id, type, **amount** |
+| PrintLog | `print_logs` | — | bill_id, user_id, action, timestamp |
 
 ### Tax engine
 
@@ -74,7 +88,7 @@ Schema version **66**. All tables defined in `main/db.ts` `createSchema()`.
 
 ## Relationships (declared FKs)
 
-See `main/db.ts` createSchema — key chains:
+See `main/db.ts` `createSchema()` — key chains:
 - `products.category_id` → `categories`
 - `orders.user_id` → `users`
 - `order_items.order_id` → `orders`
@@ -103,17 +117,24 @@ See `main/db.ts` createSchema — key chains:
 
 ## Identifiers
 
-- String UUIDs for most entities (generated at insert)
-- Human-readable sequences: `order_number`, `bill_number` via `sequences` table
+**Mixed strategy (VERIFIED):**
+
+| ID style | Tables |
+|----------|--------|
+| TEXT (short random or UUID-style via `uuid` / `generateShortId`) | categories, products, users, customers, tables, printers, most config entities |
+| **INTEGER AUTOINCREMENT** | **orders**, **order_items**, **bills**, loyalty_ledger, tax_config_audit |
+
+Human-readable sequences: `order_number`, `bill_number` via `sequences` table.
 
 ## State transitions
 
 ### Order status
-`preparing` → `ready` → `served` → `completed` | `cancelled`
-Evidence: `main/routes/orders.ts` PATCH status
+`pending` → `preparing` → `ready` → `served` → `completed` | `cancelled`
 
-### Bill paid_status
-Tracked on `bills.paid_status` — integration tests cover partial/split payment flows.
+New orders are created with status **`pending`** (`main/routes/orders.ts`). Evidence: PATCH status allows `preparing`, `ready`, `served`, `completed`, `cancelled`.
+
+### Bill payment_status
+Values include `unpaid`, **`partial`**, and `paid` (`main/routes/bills.ts`). Tracked on `bills.payment_status` with `paid_amount` and `balance`.
 
 ### Table status
 Updated via `PATCH /api/tables/:id/status`.

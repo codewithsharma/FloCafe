@@ -118,6 +118,8 @@ Prerequisite for §4 and §5 — do this first.
 
 ## 4. Diagnostics opt-in (store-attributed)
 
+> **CURRENT STATE note:** Despite the "opt-in" design intent below, new installs currently seed `diagnostics_consent='true'` in `seedInstallDefaults()` (`main/db.ts`). Owners can disable in Settings. **TARGET STATE** should align implementation with explicit consent requirements.
+
 A second, opt-in telemetry stream that carries the store id, so a maintainer can look at one
 store's recent failures instead of fleet aggregates.
 

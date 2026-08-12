@@ -121,7 +121,9 @@
     "test:whatsapp-service": "ts-node --transpile-only -P tests/tsconfig.json tests/whatsapp-service.test.ts",
     "test:whatsapp-middleware": "node tests/run-electron-node-test.cjs tests/whatsapp-middleware.test.ts",
     "test:printer-width-refresh": "node tests/run-electron-node-test.cjs tests/printer-width-refresh.test.ts",
-    "test:printer-migrations": "node tests/run-electron-node-test.cjs tests/printer-usb-device-path-migration.test.ts"
+    "test:printer-migrations": "node tests/run-electron-node-test.cjs tests/printer-usb-device-path-migration.test.ts",
+    "test:coverage:baseline": "node scripts/run-coverage-baseline.cjs",
+    "test:m1-gate": "ts-node --transpile-only -P tests/tsconfig.json tests/m1-engineering-gate.test.ts"
   },
   "author": {
     "name": "Flo",
@@ -151,6 +153,7 @@
     "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^8.66.0",
     "@typescript-eslint/parser": "^8.63.0",
+    "c8": "^10.1.3",
     "cross-env": "10.1.0",
     "electron": "^43.3.0",
     "electron-builder": "^26.15.3",

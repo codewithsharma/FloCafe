@@ -11,7 +11,7 @@
 | Health endpoint | GET /api/health |
 | DB health | GET /api/db-tools/health-check |
 | Update status | electron-updater events |
-| Telemetry (opt-in) | telemetry.flopos.com |
+| Telemetry (default-on; owner can disable) | telemetry.flopos.com |
 | Store diagnostics | store_diagnostics_outbox |
 
 ### User-facing monitoring

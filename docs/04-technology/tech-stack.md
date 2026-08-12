@@ -82,7 +82,7 @@ Targets: NSIS, DMG/ZIP, AppImage, deb, rpm, Snap, AppX, Mac App Store.
 | supertest | HTTP integration tests |
 | Playwright | Browser E2E |
 
-**Coverage tooling:** NOT IMPLEMENTED (no nyc/c8 in package.json).
+**Coverage tooling:** c8 v10 (`npm run test:coverage:baseline`) — M1 baseline on auth/tax/payment modules.
 
 ## Infrastructure
 
@@ -97,6 +97,7 @@ Targets: NSIS, DMG/ZIP, AppImage, deb, rpm, Snap, AppX, Mac App Store.
 | Device | Support | Evidence |
 |--------|---------|----------|
 | ESC/POS receipt printers | USB, network, WebUSB | `main/printers/`, `docs/printers.md` |
+| Bluetooth thermal printers | **NOT BUILT** | UI type stub; DB CHECK excludes bluetooth |
 | Kitchen ticket printers | Same stack | KOT in `thermal.ts` |
 | Barcode scanner | Keyboard wedge | `useBarcodeScanner.ts` |
 | Cash drawer | NOT BUILT | No kick command found |

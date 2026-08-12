@@ -24,7 +24,7 @@
 4. Stock decremented if tracked
 
 ### Send to kitchen
-1. Order status → `preparing`
+1. Order status → `preparing` (from `pending` or current status)
 2. `notifyKdsUpdate()` broadcasts WS
 3. Optional KOT print via `POST /api/printers/print-kot`
 

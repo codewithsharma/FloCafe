@@ -11,7 +11,7 @@
 
 ### Performance indexes (v45+)
 - orders: customer, table_id, type
-- bills: created_at, paid_status, paid_at, customer_id
+- bills: created_at, **payment_status**, paid_at, customer_id
 - order_items: product_id
 - customers: created_at
 - print_logs: bill_id
@@ -19,6 +19,8 @@
 - payment_idempotency: bill
 - bill_items: order_item
 - bills: split_group_id
+
+Index name in code: `idx_bills_paid_status_paid_at` — indexes **`payment_status`**, not a column named `paid_status`.
 
 ### Unique constraints
 - tables.number, users.email, orders.order_number, bills.bill_number

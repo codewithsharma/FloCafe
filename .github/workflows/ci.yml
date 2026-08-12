@@ -118,6 +118,19 @@ jobs:
       - name: Core test suite (Includes smoke & kds integration)
         run: npm test
 
+      - name: M1 engineering gate
+        run: npm run test:m1-gate
+
+      - name: Coverage baseline (auth, tax, payments)
+        run: npm run test:coverage:baseline
+
+      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        if: always()
+        with:
+          name: coverage-baseline
+          path: coverage/
+          retention-days: 14
+
   # 5. Playwright E2E
   e2e-playwright:
     needs: changes

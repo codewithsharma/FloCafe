@@ -1,5 +1,7 @@
 # Release Plan
 
+> **Authoritative release strategy:** [`15-project-management/master-implementation-plan.md`](../15-project-management/master-implementation-plan.md) §15
+
 ## CURRENT STATE
 
 FloCafe releases via GitHub tags triggering `.github/workflows/release.yml`.
@@ -37,3 +39,13 @@ Plus: upgrade-path test, frontend build, Playwright E2E in CI.
 
 ### RestaurantOS naming
 Product rename (Flo Cafe → RestaurantOS) is a **marketing/branding decision** — not implemented in code today (`productName: Flo Cafe` in electron-builder).
+
+### Milestone → release mapping (PROPOSED)
+
+| Milestones | Release channel |
+|------------|-----------------|
+| M1–M2 | Internal alpha |
+| M3–M5 | Beta (ops core) |
+| M6 | Beta (refunds) |
+| M7–M9 | Minor semver releases |
+| M10+ | See master implementation plan |

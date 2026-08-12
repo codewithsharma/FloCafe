@@ -14,11 +14,26 @@
 | Feature inventory | ✅ Complete |
 | Security findings documented | ✅ Complete |
 | docs/ structure generated | ✅ Complete |
+| Second-pass audit | ✅ Complete |
+| §11 documentation corrections | ✅ Complete |
+| Master implementation plan | ✅ Complete |
 
-## Application development
-No code changes in this phase.
+## M1 — Engineering baseline
+
+| Task | Status |
+|------|--------|
+| c8 coverage baseline (auth/tax/payments) | ✅ Complete |
+| M1 engineering gate test | ✅ Complete |
+| CI coverage artifact | ✅ Complete |
+| Backup/restore verification | ✅ Complete |
+| Rollback procedure documented | ✅ Complete |
+
+**Report:** [`m1-engineering-baseline.md`](m1-engineering-baseline.md) — **GREEN**
+
+No product behavior or schema changes (v66 unchanged).
 
 ## Next steps
-1. Team review of gap analysis and roadmap
-2. Prioritize P0 migration extraction
-3. Establish upstream sync cadence with FreeOpenSourcePOS/FloCafe
+
+1. Team review of M1 report
+2. **M2:** Privacy & consent (requires product/legal sign-off)
+3. Do not start M2 until explicitly approved

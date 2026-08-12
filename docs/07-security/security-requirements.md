@@ -21,3 +21,4 @@
 | SR-T-03 | Encrypt WhatsApp credentials with safeStorage | P2 |
 | SR-T-04 | Enable GitHub CodeQL + secret scanning | P2 |
 | SR-T-05 | Audit log for payment/refund/void actions | P1 |
+| SR-T-06 | Explicit consent before first telemetry/diagnostics transmission (TARGET) | P1 |
