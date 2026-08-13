@@ -76,6 +76,21 @@ export interface TaxLineResult {
   components: TaxComponentResult[];
 }
 
+/**
+ * Phase 2.11 — frozen engine tax snapshot (business evidence).
+ * Persisted on order_items (object) and inside orders/bills arrays.
+ * Treat as read-only after creation; do not mutate in consumers.
+ */
+export interface EngineTaxSnapshot {
+  packId: string;
+  packVersion: string;
+  effectiveFrom: string;
+  taxRounding: CountryPack['taxRounding'];
+  payableRounding: CountryPack['payableRounding'];
+  appliedRuleIds: string[];
+  lines: TaxLineResult[];
+}
+
 export interface TaxCalculation {
   packId: string;
   packVersion: string;
@@ -85,15 +100,7 @@ export interface TaxCalculation {
   totalBeforePayableRounding: string;
   payableTotal: string;
   payableRoundingAdjustment: string;
-  snapshot: {
-    packId: string;
-    packVersion: string;
-    effectiveFrom: string;
-    taxRounding: CountryPack['taxRounding'];
-    payableRounding: CountryPack['payableRounding'];
-    appliedRuleIds: string[];
-    lines: TaxLineResult[];
-  };
+  snapshot: EngineTaxSnapshot;
 }
 
 interface RawComponent {

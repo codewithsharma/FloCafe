@@ -1,15 +1,16 @@
 /**
- * Tax domain boundary (Phase 2.7).
+ * Tax domain boundary (Phase 2.7 + 2.11).
  *
  * Owns: tax calculation adapters, discount tax scaling, snapshot scale/invert,
  * charge taxes, preview, pack resolution for compute, payable-rounding helpers
- * re-exported from tax-engine.
+ * re-exported from tax-engine, and the frozen EngineTaxSnapshot contract.
  *
  * Does NOT own: products, orders, payments, refunds, reporting UI, tax-pack
  * install/activate lifecycle (those consume Tax).
  *
  * Authoritative line engine: TaxEngine.calculate in tax-engine.ts.
- * Prefer calculateTax(...) as the stable facade name for that engine entrypoint.
+ * Public compute entry: calculateTax(...) — consumers import from this module,
+ * not tax-engine, except Tax-owned code and engine unit tests.
  *
  * Money-path discount scaling of *item* tax totals historically used
  * Math.round(x * ratio * 100) / 100 in orders/bills/index. That behavior is
@@ -21,7 +22,56 @@ import { getDatabase, getSettingValue } from '../db';
 import { getBundledCountryPack } from '../tax-packs/bundled';
 import { getCountryByCode, type TaxIdFormat } from '../countries';
 import { TaxEngine, applyPayableRounding } from './tax-engine';
-import type { CountryPack, TaxRule } from '../tax-packs/types';
+import type {
+  CountryPack,
+  TaxRule,
+} from '../tax-packs/types';
+import type {
+  EngineTaxSnapshot,
+  TaxCalculation,
+  TaxComponentResult,
+  TaxCustomer,
+  TaxEngineInput,
+  TaxEngineLine,
+  TaxLineResult,
+} from './tax-engine';
+
+export type {
+  EngineTaxSnapshot,
+  TaxCalculation,
+  TaxComponentResult,
+  TaxCustomer,
+  TaxEngineInput,
+  TaxEngineLine,
+  TaxLineResult,
+};
+
+/** Read-only view of the frozen engine snapshot (Phase 2.11). */
+export type FrozenEngineTaxSnapshot = Readonly<EngineTaxSnapshot>;
+
+export type ChargeTaxKind = 'packaging' | 'delivery' | 'service_charge';
+
+export interface MerchantOverrideApplied {
+  overrideId: string;
+  entityType: 'product';
+  entityId: string;
+  fieldName: 'tax_category_id';
+  categoryId: string;
+}
+
+/** order_items.tax_snapshot object (when categorized). */
+export type ItemTaxSnapshot = EngineTaxSnapshot & {
+  merchantOverridesApplied: MerchantOverrideApplied[];
+};
+
+/** Charge element inside orders/bills.tax_snapshot arrays. */
+export type ChargeTaxSnapshot = EngineTaxSnapshot & {
+  chargeKind: ChargeTaxKind;
+  configuredCategoryId: string;
+};
+
+/** orders.tax_snapshot / bills.tax_snapshot after aggregateTaxSnapshots. */
+export type DocumentTaxSnapshot = ReadonlyArray<ItemTaxSnapshot | ChargeTaxSnapshot>;
 
 interface TenantInfo {
   country: string;
@@ -48,20 +98,18 @@ interface Customer {
   customer_state_code?: string;
 }
 
-interface TaxResult {
-  tax_amount: number;
-  tax_breakdown: TaxBreakdown[];
-  tax_type: string;
-  tax_snapshot?: Record<string, unknown> | null;
-}
-
 export interface TaxBreakdown {
   title: string;
   rate: number;
   amount: number;
 }
 
-export type ChargeTaxKind = 'packaging' | 'delivery' | 'service_charge';
+interface TaxResult {
+  tax_amount: number;
+  tax_breakdown: TaxBreakdown[];
+  tax_type: string;
+  tax_snapshot?: ItemTaxSnapshot | null;
+}
 
 export interface ChargeTaxCategorySelection {
   categoryId: string;
@@ -96,10 +144,8 @@ function round(value: number, decimals: number = 2): number {
   return Number(Math.round(Number(value + 'e' + decimals)) + 'e-' + decimals);
 }
 
-/** Stable facade over TaxEngine.calculate — Order/POS/Bills call Tax, not the engine class directly when practical. */
-export function calculateTax(
-  input: Parameters<typeof TaxEngine.calculate>[0],
-): ReturnType<typeof TaxEngine.calculate> {
+/** Stable facade over TaxEngine.calculate — Order/POS/Bills/packs call Tax, not the engine class. */
+export function calculateTax(input: TaxEngineInput): TaxCalculation {
   return TaxEngine.calculate(input);
 }
 
@@ -206,7 +252,7 @@ export function validateTaxRegistrationNumber(
 // A representative rate for display only (product tax-category picker,
 // products list) — the intrastate/default rule set for this business type,
 // summing every matching percent component (e.g. Tax 1 + Tax 2). Authoritative
-// calculation always goes through TaxEngine.calculate, which also resolves
+// calculation always goes through calculateTax (TaxEngine facade), which also resolves
 // the interstate variant per transaction; this never feeds a checkout total.
 //
 // Rule selection here mirrors calculateRawLine (tax-engine.ts): a rule only
@@ -293,7 +339,7 @@ export function calculateItemTax(
   if (taxCategoryId || merchantOverride) {
     let calculation;
     try {
-      calculation = TaxEngine.calculate({
+      calculation = calculateTax({
         pack,
         country: tenant.country,
         businessType: tenant.business_type,
@@ -440,7 +486,7 @@ export function calculateConfiguredChargeTaxes(
 
     let calculation;
     try {
-      calculation = TaxEngine.calculate({
+      calculation = calculateTax({
         pack,
         country: tenant.country,
         businessType: tenant.business_type,

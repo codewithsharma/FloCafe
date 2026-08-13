@@ -50,4 +50,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 2.10 Tax HTTP boundary shipped (2026-08-13).** `/api/tax/*` owned by `main/routes/tax.ts`; tax-packs and settings tax intentionally separate; no schema change; no frontend. Next: tax snapshot freeze, inventory movement API/UI, or fail-closed after pilots.
+**Phase 2.11 Tax snapshot contract freeze shipped (2026-08-13).** `EngineTaxSnapshot` named + characterized; money/pack routes use Tax facade; no schema/money/HTTP change. Tax remains MEDIUM. Next: inventory movement API/UI, product tax columns, or fail-closed after pilots.

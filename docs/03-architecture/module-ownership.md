@@ -38,9 +38,9 @@ Practical ownership for future extraction. Implementations remain colocated in t
 
 `products.stock_quantity` = current-state **read** cache; Inventory owns mutations. Ledger from schema v75 (no pre-migration backfill). Opening stock = `adjustment` + reason `opening` (no separate type).
 
-## Tax owns / does not own (Phase 2.7 + 2.10)
+## Tax owns / does not own (Phase 2.7 + 2.10 + 2.11)
 
-- **Owns:** tax calculation (`calculateTax` / engine), tax breakdown/snapshots adapters, tax rounding helpers, money-path discount item-tax scaling, Tax HTTP under `main/routes/tax.ts` (`/api/tax/preview`, `/api/tax/categories`).
+- **Owns:** tax calculation (`calculateTax` / engine), frozen `EngineTaxSnapshot` contract, tax breakdown/snapshots adapters, tax rounding helpers, money-path discount item-tax scaling, Tax HTTP under `main/routes/tax.ts` (`/api/tax/preview`, `/api/tax/categories`).
 - **Does not own:** products, orders, payments, refunds, reporting UI, tax-pack install/activate lifecycle (`tax-packs.ts`), settings registration/`taxes_enabled` HTTP.
 
-See also [extraction-readiness.md](extraction-readiness.md), [phase-2.7-domain-boundaries.md](phase-2.7-domain-boundaries.md), [phase-2.8-inventory-ledger.md](phase-2.8-inventory-ledger.md), [phase-2.9-product-inventory-boundary.md](phase-2.9-product-inventory-boundary.md), and [phase-2.10-tax-http-boundary.md](phase-2.10-tax-http-boundary.md).
+See also [extraction-readiness.md](extraction-readiness.md), [phase-2.7-domain-boundaries.md](phase-2.7-domain-boundaries.md), [phase-2.8-inventory-ledger.md](phase-2.8-inventory-ledger.md), [phase-2.9-product-inventory-boundary.md](phase-2.9-product-inventory-boundary.md), [phase-2.10-tax-http-boundary.md](phase-2.10-tax-http-boundary.md), and [phase-2.11-tax-snapshot-contract.md](phase-2.11-tax-snapshot-contract.md).

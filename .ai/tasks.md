@@ -76,9 +76,10 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P2.8 Inventory movement ledger (2026-08-13) — schema v75 `inventory_movements`; atomic stock+ledger; no HTTP/UI; no backfill
 - [x] P2.9 Product↔Inventory stock write ownership (2026-08-13) — create/PUT via `applyAbsoluteStockChange`; soft-delete preserves ledger
 - [x] P2.10 Tax HTTP consolidation (2026-08-13) — `main/routes/tax.ts` owns `/api/tax/*`; tax-packs/settings intentionally separate
+- [x] P2.11 Tax snapshot contract freeze (2026-08-13) — `EngineTaxSnapshot` + facade imports; no schema/money change
 - [ ] Fail-closed dependency enforcement (still no packages; after pilot proof)
 - [ ] Inventory stock ledger UI / HTTP history API
-- [ ] Tax snapshot contract freeze (after HTTP consolidation)
+- [ ] Product tax column ownership / snapshot digest (deferred)
 - [ ] Recipes/BOM, wastage (after ledger)
 - [ ] Suppliers / PO / receiving
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet

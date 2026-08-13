@@ -14,7 +14,7 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 | Customer | MEDIUM | Extract after phone util boundary + loyalty read API |
 | Inventory | **MEDIUM** | Service + ledger + Product CRUD write ownership; columns still on products |
 | Product | HIGH | Tax columns remain; stock writes now delegated to Inventory |
-| Tax | **MEDIUM** | HTTP consolidated (`routes/tax.ts`); freeze snapshots; money-path + product tax columns remain |
+| Tax | **MEDIUM** | Snapshot contract frozen + facade preferred; denormalized columns + money-path orchestration remain |
 | POS | HIGH | Orchestrator — extract last among commerce |
 | Tables | MEDIUM | Clear order FK contract; restaurant package candidate |
 | KDS | HIGH | WS + order stream contract required |
@@ -51,12 +51,12 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 
 - **Deps:** core
 - **DB:** pack tables + denormalized tax on products/orders/bills
-- **Services:** `tax.ts` (facade + adapters + discount scale), `tax-engine.ts`
+- **Services:** `tax.ts` (facade + adapters + discount scale + frozen snapshot types), `tax-engine.ts`
 - **Routes:** `main/routes/tax.ts` (`/api/tax/*`); pack lifecycle remains `tax-packs.ts`
-- **Blockers:** denormalized snapshots; deep money-path orchestration in Order/Bill; product tax columns
-- **Action:** Freeze snapshot contract; prefer Tax facade imports from money routes; product tax column ownership later
+- **Blockers:** denormalized snapshots still co-owned with Order/Bill rows; product tax columns; deep money-path orchestration
+- **Action:** Prefer Tax facade (done for route engine imports); product tax column ownership later; optional digest-in-snapshot later
 
-Tax HTTP consolidation (Phase 2.10) cleared the `index.ts` inline preview/categories blocker. Rating stays **MEDIUM** — not LOW.
+Phase 2.11 froze `EngineTaxSnapshot` + characterization tests and routed money/pack routes through the Tax facade. Rating stays **MEDIUM** — clearer contract, not LOW extraction.
 
 ### POS — HIGH
 

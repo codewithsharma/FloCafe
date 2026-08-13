@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.11 Tax snapshot contract freeze (Accepted + Implemented)
+
+Named `EngineTaxSnapshot` (existing engine fields only). Exported Item/Charge/Document wrapper types from `tax.ts`. Adapters call `calculateTax`. Money/pack routes import `applyPayableRounding` / `calculateTax` from Tax facade (no route-level `tax-engine`). Characterization: `tax-snapshot-contract.test.ts`. No schema, money, HTTP, or frontend changes. No `snapshotVersion` yet (document versioning strategy). Tax extraction readiness remains MEDIUM.
+
 ## 2026-08-13 — Phase 2.10 Tax HTTP boundary consolidation (Accepted + Implemented)
 
 Moved `POST /api/tax/preview` and `GET /api/tax/categories` from inline `index.ts` into `main/routes/tax.ts` mounted via `app.use('/api/tax', taxRoutes)`. Left `/api/tax-packs` and `/api/settings/tax` (plus `taxes_enabled`) separate by design. Auth/flags/contracts/money math unchanged. No schema migration. Tax extraction readiness remains MEDIUM. Tests: `tax-route-boundary.test.ts`. Next: snapshot freeze, movement API/UI, or fail-closed after pilots.

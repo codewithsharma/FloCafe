@@ -2,6 +2,7 @@ import { createHash } from 'crypto';
 import { Router, Request, Response } from 'express';
 import { getDatabase, generateOrderNumber, now, parseItemJson, parseRowJson, withTxn, verifyPin, getSettingValue, insertOrderItemAddons, attachEffectiveAddons, utcDayBounds, utcTodayDate } from '../db';
 import {
+  applyPayableRounding,
   calculateConfiguredChargeTaxes,
   calculateItemTax,
   combineItemAndChargeTaxes,
@@ -9,7 +10,6 @@ import {
   getConfiguredChargeTaxCategories,
   scaleItemTaxAfterOrderDiscount,
 } from '../services/tax';
-import { applyPayableRounding } from '../services/tax-engine';
 import { assertStockAvailable, decrementTrackedStock, restoreTrackedStock } from '../services/inventory';
 import { notifyKdsUpdate, notifyOrderUpdated } from '../services/kds';
 import { cloudSync } from '../services/cloud-sync';

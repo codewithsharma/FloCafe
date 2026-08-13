@@ -17,13 +17,13 @@ import { notifyKdsUpdate, notifyOrderUpdated } from '../services/kds';
 import { printReceipt } from '../services/receipt';
 import { requireRole } from '../middleware/security';
 import {
+  applyPayableRounding,
   calculateConfiguredChargeTaxes,
   combineItemAndChargeTaxes,
   getActiveCountryPack,
   scaleItemTaxForDiscountRatio,
   computeDiscountTaxRatio,
 } from '../services/tax';
-import { applyPayableRounding } from '../services/tax-engine';
 import { sendEvent } from '../services/telemetry';
 import {
   assertOpenShiftForCashPayment,

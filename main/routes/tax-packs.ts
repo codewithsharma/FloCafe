@@ -3,7 +3,7 @@ import { randomUUID, createHash, type KeyLike } from 'crypto';
 import Decimal from 'decimal.js';
 import { getDatabase, getSettingValue, now, upsertSettings, withTxn } from '../db';
 import { requireRole } from '../middleware/security';
-import { TaxEngine } from '../services/tax-engine';
+import { calculateTax } from '../services/tax';
 import type { CountryPack, TaxBehavior, TaxCategory, TaxRule } from '../tax-packs/types';
 import { BUNDLED_COUNTRY_PACKS } from '../tax-packs/bundled';
 import {
@@ -293,7 +293,7 @@ function containsUnsafeData(value: unknown): boolean {
 function activationVectorPasses(pack: CountryPack): boolean {
   const primaryCategory = pack.categories[0];
   if (!primaryCategory) return false;
-  const calculate = (customer?: { stateCode: string; registrationNumber: string }) => TaxEngine.calculate({
+  const calculate = (customer?: { stateCode: string; registrationNumber: string }) => calculateTax({
     pack,
     country: pack.country === '*' ? 'ZZ' : pack.country,
     jurisdiction: pack.jurisdiction,
@@ -446,7 +446,7 @@ export function validationChecklist(
       .reduce((total, rule) => total.plus(rule.amount || 0), new Decimal(0));
     if (fixedTotal.gt(0)) {
       try {
-        const result = TaxEngine.calculate({
+        const result = calculateTax({
           pack,
           country: pack.country === '*' ? 'ZZ' : pack.country,
           jurisdiction: pack.jurisdiction,
@@ -1070,7 +1070,7 @@ router.post('/test-calculation', requireRole('owner', 'manager'), (req: Request,
     if (!active.definition.categories.some((category) => category.id === category_id)) {
       return res.status(400).json({ error: 'Unknown category for the active pack' });
     }
-    const calculation = TaxEngine.calculate({
+    const calculation = calculateTax({
       pack: active.definition,
       country,
       jurisdiction: active.definition.jurisdiction,

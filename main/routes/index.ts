@@ -40,6 +40,7 @@ import { getDatabase, now, parseItemJson, attachEffectiveAddons, withTxn, getSet
 import { checkPinRateLimit } from './orders';
 import { getPlatformCompositionSummary, logCompositionSnapshotIfDev } from '../modules';
 import {
+  applyPayableRounding,
   calculateConfiguredChargeTaxes,
   combineItemAndChargeTaxes,
   getActiveCountryPack,
@@ -47,7 +48,6 @@ import {
   invertTaxSnapshot,
   scaleItemTaxAfterOrderDiscount,
 } from '../services/tax';
-import { applyPayableRounding } from '../services/tax-engine';
 import { restoreTrackedStock } from '../services/inventory';
 import { cloudSync } from '../services/cloud-sync';
 import { parsePhoneE164, stripPhoneDigits } from '../lib/phone';
