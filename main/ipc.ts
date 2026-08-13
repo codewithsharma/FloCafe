@@ -34,6 +34,7 @@ const SENSITIVE_SETTING_KEYS = new Set([
 ]);
 
 function maskSetting(key: string, value: string): string {
+  if (key === 'jwt_secret') return ''; // never expose via IPC
   if (key === 'cloud_last_error') return value ? 'Cloud service request failed' : '';
   if (!SENSITIVE_SETTING_KEYS.has(key)) return value;
   return value ? `****${value.slice(-4)}` : '';
@@ -208,6 +209,7 @@ export function registerIpcHandlers(): void {
       const rows = db.prepare('SELECT key, value FROM settings').all() as { key: string; value: string }[];
       const settings: Record<string, string> = {};
       rows.forEach((row) => {
+        if (row.key === 'jwt_secret') return;
         settings[row.key] = maskSetting(row.key, row.value);
       });
       return settings;

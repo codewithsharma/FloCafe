@@ -1133,7 +1133,9 @@ export type RestoreOutboxState = {
   diagnostics: Record<string, unknown>[];
 };
 const RESTORE_PROTECTED_SETTING_KEYS = [
-  'jwt_secret', 'cloud_api_key', 'cloud_device_secret', 'cloud_pos_hash',
+  // jwt_secret removed — signing secret is safeStorage userData/jwt-secret.enc (not in DB backups)
+  'jwt_secret_storage',
+  'cloud_api_key', 'cloud_device_secret', 'cloud_pos_hash',
   'telemetry_enabled', 'diagnostics_consent',
   'mobile_pairing_code', 'mobile_pairing_code_expires_at',
 ];
@@ -1170,6 +1172,9 @@ export function mergeRestoreProtectedSettings(dbInstance: Database.Database, sta
     if (state.present) upsert.run(state.key, state.value, now());
     else if (!state.key.startsWith('cloud_')) dbInstance.prepare('DELETE FROM settings WHERE key = ?').run(state.key);
   }
+  // P0.2: JWT signing secret must never land in SQLite from a DB backup.
+  // Secure secret lives in userData/jwt-secret.enc (same machine) or recovery.
+  dbInstance.prepare('DELETE FROM settings WHERE key = ?').run('jwt_secret');
   const hasDeviceSecret = states.some((state) => state.key === 'cloud_device_secret' && state.present);
   const hasPosHash = states.some((state) => state.key === 'cloud_pos_hash' && state.present);
   if (!hasDeviceSecret || !hasPosHash) ensureCloudIdentity();
@@ -3749,6 +3754,16 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       // explicit operator choice (kds_lan | lan). Invalid values are coerced
       // to localhost at read time — never silently bind 0.0.0.0.
       insertSettingIfMissing('network_mode', 'localhost');
+    },
+  },
+  {
+    version: 74,
+    name: 'p0_2_jwt_secret_storage_marker',
+    up: () => {
+      // Marker only — actual secret migration to safeStorage runs at startup
+      // via initializeJWTSecret() / migrateLegacyJWTSecret(). Do not seed
+      // plaintext jwt_secret here.
+      insertSettingIfMissing('jwt_secret_storage', 'legacy');
     },
   },
 ];

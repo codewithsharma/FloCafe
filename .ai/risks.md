@@ -3,7 +3,7 @@
 ## Production blockers (P0)
 
 - 🔒 SEC: LAN exposure is mode-gated (`network_mode`; default `localhost`). Cleartext HTTP/WS still applies on staff LAN when `kds_lan`/`lan` selected — guest Wi‑Fi unsupported; TLS deferred. See `p0.1-lan-security-audit.md` (GREEN WITH HARDENING).
-- 🔒 SEC: `jwt_secret` stored in SQLite `settings` — backup/OS-user leak ⇒ token forgery. Needs safeStorage/keychain design with upgrade/restore story (P0.5).
+- 🔒 SEC: JWT signing secret in Electron `safeStorage` (`userData/jwt-secret.enc`). SQLite/Drive backups no longer carry forge key. Remaining: same-OS-user malware can still decrypt; Linux needs desktop keyring. See `p0.2-jwt-secret-storage-audit.md` (GREEN WITH HARDENING).
 - 🔒 SEC: Electron `sandbox: false` — justify or migrate (P0.6).
 - 🔒 SEC: `terminal_id` is identification, not authentication; knowing the string + JWT role can close a shift.
 - ⚠️ RISK: M6 refunds API + minimal Orders refund UI shipped; **refund receipt print still deferred**. Card refunds are record-only (no gateway).

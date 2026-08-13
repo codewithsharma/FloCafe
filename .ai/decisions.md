@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-08-13 — JWT secret storage Option B (Accepted + Implemented)
+
+CEO+CTO approved. Production secret via Electron `safeStorage` → `userData/jwt-secret.enc`. SQLite plaintext removed after crash-safe migration. `JWT_SECRET` env CI-only. Rotate/recover via owner + Master PIN. Schema v74 marker `jwt_secret_storage`. See `docs/15-project-management/p0.2-jwt-secret-storage-audit.md`.
+
+## 2026-08-13 — JWT secret storage Phase 1 discovery (Superseded)
+
+Discovery recommended Option B; implementation completed same day.
+
 ## 2026-08-12 — LAN security Phase 1 implementation (Accepted)
 
 CEO+CTO approved Model D+E hybrid. Implemented `settings.network_mode`:

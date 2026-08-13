@@ -8,6 +8,10 @@ if [ "$#" -eq 0 ]; then
   exit 2
 fi
 
+# Backend JWT secret service allows JWT_SECRET only in test/CI/unpackaged modes.
+# Ensure plain ts-node suites (not only Electron-as-Node) are treated as test.
+export NODE_ENV="${NODE_ENV:-test}"
+
 "$@"
 exit_code=$?
 

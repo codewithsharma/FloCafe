@@ -55,6 +55,11 @@ Module._load = function (request, parent, isMain) {
   if (request === 'electron') {
     return {
       app: mockApp,
+      safeStorage: {
+        isEncryptionAvailable: () => true,
+        encryptString: (s) => Buffer.from(s, 'utf8'),
+        decryptString: (b) => Buffer.isBuffer(b) ? b.toString('utf8') : Buffer.from(b).toString('utf8'),
+      },
       // Stub anything else that might be imported at module level
       BrowserWindow: class {},
       ipcMain: { handle: () => {}, on: () => {} },
@@ -102,6 +107,8 @@ process.once('unhandledRejection', (err) => {
   try {
     console.log('[DevServer] Initializing database...');
     initDatabase();
+    const { initializeJWTSecret } = require('./dist/services/jwt-secret');
+    initializeJWTSecret();
 
     console.log('[DevServer] Starting Express, KDS, and Server App servers...');
     await startServer();

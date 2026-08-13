@@ -21,6 +21,7 @@ import {
   mdnsPrimaryPort,
   shouldAdvertiseMdns,
 } from './services/network-mode';
+import { initializeJWTSecret, JwtSecretError } from './services/jwt-secret';
 import log from 'electron-log/main';
 import { autoUpdater } from 'electron-updater';
 import { isAllowedLocalWindowUrl, isSafeExternalUrl } from './security/url-allowlist';
@@ -607,6 +608,18 @@ async function initialize(): Promise<void> {
 
     console.log('[Flo] Initializing database...');
     initDatabase();
+
+    console.log('[Flo] Initializing JWT signing secret (secure storage)...');
+    try {
+      initializeJWTSecret();
+    } catch (err) {
+      if (err instanceof JwtSecretError && err.code === 'JWT_SECRET_RECOVERY_REQUIRED') {
+        console.error('[Flo] JWT secret recovery required:', err.message);
+        // Allow UI to load so owner can recover; auth will fail until recoverJWTSecret().
+      } else {
+        throw err;
+      }
+    }
 
     console.log('[Flo] Starting local server...');
     await startServer();

@@ -66,6 +66,8 @@ function maskSetting(key: string, value: string): string {
 function publicSettingsShape(settings: Record<string, string>): Record<string, string> {
   const publicSettings: Record<string, string> = {};
   for (const [key, value] of Object.entries(settings)) {
+    // Never expose jwt_secret (even masked). Signing secret lives in safeStorage.
+    if (key === 'jwt_secret') continue;
     publicSettings[key] = maskSetting(key, value);
   }
   return publicSettings;

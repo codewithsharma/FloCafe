@@ -1,17 +1,27 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { randomBytes } from 'crypto';
 import { getCountryCallingCode, type CountryCode } from 'libphonenumber-js';
 import { getCurrentSchemaVersion, getDatabase, now } from '../db';
 import { authorizeMasterPin, isMasterPinAvailable, setMasterPin } from '../services/master-pin';
+import {
+  clearJWTSecretCache,
+  getJWTSecret,
+  initializeJWTSecret,
+  recoverJWTSecret,
+  rotateJWTSecret,
+  JwtSecretError,
+} from '../services/jwt-secret';
 import { authRateLimit, validatePassword, revokeToken, isTokenRevoked, isTokenStale, invalidateUserAuthCache } from '../middleware/security';
 import { getCurrencySymbol, getCountryByCode } from '../countries';
 import { cloudSync, DEFAULT_CLOUD_SERVER_URL, normalizeCloudServerUrl } from '../services/cloud-sync';
 import { applySetupDiagnosticsOptIn, applySetupTelemetryOptIn } from '../services/privacy-consent';
 import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
+
+export { clearJWTSecretCache, getJWTSecret, initializeJWTSecret, recoverJWTSecret, rotateJWTSecret };
 
 const router = Router();
 
@@ -34,50 +44,6 @@ const VALID_BUSINESS_TYPES = new Set(['restaurant']);
 const VALID_SETUP_PROFILES = new Set(['empty', 'express', 'demo']);
 const VALID_SERVICE_MODELS = new Set(['qsr', 'finedine']);
 const LOCAL_SETUP_HOSTS = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
-
-/**
- * Lazy-loaded JWT secret. On first access, reads from the settings table.
- * If no secret exists (first launch), generates a random 32-byte hex string
- * and persists it. This ensures every install gets a unique secret without
- * requiring manual configuration.
- */
-let _jwtSecret: string | null = null;
-
-export function clearJWTSecretCache(): void {
-  _jwtSecret = null;
-}
-
-export function getJWTSecret(): string {
-  if (_jwtSecret) return _jwtSecret;
-
-  // Environment variable always wins (for CI/testing)
-  if (process.env.JWT_SECRET) {
-    _jwtSecret = process.env.JWT_SECRET;
-    return _jwtSecret;
-  }
-
-  try {
-    const db = getDatabase();
-    const row = db.prepare("SELECT value FROM settings WHERE key = 'jwt_secret'").get() as { value: string } | undefined;
-
-    if (row?.value) {
-      _jwtSecret = row.value;
-    } else {
-      // First launch: generate and persist a random secret
-      _jwtSecret = randomBytes(32).toString('hex');
-      db.prepare("INSERT INTO settings (key, value, updated_at) VALUES ('jwt_secret', ?, ?)")
-        .run(_jwtSecret, now());
-      console.log('[Auth] Generated new JWT secret for this install');
-    }
-  } catch (err) {
-    // Database not ready — refuse to operate with a static secret.
-    // JWT operations will fail until the database is accessible.
-    console.error('[Auth] Database not ready — JWT secret unavailable:', err);
-    throw new Error('Database not ready — authentication unavailable');
-  }
-
-  return _jwtSecret;
-}
 
 /**
  * Build a synthetic "tenant" object from local settings.
@@ -840,6 +806,11 @@ router.post('/setup/initialize', (req: Request, res: Response) => {
       setMasterPin(String(master_pin));
     }
 
+    // JWT secret must exist before the owner row is committed. getJWTSecret()
+    // treats "users exist + no secure secret" as recovery_required (new-machine
+    // / missing .enc). First-run setup would otherwise fail closed mid-response.
+    initializeJWTSecret();
+
     db.transaction(() => {
       const userCount = getUserCount(db);
       if (userCount > 0) {
@@ -942,6 +913,102 @@ router.post('/setup/initialize', (req: Request, res: Response) => {
 
 router.post('/setup/seed', (req: Request, res: Response) => {
   res.status(410).json({ error: 'Use /api/auth/setup/initialize with setup_profile and owner details.' });
+});
+
+/**
+ * POST /api/auth/jwt-secret/rotate
+ * Owner + Master PIN — hard cutover to a new signing secret (all sessions die).
+ */
+router.post('/jwt-secret/rotate', authRateLimit(), (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    const token = authHeader.split(' ')[1];
+    if (isTokenRevoked(token)) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+    const decoded = jwt.verify(token, getJWTSecret()) as { userId: string; role?: string; iat?: number };
+    const db = getDatabase();
+    const user = db.prepare('SELECT id, role, is_active, tokens_valid_after FROM users WHERE id = ?').get(decoded.userId) as
+      | { id: string; role: string; is_active: number; tokens_valid_after: string | null }
+      | undefined;
+    if (!user || !user.is_active || user.role !== 'owner') {
+      return res.status(403).json({ error: 'Only the owner can rotate the JWT signing secret' });
+    }
+    if (isTokenStale(decoded.iat, user.tokens_valid_after)) {
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
+
+    const pin = String(req.body?.master_pin || '');
+    const authz = authorizeMasterPin(pin, `jwt-rotate:${req.ip || 'local'}`);
+    if (!authz.ok) {
+      return res.status(authz.status).json({ error: authz.error });
+    }
+
+    rotateJWTSecret();
+    logAuditEvent({
+      action: 'jwt_secret.rotated',
+      actorUserId: user.id,
+      actorRole: 'owner',
+      entityType: 'security',
+      entityId: 'jwt_secret',
+      metadata: { method: 'rotate' },
+    });
+    res.json({ ok: true, message: 'JWT signing secret rotated. All sessions must sign in again.' });
+  } catch (error: any) {
+    if (error instanceof JwtSecretError) {
+      return res.status(503).json({ error: error.message, code: error.code });
+    }
+    console.error('[Auth] JWT secret rotate failed:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/auth/jwt-secret/recover
+ * Owner + Master PIN — explicit recovery when secure secret is missing/corrupt
+ * (new machine / wiped userData). Generates a replacement secret.
+ */
+router.post('/jwt-secret/recover', authRateLimit(), (req: Request, res: Response) => {
+  try {
+    // Recovery may run when verify is impossible (secret missing). Allow bootstrap
+    // via Master PIN + owner email/password instead of Bearer when needed.
+    const pin = String(req.body?.master_pin || '');
+    const authz = authorizeMasterPin(pin, `jwt-recover:${req.ip || 'local'}`);
+    if (!authz.ok) {
+      return res.status(authz.status).json({ error: authz.error });
+    }
+
+    const email = normalizeEmail(req.body?.email);
+    const password = String(req.body?.password || '');
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Owner email and password are required for recovery' });
+    }
+    const db = getDatabase();
+    const user = db.prepare('SELECT * FROM users WHERE email = ? AND is_active = 1').get(email) as any;
+    if (!user || user.role !== 'owner' || !bcrypt.compareSync(password, user.password)) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    recoverJWTSecret();
+    logAuditEvent({
+      action: 'jwt_secret.recovered',
+      actorUserId: user.id,
+      actorRole: 'owner',
+      entityType: 'security',
+      entityId: 'jwt_secret',
+      metadata: { method: 'recover' },
+    });
+    res.json({ ok: true, message: 'JWT signing secret recovered. Sign in again with your password.' });
+  } catch (error: any) {
+    if (error instanceof JwtSecretError) {
+      return res.status(503).json({ error: error.message, code: error.code });
+    }
+    console.error('[Auth] JWT secret recover failed:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 export const authRoutes = router;
