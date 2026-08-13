@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.3 Composition snapshot (Accepted + Implemented)
+
+Read-only `getCompositionSnapshot()` in `main/modules/composition.ts` — orchestrates registry + Phase 2.2 diagnostics (no duplicate validation). Deterministic sorted output; dev-only `[Opervia Composition]` log. No HTTP endpoint, no settings UI, no schema change, no package extraction. Tests: `module-composition.test.ts`. Docs: `phase-2.3-composition-snapshot.md`. Next: P2.4 optional GET / settings gates.
+
 ## 2026-08-13 — Phase 2.2 Module consumers + soft diagnostics (Accepted + Implemented)
 
 Registry becomes a capability-discovery layer: broader nav/`isFeatureAvailable` consumers; Category-2 restaurant gates → modules (`tables`, `addons`, `kds`); soft `validateVerticalDependencies` + integrity + dev-only `[Opervia Modules]` log. No fail-closed deps, no route remount, no schema change, no package extraction. Tests: `module-diagnostics.test.ts`, extended flo-ui-shell/registry. Docs: `phase-2.2-module-consumers.md`. Next: P2.3 optional composition API / deeper settings gates.

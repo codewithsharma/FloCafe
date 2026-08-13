@@ -50,4 +50,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 2.2 module consumers + soft diagnostics shipped (2026-08-13).** Pilot path unchanged: production signing + human gates still block READY FOR PILOT. Architecture follow-up: **P2.3** optional read-only composition API / settings consumer depth — still no package extraction.
+**Phase 2.3 composition snapshot shipped (2026-08-13).** Pilot path unchanged. Architecture follow-up: **P2.4** optional authenticated composition GET / deeper settings gates — still no package extraction.

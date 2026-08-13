@@ -42,7 +42,9 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P0.7b Opervia branding consolidation — STRATEGY, vision, docs/README, package `productName`, UI i18n/manifest, user-facing main strings (2026-08-13); historical audits preserved; `appId`/linux `executableName` unchanged for upgrade continuity
 - [x] P2.1 Lightweight module registry + Opervia Restaurant vertical (`main/modules/`; `tests/module-registry.test.ts`) — **IMPLEMENTED** (metadata seam; no package extraction)
 - [ ] P0.7 Documentation truth — roadmap/feature-list/production-readiness match code; CURRENT Opervia Restaurant vs TARGET modular platform
-- [x] P2.2 Broaden module consumers (nav/UI) + soft dep diagnostics — **IMPLEMENTED** (`phase-2.2-module-consumers.md`; settings tab gates deferred; still no package extraction)
+- [x] P2.2 Broaden module consumers (nav/UI) + soft dep diagnostics — **IMPLEMENTED**
+- [x] P2.3 Read-only composition snapshot — **IMPLEMENTED** (`phase-2.3-composition-snapshot.md`; in-process only; still no package extraction)
+- [ ] P2.4 Optional authenticated composition GET / deeper settings module gates
 
 ## P1 — Pilot reliability
 
@@ -64,7 +66,8 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 
 - [x] P2.1 Module registry + Restaurant vertical definition (2026-08-13) — may land before pilots as a non-behavioral seam
 - [x] P2.2 Broaden registry consumers + soft dependency diagnostics (2026-08-13)
-- [ ] P2.3 Optional read-only composition surface / deeper settings module gates (still no packages)
+- [x] P2.3 Read-only composition snapshot (2026-08-13)
+- [ ] P2.4 Optional composition GET / settings module gates (still no packages)
 - [ ] Inventory stock ledger (movements + adjustments) before BOM/procurement
 - [ ] Recipes/BOM, wastage (after ledger)
 - [ ] Suppliers / PO / receiving

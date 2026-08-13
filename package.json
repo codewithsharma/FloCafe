@@ -58,7 +58,7 @@
     "test:shift-client": "ts-node --transpile-only -P tests/tsconfig.json tests/shift-client.test.ts",
     "test:shift-ui": "ts-node --transpile-only -P tests/tsconfig.json tests/shift-ui.test.ts",
     "test:flo-ui-shell": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-ui-shell.test.ts",
-    "test:module-registry": "ts-node --transpile-only -P tests/tsconfig.json tests/module-registry.test.ts && npm run test:module-diagnostics",
+    "test:module-registry": "ts-node --transpile-only -P tests/tsconfig.json tests/module-registry.test.ts && npm run test:module-diagnostics && npm run test:module-composition",
     "test:flo-theme": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-theme.test.ts",
     "test:flo-home": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-home.test.ts",
     "test:flo-pos": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-pos.test.ts",
@@ -160,7 +160,8 @@
     "test:m1-gate": "ts-node --transpile-only -P tests/tsconfig.json tests/m1-engineering-gate.test.ts",
     "test:financial-reporting": "node tests/run-electron-node-test.cjs tests/financial-reporting-semantics.test.ts",
     "test:shift-settings-api": "node tests/run-electron-node-test.cjs tests/shift-settings-api.test.ts",
-    "test:module-diagnostics": "ts-node --transpile-only -P tests/tsconfig.json tests/module-diagnostics.test.ts"
+    "test:module-diagnostics": "ts-node --transpile-only -P tests/tsconfig.json tests/module-diagnostics.test.ts",
+    "test:module-composition": "ts-node --transpile-only -P tests/tsconfig.json tests/module-composition.test.ts"
   },
   "author": {
     "name": "Nexora",

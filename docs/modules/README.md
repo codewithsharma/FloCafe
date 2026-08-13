@@ -71,10 +71,11 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 
 1. ~~Module registry + Restaurant vertical definition~~ — **Phase 2.1 done** ([phase-2.1-module-registry.md](../03-architecture/phase-2.1-module-registry.md))
 2. ~~Broaden consumers + soft dependency diagnostics~~ — **Phase 2.2 done** ([phase-2.2-module-consumers.md](../03-architecture/phase-2.2-module-consumers.md))
-3. Fail-closed dependency enforcement — deferred (multi-vertical)
-4. Formal events bus for modules — deferred
-5. Deeper Inventory ledger (after pilots)
-6. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — deferred
+3. ~~Read-only composition snapshot~~ — **Phase 2.3 done** ([phase-2.3-composition-snapshot.md](../03-architecture/phase-2.3-composition-snapshot.md))
+4. Fail-closed dependency enforcement — deferred (multi-vertical)
+5. Formal events bus for modules — deferred
+6. Deeper Inventory ledger (after pilots)
+7. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — deferred
 
 **Do not** create Opervia Custom or extract every folder into packages yet.
 
@@ -84,5 +85,6 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 - [module-system.md](../03-architecture/module-system.md)
 - [phase-2.1-module-registry.md](../03-architecture/phase-2.1-module-registry.md)
 - [phase-2.2-module-consumers.md](../03-architecture/phase-2.2-module-consumers.md)
+- [phase-2.3-composition-snapshot.md](../03-architecture/phase-2.3-composition-snapshot.md)
 - [vertical-architecture.md](../03-architecture/vertical-architecture.md)
 - [ADR-010](../14-decisions/ADR-010-opervia-platform.md)

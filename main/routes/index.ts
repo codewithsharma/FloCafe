@@ -36,7 +36,7 @@ import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
 import { getDatabase, now, parseItemJson, attachEffectiveAddons, withTxn, getSettingValue, getCachedPairingCode, setCachedPairingCode, verifyPin } from '../db';
 import { checkPinRateLimit } from './orders';
-import { getPlatformCompositionSummary, logModuleDiagnosticsIfDev } from '../modules';
+import { getPlatformCompositionSummary, logCompositionSnapshotIfDev } from '../modules';
 import {
   calculateConfiguredChargeTaxes,
   combineItemAndChargeTaxes,
@@ -74,7 +74,7 @@ export function registerRoutes(app: Express): void {
   // Phase 2.1/2.2 — Opervia modules are declared in main/modules; Express mounts remain static.
   // Composition summary + soft dep diagnostics are metadata only (no dynamic route loading).
   void getPlatformCompositionSummary();
-  logModuleDiagnosticsIfDev();
+  logCompositionSnapshotIfDev();
 
   // Auth routes
   app.use('/api/auth', authRoutes);

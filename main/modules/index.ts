@@ -32,6 +32,13 @@ export {
   logModuleDiagnosticsIfDev,
 } from './diagnostics';
 
+export {
+  COMPOSITION_SNAPSHOT_SCHEMA_VERSION,
+  getCompositionSnapshot,
+  formatCompositionDiagnosticsLog,
+  logCompositionSnapshotIfDev,
+} from './composition';
+
 export { OPERVIA_RESTAURANT_ENABLED_MODULES } from './verticals';
 
 export type { ModuleId, OperviaModule, VerticalDefinition, ModuleKind } from './types';
@@ -42,3 +49,9 @@ export type {
   RegistryIntegrityIssueKind,
   RegistryIntegrityReport,
 } from './diagnostics';
+export type {
+  CompositionSnapshot,
+  CompositionSnapshotOptions,
+  CompositionModuleEntry,
+  CompositionDiagnosticWarning,
+} from './composition';

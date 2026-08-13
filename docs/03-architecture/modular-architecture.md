@@ -67,7 +67,8 @@ Composition flows **upward**: Core enables Modules; Verticals select and configu
 
 **Phase 2.1 done:** lightweight module registry + Restaurant vertical — see [phase-2.1-module-registry.md](phase-2.1-module-registry.md).
 **Phase 2.2 done:** broaden consumers + soft dep diagnostics — see [phase-2.2-module-consumers.md](phase-2.2-module-consumers.md).
-**Next (2.3):** optional read-only composition API / deeper settings gates — still no package extraction.
+**Phase 2.3 done:** read-only composition snapshot — see [phase-2.3-composition-snapshot.md](phase-2.3-composition-snapshot.md).
+**Next (2.4):** optional authenticated composition GET / deeper settings module gates — still no package extraction.
 
 ## Explicit non-goals (now)
 
