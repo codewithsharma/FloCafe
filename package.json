@@ -147,6 +147,7 @@
     "test:payment-boundary": "node tests/run-electron-node-test.cjs tests/payment-boundary.test.ts && node tests/run-electron-node-test.cjs tests/payment-without-restaurant.test.ts",
     "test:pos-orchestration-boundary": "ts-node --transpile-only -P tests/tsconfig.json tests/pos-orchestration-boundary.test.ts",
     "test:restaurant-isolation": "node tests/run-electron-node-test.cjs tests/restaurant-isolation.test.ts && node tests/run-electron-node-test.cjs tests/order-restaurant-isolation.test.ts",
+    "test:synthetic-retail": "ts-node --transpile-only -P tests/tsconfig.json tests/synthetic-retail-composition.test.ts && ts-node --transpile-only -P tests/tsconfig.json tests/shared-module-vertical-neutrality.test.ts",
     "test:inventory-ledger": "node tests/run-electron-node-test.cjs tests/inventory-ledger.test.ts",
     "test:product-inventory-boundary": "node tests/run-electron-node-test.cjs tests/product-inventory-boundary.test.ts",
     "test:product-tax-boundary": "node tests/run-electron-node-test.cjs tests/product-tax-boundary.test.ts",

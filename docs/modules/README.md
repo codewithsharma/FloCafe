@@ -87,7 +87,8 @@ Modules are reusable business capabilities. Phase 2 ships a **lightweight regist
 16. ~~Payment domain boundary~~ — **Phase 2.15 done** ([phase-2.15-payment-domain-boundary.md](../03-architecture/phase-2.15-payment-domain-boundary.md)) — PaymentTenderService + soft-gated tables/kds; money unchanged
 17. ~~POS orchestration boundary~~ — **Phase 2.16 done** ([phase-2.16-pos-orchestration-boundary.md](../03-architecture/phase-2.16-pos-orchestration-boundary.md)) — checkout coordinator + addons/kds gates; no domain math on client
 18. ~~Restaurant isolation~~ — **Phase 2.17 done** ([phase-2.17-restaurant-isolation.md](../03-architecture/phase-2.17-restaurant-isolation.md)) — Order soft-gates tables/kds; shared ↛ restaurant deps; fail-closed remount deferred
-19. Fail-closed dependency enforcement / route remount — **Phase 3**
+19. ~~Synthetic Retail validation~~ — **Phase 2.18 done** ([phase-2.18-synthetic-retail-validation.md](../03-architecture/phase-2.18-synthetic-retail-validation.md)) — retail-test stronger; not production
+20. Fail-closed dependency enforcement / route remount — **Phase 3**
 20. Inventory UI / legacy tax column cleanup — **Phase 3**
 21. Formal events bus for modules — **Phase 3**
 22. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — **Phase 3**

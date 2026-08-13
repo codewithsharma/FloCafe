@@ -84,7 +84,8 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **P2.15 Payment domain boundary** (2026-08-13) — `main/services/payment-tender.ts`; soft-gate tables/kds on bill-paid; no FIN-01/money/schema/API change; retail-test not production
 - [x] **P2.16 POS orchestration boundary** (2026-08-13) — `checkout-coordinator` + `POS_DOES_NOT_OWN`; gate addons/kds kot; no backend god-service; page retry/discount debt deferred
 - [x] **P2.17 Restaurant isolation** (2026-08-13) — Order soft-gate table occupy/free + KDS notify; shared catalog must not depend on restaurant modules; UX unchanged when modules ON; fail-closed remount deferred Phase 3
-- [ ] Phase 2 continuation — further facade depth if tasked; do **not** claim Phase 2 complete
+- [x] **P2.18 Synthetic Retail validation** (2026-08-13) — stronger retail-test fixture tests; shared-module neutrality; not production Retail
+- [ ] **Phase 2 final exit gate** — after 2.18 verification
 - [ ] **Phase 3** Fail-closed dependency enforcement / route remount (still no packages; after pilot proof)
 - [ ] **Phase 3** Inventory stock ledger UI
 - [ ] **Phase 3** Legacy product tax_type/tax_rate cleanup (deferred; characterized in 2.13)

@@ -19,10 +19,10 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 | **Opervia** | Canonical platform brand |
 | **Opervia Restaurant** | Active production vertical (`ACTIVE_VERTICAL_ID = restaurant`) |
 | **retail-test** | Synthetic composition fixture only (`SYNTHETIC_VERTICALS`) — not production |
-| **Phase 2** | **CONTINUATION in progress** — CURRENT **2.16 POS orchestration** + **2.17 Restaurant isolation**; prior **2.15 Payment** / **2.14 Order**; INTERIM exit gate preserved (`docs/03-architecture/phase-2-exit-gate.md`) |
+| **Phase 2** | **CONTINUATION** — CURRENT **2.18 Synthetic Retail**; 2.14–2.17 Order/Payment/POS/Restaurant isolation done; INTERIM exit gate preserved (`phase-2-exit-gate.md`). Final exit next. |
 | **Phase 3** | **FUTURE** — package extraction, fail-closed deps/remount, multi-vertical runtime, production Retail+, deeper `db.ts` split |
 
-Phase 2 delivered so far: registry → consumers → composition → contract/capabilities → Inventory/Tax boundaries → ledger → product stock ownership → tax HTTP/snapshot → product/tax ownership → INTERIM 2.14 exit → 2.14 Order → 2.15 Payment → **2.16 POS orchestration** (checkout coordinator + module gates) → **2.17 Restaurant isolation** (Order soft-gates tables/kds).
+Phase 2 delivered so far: registry → … → INTERIM 2.14 exit → 2.14 Order → 2.15 Payment → 2.16 POS → 2.17 Restaurant isolation → **2.18 synthetic Retail validation**.
 
 ## Active work — Opervia Restaurant v1.0 / pilot hardening
 

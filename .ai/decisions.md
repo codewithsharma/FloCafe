@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.18 Synthetic Retail validation (Accepted + Implemented)
+
+Strengthened `retail-test` as architecture-only composition: shared commerce modules without tables/kitchen/kds/menu/addons; production `VERTICALS` / `ACTIVE_VERTICAL_ID` remain restaurant; `business_type` still maps retail → restaurant. Tests: `synthetic-retail-composition`, `shared-module-vertical-neutrality` (no core/shared catalog deps on restaurant-kind; Order/Payment side effects module-gated). Not production Opervia Retail. Doc: `phase-2.18-synthetic-retail-validation.md`.
+
 ## 2026-08-13 — Phase 2.16 POS orchestration boundary (Accepted + Implemented)
 
 POS is an orchestrator composing Order/Payment/Tax/Inventory — not a domain owner. Added `frontend/src/lib/pos/checkout-coordinator.ts` (`placePostpaidOrder` / `placePrepaidOrder`) extracting checkout HTTP sequences without payload changes; `orchestration.ts` exports `POS_OWNED` / `POS_DOES_NOT_OWN` (tax engine, inventory stock, payment tender internals). Soft-gated AddonModal behind `isModuleEnabled('addons')`; KOT print via `isFeatureAvailable('kds', kotPrintingEnabled)`; tables gate preserved. No POS backend god-service; `pos-info.ts` stays thin; no UI layout redesign; restaurant modules ON → identical UX. CURRENT DEBT: discount reconciliation / attempt storage / print triggers remain in `pos/page.tsx`. Tests: `pos-orchestration-boundary`. Doc: `phase-2.16-pos-orchestration-boundary.md`.
