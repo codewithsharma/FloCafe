@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.6 Module contract + capabilities (Accepted + Implemented)
+
+Extended `OperviaModule` / `ModuleDefinition` with required domain-level `capabilities` (`CapabilityId`, `{domain}.{verb}`). Soft integrity via `validateModuleDefinitions` + extended `validateRegistryIntegrity`. Helpers: `getModuleCapabilities`, `moduleOwnsCapability`, `findCapabilityOwner` — discovery only, never authorization. No nav/settings/permissions metadata in catalog; no HTTP API expansion; no frontend capability consumers; no fail-closed; no package extraction. Docs: `module-contract.md`, `module-ownership.md`, `extraction-readiness.md`. Tests: `module-contract.test.ts`. Next: deepen inventory/tax boundaries or fail-closed design after pilots.
+
 ## 2026-08-13 — Phase 2.5 Synthetic retail-test composition (Accepted + Implemented)
 
 Non-production `retail-test` / Opervia Retail Test fixture in `main/modules/fixtures/` + `SYNTHETIC_VERTICALS` lookup. Production `VERTICALS` and `ACTIVE_VERTICAL_ID` remain restaurant-only. Proves shared ModuleIds compose into two verticals without duplicating implementations; restaurant-only modules excluded from retail-test. Soft dependency validation only — fail-closed deferred. No `?verticalId=` on HTTP API. Settings: printing/notification/backup gated with `isModuleEnabled`. Tests: `module-vertical-composition.test.ts`. Docs: `phase-2.5-vertical-composition-validation.md`. Next: P2.6 fail-closed after pilot proof OR real Retail requirements.

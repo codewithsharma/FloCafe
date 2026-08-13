@@ -9,7 +9,12 @@ import {
   getModuleDependencies,
   getVerticalDefinition,
 } from './registry';
-import type { ModuleId } from './types';
+import type { CapabilityId, ModuleId, OperviaModule } from './types';
+import { CAPABILITY_IDS } from './types';
+
+const VERSION_RE = /^\d+\.\d+\.\d+/;
+const CAPABILITY_RE = /^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/;
+const KNOWN_CAPABILITIES = new Set<string>(CAPABILITY_IDS);
 
 export interface MissingDependency {
   module: ModuleId;
@@ -28,7 +33,14 @@ export type RegistryIntegrityIssueKind =
   | 'unknown_dependency'
   | 'unknown_vertical_module'
   | 'duplicate_vertical_module'
-  | 'circular_dependency';
+  | 'circular_dependency'
+  | 'empty_capabilities'
+  | 'duplicate_capability_on_module'
+  | 'duplicate_capability_across_modules'
+  | 'invalid_capability_format'
+  | 'unknown_capability'
+  | 'invalid_module_name'
+  | 'invalid_module_version';
 
 export interface RegistryIntegrityIssue {
   kind: RegistryIntegrityIssueKind;
@@ -147,6 +159,108 @@ export function detectDependencyCycles(
   return cycles;
 }
 
+/**
+ * Soft validation of an arbitrary module list (tests / tooling).
+ * Never throws. Does not mutate catalog or block startup.
+ */
+export function validateModuleDefinitions(
+  modules: readonly OperviaModule[],
+): RegistryIntegrityReport {
+  const issues: RegistryIntegrityIssue[] = [];
+  const seenIds = new Set<string>();
+  const capabilityOwners = new Map<string, ModuleId>();
+  const registered = new Set(modules.map((m) => m.id));
+
+  for (const mod of modules) {
+    if (seenIds.has(mod.id)) {
+      issues.push({
+        kind: 'duplicate_module_id',
+        detail: `Duplicate module id: ${mod.id}`,
+        module: mod.id,
+      });
+    }
+    seenIds.add(mod.id);
+
+    if (!mod.name || !mod.name.trim()) {
+      issues.push({
+        kind: 'invalid_module_name',
+        detail: `Module ${mod.id} has empty name`,
+        module: mod.id,
+      });
+    }
+
+    if (!VERSION_RE.test(mod.version || '')) {
+      issues.push({
+        kind: 'invalid_module_version',
+        detail: `Module ${mod.id} has invalid version: ${mod.version}`,
+        module: mod.id,
+      });
+    }
+
+    for (const dep of mod.dependencies || []) {
+      if (!registered.has(dep) && !getModule(dep)) {
+        issues.push({
+          kind: 'unknown_dependency',
+          detail: `Module ${mod.id} depends on unregistered ${dep}`,
+          module: mod.id,
+          dependency: dep,
+        });
+      }
+    }
+
+    const caps = mod.capabilities || [];
+    if (caps.length === 0) {
+      issues.push({
+        kind: 'empty_capabilities',
+        detail: `Module ${mod.id} declares no capabilities`,
+        module: mod.id,
+      });
+    }
+
+    const localCaps = new Set<string>();
+    for (const cap of caps) {
+      if (!CAPABILITY_RE.test(cap)) {
+        issues.push({
+          kind: 'invalid_capability_format',
+          detail: `Module ${mod.id} has invalid capability format: ${cap}`,
+          module: mod.id,
+        });
+      } else if (!KNOWN_CAPABILITIES.has(cap)) {
+        issues.push({
+          kind: 'unknown_capability',
+          detail: `Module ${mod.id} declares unknown capability: ${cap}`,
+          module: mod.id,
+        });
+      }
+
+      if (localCaps.has(cap)) {
+        issues.push({
+          kind: 'duplicate_capability_on_module',
+          detail: `Module ${mod.id} duplicates capability ${cap}`,
+          module: mod.id,
+        });
+      }
+      localCaps.add(cap);
+
+      const prior = capabilityOwners.get(cap);
+      if (prior && prior !== mod.id) {
+        issues.push({
+          kind: 'duplicate_capability_across_modules',
+          detail: `Capability ${cap} claimed by ${prior} and ${mod.id}`,
+          module: mod.id,
+        });
+      } else {
+        capabilityOwners.set(cap, mod.id);
+      }
+    }
+  }
+
+  return {
+    valid: issues.length === 0,
+    issues,
+  };
+}
+
 export function validateRegistryIntegrity(options?: {
   detectCycles?: boolean;
 }): RegistryIntegrityReport {
@@ -219,6 +333,10 @@ export function validateRegistryIntegrity(options?: {
       });
     }
   }
+
+  // Phase 2.6 — capability / identity soft checks on live catalog
+  const contract = validateModuleDefinitions(MODULE_CATALOG);
+  issues.push(...contract.issues);
 
   return {
     valid: issues.length === 0,

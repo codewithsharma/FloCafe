@@ -50,4 +50,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 2.5 synthetic retail-test composition validation shipped (2026-08-13).** Restaurant unchanged; Retail not production. Next: **P2.6** fail-closed deps after pilot proof, or real Retail requirements — still no package extraction.
+**Phase 2.6 module contract + capabilities shipped (2026-08-13).** Metadata-only; auth unchanged; no package extraction. Next: **P2.7** deepen inventory/tax boundaries per extraction-readiness, or documented fail-closed design after pilot proof.

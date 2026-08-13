@@ -68,7 +68,7 @@ Composition flows **upward**: Core enables Modules; Verticals select and configu
 **Phase 2.1 done:** lightweight module registry + Restaurant vertical — see [phase-2.1-module-registry.md](phase-2.1-module-registry.md).
 **Phase 2.2 done:** broaden consumers + soft dep diagnostics — see [phase-2.2-module-consumers.md](phase-2.2-module-consumers.md).
 **Phase 2.3 done:** read-only composition snapshot — see [phase-2.3-composition-snapshot.md](phase-2.3-composition-snapshot.md).
-**Next (2.6+):** fail-closed dependency enforcement after pilot proof, or real Retail requirements gathering — still no package extraction until composition model is proven in pilots.
+**Next (2.7+):** soft→documented fail-closed design for production verticals after pilot proof, or deepen inventory/tax boundaries per extraction-readiness — still no package extraction.
 
 ## Explicit non-goals (now)
 

@@ -15,7 +15,8 @@ import {
   OPERVIA_RETAIL_TEST_VERTICAL_ID,
   SYNTHETIC_VERTICALS,
 } from './fixtures/retail-test-vertical';
-import type { ModuleId, OperviaModule, VerticalDefinition } from './types';
+import type { CapabilityId, ModuleId, ModuleDefinition, OperviaModule, VerticalDefinition } from './types';
+import { CAPABILITY_IDS } from './types';
 
 export {
   MODULE_CATALOG,
@@ -29,7 +30,30 @@ export {
   OPERVIA_RETAIL_TEST_ENABLED_MODULES,
   SYNTHETIC_VERTICALS,
 };
-export type { ModuleId, OperviaModule, VerticalDefinition };
+export type { ModuleId, OperviaModule, VerticalDefinition, CapabilityId, ModuleDefinition };
+export { CAPABILITY_IDS };
+
+export function getModuleCapabilities(moduleId: string): readonly CapabilityId[] {
+  return getModule(moduleId)?.capabilities ?? [];
+}
+
+export function moduleOwnsCapability(
+  moduleId: string,
+  capability: CapabilityId,
+): boolean {
+  return getModuleCapabilities(moduleId).includes(capability);
+}
+
+/** Soft discovery: which enabled module owns this capability (if any). Not authz. */
+export function findCapabilityOwner(
+  capability: CapabilityId,
+  verticalId?: string,
+): ModuleId | undefined {
+  for (const id of getEnabledModules(verticalId)) {
+    if (moduleOwnsCapability(id, capability)) return id;
+  }
+  return undefined;
+}
 
 export function listModules(): readonly OperviaModule[] {
   return MODULE_CATALOG;

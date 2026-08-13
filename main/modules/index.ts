@@ -23,12 +23,17 @@ export {
   getRouteModuleMap,
   verticalIdForBusinessType,
   getPlatformCompositionSummary,
+  getModuleCapabilities,
+  moduleOwnsCapability,
+  findCapabilityOwner,
+  CAPABILITY_IDS,
 } from './registry';
 
 export {
   validateVerticalDependencies,
   validateEnabledSetDependencies,
   validateRegistryIntegrity,
+  validateModuleDefinitions,
   detectDependencyCycles,
   formatModuleDiagnosticsLog,
   getModuleDiagnosticsSnapshot,
@@ -47,7 +52,7 @@ export {
 export { OPERVIA_RESTAURANT_ENABLED_MODULES } from './verticals';
 // Synthetic retail-test is re-exported via registry (not production VERTICALS).
 
-export type { ModuleId, OperviaModule, VerticalDefinition, ModuleKind } from './types';
+export type { ModuleId, OperviaModule, VerticalDefinition, ModuleKind, CapabilityId, ModuleDefinition } from './types';
 export type {
   MissingDependency,
   VerticalDependencyReport,

@@ -1,6 +1,7 @@
 /**
  * Opervia module catalog — describes Phase 1 capabilities in place.
  * Implementations remain in existing routes/services; this is metadata only.
+ * Phase 2.6: each module declares domain-level capabilities (not authz).
  */
 import type { ModuleId, OperviaModule } from './types';
 
@@ -11,6 +12,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: [],
     kind: 'core',
+    capabilities: ['platform.auth', 'platform.settings', 'platform.audit'],
     routePrefixes: ['/api/auth', '/api/settings', '/api/audit-logs'],
     description: 'Auth, authorization, settings, audit, security middleware',
   },
@@ -20,6 +22,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['core'],
     kind: 'shared',
+    capabilities: ['customer.manage'],
     routePrefixes: ['/api/customers', '/api/customers-search', '/api/crm'],
   },
   {
@@ -28,6 +31,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['core', 'category'],
     kind: 'shared',
+    capabilities: ['product.manage'],
     routePrefixes: ['/api/products'],
   },
   {
@@ -36,6 +40,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['core'],
     kind: 'shared',
+    capabilities: ['category.manage'],
     routePrefixes: ['/api/categories'],
   },
   {
@@ -44,6 +49,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['product'],
     kind: 'shared',
+    capabilities: ['inventory.stock'],
     description: 'Light product stock counts (ledger PLANNED)',
   },
   {
@@ -52,6 +58,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['product', 'order', 'payment'],
     kind: 'shared',
+    capabilities: ['pos.sell'],
     routePrefixes: ['/api/pos-info'],
   },
   {
@@ -60,6 +67,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['product', 'core'],
     kind: 'shared',
+    capabilities: ['order.manage'],
     routePrefixes: ['/api/orders', '/api/order-items', '/api/held-orders'],
   },
   {
@@ -68,6 +76,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['order'],
     kind: 'shared',
+    capabilities: ['payment.tender'],
     routePrefixes: ['/api/bills', '/api/payment-methods'],
   },
   {
@@ -76,6 +85,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['payment'],
     kind: 'shared',
+    capabilities: ['refund.process'],
     routePrefixes: ['/api/refunds'],
   },
   {
@@ -84,6 +94,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['core'],
     kind: 'shared',
+    capabilities: ['tax.compute'],
     featureFlags: ['taxes_enabled'],
     routePrefixes: ['/api/tax', '/api/tax-packs'],
   },
@@ -93,6 +104,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['core', 'payment'],
     kind: 'shared',
+    capabilities: ['shift.operate'],
     featureFlags: ['shifts_enabled'],
     routePrefixes: ['/api/shifts'],
   },
@@ -102,6 +114,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['core'],
     kind: 'shared',
+    capabilities: ['staff.manage'],
     routePrefixes: ['/api/staff', '/api/users'],
   },
   {
@@ -110,6 +123,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['customer', 'payment'],
     kind: 'shared',
+    capabilities: ['loyalty.operate'],
     featureFlags: ['loyalty_enabled'],
   },
   {
@@ -118,6 +132,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['core', 'payment'],
     kind: 'shared',
+    capabilities: ['reporting.view'],
     routePrefixes: ['/api/reports'],
   },
   {
@@ -126,6 +141,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['core'],
     kind: 'shared',
+    capabilities: ['printing.output'],
     featureFlags: ['kot_printing_enabled'],
     routePrefixes: ['/api/printers'],
     description: 'Receipt printing shared; KOT printing restaurant-oriented',
@@ -136,6 +152,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['core'],
     kind: 'shared',
+    capabilities: ['notification.deliver'],
     routePrefixes: ['/api/whatsapp'],
     description: 'WhatsApp bill delivery (runtime gated by connection status)',
   },
@@ -145,6 +162,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['core'],
     kind: 'shared',
+    capabilities: ['backup.operate'],
     routePrefixes: ['/api/database', '/api/database-tools'],
   },
   {
@@ -153,6 +171,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['order'],
     kind: 'restaurant',
+    capabilities: ['tables.manage'],
     featureFlags: ['tables_required'],
     routePrefixes: ['/api/tables'],
   },
@@ -162,6 +181,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['order', 'product'],
     kind: 'restaurant',
+    capabilities: ['kitchen.stations'],
     routePrefixes: ['/api/kitchen', '/api/kitchen-stations'],
   },
   {
@@ -170,6 +190,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['order', 'kitchen', 'product'],
     kind: 'restaurant',
+    capabilities: ['kds.display'],
     featureFlags: ['kds_enabled'],
     routePrefixes: ['/api/kds', '/api/kds-info'],
   },
@@ -179,6 +200,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['product', 'category'],
     kind: 'restaurant',
+    capabilities: ['menu.present'],
     routePrefixes: ['/api/menu'],
     description: 'Menu CSV import / restaurant catalog presentation',
   },
@@ -188,6 +210,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     version: '1.0.0',
     dependencies: ['product'],
     kind: 'restaurant',
+    capabilities: ['addons.manage'],
     routePrefixes: ['/api/addon-groups'],
   },
 ] as const;

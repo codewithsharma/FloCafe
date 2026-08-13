@@ -74,10 +74,11 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 3. ~~Read-only composition snapshot~~ — **Phase 2.3 done** ([phase-2.3-composition-snapshot.md](../03-architecture/phase-2.3-composition-snapshot.md))
 4. ~~Composition read API + settings module gates~~ — **Phase 2.4 done** ([phase-2.4-platform-composition-api.md](../03-architecture/phase-2.4-platform-composition-api.md))
 5. ~~Synthetic multi-vertical composition validation~~ — **Phase 2.5 done** ([phase-2.5-vertical-composition-validation.md](../03-architecture/phase-2.5-vertical-composition-validation.md))
-6. Fail-closed dependency enforcement — deferred (multi-vertical)
-7. Formal events bus for modules — deferred
-8. Deeper Inventory ledger (after pilots)
-9. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — deferred
+6. ~~Module contract + capabilities~~ — **Phase 2.6 done** ([module-contract.md](../03-architecture/module-contract.md))
+7. Fail-closed dependency enforcement — deferred (after pilot proof)
+8. Formal events bus for modules — deferred
+9. Deeper Inventory ledger (after pilots)
+10. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — deferred
 
 **Do not** create Opervia Custom or extract every folder into packages yet.
 
@@ -90,5 +91,8 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 - [phase-2.3-composition-snapshot.md](../03-architecture/phase-2.3-composition-snapshot.md)
 - [phase-2.4-platform-composition-api.md](../03-architecture/phase-2.4-platform-composition-api.md)
 - [phase-2.5-vertical-composition-validation.md](../03-architecture/phase-2.5-vertical-composition-validation.md)
+- [module-contract.md](../03-architecture/module-contract.md)
+- [module-ownership.md](../03-architecture/module-ownership.md)
+- [extraction-readiness.md](../03-architecture/extraction-readiness.md)
 - [vertical-architecture.md](../03-architecture/vertical-architecture.md)
 - [ADR-010](../14-decisions/ADR-010-opervia-platform.md)
