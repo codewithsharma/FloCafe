@@ -11,10 +11,11 @@
  */
 
 /** Minimal axios-like client (injected so tests can stub without bundling). */
+/* eslint-disable @typescript-eslint/no-explicit-any -- axios seam stays intentionally loose */
 export interface PosCheckoutApi {
-  get: (url: string, config?: unknown) => Promise<{ data: any }>;
-  post: (url: string, data?: unknown, config?: unknown) => Promise<{ data: any }>;
-  patch: (url: string, data?: unknown, config?: unknown) => Promise<{ data: any }>;
+  get: (url: string, config?: any) => Promise<{ data: any }>;
+  post: (url: string, data?: any, config?: any) => Promise<{ data: any }>;
+  patch: (url: string, data?: any, config?: any) => Promise<{ data: any }>;
 }
 
 export type PlacePostpaidInput =
@@ -23,7 +24,7 @@ export type PlacePostpaidInput =
       body: Record<string, unknown>;
       idempotencyKey: string;
       /** When a prior attempt already created the order, skip the POST. */
-      existingOrder?: { id: number; [key: string]: unknown };
+      existingOrder?: { id: number; [key: string]: any };
     }
   | {
       mode: 'add-items';
@@ -33,7 +34,7 @@ export type PlacePostpaidInput =
     };
 
 export interface PlacePostpaidResult {
-  order: { id: number; order_number?: string; [key: string]: unknown };
+  order: { id: number; order_number?: string; [key: string]: any };
 }
 
 /**
@@ -64,24 +65,29 @@ export async function placePostpaidOrder(
 export interface PlacePrepaidParams {
   orderBody: Record<string, unknown>;
   orderIdempotencyKey: string;
-  existingOrder?: { id: number; [key: string]: unknown };
+  existingOrder?: { id: number; [key: string]: any };
   /** When set, PATCH /orders/:id/discount before bill generate. */
   discountBody?: Record<string, unknown> | null;
-  existingBill?: { id: number; [key: string]: unknown };
+  existingBill?: { id: number; [key: string]: any };
   paymentBody: { payments: unknown[]; customer_id?: unknown };
   paymentIdempotencyKey: string;
-  onOrderCreated?: (order: { id: number; [key: string]: unknown }) => void;
+  onOrderCreated?: (order: { id: number; [key: string]: any }) => void;
   onBillCreated?: (
-    order: { id: number; [key: string]: unknown },
-    bill: { id: number; [key: string]: unknown },
+    order: { id: number; [key: string]: any },
+    bill: { id: number; [key: string]: any },
   ) => void;
 }
 
 export interface PlacePrepaidResult {
-  order: { id: number; order_number?: string; [key: string]: unknown };
-  bill: { id: number; payment_status?: string; balance?: number; [key: string]: unknown };
-  paymentData: { bill?: PlacePrepaidResult['bill']; loyaltyPointsEarned?: number; [key: string]: unknown };
+  order: { id: number; order_number?: string; [key: string]: any };
+  bill: { id: number; payment_status?: string; balance?: number; [key: string]: any };
+  paymentData: {
+    bill?: PlacePrepaidResult['bill'];
+    loyaltyPointsEarned?: number;
+    [key: string]: any;
+  };
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 /**
  * Prepaid checkout HTTP sequence: order → optional discount → bill → payments.
@@ -111,11 +117,9 @@ export async function placePrepaidOrder(
     params.onBillCreated?.(order!, bill!);
   }
 
-  const { data: paymentData } = await api.post(
-    `/bills/${bill!.id}/payments`,
-    params.paymentBody,
-    { headers: { 'Idempotency-Key': params.paymentIdempotencyKey } },
-  );
+  const { data: paymentData } = await api.post(`/bills/${bill!.id}/payments`, params.paymentBody, {
+    headers: { 'Idempotency-Key': params.paymentIdempotencyKey },
+  });
 
   return {
     order: order as PlacePrepaidResult['order'],

@@ -68,4 +68,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 2 COMPLETE.** Do not start Phase 3 unless explicitly tasked. Pilot focus remains P0/P1 reliability. Deferred: packages, fail-closed remount, production Retail+, Inventory UI, void×cancel product fix.
+**Dependency integration (2026-08-13) COMPLETE** for justified packages (zod, react-query, i18next foundation, helmet/pino-http/compression, OTel API, vitest, prettier/husky). Phase 2 COMPLETE. Do not start Phase 3 unless explicitly tasked. Pilot focus remains P0/P1 reliability. Deferred: packages extraction, fail-closed remount, production Retail+, Inventory UI, void×cancel product fix.

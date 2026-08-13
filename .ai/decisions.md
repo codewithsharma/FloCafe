@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Dependency addition & integration (Accepted + Implemented)
+
+Justified packages integrated without replacing working equivalents. **Added (root):** zod, pino-pretty (dev), pino-http, helmet, compression, @opentelemetry/api, date-fns, vitest, prettier, eslint-config-prettier, husky, lint-staged. **Added (frontend):** @tanstack/react-query, date-fns, i18next, react-i18next, vitest. **Skipped:** zustand (already present), express-rate-limit (custom LAN-aware `rateLimit`/`authRateLimit` retained). State rule: server→Query, client→Zustand, domain→SQLite. i18next foundation + Settings language migration; legacy flat `t()` retained. Plan: `docs/03-architecture/dependency-integration-plan.md`.
+
 ## 2026-08-13 — Phase 2 final exit gate (Accepted)
 
 Phase 2 declared **COMPLETE** after CURRENT 2.14–2.18 seams. Decision **PASS WITH DOCUMENTED DEFERMENTS**. Interim `phase-2-exit-gate.md` preserved. Schema v75. Production vertical restaurant. retail-test synthetic. Full listed regression PASS. Cursor trailer on already-pushed `0e4a41a` not rewritten. Doc: `phase-2-final-exit-gate.md`.

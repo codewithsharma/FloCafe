@@ -1,0 +1,13 @@
+node_modules
+dist
+build
+release
+coverage
+frontend/out
+frontend/.next
+frontend/node_modules
+*.min.js
+package-lock.json
+frontend/package-lock.json
+.ai
+docs/superpowers

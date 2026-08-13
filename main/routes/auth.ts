@@ -14,14 +14,38 @@ import {
   rotateJWTSecret,
   JwtSecretError,
 } from '../services/jwt-secret';
-import { authRateLimit, validatePassword, revokeToken, isTokenRevoked, isTokenStale, invalidateUserAuthCache } from '../middleware/security';
+import {
+  authRateLimit,
+  validatePassword,
+  revokeToken,
+  isTokenRevoked,
+  isTokenStale,
+  invalidateUserAuthCache,
+} from '../middleware/security';
+import { validateBody } from '../middleware/validate';
+import {
+  loginBodySchema,
+  recoverPasswordBodySchema,
+  setupInitializeBodySchema,
+} from '../validation/auth';
 import { getCurrencySymbol, getCountryByCode } from '../countries';
-import { cloudSync, DEFAULT_CLOUD_SERVER_URL, normalizeCloudServerUrl } from '../services/cloud-sync';
+import {
+  cloudSync,
+  DEFAULT_CLOUD_SERVER_URL,
+  normalizeCloudServerUrl,
+} from '../services/cloud-sync';
 import { applySetupDiagnosticsOptIn, applySetupTelemetryOptIn } from '../services/privacy-consent';
 import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
+import { withSpan } from '../lib/tracing';
 
-export { clearJWTSecretCache, getJWTSecret, initializeJWTSecret, recoverJWTSecret, rotateJWTSecret };
+export {
+  clearJWTSecretCache,
+  getJWTSecret,
+  initializeJWTSecret,
+  recoverJWTSecret,
+  rotateJWTSecret,
+};
 
 const router = Router();
 
@@ -35,8 +59,11 @@ function expiresInFor(remember: boolean): SignOptions['expiresIn'] {
 
 function dialCodeFor(country: string | undefined): string {
   if (!country) return '+1';
-  try { return `+${getCountryCallingCode(country.toUpperCase() as CountryCode)}`; }
-  catch { return '+1'; }
+  try {
+    return `+${getCountryCallingCode(country.toUpperCase() as CountryCode)}`;
+  } catch {
+    return '+1';
+  }
 }
 
 const INITIAL_ADMIN_ROLE = 'owner';
@@ -51,8 +78,11 @@ const LOCAL_SETUP_HOSTS = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
  * The frontend expects this shape to determine routing (chef → KDS, others → POS).
  */
 function buildLocalTenant(db: ReturnType<typeof getDatabase>, userRole: string) {
-  const rows = db.prepare('SELECT key, value FROM settings').all() as { key: string; value: string }[];
-  const s: Record<string, string> = Object.fromEntries(rows.map(r => [r.key, r.value]));
+  const rows = db.prepare('SELECT key, value FROM settings').all() as {
+    key: string;
+    value: string;
+  }[];
+  const s: Record<string, string> = Object.fromEntries(rows.map((r) => [r.key, r.value]));
 
   return {
     id: 1,
@@ -62,13 +92,14 @@ function buildLocalTenant(db: ReturnType<typeof getDatabase>, userRole: string) 
     business_type: s.business_type || 'restaurant',
     country: s.country || 'IN',
     currency: s.currency || 'INR',
-    currency_symbol: getCurrencySymbol(s.currency || 'INR', getCountryByCode(s.country)?.locale) || '₹',
+    currency_symbol:
+      getCurrencySymbol(s.currency || 'INR', getCountryByCode(s.country)?.locale) || '₹',
     timezone: s.timezone || 'Asia/Kolkata',
     language: s.language || 'en',
     service_model: s.service_model || 'finedine',
     plan: 'desktop',
     status: 'active',
-    role: userRole,  // user's role — AuthGuard uses this for routing
+    role: userRole, // user's role — AuthGuard uses this for routing
   };
 }
 
@@ -77,7 +108,9 @@ function getUserCount(db: ReturnType<typeof getDatabase>): number {
 }
 
 function normalizeEmail(email: unknown): string {
-  return String(email || '').trim().toLowerCase();
+  return String(email || '')
+    .trim()
+    .toLowerCase();
 }
 
 export function parseCategoryIds(value: unknown): string[] {
@@ -94,7 +127,10 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function upsertSettings(db: ReturnType<typeof getDatabase>, entries: Record<string, unknown>): void {
+function upsertSettings(
+  db: ReturnType<typeof getDatabase>,
+  entries: Record<string, unknown>,
+): void {
   const stmt = db.prepare(`
     INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
@@ -105,40 +141,82 @@ function upsertSettings(db: ReturnType<typeof getDatabase>, entries: Record<stri
   }
 }
 
-
-function insertCategory(db: ReturnType<typeof getDatabase>, id: string, name: string, color: string, icon: string, sortOrder: number): void {
-  db.prepare(`
+function insertCategory(
+  db: ReturnType<typeof getDatabase>,
+  id: string,
+  name: string,
+  color: string,
+  icon: string,
+  sortOrder: number,
+): void {
+  db.prepare(
+    `
     INSERT OR IGNORE INTO categories (id, name, color, icon, sort_order, is_active, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, 1, ?, ?)
-  `).run(id, name, color, icon, sortOrder, now(), now());
+  `,
+  ).run(id, name, color, icon, sortOrder, now(), now());
 }
 
-function insertProduct(db: ReturnType<typeof getDatabase>, id: string, categoryId: string, name: string, price: number, sortOrder: number): void {
-  db.prepare(`
+function insertProduct(
+  db: ReturnType<typeof getDatabase>,
+  id: string,
+  categoryId: string,
+  name: string,
+  price: number,
+  sortOrder: number,
+): void {
+  db.prepare(
+    `
     INSERT OR IGNORE INTO products (id, category_id, name, price, sort_order, is_active, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, 1, ?, ?)
-  `).run(id, categoryId, name, price, sortOrder, now(), now());
+  `,
+  ).run(id, categoryId, name, price, sortOrder, now(), now());
 }
 
-function insertTable(db: ReturnType<typeof getDatabase>, id: string, number: string, capacity: number): void {
-  db.prepare(`
+function insertTable(
+  db: ReturnType<typeof getDatabase>,
+  id: string,
+  number: string,
+  capacity: number,
+): void {
+  db.prepare(
+    `
     INSERT OR IGNORE INTO tables (id, number, capacity, status, created_at, updated_at)
     VALUES (?, ?, ?, 'available', ?, ?)
-  `).run(id, number, capacity, now(), now());
+  `,
+  ).run(id, number, capacity, now(), now());
 }
 
-function insertCustomer(db: ReturnType<typeof getDatabase>, id: string, name: string, phone: string, countryCode: string): void {
-  db.prepare(`
+function insertCustomer(
+  db: ReturnType<typeof getDatabase>,
+  id: string,
+  name: string,
+  phone: string,
+  countryCode: string,
+): void {
+  db.prepare(
+    `
     INSERT OR IGNORE INTO customers (id, name, phone, country_code, is_active, created_at, updated_at)
     VALUES (?, ?, ?, ?, 1, ?, ?)
-  `).run(id, name, phone, countryCode, now(), now());
+  `,
+  ).run(id, name, phone, countryCode, now(), now());
 }
 
-function insertStaffUser(db: ReturnType<typeof getDatabase>, id: string, name: string, email: string, role: string, password: string, isActive = 1): void {
-  db.prepare(`
+function insertStaffUser(
+  db: ReturnType<typeof getDatabase>,
+  id: string,
+  name: string,
+  email: string,
+  role: string,
+  password: string,
+  isActive = 1,
+): void {
+  db.prepare(
+    `
     INSERT OR IGNORE INTO users (id, name, email, password, role, is_active, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, name, email, bcrypt.hashSync(password, 10), role, isActive, now(), now());
+  `,
+  ).run(id, name, email, bcrypt.hashSync(password, 10), role, isActive, now(), now());
 }
 
 function seedExpressRestaurant(db: ReturnType<typeof getDatabase>, serviceModel: string): void {
@@ -157,65 +235,73 @@ function seedExpressRestaurant(db: ReturnType<typeof getDatabase>, serviceModel:
   }
 }
 
-function seedDemoRestaurant(db: ReturnType<typeof getDatabase>, serviceModel: string, language?: string, country?: string): void {
+function seedDemoRestaurant(
+  db: ReturnType<typeof getDatabase>,
+  serviceModel: string,
+  language?: string,
+  country?: string,
+): void {
   const lang: 'en' | 'es' | 'pt' = language === 'es' ? 'es' : language === 'pt' ? 'pt' : 'en';
   const dialCode = dialCodeFor(country);
 
-  const cats = lang === 'es'
-    ? [
-        ['cat-demo-starters', 'Entradas', '#FF6B6B', '🍟', 1],
-        ['cat-demo-burger', 'Hamburguesas', '#4ECDC4', '🍔', 2],
-        ['cat-demo-beverages', 'Bebidas', '#45B7D1', '🥤', 3],
-        ['cat-demo-desserts', 'Postres', '#96CEB4', '🍰', 4],
-      ] as const
-    : lang === 'pt'
-    ? [
-        ['cat-demo-starters', 'Entradas', '#FF6B6B', '🍟', 1],
-        ['cat-demo-burger', 'Hambúrgueres', '#4ECDC4', '🍔', 2],
-        ['cat-demo-beverages', 'Bebidas', '#45B7D1', '🥤', 3],
-        ['cat-demo-desserts', 'Sobremesas', '#96CEB4', '🍰', 4],
-      ] as const
-    : [
-        ['cat-demo-starters', 'Starters', '#FF6B6B', '🍔', 1],
-        ['cat-demo-main', 'Main Course', '#4ECDC4', '🍛', 2],
-        ['cat-demo-beverages', 'Beverages', '#45B7D1', '🥤', 3],
-        ['cat-demo-desserts', 'Desserts', '#96CEB4', '🍰', 4],
-      ] as const;
+  const cats =
+    lang === 'es'
+      ? ([
+          ['cat-demo-starters', 'Entradas', '#FF6B6B', '🍟', 1],
+          ['cat-demo-burger', 'Hamburguesas', '#4ECDC4', '🍔', 2],
+          ['cat-demo-beverages', 'Bebidas', '#45B7D1', '🥤', 3],
+          ['cat-demo-desserts', 'Postres', '#96CEB4', '🍰', 4],
+        ] as const)
+      : lang === 'pt'
+        ? ([
+            ['cat-demo-starters', 'Entradas', '#FF6B6B', '🍟', 1],
+            ['cat-demo-burger', 'Hambúrgueres', '#4ECDC4', '🍔', 2],
+            ['cat-demo-beverages', 'Bebidas', '#45B7D1', '🥤', 3],
+            ['cat-demo-desserts', 'Sobremesas', '#96CEB4', '🍰', 4],
+          ] as const)
+        : ([
+            ['cat-demo-starters', 'Starters', '#FF6B6B', '🍔', 1],
+            ['cat-demo-main', 'Main Course', '#4ECDC4', '🍛', 2],
+            ['cat-demo-beverages', 'Beverages', '#45B7D1', '🥤', 3],
+            ['cat-demo-desserts', 'Desserts', '#96CEB4', '🍰', 4],
+          ] as const);
   for (const [id, name, color, icon, sort] of cats) insertCategory(db, id, name, color, icon, sort);
 
-  const products = lang === 'es'
-    ? [
-        ['prod-demo-empanadas', 'cat-demo-starters', 'Empanadas de Carne', 280, 1],
-        ['prod-demo-papas', 'cat-demo-starters', 'Papas Fritas', 250, 2],
-        ['prod-demo-hamburguesa-clasica', 'cat-demo-burger', 'Hamburguesa Clásica', 800, 1],
-        ['prod-demo-doble', 'cat-demo-burger', 'Hamburguesa Doble', 1100, 2],
-        ['prod-demo-bbq', 'cat-demo-burger', 'Hamburguesa BBQ', 1200, 3],
-        ['prod-demo-gaseosa', 'cat-demo-beverages', 'Gaseosa Cola', 350, 1],
-        ['prod-demo-agua', 'cat-demo-beverages', 'Agua Mineral', 200, 2],
-        ['prod-demo-flan', 'cat-demo-desserts', 'Flan Casero', 400, 1],
-      ] as const
-    : lang === 'pt'
-    ? [
-        ['prod-demo-coxinha', 'cat-demo-starters', 'Coxinha de Frango', 280, 1],
-        ['prod-demo-pastel', 'cat-demo-starters', 'Pastel de Queijo', 250, 2],
-        ['prod-demo-x-burger', 'cat-demo-burger', 'X-Burger', 800, 1],
-        ['prod-demo-x-dobro', 'cat-demo-burger', 'X-Dobro', 1100, 2],
-        ['prod-demo-x-bacon', 'cat-demo-burger', 'X-Bacon', 1200, 3],
-        ['prod-demo-refri', 'cat-demo-beverages', 'Refrigerante Cola', 350, 1],
-        ['prod-demo-agua', 'cat-demo-beverages', 'Água Mineral', 200, 2],
-        ['prod-demo-pudim', 'cat-demo-desserts', 'Pudim de Leite', 400, 1],
-      ] as const
-    : [
-        ['prod-demo-paneer-tikka', 'cat-demo-starters', 'Paneer Tikka', 250, 1],
-        ['prod-demo-chicken-wings', 'cat-demo-starters', 'Chicken Wings', 280, 2],
-        ['prod-demo-butter-chicken', 'cat-demo-main', 'Butter Chicken', 320, 1],
-        ['prod-demo-dal-makhani', 'cat-demo-main', 'Dal Makhani', 220, 2],
-        ['prod-demo-jeera-rice', 'cat-demo-main', 'Jeera Rice', 150, 3],
-        ['prod-demo-cola', 'cat-demo-beverages', 'Cola', 60, 1],
-        ['prod-demo-lemon-soda', 'cat-demo-beverages', 'Lemon Soda', 70, 2],
-        ['prod-demo-gulab-jamun', 'cat-demo-desserts', 'Gulab Jamun', 80, 1],
-      ] as const;
-  for (const [id, categoryId, name, price, sort] of products) insertProduct(db, id, categoryId, name, price, sort);
+  const products =
+    lang === 'es'
+      ? ([
+          ['prod-demo-empanadas', 'cat-demo-starters', 'Empanadas de Carne', 280, 1],
+          ['prod-demo-papas', 'cat-demo-starters', 'Papas Fritas', 250, 2],
+          ['prod-demo-hamburguesa-clasica', 'cat-demo-burger', 'Hamburguesa Clásica', 800, 1],
+          ['prod-demo-doble', 'cat-demo-burger', 'Hamburguesa Doble', 1100, 2],
+          ['prod-demo-bbq', 'cat-demo-burger', 'Hamburguesa BBQ', 1200, 3],
+          ['prod-demo-gaseosa', 'cat-demo-beverages', 'Gaseosa Cola', 350, 1],
+          ['prod-demo-agua', 'cat-demo-beverages', 'Agua Mineral', 200, 2],
+          ['prod-demo-flan', 'cat-demo-desserts', 'Flan Casero', 400, 1],
+        ] as const)
+      : lang === 'pt'
+        ? ([
+            ['prod-demo-coxinha', 'cat-demo-starters', 'Coxinha de Frango', 280, 1],
+            ['prod-demo-pastel', 'cat-demo-starters', 'Pastel de Queijo', 250, 2],
+            ['prod-demo-x-burger', 'cat-demo-burger', 'X-Burger', 800, 1],
+            ['prod-demo-x-dobro', 'cat-demo-burger', 'X-Dobro', 1100, 2],
+            ['prod-demo-x-bacon', 'cat-demo-burger', 'X-Bacon', 1200, 3],
+            ['prod-demo-refri', 'cat-demo-beverages', 'Refrigerante Cola', 350, 1],
+            ['prod-demo-agua', 'cat-demo-beverages', 'Água Mineral', 200, 2],
+            ['prod-demo-pudim', 'cat-demo-desserts', 'Pudim de Leite', 400, 1],
+          ] as const)
+        : ([
+            ['prod-demo-paneer-tikka', 'cat-demo-starters', 'Paneer Tikka', 250, 1],
+            ['prod-demo-chicken-wings', 'cat-demo-starters', 'Chicken Wings', 280, 2],
+            ['prod-demo-butter-chicken', 'cat-demo-main', 'Butter Chicken', 320, 1],
+            ['prod-demo-dal-makhani', 'cat-demo-main', 'Dal Makhani', 220, 2],
+            ['prod-demo-jeera-rice', 'cat-demo-main', 'Jeera Rice', 150, 3],
+            ['prod-demo-cola', 'cat-demo-beverages', 'Cola', 60, 1],
+            ['prod-demo-lemon-soda', 'cat-demo-beverages', 'Lemon Soda', 70, 2],
+            ['prod-demo-gulab-jamun', 'cat-demo-desserts', 'Gulab Jamun', 80, 1],
+          ] as const);
+  for (const [id, categoryId, name, price, sort] of products)
+    insertProduct(db, id, categoryId, name, price, sort);
 
   if (serviceModel === 'finedine') {
     const tableLabel = lang === 'es' ? 'M' : lang === 'pt' ? 'M' : 'T';
@@ -239,18 +325,50 @@ function seedDemoRestaurant(db: ReturnType<typeof getDatabase>, serviceModel: st
     insertCustomer(db, 'cust-demo-3', 'Kabir Khan', '9876543212', dialCode);
   }
 
-  const managerName = lang === 'es' ? 'Gerente Demo' : lang === 'pt' ? 'Gerente Demo' : 'Demo Manager';
+  const managerName =
+    lang === 'es' ? 'Gerente Demo' : lang === 'pt' ? 'Gerente Demo' : 'Demo Manager';
   const cashierName = lang === 'es' ? 'Cajero Demo' : lang === 'pt' ? 'Caixa Demo' : 'Demo Cashier';
-  const chefName = lang === 'es' ? 'Cocinero Demo' : lang === 'pt' ? 'Cozinheiro Demo' : 'Demo Chef';
+  const chefName =
+    lang === 'es' ? 'Cocinero Demo' : lang === 'pt' ? 'Cozinheiro Demo' : 'Demo Chef';
   // Demo staff remains useful as localized sample rows, but must never ship with
   // a reusable public credential. The inactive rows can be explicitly replaced
   // by an owner during setup if staff access is wanted.
-  insertStaffUser(db, 'user-demo-manager', managerName, 'manager@flo.local', 'manager', randomBytes(32).toString('hex'), 0);
-  insertStaffUser(db, 'user-demo-cashier', cashierName, 'cashier@flo.local', 'cashier', randomBytes(32).toString('hex'), 0);
-  insertStaffUser(db, 'user-demo-chef', chefName, 'chef@flo.local', 'chef', randomBytes(32).toString('hex'), 0);
+  insertStaffUser(
+    db,
+    'user-demo-manager',
+    managerName,
+    'manager@flo.local',
+    'manager',
+    randomBytes(32).toString('hex'),
+    0,
+  );
+  insertStaffUser(
+    db,
+    'user-demo-cashier',
+    cashierName,
+    'cashier@flo.local',
+    'cashier',
+    randomBytes(32).toString('hex'),
+    0,
+  );
+  insertStaffUser(
+    db,
+    'user-demo-chef',
+    chefName,
+    'chef@flo.local',
+    'chef',
+    randomBytes(32).toString('hex'),
+    0,
+  );
 }
 
-export function seedSetupProfile(db: ReturnType<typeof getDatabase>, profile: string, serviceModel: string, language?: string, country?: string): void {
+export function seedSetupProfile(
+  db: ReturnType<typeof getDatabase>,
+  profile: string,
+  serviceModel: string,
+  language?: string,
+  country?: string,
+): void {
   if (profile === 'express') {
     seedExpressRestaurant(db, serviceModel);
   } else if (profile === 'demo') {
@@ -309,90 +427,104 @@ function resetSuccessfulLogin(ip: string) {
 
 // ── POST /api/auth/login ──────────────────────────────────────────────────────
 
-router.post('/login', authRateLimit(), async (req: Request, res: Response) => {
-  try {
-    const ip = req.ip || req.socket.remoteAddress || 'unknown';
-    const rateLimit = checkRateLimit(ip);
-    if (!rateLimit.allowed) {
-      return res.status(429).json({ error: `Too many failed attempts. Try again in ${rateLimit.waitMinutes} minutes.` });
-    }
+router.post(
+  '/login',
+  authRateLimit(),
+  validateBody(loginBodySchema),
+  async (req: Request, res: Response) => {
+    try {
+      await withSpan('authentication', 'auth.login', async () => {
+        const ip = req.ip || req.socket.remoteAddress || 'unknown';
+        const rateLimit = checkRateLimit(ip);
+        if (!rateLimit.allowed) {
+          res.status(429).json({
+            error: `Too many failed attempts. Try again in ${rateLimit.waitMinutes} minutes.`,
+          });
+          return;
+        }
 
-    const email = normalizeEmail(req.body?.email);
-    const { password, rememberMe } = req.body || {};
+        const email = normalizeEmail(req.body.email);
+        const { password, rememberMe } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password required' });
-    }
+        if (!email || !password) {
+          res.status(400).json({ error: 'Email and password required' });
+          return;
+        }
 
-    const db = getDatabase();
-    const user = db.prepare('SELECT * FROM users WHERE email = ? AND is_active = 1').get(email) as any;
-    let passwordMatches = false;
-    if (user) {
-      try {
-        passwordMatches = await bcrypt.compare(password, user.password);
-      } catch {
-        passwordMatches = false;
-      }
-    }
+        const db = getDatabase();
+        const user = db
+          .prepare('SELECT * FROM users WHERE email = ? AND is_active = 1')
+          .get(email) as any;
+        let passwordMatches = false;
+        if (user) {
+          try {
+            passwordMatches = await bcrypt.compare(password, user.password);
+          } catch {
+            passwordMatches = false;
+          }
+        }
 
-    if (!user || !passwordMatches) {
-      const attemptsRemaining = incrementFailedLogin(ip);
-      logAuditEvent({
-        action: 'auth.login.failure',
-        entityType: 'auth',
-        result: 'failure',
-        reason: 'invalid_credentials',
-        metadata: { attempts_remaining: attemptsRemaining },
-        context: { requestId: correlationId(), clientIp: ip },
+        if (!user || !passwordMatches) {
+          const attemptsRemaining = incrementFailedLogin(ip);
+          logAuditEvent({
+            action: 'auth.login.failure',
+            entityType: 'auth',
+            result: 'failure',
+            reason: 'invalid_credentials',
+            metadata: { attempts_remaining: attemptsRemaining },
+            context: { requestId: correlationId(), clientIp: ip },
+          });
+          res.status(401).json({
+            error: 'Invalid credentials',
+            attempts_remaining: attemptsRemaining,
+            lockout_minutes: attemptsRemaining === 0 ? LOCKOUT_MINUTES : undefined,
+          });
+          return;
+        }
+
+        resetSuccessfulLogin(ip);
+
+        const remember = !!rememberMe;
+        const token = jwt.sign(
+          { userId: user.id, email: user.email, role: user.role, remember, jti: uuidv4() },
+          getJWTSecret(),
+          { expiresIn: expiresInFor(remember) },
+        );
+
+        logAuditEvent({
+          actorUserId: user.id,
+          action: 'auth.login.success',
+          entityType: 'user',
+          entityId: user.id,
+          result: 'success',
+          metadata: { role: user.role, remember },
+          context: { requestId: correlationId(), clientIp: ip },
+        });
+
+        const tenant = buildLocalTenant(db, user.role);
+
+        res.json({
+          access_token: token,
+          token_type: 'bearer',
+          expires_in: remember ? JWT_REMEMBER_EXPIRES_IN_SECONDS : 86400,
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            category_ids: parseCategoryIds(user.category_ids),
+          },
+          // Single tenant — frontend auto-selects when tenants.length === 1
+          tenants: [tenant],
+        });
       });
-      return res.status(401).json({
-        error: 'Invalid credentials',
-        attempts_remaining: attemptsRemaining,
-        lockout_minutes: attemptsRemaining === 0 ? LOCKOUT_MINUTES : undefined,
-      });
+    } catch (error: any) {
+      console.error('[Auth] Login error:', error);
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    resetSuccessfulLogin(ip);
-
-    const remember = !!rememberMe;
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, role: user.role, remember, jti: uuidv4() },
-      getJWTSecret(),
-      { expiresIn: expiresInFor(remember) }
-    );
-
-    logAuditEvent({
-      actorUserId: user.id,
-      action: 'auth.login.success',
-      entityType: 'user',
-      entityId: user.id,
-      result: 'success',
-      metadata: { role: user.role, remember },
-      context: { requestId: correlationId(), clientIp: ip },
-    });
-
-    const tenant = buildLocalTenant(db, user.role);
-
-    res.json({
-      access_token: token,
-      token_type: 'bearer',
-      expires_in: remember ? JWT_REMEMBER_EXPIRES_IN_SECONDS : 86400,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        category_ids: parseCategoryIds(user.category_ids),
-      },
-      // Single tenant — frontend auto-selects when tenants.length === 1
-      tenants: [tenant],
-    });
-  } catch (error: any) {
-    console.error('[Auth] Login error:', error);
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+  },
+);
 
 // ── POST /api/auth/tenants/select ─────────────────────────────────────────────
 // Frontend calls this after login (even when auto-selecting the single tenant).
@@ -411,7 +543,11 @@ router.post('/tenants/select', (req: Request, res: Response) => {
     const decoded = jwt.verify(token, getJWTSecret()) as any;
 
     const db = getDatabase();
-    const user = db.prepare('SELECT id, name, email, role, is_active, tokens_valid_after FROM users WHERE id = ?').get(decoded.userId) as any;
+    const user = db
+      .prepare(
+        'SELECT id, name, email, role, is_active, tokens_valid_after FROM users WHERE id = ?',
+      )
+      .get(decoded.userId) as any;
     if (!user) return res.status(404).json({ error: 'User not found' });
     if (user.is_active !== 1 || isTokenStale(decoded.iat, user.tokens_valid_after)) {
       return res.status(401).json({ error: 'Invalid token' });
@@ -424,7 +560,7 @@ router.post('/tenants/select', (req: Request, res: Response) => {
     const newToken = jwt.sign(
       { userId: user.id, email: user.email, role: user.role, tenantId: 1, remember, jti: uuidv4() },
       getJWTSecret(),
-      { expiresIn: expiresInFor(remember) }
+      { expiresIn: expiresInFor(remember) },
     );
 
     res.json({
@@ -472,16 +608,25 @@ router.post('/refresh', (req: Request, res: Response) => {
     // Without this, a token minted before a password/PIN change (#173) could
     // keep refreshing itself into new tokens forever, bypassing revocation entirely.
     const db = getDatabase();
-    const user = db.prepare('SELECT is_active, tokens_valid_after FROM users WHERE id = ?').get(decoded.userId) as any;
+    const user = db
+      .prepare('SELECT is_active, tokens_valid_after FROM users WHERE id = ?')
+      .get(decoded.userId) as any;
     if (!user || user.is_active !== 1 || isTokenStale(decoded.iat, user.tokens_valid_after)) {
       return res.status(401).json({ error: 'Invalid token' });
     }
 
     const remember = !!decoded.remember;
     const newToken = jwt.sign(
-      { userId: decoded.userId, email: decoded.email, role: decoded.role, tenantId: decoded.tenantId, remember, jti: uuidv4() },
+      {
+        userId: decoded.userId,
+        email: decoded.email,
+        role: decoded.role,
+        tenantId: decoded.tenantId,
+        remember,
+        jti: uuidv4(),
+      },
       getJWTSecret(),
-      { expiresIn: expiresInFor(remember) }
+      { expiresIn: expiresInFor(remember) },
     );
 
     res.json({
@@ -510,7 +655,11 @@ router.get('/me', (req: Request, res: Response) => {
     const decoded = jwt.verify(token, getJWTSecret()) as any;
 
     const db = getDatabase();
-    const user = db.prepare('SELECT id, name, email, role, is_active, tokens_valid_after FROM users WHERE id = ?').get(decoded.userId) as any;
+    const user = db
+      .prepare(
+        'SELECT id, name, email, role, is_active, tokens_valid_after FROM users WHERE id = ?',
+      )
+      .get(decoded.userId) as any;
     if (!user) return res.status(404).json({ error: 'User not found' });
     if (user.is_active !== 1 || isTokenStale(decoded.iat, user.tokens_valid_after)) {
       return res.status(401).json({ error: 'Invalid token' });
@@ -561,19 +710,23 @@ router.post('/password/change', (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Current password is incorrect' });
     }
     if (!validatePassword(password)) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.' });
+      return res.status(400).json({
+        error:
+          'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.',
+      });
     }
 
     const hashedPassword = bcrypt.hashSync(password, 10);
     const changedAt = now();
-    db.prepare('UPDATE users SET password = ?, tokens_valid_after = ?, updated_at = ? WHERE id = ?')
-      .run(hashedPassword, changedAt, changedAt, decoded.userId);
+    db.prepare(
+      'UPDATE users SET password = ?, tokens_valid_after = ?, updated_at = ? WHERE id = ?',
+    ).run(hashedPassword, changedAt, changedAt, decoded.userId);
     invalidateUserAuthCache(decoded.userId);
 
     res.json({ message: 'Password changed successfully' });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -594,90 +747,127 @@ router.post('/password/change', (req: Request, res: Response) => {
 // the issue is intentionally NOT implemented here (no cloud server exists in
 // this repo to issue the short-lived signed grant safely).
 
-router.post('/recover-password', authRateLimit(), (req: Request, res: Response) => {
-  try {
-    if (!requireLocalSetup(req, res)) return;
-    const db = getDatabase();
+router.post(
+  '/recover-password',
+  authRateLimit(),
+  validateBody(recoverPasswordBodySchema),
+  (req: Request, res: Response) => {
+    try {
+      if (!requireLocalSetup(req, res)) return;
+      const db = getDatabase();
 
-    // First-run setup is the only recovery path when there is no owner yet —
-    // never let this endpoint substitute for /setup/initialize.
-    if (getUserCount(db) === 0) {
-      return res.status(409).json({ error: 'Setup has not been completed yet. Use first-run setup to create the owner account.' });
-    }
-
-    const email = normalizeEmail(req.body?.email);
-    const { master_pin, new_password } = req.body || {};
-
-    if (!email || !isValidEmail(email)) {
-      return res.status(400).json({ error: 'A valid email is required' });
-    }
-    if (!new_password || !validatePassword(new_password)) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.' });
-    }
-
-    // Rate-limit key is IP-scoped only (not email-scoped) so an attacker can't
-    // reset the Master PIN attempt counter simply by guessing a different
-    // email address on each request.
-    const ip = req.ip || req.socket.remoteAddress || 'unknown';
-    const pinResult = authorizeMasterPin(master_pin, `auth:recover-password:${ip}`);
-    if (!pinResult.ok) {
-      return res.status(pinResult.status).json({ error: pinResult.error });
-    }
-
-    const activeOwnerCount = (db.prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'owner' AND is_active = 1").get() as { count: number }).count;
-    const user = activeOwnerCount === 0
-      ? db.prepare('SELECT * FROM users WHERE email = ? AND is_active = 1').get(email) as any
-      : db.prepare('SELECT * FROM users WHERE email = ? AND role = ? AND is_active = 1').get(email, INITIAL_ADMIN_ROLE) as any;
-    if (!user) {
-      return res.status(404).json({ error: 'No active owner account found with that email on this install' });
-    }
-
-    const hashedPassword = bcrypt.hashSync(new_password, 10);
-    const changedAt = now();
-    let restoredOwnerAccess = false;
-    const updated = db.transaction(() => {
-      const currentOwnerCount = (db.prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'owner' AND is_active = 1").get() as { count: number }).count;
-      if (currentOwnerCount > 0) {
-        return db.prepare('UPDATE users SET password = ?, tokens_valid_after = ?, updated_at = ? WHERE id = ? AND role = ? AND is_active = 1')
-          .run(hashedPassword, changedAt, changedAt, user.id, INITIAL_ADMIN_ROLE);
+      // First-run setup is the only recovery path when there is no owner yet —
+      // never let this endpoint substitute for /setup/initialize.
+      if (getUserCount(db) === 0) {
+        return res.status(409).json({
+          error:
+            'Setup has not been completed yet. Use first-run setup to create the owner account.',
+        });
       }
 
-      restoredOwnerAccess = true;
-      return db.prepare(`
+      const email = normalizeEmail(req.body?.email);
+      const { master_pin, new_password } = req.body || {};
+
+      if (!email || !isValidEmail(email)) {
+        return res.status(400).json({ error: 'A valid email is required' });
+      }
+      if (!new_password || !validatePassword(new_password)) {
+        return res.status(400).json({
+          error:
+            'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.',
+        });
+      }
+
+      // Rate-limit key is IP-scoped only (not email-scoped) so an attacker can't
+      // reset the Master PIN attempt counter simply by guessing a different
+      // email address on each request.
+      const ip = req.ip || req.socket.remoteAddress || 'unknown';
+      const pinResult = authorizeMasterPin(master_pin, `auth:recover-password:${ip}`);
+      if (!pinResult.ok) {
+        return res.status(pinResult.status).json({ error: pinResult.error });
+      }
+
+      const activeOwnerCount = (
+        db
+          .prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'owner' AND is_active = 1")
+          .get() as { count: number }
+      ).count;
+      const user =
+        activeOwnerCount === 0
+          ? (db.prepare('SELECT * FROM users WHERE email = ? AND is_active = 1').get(email) as any)
+          : (db
+              .prepare('SELECT * FROM users WHERE email = ? AND role = ? AND is_active = 1')
+              .get(email, INITIAL_ADMIN_ROLE) as any);
+      if (!user) {
+        return res
+          .status(404)
+          .json({ error: 'No active owner account found with that email on this install' });
+      }
+
+      const hashedPassword = bcrypt.hashSync(new_password, 10);
+      const changedAt = now();
+      let restoredOwnerAccess = false;
+      const updated = db.transaction(() => {
+        const currentOwnerCount = (
+          db
+            .prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'owner' AND is_active = 1")
+            .get() as { count: number }
+        ).count;
+        if (currentOwnerCount > 0) {
+          return db
+            .prepare(
+              'UPDATE users SET password = ?, tokens_valid_after = ?, updated_at = ? WHERE id = ? AND role = ? AND is_active = 1',
+            )
+            .run(hashedPassword, changedAt, changedAt, user.id, INITIAL_ADMIN_ROLE);
+        }
+
+        restoredOwnerAccess = true;
+        return db
+          .prepare(
+            `
         UPDATE users SET password = ?, role = ?, tokens_valid_after = ?, updated_at = ?
         WHERE id = ? AND is_active = 1
           AND NOT EXISTS (SELECT 1 FROM users WHERE role = 'owner' AND is_active = 1)
-      `).run(hashedPassword, INITIAL_ADMIN_ROLE, changedAt, changedAt, user.id);
-    })();
-    if (updated.changes === 0) {
-      return res.status(409).json({ error: 'Owner access changed during recovery. Try again.' });
+      `,
+          )
+          .run(hashedPassword, INITIAL_ADMIN_ROLE, changedAt, changedAt, user.id);
+      })();
+      if (updated.changes === 0) {
+        return res.status(409).json({ error: 'Owner access changed during recovery. Try again.' });
+      }
+      invalidateUserAuthCache(user.id);
+
+      // Local audit trail — this codebase has no dedicated audit-events table,
+      // so we follow its existing convention: a tagged console log (grep-able
+      // in the app's log file) plus a timestamp/identity pair in `settings`,
+      // the same generic key/value mechanism already used for e.g.
+      // `telemetry_last_ping_at`.
+      upsertSettings(db, {
+        last_password_recovery_at: now(),
+        last_password_recovery_user_id: String(user.id),
+        ...(restoredOwnerAccess
+          ? {
+              last_owner_recovery_at: now(),
+              last_owner_recovery_user_id: String(user.id),
+            }
+          : {}),
+      });
+      console.warn(
+        `[Auth] Password recovery: ${restoredOwnerAccess ? 'owner access' : 'owner password'} was reset locally via Master PIN for user ${user.id}`,
+      );
+
+      res.json({
+        message: restoredOwnerAccess
+          ? 'Owner access restored. You can now log in with your new password.'
+          : 'Password reset successfully. You can now log in with your new password.',
+      });
+    } catch (error: any) {
+      console.error('[Auth] Password recovery error:', error);
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-    invalidateUserAuthCache(user.id);
-
-    // Local audit trail — this codebase has no dedicated audit-events table,
-    // so we follow its existing convention: a tagged console log (grep-able
-    // in the app's log file) plus a timestamp/identity pair in `settings`,
-    // the same generic key/value mechanism already used for e.g.
-    // `telemetry_last_ping_at`.
-    upsertSettings(db, {
-      last_password_recovery_at: now(),
-      last_password_recovery_user_id: String(user.id),
-      ...(restoredOwnerAccess ? {
-        last_owner_recovery_at: now(),
-        last_owner_recovery_user_id: String(user.id),
-      } : {}),
-    });
-    console.warn(`[Auth] Password recovery: ${restoredOwnerAccess ? 'owner access' : 'owner password'} was reset locally via Master PIN for user ${user.id}`);
-
-    res.json({ message: restoredOwnerAccess
-      ? 'Owner access restored. You can now log in with your new password.'
-      : 'Password reset successfully. You can now log in with your new password.' });
-  } catch (error: any) {
-    console.error('[Auth] Password recovery error:', error);
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+  },
+);
 
 // ── GET /api/auth/setup/status ──────────────────────────────────────────────────
 // Returns whether the app needs setup (no users exist yet)
@@ -754,247 +944,296 @@ router.get('/setup/status', (_req: Request, res: Response) => {
       masterPinAvailable: isMasterPinAvailable(),
     });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // ── POST /api/auth/setup/initialize ─────────────────────────────────────────────
 // Creates the initial owner user. This endpoint is disabled after any user exists.
 
-router.post('/setup/initialize', (req: Request, res: Response) => {
-  try {
-    const { isRecoveryRequired, isInstallationInitialized, markInstallationInitialized } = require('../services/install-state');
-    const { isDatabaseOpen } = require('../db');
-    if (isRecoveryRequired()) {
-      return res.status(403).json({
-        error: 'Database recovery required. Restore a backup instead of running first-time setup.',
-        recovery_required: true,
-        code: 'DATABASE_RECOVERY_REQUIRED',
-      });
-    }
-    if (isInstallationInitialized()) {
-      const users = isDatabaseOpen() ? getUserCount(getDatabase()) : 0;
-      if (users === 0) {
+router.post(
+  '/setup/initialize',
+  validateBody(setupInitializeBodySchema),
+  (req: Request, res: Response) => {
+    try {
+      const {
+        isRecoveryRequired,
+        isInstallationInitialized,
+        markInstallationInitialized,
+      } = require('../services/install-state');
+      const { isDatabaseOpen } = require('../db');
+      if (isRecoveryRequired()) {
         return res.status(403).json({
-          error: 'Database recovery required. Restore a backup instead of running first-time setup.',
+          error:
+            'Database recovery required. Restore a backup instead of running first-time setup.',
           recovery_required: true,
           code: 'DATABASE_RECOVERY_REQUIRED',
         });
       }
-      return res.status(403).json({ error: 'Setup already complete. This endpoint is disabled.' });
-    }
-
-    if (!requireLocalSetup(req, res)) return;
-
-    const {
-      name,
-      password,
-      business_type = 'restaurant',
-      setup_profile = 'express',
-      service_model = 'qsr',
-      language,
-      business_name,
-      store_name,
-      country = 'IN',
-      currency = 'INR',
-      currency_symbol,
-      timezone = 'Asia/Kolkata',
-      business_address,
-      address,
-      business_phone,
-      phone,
-      tax_registration_number,
-      state_code,
-      tax_registered,
-      billing_type,
-      terms_accepted,
-      master_pin,
-      cloud_server_url,
-      email_product_updates,
-      email_marketing,
-      telemetry_opt_in,
-      diagnostics_opt_in,
-    } = req.body;
-    const email = normalizeEmail(req.body.email);
-    const displayName = String(name || '').trim();
-    const normalizedBusinessType = String(business_type || 'restaurant').trim();
-    const normalizedSetupProfile = String(setup_profile || 'express').trim().toLowerCase();
-    const normalizedServiceModel = String(service_model || 'qsr').trim().toLowerCase();
-    const normalizedCurrency = String(currency || 'INR').trim().toUpperCase();
-    const storeName = String(store_name || business_name || '').trim();
-    const resolvedStoreName = storeName || 'Store';
-    const outletAddress = String(business_address || address || '').trim();
-    const outletPhone = String(business_phone || phone || '').trim();
-    if (!displayName || !email || !password) {
-      return res.status(400).json({ error: 'Name, email, and password are required' });
-    }
-    if (!validatePassword(password)) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.' });
-    }
-
-    if (!isValidEmail(email)) {
-      return res.status(400).json({ error: 'A valid email is required' });
-    }
-
-    if (terms_accepted !== true) {
-      return res.status(400).json({ error: 'You must accept the Terms and Conditions, Privacy Policy, and No Warranty Disclaimer to continue.' });
-    }
-
-    const masterPinRequired = isMasterPinAvailable();
-    if (masterPinRequired && !/^\d{4}$/.test(String(master_pin || ''))) {
-      return res.status(400).json({ error: 'A 4-digit Master PIN is required to complete setup' });
-    }
-
-    if (!VALID_BUSINESS_TYPES.has(normalizedBusinessType)) {
-      return res.status(400).json({ error: 'Nexora setup only supports restaurant businesses' });
-    }
-
-    if (!VALID_SETUP_PROFILES.has(normalizedSetupProfile)) {
-      return res.status(400).json({ error: 'Invalid setup profile' });
-    }
-
-    if (!VALID_SERVICE_MODELS.has(normalizedServiceModel)) {
-      return res.status(400).json({ error: 'Invalid service model' });
-    }
-
-    // Cloud v2 registers the POS automatically on first boot. There is no
-    // pending/claim step, so new installs start with cloud coordination on.
-    const cloudSyncEnabled = true;
-    let normalizedCloudServerUrl: string | undefined;
-    if (cloudSyncEnabled) {
-      try {
-        normalizedCloudServerUrl = normalizeCloudServerUrl(cloud_server_url || DEFAULT_CLOUD_SERVER_URL);
-      } catch {
-        return res.status(400).json({ error: 'Cloud server URL must be a valid HTTPS URL' });
-      }
-    }
-
-    const db = getDatabase();
-    const beforeCount = getUserCount(db);
-    if (beforeCount > 0) {
-      return res.status(403).json({ error: 'Setup already complete. This endpoint is disabled.' });
-    }
-
-    let userId = '';
-    const hashedPassword = bcrypt.hashSync(password, 10);
-
-    // Persist the external Master PIN before committing the owner transaction.
-    // A keyring/filesystem failure must leave setup retryable rather than
-    // returning 500 after the database already contains an owner.
-    if (masterPinRequired) {
-      setMasterPin(String(master_pin));
-    }
-
-    // JWT secret must exist before the owner row is committed. getJWTSecret()
-    // treats "users exist + no secure secret" as recovery_required (new-machine
-    // / missing .enc). First-run setup would otherwise fail closed mid-response.
-    initializeJWTSecret();
-
-    db.transaction(() => {
-      const userCount = getUserCount(db);
-      if (userCount > 0) {
-        throw new Error('Setup already complete. This endpoint is disabled.');
+      if (isInstallationInitialized()) {
+        const users = isDatabaseOpen() ? getUserCount(getDatabase()) : 0;
+        if (users === 0) {
+          return res.status(403).json({
+            error:
+              'Database recovery required. Restore a backup instead of running first-time setup.',
+            recovery_required: true,
+            code: 'DATABASE_RECOVERY_REQUIRED',
+          });
+        }
+        return res
+          .status(403)
+          .json({ error: 'Setup already complete. This endpoint is disabled.' });
       }
 
-      const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-      if (existingUser) {
-        throw new Error('User with this email already exists');
-      }
+      if (!requireLocalSetup(req, res)) return;
 
-      userId = uuidv4();
-      db.prepare(`
-        INSERT INTO users (id, name, email, password, role, is_active, terms_accepted_at, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(userId, displayName, email, hashedPassword, INITIAL_ADMIN_ROLE, 1, now(), now(), now());
-
-      upsertSettings(db, {
-        business_name: resolvedStoreName,
-        business_type: normalizedBusinessType,
-        country,
-        currency: normalizedCurrency,
-        currency_symbol: currency_symbol || getCurrencySymbol(normalizedCurrency, getCountryByCode(country)?.locale),
-        timezone,
+      const {
+        name,
+        password,
+        business_type = 'restaurant',
+        setup_profile = 'express',
+        service_model = 'qsr',
         language,
-        business_address: outletAddress,
-        business_phone: outletPhone,
-        address: outletAddress,
-        phone: outletPhone,
-        email,
+        business_name,
+        store_name,
+        country = 'IN',
+        currency = 'INR',
+        currency_symbol,
+        timezone = 'Asia/Kolkata',
+        business_address,
+        address,
+        business_phone,
+        phone,
         tax_registration_number,
         state_code,
         tax_registered,
-        billing_type: billing_type || (normalizedServiceModel === 'qsr' ? 'prepaid' : 'postpaid'),
-        tables_required: normalizedServiceModel === 'finedine' ? 'true' : 'false',
-        service_model: normalizedServiceModel,
-        setup_profile: normalizedSetupProfile,
-        onboarding_completed: 'true',
-        telemetry_scope: 'usage_stats,country,app_version,platform,session_duration,feature_usage,error_diagnostics',
-        split_checks_enabled: 'false',
-        // '1'/'0', not 'true'/'false' — mirrors FloAdmin's own `stores` table and
-        // matches how cloud-sync.ts reads this key everywhere else.
-        cloud_sync_enabled: cloudSyncEnabled ? '1' : '0',
-        cloud_server_url: normalizedCloudServerUrl || DEFAULT_CLOUD_SERVER_URL,
-        email_product_updates: email_product_updates === true ? 'true' : 'false',
-        email_marketing: email_marketing === true ? 'true' : 'false',
-        cloud_services_disabled_by_user: 'false',
+        billing_type,
+        terms_accepted,
+        master_pin,
+        cloud_server_url,
+        email_product_updates,
+        email_marketing,
+        telemetry_opt_in,
+        diagnostics_opt_in,
+      } = req.body;
+      const email = normalizeEmail(req.body.email);
+      const displayName = String(name || '').trim();
+      const normalizedBusinessType = String(business_type || 'restaurant').trim();
+      const normalizedSetupProfile = String(setup_profile || 'express')
+        .trim()
+        .toLowerCase();
+      const normalizedServiceModel = String(service_model || 'qsr')
+        .trim()
+        .toLowerCase();
+      const normalizedCurrency = String(currency || 'INR')
+        .trim()
+        .toUpperCase();
+      const storeName = String(store_name || business_name || '').trim();
+      const resolvedStoreName = storeName || 'Store';
+      const outletAddress = String(business_address || address || '').trim();
+      const outletPhone = String(business_phone || phone || '').trim();
+      if (!displayName || !email || !password) {
+        return res.status(400).json({ error: 'Name, email, and password are required' });
+      }
+      if (!validatePassword(password)) {
+        return res.status(400).json({
+          error:
+            'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.',
+        });
+      }
+
+      if (!isValidEmail(email)) {
+        return res.status(400).json({ error: 'A valid email is required' });
+      }
+
+      if (terms_accepted !== true) {
+        return res.status(400).json({
+          error:
+            'You must accept the Terms and Conditions, Privacy Policy, and No Warranty Disclaimer to continue.',
+        });
+      }
+
+      const masterPinRequired = isMasterPinAvailable();
+      if (masterPinRequired && !/^\d{4}$/.test(String(master_pin || ''))) {
+        return res
+          .status(400)
+          .json({ error: 'A 4-digit Master PIN is required to complete setup' });
+      }
+
+      if (!VALID_BUSINESS_TYPES.has(normalizedBusinessType)) {
+        return res.status(400).json({ error: 'Nexora setup only supports restaurant businesses' });
+      }
+
+      if (!VALID_SETUP_PROFILES.has(normalizedSetupProfile)) {
+        return res.status(400).json({ error: 'Invalid setup profile' });
+      }
+
+      if (!VALID_SERVICE_MODELS.has(normalizedServiceModel)) {
+        return res.status(400).json({ error: 'Invalid service model' });
+      }
+
+      // Cloud v2 registers the POS automatically on first boot. There is no
+      // pending/claim step, so new installs start with cloud coordination on.
+      const cloudSyncEnabled = true;
+      let normalizedCloudServerUrl: string | undefined;
+      if (cloudSyncEnabled) {
+        try {
+          normalizedCloudServerUrl = normalizeCloudServerUrl(
+            cloud_server_url || DEFAULT_CLOUD_SERVER_URL,
+          );
+        } catch {
+          return res.status(400).json({ error: 'Cloud server URL must be a valid HTTPS URL' });
+        }
+      }
+
+      const db = getDatabase();
+      const beforeCount = getUserCount(db);
+      if (beforeCount > 0) {
+        return res
+          .status(403)
+          .json({ error: 'Setup already complete. This endpoint is disabled.' });
+      }
+
+      let userId = '';
+      const hashedPassword = bcrypt.hashSync(password, 10);
+
+      // Persist the external Master PIN before committing the owner transaction.
+      // A keyring/filesystem failure must leave setup retryable rather than
+      // returning 500 after the database already contains an owner.
+      if (masterPinRequired) {
+        setMasterPin(String(master_pin));
+      }
+
+      // JWT secret must exist before the owner row is committed. getJWTSecret()
+      // treats "users exist + no secure secret" as recovery_required (new-machine
+      // / missing .enc). First-run setup would otherwise fail closed mid-response.
+      initializeJWTSecret();
+
+      db.transaction(() => {
+        const userCount = getUserCount(db);
+        if (userCount > 0) {
+          throw new Error('Setup already complete. This endpoint is disabled.');
+        }
+
+        const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+        if (existingUser) {
+          throw new Error('User with this email already exists');
+        }
+
+        userId = uuidv4();
+        db.prepare(
+          `
+        INSERT INTO users (id, name, email, password, role, is_active, terms_accepted_at, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+        ).run(
+          userId,
+          displayName,
+          email,
+          hashedPassword,
+          INITIAL_ADMIN_ROLE,
+          1,
+          now(),
+          now(),
+          now(),
+        );
+
+        upsertSettings(db, {
+          business_name: resolvedStoreName,
+          business_type: normalizedBusinessType,
+          country,
+          currency: normalizedCurrency,
+          currency_symbol:
+            currency_symbol ||
+            getCurrencySymbol(normalizedCurrency, getCountryByCode(country)?.locale),
+          timezone,
+          language,
+          business_address: outletAddress,
+          business_phone: outletPhone,
+          address: outletAddress,
+          phone: outletPhone,
+          email,
+          tax_registration_number,
+          state_code,
+          tax_registered,
+          billing_type: billing_type || (normalizedServiceModel === 'qsr' ? 'prepaid' : 'postpaid'),
+          tables_required: normalizedServiceModel === 'finedine' ? 'true' : 'false',
+          service_model: normalizedServiceModel,
+          setup_profile: normalizedSetupProfile,
+          onboarding_completed: 'true',
+          telemetry_scope:
+            'usage_stats,country,app_version,platform,session_duration,feature_usage,error_diagnostics',
+          split_checks_enabled: 'false',
+          // '1'/'0', not 'true'/'false' — mirrors FloAdmin's own `stores` table and
+          // matches how cloud-sync.ts reads this key everywhere else.
+          cloud_sync_enabled: cloudSyncEnabled ? '1' : '0',
+          cloud_server_url: normalizedCloudServerUrl || DEFAULT_CLOUD_SERVER_URL,
+          email_product_updates: email_product_updates === true ? 'true' : 'false',
+          email_marketing: email_marketing === true ? 'true' : 'false',
+          cloud_services_disabled_by_user: 'false',
+        });
+
+        seedSetupProfile(db, normalizedSetupProfile, normalizedServiceModel, language, country);
+      })();
+
+      markInstallationInitialized();
+
+      applySetupTelemetryOptIn(telemetry_opt_in === true);
+      applySetupDiagnosticsOptIn(diagnostics_opt_in === true);
+
+      // Pick up the cloud settings just written without requiring a restart —
+      // mirrors PUT /api/settings/cloud's own reload() call. Cloud coordination
+      // is best-effort: a network/profile failure must not make a completed local
+      // setup appear to have failed.
+      try {
+        cloudSync.reload();
+      } catch (error) {
+        console.warn('[Auth] Cloud settings reload deferred after setup:', error);
+      }
+      try {
+        cloudSync.refreshRegistrationProfile();
+      } catch (error) {
+        console.warn('[Auth] Cloud registration profile refresh deferred after setup:', error);
+      }
+
+      const token = jwt.sign(
+        { userId, email, role: INITIAL_ADMIN_ROLE, jti: uuidv4() },
+        getJWTSecret(),
+        { expiresIn: JWT_EXPIRES_IN },
+      );
+
+      const tenant = buildLocalTenant(db, INITIAL_ADMIN_ROLE);
+
+      res.json({
+        access_token: token,
+        token_type: 'bearer',
+        expires_in: 86400,
+        user: { id: userId, name: displayName, email, role: INITIAL_ADMIN_ROLE },
+        tenant,
+        tenants: [tenant],
       });
-
-      seedSetupProfile(db, normalizedSetupProfile, normalizedServiceModel, language, country);
-    })();
-
-    markInstallationInitialized();
-
-    applySetupTelemetryOptIn(telemetry_opt_in === true);
-    applySetupDiagnosticsOptIn(diagnostics_opt_in === true);
-
-    // Pick up the cloud settings just written without requiring a restart —
-    // mirrors PUT /api/settings/cloud's own reload() call. Cloud coordination
-    // is best-effort: a network/profile failure must not make a completed local
-    // setup appear to have failed.
-    try {
-      cloudSync.reload();
-    } catch (error) {
-      console.warn('[Auth] Cloud settings reload deferred after setup:', error);
+    } catch (error: any) {
+      console.error('[Auth] Setup error:', error);
+      const message = error.message || 'Setup failed';
+      const status = message.includes('already complete')
+        ? 403
+        : message.includes('already exists')
+          ? 400
+          : 500;
+      res.status(status).json({ error: status === 500 ? 'Setup failed' : message });
     }
-    try {
-      cloudSync.refreshRegistrationProfile();
-    } catch (error) {
-      console.warn('[Auth] Cloud registration profile refresh deferred after setup:', error);
-    }
-
-    const token = jwt.sign(
-      { userId, email, role: INITIAL_ADMIN_ROLE, jti: uuidv4() },
-      getJWTSecret(),
-      { expiresIn: JWT_EXPIRES_IN }
-    );
-
-    const tenant = buildLocalTenant(db, INITIAL_ADMIN_ROLE);
-
-    res.json({
-      access_token: token,
-      token_type: 'bearer',
-      expires_in: 86400,
-      user: { id: userId, name: displayName, email, role: INITIAL_ADMIN_ROLE },
-      tenant,
-      tenants: [tenant],
-    });
-  } catch (error: any) {
-    console.error('[Auth] Setup error:', error);
-    const message = error.message || 'Setup failed';
-    const status = message.includes('already complete') ? 403
-      : message.includes('already exists') ? 400
-        : 500;
-    res.status(status).json({ error: status === 500 ? 'Setup failed' : message });
-  }
-});
+  },
+);
 
 // ── POST /api/auth/setup/seed ───────────────────────────────────────────────────
 // Legacy endpoint retained only to return a clear error. First-run setup must
 // create the owner through /setup/initialize and pass the selected seed profile.
 
 router.post('/setup/seed', (req: Request, res: Response) => {
-  res.status(410).json({ error: 'Use /api/auth/setup/initialize with setup_profile and owner details.' });
+  res
+    .status(410)
+    .json({ error: 'Use /api/auth/setup/initialize with setup_profile and owner details.' });
 });
 
 /**
@@ -1011,9 +1250,15 @@ router.post('/jwt-secret/rotate', authRateLimit(), (req: Request, res: Response)
     if (isTokenRevoked(token)) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
-    const decoded = jwt.verify(token, getJWTSecret()) as { userId: string; role?: string; iat?: number };
+    const decoded = jwt.verify(token, getJWTSecret()) as {
+      userId: string;
+      role?: string;
+      iat?: number;
+    };
     const db = getDatabase();
-    const user = db.prepare('SELECT id, role, is_active, tokens_valid_after FROM users WHERE id = ?').get(decoded.userId) as
+    const user = db
+      .prepare('SELECT id, role, is_active, tokens_valid_after FROM users WHERE id = ?')
+      .get(decoded.userId) as
       | { id: string; role: string; is_active: number; tokens_valid_after: string | null }
       | undefined;
     if (!user || !user.is_active || user.role !== 'owner') {
@@ -1068,7 +1313,9 @@ router.post('/jwt-secret/recover', authRateLimit(), (req: Request, res: Response
       return res.status(400).json({ error: 'Owner email and password are required for recovery' });
     }
     const db = getDatabase();
-    const user = db.prepare('SELECT * FROM users WHERE email = ? AND is_active = 1').get(email) as any;
+    const user = db
+      .prepare('SELECT * FROM users WHERE email = ? AND is_active = 1')
+      .get(email) as any;
     if (!user || user.role !== 'owner' || !bcrypt.compareSync(password, user.password)) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -1081,7 +1328,10 @@ router.post('/jwt-secret/recover', authRateLimit(), (req: Request, res: Response
       entityId: 'jwt_secret',
       metadata: { method: 'recover', actor_role: 'owner' },
     });
-    res.json({ ok: true, message: 'JWT signing secret recovered. Sign in again with your password.' });
+    res.json({
+      ok: true,
+      message: 'JWT signing secret recovered. Sign in again with your password.',
+    });
   } catch (error: any) {
     if (error instanceof JwtSecretError) {
       return res.status(503).json({ error: error.message, code: error.code });

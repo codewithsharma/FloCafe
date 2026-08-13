@@ -86,6 +86,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **P2.17 Restaurant isolation** (2026-08-13) — Order soft-gate table occupy/free + KDS notify; shared catalog must not depend on restaurant modules; UX unchanged when modules ON; fail-closed remount deferred Phase 3
 - [x] **P2.18 Synthetic Retail validation** (2026-08-13) — stronger retail-test fixture tests; shared-module neutrality; not production Retail
 - [x] **P2.19 / Phase 2 final exit gate** (2026-08-13) — `phase-2-final-exit-gate.md`; **PASS WITH DOCUMENTED DEFERMENTS**; Phase 2 **COMPLETE**
+- [x] **Dependency addition & integration** (2026-08-13) — zod/pino-http/helmet/compression/otel/react-query/i18next/vitest/prettier/husky; skipped zustand + express-rate-limit; plan `dependency-integration-plan.md`
 - [ ] **Phase 3** Fail-closed dependency enforcement / route remount (still no packages; after pilot proof)
 - [ ] **Phase 3** Inventory stock ledger UI
 - [ ] **Phase 3** Legacy product tax_type/tax_rate cleanup (deferred; characterized in 2.13)

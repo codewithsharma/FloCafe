@@ -25,6 +25,8 @@
 - ⚠️ RISK: Brand consolidation to **Opervia** (ADR-010) — living docs/STRATEGY/`productName`/UI i18n updated; historical `15-*` audits still say Nexora/FloCafe; `appId`/`executableName` remain flo\* for upgrade continuity; Drive folder is `Opervia Backups` (old `Nexora Backups` not auto-migrated).
 - ⚠️ RISK: Phase 2.6 capabilities are metadata only — any future consumer must not treat `CapabilityId` as authorization (roles/`requireRole` remain authoritative).
 - ⚠️ RISK: Soft module registry — Express routes remain statically mounted; composition does not unload APIs (fail-closed remount deferred Phase 3; Phase 2.17 soft-gates Order/Payment restaurant side effects only).
+- ⚠️ RISK: Dual i18n catalogs during migration — i18next namespaces + legacy flat `lib/i18n/*.json`; migrate gradually; avoid key drift.
+- ⚠️ RISK: Helmet CSP still allows `'unsafe-inline'` for Next static export (Phase C CSP hardening deferred).
 - ⚠️ RISK: Void + full-order cancel may restore stock for voided lines (Inventory API used correctly; call-site filter gap). Documented at Phase 2 exit; fix requires careful characterization — Phase 3.
 - 🔴 DEBT: Extraction readiness: Order LOW–MEDIUM; Payment tender MEDIUM; Inventory/Tax MEDIUM; Product HIGH; POS/KDS HIGH — see `extraction-readiness.md`. Phase 2 COMPLETE; extraction is Phase 3.
 - ⚠️ RISK: Inventory ledger starts at v75 with **no backfill**; product create opening uses `adjustment`+`reason=opening` (not a separate type); refunds intentionally do not restock; test/seed fixtures may still INSERT stock outside Inventory. History API does not claim complete pre-v75 audit.

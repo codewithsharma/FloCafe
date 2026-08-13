@@ -203,7 +203,7 @@ async function main(): Promise<void> {
   const db = getDatabase();
 
   // 1. Fresh install reaches latest schema (v72+) with day_closes
-  assert.equal(db.pragma('user_version', { simple: true }), 74);
+  assert.equal(db.pragma('user_version', { simple: true }), 75);
   assert.ok(
     db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'day_closes'`).get(),
     'day_closes table exists',
@@ -212,7 +212,7 @@ async function main(): Promise<void> {
   for (const col of ['id', 'business_date', 'closed_by_user_id', 'summary_json', 'created_at']) {
     assert.ok(cols.includes(col), `day_closes.${col}`);
   }
-  console.log('   ✓ migration reaches v74; user_version 74');
+  console.log('   ✓ migration reaches v75; user_version 75');
 
   // Timezone helpers
   {

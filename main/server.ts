@@ -8,9 +8,26 @@ import * as fs from 'fs';
 import jwt from 'jsonwebtoken';
 import { registerRoutes } from './routes';
 import { getJWTSecret } from './routes/auth';
-import { databaseMaintenanceMiddleware, getDbHealth, isDatabaseMaintenanceActive, isDatabaseOpen, isKdsEnabled } from './db';
+import {
+  databaseMaintenanceMiddleware,
+  getDbHealth,
+  isDatabaseMaintenanceActive,
+  isDatabaseOpen,
+  isKdsEnabled,
+} from './db';
 import { setupKdsWebSocket } from './services/kds';
-import { rateLimit, corsOptions, getUserAuthStatus, isTokenRevoked, isTokenStale } from './middleware/security';
+import {
+  rateLimit,
+  corsOptions,
+  getUserAuthStatus,
+  isTokenRevoked,
+  isTokenStale,
+} from './middleware/security';
+import {
+  applyCompression,
+  applyRequestLogging,
+  applySecurityHeaders,
+} from './middleware/http-observability';
 import { initFromDb as initWhatsAppFromDb } from './services/whatsapp';
 import {
   DEFAULT_NETWORK_MODE,
@@ -33,7 +50,11 @@ let activeListenHost: ListenHost = '127.0.0.1';
  * REC-01: block money/business APIs while recovery is required.
  * Fail closed if recovery-state evaluation itself throws.
  */
-export function recoveryApiProtectionMiddleware(req: Request, res: Response, next: NextFunction): void {
+export function recoveryApiProtectionMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
   try {
     const { isRecoveryRequired, getRecoveryReason } = require('./services/install-state');
     if (!isRecoveryRequired()) {
@@ -75,13 +96,29 @@ function requireAuth(req: Request, res: Response, next: NextFunction): void {
   // Only protect API routes — static files and SPA fallback must pass through
   // JWT verification: skips health check and auth routes (those verify tokens
   // individually). Protects all resource routes from unauthenticated LAN access.
-  if (!req.path.startsWith('/api')) { next(); return; }
+  if (!req.path.startsWith('/api')) {
+    next();
+    return;
+  }
   // Health check — unauthenticated
-  if (req.path === '/api/health') { next(); return; }
+  if (req.path === '/api/health') {
+    next();
+    return;
+  }
   // Auth routes handle their own token verification
-  if (req.path.startsWith('/api/auth')) { next(); return; }
+  if (req.path.startsWith('/api/auth')) {
+    next();
+    return;
+  }
   // Allow unauthenticated GET requests for product images (so <img> tags work)
-  if (req.path.startsWith('/api/products/') && req.path.endsWith('/image') && req.method === 'GET') { next(); return; }
+  if (
+    req.path.startsWith('/api/products/') &&
+    req.path.endsWith('/image') &&
+    req.method === 'GET'
+  ) {
+    next();
+    return;
+  }
 
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
@@ -98,9 +135,10 @@ function requireAuth(req: Request, res: Response, next: NextFunction): void {
 
     // Reject tokens for users deactivated (or deleted) since the token was
     // issued, instead of trusting the JWT's signature/expiry alone (vuln-0001).
-    const freshKdsAuth = req.path.startsWith('/api/kds')
-      || req.path.startsWith('/api/kitchen')
-      || req.path.startsWith('/api/order-items');
+    const freshKdsAuth =
+      req.path.startsWith('/api/kds') ||
+      req.path.startsWith('/api/kitchen') ||
+      req.path.startsWith('/api/order-items');
     const status = getUserAuthStatus(decoded.userId, { fresh: freshKdsAuth });
     if (!status || !status.isActive) {
       res.status(401).json({ error: 'Invalid or expired token' });
@@ -195,6 +233,10 @@ export function startServer(): Promise<void> {
     app = express();
 
     app.use(cors(corsOptions));
+    // Helmet before body parsers — Electron-friendly CSP (unsafe-inline for Next export).
+    applySecurityHeaders(app);
+    applyRequestLogging(app);
+    applyCompression(app);
     app.use(express.json());
     // body-parser 2.x (bundled with Express 5) leaves req.body undefined
     // instead of {} when a request has no parseable body -- restore the
@@ -205,25 +247,8 @@ export function startServer(): Promise<void> {
     });
     app.use(databaseMaintenanceMiddleware);
 
-    // ── Global API rate limiting ───────────────────────────────────────
+    // ── Global API rate limiting (custom LAN-aware limiter; not express-rate-limit)
     app.use('/api', rateLimit({ windowMs: 60 * 1000, max: 100 }));
-
-    // ── Content Security Policy ────────────────────────────────────────
-    // Blocks eval() and remote code. 'unsafe-inline' is required for
-    // Next.js RSC hydration scripts and Tailwind-generated style tags.
-    app.use((_req: Request, res: Response, next: NextFunction) => {
-      res.setHeader('X-Content-Type-Options', 'nosniff');
-      res.setHeader('Content-Security-Policy',
-        "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline'; " +
-        "style-src 'self' 'unsafe-inline'; " +
-        "img-src 'self' data:; " +
-        "font-src 'self' data:; " +
-        "connect-src 'self' http://localhost:3000 http://localhost:3001 http://localhost:3002 http://localhost:3003 ws://localhost:3001 ws://localhost:3002; " +
-        "frame-ancestors 'none'"
-      );
-      next();
-    });
 
     // REC-01: evaluate recovery BEFORE auth so money/setup routes return 503
     // without touching JWT/user tables when the production DB is missing.
@@ -234,7 +259,11 @@ export function startServer(): Promise<void> {
 
     // ── API health check ───────────────────────────────────────────────
     app.get('/api/health', (_req: Request, res: Response) => {
-      const { isRecoveryRequired, getRecoveryReason, getInstallState } = require('./services/install-state');
+      const {
+        isRecoveryRequired,
+        getRecoveryReason,
+        getInstallState,
+      } = require('./services/install-state');
       if (isRecoveryRequired()) {
         return res.status(503).json({
           status: 'recovery_required',
@@ -306,16 +335,26 @@ export function startServer(): Promise<void> {
     }
 
     // ── Global error handler ───────────────────────────────────────────
-    app.use((err: Error & { status?: number; type?: string }, _req: Request, res: Response, _next: NextFunction) => {
-      if (err.type === 'entity.parse.failed') {
-        return res.status(400).json({ error: 'Malformed JSON request body' });
-      }
-      const status = typeof err.status === 'number' && err.status >= 400 && err.status < 500
-        ? err.status
-        : 500;
-      if (status >= 500) console.error('[Server] Error:', err);
-      res.status(status).json({ error: status >= 500 ? 'Internal server error' : (err.message || 'Client error') });
-    });
+    app.use(
+      (
+        err: Error & { status?: number; type?: string },
+        _req: Request,
+        res: Response,
+        _next: NextFunction,
+      ) => {
+        if (err.type === 'entity.parse.failed') {
+          return res.status(400).json({ error: 'Malformed JSON request body' });
+        }
+        const status =
+          typeof err.status === 'number' && err.status >= 400 && err.status < 500
+            ? err.status
+            : 500;
+        if (status >= 500) console.error('[Server] Error:', err);
+        res
+          .status(status)
+          .json({ error: status >= 500 ? 'Internal server error' : err.message || 'Client error' });
+      },
+    );
 
     let currentPort = PORT;
     let attempts = 0;
@@ -343,19 +382,25 @@ export function startServer(): Promise<void> {
         server.on('upgrade', (request, socket, head) => {
           const pathname = (request.url || '').split('?')[0];
           if (pathname !== '/kds') {
-            socket.write('HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-Length: 0\r\n\r\n');
+            socket.write(
+              'HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-Length: 0\r\n\r\n',
+            );
             socket.destroy();
             return;
           }
 
           if (isRecoveryRequired() || !isDatabaseOpen()) {
-            socket.write('HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\nContent-Length: 0\r\n\r\n');
+            socket.write(
+              'HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\nContent-Length: 0\r\n\r\n',
+            );
             socket.destroy();
             return;
           }
 
           if (isDatabaseMaintenanceActive()) {
-            socket.write('HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\nContent-Length: 0\r\n\r\n');
+            socket.write(
+              'HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\nContent-Length: 0\r\n\r\n',
+            );
             socket.destroy();
             return;
           }

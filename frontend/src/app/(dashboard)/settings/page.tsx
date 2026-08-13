@@ -6,9 +6,53 @@ import { useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { usePosSettingsStore, type PaperSize, type BillTemplate } from '@/store/pos-settings';
 import { usePrinterStore, usePrinterStatusSync } from '@/hooks/usePrinter';
-import { Settings, Building2, CreditCard, Monitor, Users, Gift, Printer, Share2, FileText, Lock, Smartphone, RefreshCw, Copy, Check, Wifi, Usb, Trash2, Plus, Star, TestTube2, ChefHat, QrCode, CheckCircle2, Database, Cloud, CloudOff, Zap, Percent, KeyRound, AlertTriangle, Wrench, HardDrive, UploadCloud, Hash, ChevronDown, Clock } from 'lucide-react';
+import {
+  Settings,
+  Building2,
+  CreditCard,
+  Monitor,
+  Users,
+  Gift,
+  Printer,
+  Share2,
+  FileText,
+  Lock,
+  Smartphone,
+  RefreshCw,
+  Copy,
+  Check,
+  Wifi,
+  Usb,
+  Trash2,
+  Plus,
+  Star,
+  TestTube2,
+  ChefHat,
+  QrCode,
+  CheckCircle2,
+  Database,
+  Cloud,
+  CloudOff,
+  Zap,
+  Percent,
+  KeyRound,
+  AlertTriangle,
+  Wrench,
+  HardDrive,
+  UploadCloud,
+  Hash,
+  ChevronDown,
+  Clock,
+} from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import { isModuleEnabled, verticalIdForBusinessType } from '@/lib/modules';
@@ -26,6 +70,7 @@ import ShiftHistoryPanel from '@/components/shifts/ShiftHistoryPanel';
 import { PageHeader, Panel } from '@/components/flo';
 import type { HealthCheckReport } from '@/types/electron';
 import { useI18n } from '@/hooks/useI18n';
+import { useTranslation } from 'react-i18next';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useUpdateStatus } from '@/hooks/useUpdateStatus';
 import { TENANT_STATUS_LABEL_KEYS } from '@/lib/i18n-enums';
@@ -33,7 +78,8 @@ import { TENANT_STATUS_LABEL_KEYS } from '@/lib/i18n-enums';
 const CLOUD_ACCOUNT_STATUS_CHANGED_EVENT = 'flo:cloud-account-status-changed';
 
 function notifyCloudAccountStatusChanged(): void {
-  if (typeof window !== 'undefined') window.dispatchEvent(new Event(CLOUD_ACCOUNT_STATUS_CHANGED_EVENT));
+  if (typeof window !== 'undefined')
+    window.dispatchEvent(new Event(CLOUD_ACCOUNT_STATUS_CHANGED_EVENT));
 }
 
 const CLASSIC_PREVIEW = `   STORE NAME
@@ -113,13 +159,20 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
       onClick={() => onChange(!value)}
       className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${value ? 'bg-flo-brand-600' : 'bg-flo-border-strong'}`}
     >
-      <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-flo-surface rounded-full shadow transition-transform ${value ? 'translate-x-5' : 'translate-x-0'}`} />
+      <span
+        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-flo-surface rounded-full shadow transition-transform ${value ? 'translate-x-5' : 'translate-x-0'}`}
+      />
     </button>
   );
 }
 
 function SettingsNavItem({
-  label, value, active, onClick, indent, attention,
+  label,
+  value,
+  active,
+  onClick,
+  indent,
+  attention,
 }: {
   label: string;
   value: string;
@@ -137,12 +190,21 @@ function SettingsNavItem({
         'flex items-center w-full min-w-0 text-left text-sm rounded-flo-md py-1.5 transition-colors',
         indent ? 'pl-5 pr-2 border-l-2 ml-1 text-xs md:ml-0' : 'px-3',
         isActive
-          ? 'bg-flo-brand-50 text-flo-brand-700 font-semibold' + (indent ? ' border-flo-brand-500' : '')
-          : 'text-flo-text-secondary hover:bg-flo-surface-muted hover:text-flo-text' + (indent ? ' border-transparent' : ''),
+          ? 'bg-flo-brand-50 text-flo-brand-700 font-semibold' +
+            (indent ? ' border-flo-brand-500' : '')
+          : 'text-flo-text-secondary hover:bg-flo-surface-muted hover:text-flo-text' +
+            (indent ? ' border-transparent' : ''),
       ].join(' ')}
     >
       <span className="min-w-0 truncate">{label}</span>
-      {attention && <span className="ml-auto rounded-full bg-flo-danger px-1.5 py-0.5 text-[10px] font-bold text-white" aria-label="Action required">1</span>}
+      {attention && (
+        <span
+          className="ml-auto rounded-full bg-flo-danger px-1.5 py-0.5 text-[10px] font-bold text-white"
+          aria-label="Action required"
+        >
+          1
+        </span>
+      )}
     </button>
   );
 }
@@ -154,11 +216,14 @@ function KdsDefaultViewCard() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    api.get('/settings/kds').then((res) => {
-      const v = res.data?.kds_default_view === 'kanban' ? 'kanban' : 'tabs';
-      setView(v);
-      setSavedView(v);
-    }).catch(() => {});
+    api
+      .get('/settings/kds')
+      .then((res) => {
+        const v = res.data?.kds_default_view === 'kanban' ? 'kanban' : 'tabs';
+        setView(v);
+        setSavedView(v);
+      })
+      .catch(() => {});
   }, []);
 
   const dirty = view !== savedView;
@@ -200,7 +265,9 @@ function KdsDefaultViewCard() {
             <input type="radio" readOnly checked={view === 'tabs'} className="text-flo-brand-600" />
             <span className="font-medium text-flo-text">{t('settings.kdsDefaultViewTabs')}</span>
           </div>
-          <p className="text-xs text-flo-text-secondary ml-6">{t('settings.kdsDefaultViewTabsHint')}</p>
+          <p className="text-xs text-flo-text-secondary ml-6">
+            {t('settings.kdsDefaultViewTabsHint')}
+          </p>
         </button>
         <button
           type="button"
@@ -212,10 +279,17 @@ function KdsDefaultViewCard() {
           }`}
         >
           <div className="flex items-center gap-2 mb-1">
-            <input type="radio" readOnly checked={view === 'kanban'} className="text-flo-brand-600" />
+            <input
+              type="radio"
+              readOnly
+              checked={view === 'kanban'}
+              className="text-flo-brand-600"
+            />
             <span className="font-medium text-flo-text">{t('settings.kdsDefaultViewKanban')}</span>
           </div>
-          <p className="text-xs text-flo-text-secondary ml-6">{t('settings.kdsDefaultViewKanbanHint')}</p>
+          <p className="text-xs text-flo-text-secondary ml-6">
+            {t('settings.kdsDefaultViewKanbanHint')}
+          </p>
         </button>
       </div>
 
@@ -233,7 +307,6 @@ function KdsDefaultViewCard() {
   );
 }
 
-
 export default function SettingsPage() {
   const { currentTenant, user, updateCurrentTenant } = useAuthStore();
   const posSettings = usePosSettingsStore();
@@ -241,12 +314,17 @@ export default function SettingsPage() {
   const { printMethod, setPrintMethod, refreshHardwarePrinter } = usePrinterStore();
   usePrinterStatusSync();
   const { t, language, setLanguage } = useI18n();
+  const { t: tSettings } = useTranslation('settings');
   const { formatDate, formatTime, formatDateTime } = useFormatDate();
   const isAdmin = currentTenant?.role === 'admin' || currentTenant?.role === 'owner';
-  const canViewTaxConfiguration = currentTenant?.role === 'owner' || currentTenant?.role === 'manager';
-  const settingsVerticalId = verticalIdForBusinessType(currentTenant?.business_type ?? 'restaurant');
+  const canViewTaxConfiguration =
+    currentTenant?.role === 'owner' || currentTenant?.role === 'manager';
+  const settingsVerticalId = verticalIdForBusinessType(
+    currentTenant?.business_type ?? 'restaurant',
+  );
   const showTaxSettingsTab = canViewTaxConfiguration && isModuleEnabled('tax', settingsVerticalId);
-  const showShiftsSettingsTab = canViewTaxConfiguration && isModuleEnabled('shift', settingsVerticalId);
+  const showShiftsSettingsTab =
+    canViewTaxConfiguration && isModuleEnabled('shift', settingsVerticalId);
   const showKdsSettingsTab = isModuleEnabled('kds', settingsVerticalId);
   const showLoyaltySettingsTab = isModuleEnabled('loyalty', settingsVerticalId);
   const showPrintingSettingsTab = isModuleEnabled('printing', settingsVerticalId);
@@ -263,8 +341,10 @@ export default function SettingsPage() {
   const [savingLoyalty, setSavingLoyalty] = useState(false);
 
   // Discount settings
-  const normalizeDiscountPercentage = (value: unknown) => Math.min(100, Math.max(1, Number(value) || 25));
-  const normalizeDiscountAmount = (value: unknown) => Math.min(999999, Math.max(0, Number(value) || 0));
+  const normalizeDiscountPercentage = (value: unknown) =>
+    Math.min(100, Math.max(1, Number(value) || 25));
+  const normalizeDiscountAmount = (value: unknown) =>
+    Math.min(999999, Math.max(0, Number(value) || 0));
   const [discountMaxPct, setDiscountMaxPct] = useState(25);
   const [savedDiscountMaxPct, setSavedDiscountMaxPct] = useState(25);
   const [discountMaxAmount, setDiscountMaxAmount] = useState(0);
@@ -285,17 +365,31 @@ export default function SettingsPage() {
   // ?tab=/?action= deep-link params directly (lazy init, once at mount) instead of being set
   // by the mount effect below — that effect now only owns the actual async fetches.
   const [activeTab, setActiveTab] = useState(() => searchParams?.get('tab') || 'store');
-  const [masterPinStatus, setMasterPinStatus] = useState<{ available: boolean; isSet: boolean }>({ available: false, isSet: false });
-  const [healthCheckOpen, setHealthCheckOpen] = useState(() => searchParams?.get('action') === 'health-check');
+  const [masterPinStatus, setMasterPinStatus] = useState<{ available: boolean; isSet: boolean }>({
+    available: false,
+    isSet: false,
+  });
+  const [healthCheckOpen, setHealthCheckOpen] = useState(
+    () => searchParams?.get('action') === 'health-check',
+  );
   const [healthReport, setHealthReport] = useState<HealthCheckReport | null>(null);
   const [applyingFixes, setApplyingFixes] = useState(false);
-  const [initializeDbOpen, setInitializeDbOpen] = useState(() => searchParams?.get('action') === 'initialize-db');
+  const [initializeDbOpen, setInitializeDbOpen] = useState(
+    () => searchParams?.get('action') === 'initialize-db',
+  );
   const [shakeSaveBar, setShakeSaveBar] = useState(false);
 
   // Unified PIN gate: 'set' opens the set/change-PIN dialog; 'backup'/'backup-custom'/
   // 'import'/'restore' open a verify prompt and, on success, run the pending action.
   type ImportPayload = { app: string; schema_version?: string; data: Record<string, unknown[]> };
-  type BackupInfo = { fileName: string; path: string; sizeBytes: number; createdAt: string; kind: 'manual' | 'auto'; schemaVersion: number | null };
+  type BackupInfo = {
+    fileName: string;
+    path: string;
+    sizeBytes: number;
+    createdAt: string;
+    kind: 'manual' | 'auto';
+    schemaVersion: number | null;
+  };
   type PinGate =
     | { mode: 'set' }
     | { mode: 'backup' }
@@ -306,20 +400,50 @@ export default function SettingsPage() {
     | { mode: 'delete-cloud' }
     | { mode: 'cancel-cloud-deletion' }
     | null;
-  const [pinGate, setPinGate] = useState<PinGate>(() => searchParams?.get('action') === 'master-pin' ? { mode: 'set' } : null);
+  const [pinGate, setPinGate] = useState<PinGate>(() =>
+    searchParams?.get('action') === 'master-pin' ? { mode: 'set' } : null,
+  );
   const [backups, setBackups] = useState<BackupInfo[]>([]);
   // The mount effect below always fetches backups unconditionally, so this starts true
   // rather than being set synchronously inside that effect.
   const [backupsLoading, setBackupsLoading] = useState(true);
-  const [cloudAccount, setCloudAccount] = useState<{ email?: string | null; cloud_account_available?: boolean; verified?: boolean; verified_at?: string | null; verification_sent_at?: string | null; product_updates?: boolean; marketing?: boolean; deletion_request?: { id?: string; status?: 'pending' | 'processing' | 'approved' | 'completed' | 'deleted' | 'failed' | 'rejected' | 'cancelled'; requested_at?: string; reviewed_at?: string | null; decision_note?: string | null } | null } | null>(null);
+  const [cloudAccount, setCloudAccount] = useState<{
+    email?: string | null;
+    cloud_account_available?: boolean;
+    verified?: boolean;
+    verified_at?: string | null;
+    verification_sent_at?: string | null;
+    product_updates?: boolean;
+    marketing?: boolean;
+    deletion_request?: {
+      id?: string;
+      status?:
+        | 'pending'
+        | 'processing'
+        | 'approved'
+        | 'completed'
+        | 'deleted'
+        | 'failed'
+        | 'rejected'
+        | 'cancelled';
+      requested_at?: string;
+      reviewed_at?: string | null;
+      decision_note?: string | null;
+    } | null;
+  } | null>(null);
   const [cloudAccountBusy, setCloudAccountBusy] = useState(false);
   const [cloudAccountLoadFailed, setCloudAccountLoadFailed] = useState(false);
   const [refreshingDeletionStatus, setRefreshingDeletionStatus] = useState(false);
-  const cloudAccountAvailable = !cloudAccountLoadFailed && cloudAccount?.cloud_account_available !== false;
+  const cloudAccountAvailable =
+    !cloudAccountLoadFailed && cloudAccount?.cloud_account_available !== false;
   const cloudDeletionStatus = cloudAccount?.deletion_request?.status || '';
   const cloudDeletionPending = cloudDeletionStatus === 'pending';
-  const cloudDeletionNeedsResolution = ['pending', 'processing', 'failed'].includes(cloudDeletionStatus);
-  const cloudDeletionCanCancel = ['pending', 'processing'].includes(cloudDeletionStatus) && Boolean(cloudAccount?.deletion_request?.id);
+  const cloudDeletionNeedsResolution = ['pending', 'processing', 'failed'].includes(
+    cloudDeletionStatus,
+  );
+  const cloudDeletionCanCancel =
+    ['pending', 'processing'].includes(cloudDeletionStatus) &&
+    Boolean(cloudAccount?.deletion_request?.id);
 
   const fetchCloudAccount = async () => {
     try {
@@ -364,20 +488,23 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
-    api.get('/db-tools/master-pin/status')
+    api
+      .get('/db-tools/master-pin/status')
       .then(({ data }) => setMasterPinStatus(data))
       .catch(() => {
         // ignore — card just shows "Unknown" state until retried
       });
 
-    api.get('/db-tools/backups')
+    api
+      .get('/db-tools/backups')
       .then(({ data }) => setBackups(data.backups ?? []))
       .catch(() => {
         // ignore — history card just shows empty state until retried
       })
       .finally(() => setBackupsLoading(false));
     if (currentTenant?.role === 'owner') {
-      api.get('/settings/cloud/account')
+      api
+        .get('/settings/cloud/account')
         .then(({ data }) => {
           setCloudAccount(data);
           setCloudAccountLoadFailed(false);
@@ -386,7 +513,8 @@ export default function SettingsPage() {
     }
 
     if (searchParams?.get('action') === 'health-check') {
-      api.get('/db-tools/health-check')
+      api
+        .get('/db-tools/health-check')
         .then(({ data }) => setHealthReport(data))
         .catch(() => {
           toast.error(t('settings.healthCheckFailed'));
@@ -401,7 +529,12 @@ export default function SettingsPage() {
     try {
       const { data } = await api.post('/db-tools/apply-safe-fixes', {});
       if (data.errors?.length) {
-        toast.error(t('settings.fixesAppliedPartial', { applied: data.applied.length, failed: data.errors.length }));
+        toast.error(
+          t('settings.fixesAppliedPartial', {
+            applied: data.applied.length,
+            failed: data.errors.length,
+          }),
+        );
       } else {
         toast.success(t('settings.fixesApplied', { count: data.applied.length }));
       }
@@ -426,7 +559,9 @@ export default function SettingsPage() {
     }
   };
 
-  const handlePinGateSubmit = async (pin: string): Promise<{ success: boolean; error?: string }> => {
+  const handlePinGateSubmit = async (
+    pin: string,
+  ): Promise<{ success: boolean; error?: string }> => {
     if (!pinGate) return { success: false, error: t('settings.nothingPending') };
 
     if (pinGate.mode === 'set') {
@@ -438,7 +573,10 @@ export default function SettingsPage() {
         return { success: true };
       } catch (err: unknown) {
         const error = err as { response?: { data?: { error?: string } } };
-        return { success: false, error: error.response?.data?.error || t('settings.savePinFailed') };
+        return {
+          success: false,
+          error: error.response?.data?.error || t('settings.savePinFailed'),
+        };
       }
     }
 
@@ -451,7 +589,10 @@ export default function SettingsPage() {
         return { success: true };
       } catch (err: unknown) {
         const error = err as { response?: { data?: { error?: string } } };
-        return { success: false, error: error.response?.data?.error || t('settings.backupFailedGeneric') };
+        return {
+          success: false,
+          error: error.response?.data?.error || t('settings.backupFailedGeneric'),
+        };
       }
     }
 
@@ -492,21 +633,31 @@ export default function SettingsPage() {
 
     if (pinGate.mode === 'delete-backup') {
       try {
-        await api.post(`/db-tools/backups/${encodeURIComponent(pinGate.payload.fileName)}/delete`, { master_pin: pin });
+        await api.post(`/db-tools/backups/${encodeURIComponent(pinGate.payload.fileName)}/delete`, {
+          master_pin: pin,
+        });
         toast.success(t('settings.backupDeleted'));
         setPinGate(null);
         fetchBackups();
         return { success: true };
       } catch (err: unknown) {
         const error = err as { response?: { data?: { error?: string } } };
-        return { success: false, error: error.response?.data?.error || t('settings.backupDeleteFailed') };
+        return {
+          success: false,
+          error: error.response?.data?.error || t('settings.backupDeleteFailed'),
+        };
       }
     }
 
     if (pinGate.mode === 'delete-cloud') {
       try {
-        await api.post('/settings/cloud/delete-data', { master_pin: pin, confirmation: 'DELETE CLOUD DATA' });
-        toast.success('Cloud deletion request submitted for manual review. Cloud services have been stopped on this device.');
+        await api.post('/settings/cloud/delete-data', {
+          master_pin: pin,
+          confirmation: 'DELETE CLOUD DATA',
+        });
+        toast.success(
+          'Cloud deletion request submitted for manual review. Cloud services have been stopped on this device.',
+        );
         await Promise.all([fetchCloudAccount(), refreshCloudStatus()]);
         notifyCloudAccountStatusChanged();
         setPinGate(null);
@@ -515,21 +666,29 @@ export default function SettingsPage() {
         await Promise.all([fetchCloudAccount(), refreshCloudStatus()]);
         notifyCloudAccountStatusChanged();
         const error = err as { response?: { data?: { error?: string } } };
-        return { success: false, error: error.response?.data?.error || 'Cloud data deletion failed' };
+        return {
+          success: false,
+          error: error.response?.data?.error || 'Cloud data deletion failed',
+        };
       }
     }
 
     if (pinGate.mode === 'cancel-cloud-deletion') {
       try {
         await api.post('/settings/cloud/delete-data/cancel', { master_pin: pin });
-        toast.success('Cloud deletion request cancelled. Cloud services remain off until you explicitly re-enable them.');
+        toast.success(
+          'Cloud deletion request cancelled. Cloud services remain off until you explicitly re-enable them.',
+        );
         await Promise.all([fetchCloudAccount(), refreshCloudStatus()]);
         notifyCloudAccountStatusChanged();
         setPinGate(null);
         return { success: true };
       } catch (err: unknown) {
         const error = err as { response?: { data?: { error?: string } } };
-        return { success: false, error: error.response?.data?.error || 'Could not cancel deletion request' };
+        return {
+          success: false,
+          error: error.response?.data?.error || 'Could not cancel deletion request',
+        };
       }
     }
 
@@ -639,19 +798,25 @@ export default function SettingsPage() {
 
   const handleInitializeDatabase = async (pin: string) => {
     try {
-      const { data } = await api.post('/db-tools/initialize', { master_pin: pin, confirmation_phrase: 'INITIALIZE' });
+      const { data } = await api.post('/db-tools/initialize', {
+        master_pin: pin,
+        confirmation_phrase: 'INITIALIZE',
+      });
       return { success: true, backupPath: data.backupPath };
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } } };
-      return { success: false, error: error.response?.data?.error || t('settings.initializeFailedGeneric') };
+      return {
+        success: false,
+        error: error.response?.data?.error || t('settings.initializeFailedGeneric'),
+      };
     }
   };
 
   // ── KDS pairing ──────────────────────────────────────────────────────────
-  const [kdsInfo, setKdsInfo] = useState<{ 
-    mdns_url: string; 
-    ip_url: string; 
-    qr_url: string; 
+  const [kdsInfo, setKdsInfo] = useState<{
+    mdns_url: string;
+    ip_url: string;
+    qr_url: string;
     qr_data_url: string | null;
     ips_data?: { ip: string; url: string; qr_data: string | null }[];
   } | null>(null);
@@ -676,19 +841,23 @@ export default function SettingsPage() {
 
   const fetchKdsInfo = () => {
     setKdsInfoLoading(true);
-    api.get('/kds-info').then((res) => {
-      setKdsInfo(res.data);
-      setKdsNetworkModeMsg(null);
-    }).catch((err) => {
-      const blocked = networkModeBlockedMessage(err);
-      setKdsInfo(null);
-      if (blocked) {
-        setKdsNetworkModeMsg(blocked);
-        return;
-      }
-      setKdsNetworkModeMsg(null);
-      toast.error(t('settings.kdsInfoFetchFailed'));
-    }).finally(() => setKdsInfoLoading(false));
+    api
+      .get('/kds-info')
+      .then((res) => {
+        setKdsInfo(res.data);
+        setKdsNetworkModeMsg(null);
+      })
+      .catch((err) => {
+        const blocked = networkModeBlockedMessage(err);
+        setKdsInfo(null);
+        if (blocked) {
+          setKdsNetworkModeMsg(blocked);
+          return;
+        }
+        setKdsNetworkModeMsg(null);
+        toast.error(t('settings.kdsInfoFetchFailed'));
+      })
+      .finally(() => setKdsInfoLoading(false));
   };
 
   // ── Server App pairing (tableside ordering) ───────────────────────────────
@@ -704,19 +873,27 @@ export default function SettingsPage() {
 
   const fetchServerAppInfo = () => {
     setServerAppInfoLoading(true);
-    api.get('/server-app-info').then((res) => {
-      setServerAppInfo(res.data);
-      setServerAppNetworkModeMsg(null);
-    }).catch((err) => {
-      const blocked = networkModeBlockedMessage(err);
-      setServerAppInfo(null);
-      if (blocked) {
-        setServerAppNetworkModeMsg(blocked);
-        return;
-      }
-      setServerAppNetworkModeMsg(null);
-      toast.error(t('settings.serverAppInfoFetchFailed', { defaultValue: 'Could not load Server App info' }));
-    }).finally(() => setServerAppInfoLoading(false));
+    api
+      .get('/server-app-info')
+      .then((res) => {
+        setServerAppInfo(res.data);
+        setServerAppNetworkModeMsg(null);
+      })
+      .catch((err) => {
+        const blocked = networkModeBlockedMessage(err);
+        setServerAppInfo(null);
+        if (blocked) {
+          setServerAppNetworkModeMsg(blocked);
+          return;
+        }
+        setServerAppNetworkModeMsg(null);
+        toast.error(
+          t('settings.serverAppInfoFetchFailed', {
+            defaultValue: 'Could not load Server App info',
+          }),
+        );
+      })
+      .finally(() => setServerAppInfoLoading(false));
   };
 
   // ── POS pairing (add a cashier device) ────────────────────────────────────
@@ -732,19 +909,23 @@ export default function SettingsPage() {
 
   const fetchPosInfo = () => {
     setPosInfoLoading(true);
-    api.get('/pos-info').then((res) => {
-      setPosInfo(res.data);
-      setPosNetworkModeMsg(null);
-    }).catch((err) => {
-      const blocked = networkModeBlockedMessage(err);
-      setPosInfo(null);
-      if (blocked) {
-        setPosNetworkModeMsg(blocked);
-        return;
-      }
-      setPosNetworkModeMsg(null);
-      toast.error(t('settings.posInfoFetchFailed'));
-    }).finally(() => setPosInfoLoading(false));
+    api
+      .get('/pos-info')
+      .then((res) => {
+        setPosInfo(res.data);
+        setPosNetworkModeMsg(null);
+      })
+      .catch((err) => {
+        const blocked = networkModeBlockedMessage(err);
+        setPosInfo(null);
+        if (blocked) {
+          setPosNetworkModeMsg(blocked);
+          return;
+        }
+        setPosNetworkModeMsg(null);
+        toast.error(t('settings.posInfoFetchFailed'));
+      })
+      .finally(() => setPosInfoLoading(false));
   };
 
   // ── More Apps ───────────────────────────────────────────────────────────────
@@ -764,17 +945,24 @@ export default function SettingsPage() {
   const [revflo, setRevflo] = useState<MoreApp | null>(null);
 
   useEffect(() => {
-    api.get('/more-apps').then((res) => {
-      setMoreApps(res.data.apps || []);
-    }).catch(() => {
-      // Silent — this tab is informational, not critical
-    }).finally(() => setMoreAppsLoading(false));
+    api
+      .get('/more-apps')
+      .then((res) => {
+        setMoreApps(res.data.apps || []);
+      })
+      .catch(() => {
+        // Silent — this tab is informational, not critical
+      })
+      .finally(() => setMoreAppsLoading(false));
 
-    api.get('/more-apps/revflo').then((res) => {
-      setRevflo(res.data.app || null);
-    }).catch(() => {
-      // Silent — the card still shows the pairing code without the QR promo
-    });
+    api
+      .get('/more-apps/revflo')
+      .then((res) => {
+        setRevflo(res.data.app || null);
+      })
+      .catch(() => {
+        // Silent — the card still shows the pairing code without the QR promo
+      });
   }, []);
 
   // ── Updates ─────────────────────────────────────────────────────────────────
@@ -782,26 +970,45 @@ export default function SettingsPage() {
 
   // ── Printers ─────────────────────────────────────────────────────────────
   type HwPrinter = {
-    id: string; name: string; connection_type: 'network' | 'usb' | 'webusb';
-    ip_address?: string; port?: number;
-    paper_width: string; is_default: number; profile_id?: string; profile_name?: string;
+    id: string;
+    name: string;
+    connection_type: 'network' | 'usb' | 'webusb';
+    ip_address?: string;
+    port?: number;
+    paper_width: string;
+    is_default: number;
+    profile_id?: string;
+    profile_name?: string;
   };
 
   type PrinterForm = {
-    name: string; connection_type: 'network' | 'usb' | 'webusb';
-    ip_address: string; port: string; paper_width: string;
+    name: string;
+    connection_type: 'network' | 'usb' | 'webusb';
+    ip_address: string;
+    port: string;
+    paper_width: string;
   };
 
   const emptyPrinterForm: PrinterForm = {
-    name: '', connection_type: 'network', ip_address: '', port: '9100',
+    name: '',
+    connection_type: 'network',
+    ip_address: '',
+    port: '9100',
     paper_width: 'cols-42',
   };
 
   type DetectedPrinter = {
-    name: string; make: string; model: string;
+    name: string;
+    make: string;
+    model: string;
     connectionType: 'usb' | 'network' | 'bluetooth';
-    deviceUri: string; status: 'idle' | 'printing' | 'offline';
-    isDefault: boolean; ipAddress?: string; port?: number; paperWidth?: string; profileId?: string;
+    deviceUri: string;
+    status: 'idle' | 'printing' | 'offline';
+    isDefault: boolean;
+    ipAddress?: string;
+    port?: number;
+    paperWidth?: string;
+    profileId?: string;
   };
 
   const [hwPrinters, setHwPrinters] = useState<HwPrinter[]>([]);
@@ -832,12 +1039,16 @@ export default function SettingsPage() {
   };
 
   const fetchPrinters = () => {
-    api.get('/printers').then((res) => setHwPrinters(res.data.printers || [])).catch(() => {});
+    api
+      .get('/printers')
+      .then((res) => setHwPrinters(res.data.printers || []))
+      .catch(() => {});
   };
 
   const fetchDetectedPrinters = () => {
     setDetectingPrinters(true);
-    api.get('/printers/detect')
+    api
+      .get('/printers/detect')
       .then((res) => setDetectedPrinters(res.data.printers || []))
       .catch(() => setDetectedPrinters([]))
       .finally(() => setDetectingPrinters(false));
@@ -881,8 +1092,10 @@ export default function SettingsPage() {
 
   const openEditPrinter = (p: HwPrinter) => {
     setPrinterForm({
-      name: p.name, connection_type: p.connection_type,
-      ip_address: p.ip_address || '', port: String(p.port || 9100),
+      name: p.name,
+      connection_type: p.connection_type,
+      ip_address: p.ip_address || '',
+      port: String(p.port || 9100),
       paper_width: normalizePrinterWidthValue(p.paper_width),
     });
     setEditingPrinterId(p.id);
@@ -890,7 +1103,10 @@ export default function SettingsPage() {
   };
 
   const savePrinterHw = async () => {
-    if (!printerForm.name) { toast.error(t('settings.printerNameRequired')); return; }
+    if (!printerForm.name) {
+      toast.error(t('settings.printerNameRequired'));
+      return;
+    }
     setSavingPrinter(true);
     try {
       const payload = {
@@ -918,13 +1134,21 @@ export default function SettingsPage() {
   };
 
   const deletePrinterHw = async (id: string) => {
-    if (!await confirm(t('settings.printerDeleteConfirm'), { destructive: true, confirmLabel: t('common.delete') })) return;
+    if (
+      !(await confirm(t('settings.printerDeleteConfirm'), {
+        destructive: true,
+        confirmLabel: t('common.delete'),
+      }))
+    )
+      return;
     try {
       await api.delete(`/printers/${id}`);
       toast.success(t('settings.printerDeleted'));
       fetchPrinters();
       refreshHardwarePrinter();
-    } catch { toast.error(t('settings.printerDeleteFailed')); }
+    } catch {
+      toast.error(t('settings.printerDeleteFailed'));
+    }
   };
 
   const setDefaultPrinter = async (id: string) => {
@@ -933,7 +1157,9 @@ export default function SettingsPage() {
       toast.success(t('settings.defaultPrinterSet'));
       fetchPrinters();
       refreshHardwarePrinter();
-    } catch { toast.error(t('settings.actionFailed')); }
+    } catch {
+      toast.error(t('settings.actionFailed'));
+    }
   };
 
   const testPrinterHw = async (printer: HwPrinter) => {
@@ -955,8 +1181,13 @@ export default function SettingsPage() {
 
   // ── Kitchen Stations ─────────────────────────────────────────────────────
   type KitchenStation = {
-    id: string; name: string; description?: string; category_ids?: string;
-    printer_id?: string | null; is_active: number; sort_order: number;
+    id: string;
+    name: string;
+    description?: string;
+    category_ids?: string;
+    printer_id?: string | null;
+    is_active: number;
+    sort_order: number;
   };
   type StaffOption = { id: string; name: string; role: string };
   type CategoryOption = { id: string; name: string };
@@ -964,28 +1195,47 @@ export default function SettingsPage() {
   const [stations, setStations] = useState<KitchenStation[]>([]);
   const [stationCategories, setStationCategories] = useState<CategoryOption[]>([]);
   const [stationStaff, setStationStaff] = useState<StaffOption[]>([]);
-  const [stationUsersByStation, setStationUsersByStation] = useState<Record<string, StaffOption[]>>({});
+  const [stationUsersByStation, setStationUsersByStation] = useState<Record<string, StaffOption[]>>(
+    {},
+  );
   const [showStationForm, setShowStationForm] = useState(false);
   const [editingStationId, setEditingStationId] = useState<string | null>(null);
   const [stationForm, setStationForm] = useState<{
-    name: string; category_ids: string[]; printer_id: string; user_ids: string[];
+    name: string;
+    category_ids: string[];
+    printer_id: string;
+    user_ids: string[];
   }>({ name: '', category_ids: [], printer_id: '', user_ids: [] });
   const [savingStation, setSavingStation] = useState(false);
 
   const fetchStations = () => {
-    api.get('/kitchen-stations').then((res) => setStations(res.data.kitchenStations || [])).catch(() => {});
+    api
+      .get('/kitchen-stations')
+      .then((res) => setStations(res.data.kitchenStations || []))
+      .catch(() => {});
   };
   const fetchStationCategories = () => {
-    api.get('/categories').then((res) => setStationCategories(res.data.categories || [])).catch(() => {});
+    api
+      .get('/categories')
+      .then((res) => setStationCategories(res.data.categories || []))
+      .catch(() => {});
   };
   const fetchStationStaff = () => {
-    api.get('/staff').then((res) => setStationStaff(res.data.staff || [])).catch(() => {});
+    api
+      .get('/staff')
+      .then((res) => setStationStaff(res.data.staff || []))
+      .catch(() => {});
   };
   const fetchStationUsers = async (stationId: string) => {
     try {
       const res = await api.get(`/kitchen-stations/${stationId}`);
-      setStationUsersByStation((prev) => ({ ...prev, [stationId]: res.data.kitchenStation.users || [] }));
-    } catch { /* ignore */ }
+      setStationUsersByStation((prev) => ({
+        ...prev,
+        [stationId]: res.data.kitchenStation.users || [],
+      }));
+    } catch {
+      /* ignore */
+    }
   };
 
   const openAddStation = () => {
@@ -997,7 +1247,11 @@ export default function SettingsPage() {
   const openEditStation = async (station: KitchenStation) => {
     setEditingStationId(station.id);
     let categoryIds: string[] = [];
-    try { categoryIds = station.category_ids ? JSON.parse(station.category_ids) : []; } catch { categoryIds = []; }
+    try {
+      categoryIds = station.category_ids ? JSON.parse(station.category_ids) : [];
+    } catch {
+      categoryIds = [];
+    }
     let userIds: string[] = stationUsersByStation[station.id]?.map((u) => u.id) || [];
     if (!stationUsersByStation[station.id]) {
       try {
@@ -1005,22 +1259,33 @@ export default function SettingsPage() {
         const users = res.data.kitchenStation.users || [];
         setStationUsersByStation((prev) => ({ ...prev, [station.id]: users }));
         userIds = users.map((u: StaffOption) => u.id);
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
-    setStationForm({ name: station.name, category_ids: categoryIds, printer_id: station.printer_id || '', user_ids: userIds });
+    setStationForm({
+      name: station.name,
+      category_ids: categoryIds,
+      printer_id: station.printer_id || '',
+      user_ids: userIds,
+    });
     setShowStationForm(true);
   };
 
   const toggleStationFormValue = (field: 'category_ids' | 'user_ids', value: string) => {
     setStationForm((prev) => {
       const set = new Set(prev[field]);
-      if (set.has(value)) set.delete(value); else set.add(value);
+      if (set.has(value)) set.delete(value);
+      else set.add(value);
       return { ...prev, [field]: Array.from(set) };
     });
   };
 
   const saveStation = async () => {
-    if (!stationForm.name.trim()) { toast.error(t('settings.stationNameRequired')); return; }
+    if (!stationForm.name.trim()) {
+      toast.error(t('settings.stationNameRequired'));
+      return;
+    }
     setSavingStation(true);
     try {
       const payload = {
@@ -1051,7 +1316,13 @@ export default function SettingsPage() {
   };
 
   const deleteStation = async (id: string) => {
-    if (!await confirm(t('settings.stationDeleteConfirm'), { destructive: true, confirmLabel: t('common.delete') })) return;
+    if (
+      !(await confirm(t('settings.stationDeleteConfirm'), {
+        destructive: true,
+        confirmLabel: t('common.delete'),
+      }))
+    )
+      return;
     try {
       await api.delete(`/kitchen-stations/${id}`);
       toast.success(t('settings.stationDeleted'));
@@ -1081,23 +1352,37 @@ export default function SettingsPage() {
   const [pairingUnavailable, setPairingUnavailable] = useState(true);
   const [rotatingCode, setRotatingCode] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
-  const [pairedDevices, setPairedDevices] = useState<Array<{
-    id: string; platform: string | null; app_version: string | null;
-    user_agent: string | null; country: string | null;
-    first_seen_at: string | null; last_seen_at: string | null;
-  }>>([]);
+  const [pairedDevices, setPairedDevices] = useState<
+    Array<{
+      id: string;
+      platform: string | null;
+      app_version: string | null;
+      user_agent: string | null;
+      country: string | null;
+      first_seen_at: string | null;
+      last_seen_at: string | null;
+    }>
+  >([]);
   const [devicesLoading, setDevicesLoading] = useState(false);
 
   // Printing local state (buffered — saved only on explicit Save)
   type PrintingForm = {
-    printerEnabled: boolean; printerPaperSize: PaperSize;
+    printerEnabled: boolean;
+    printerPaperSize: PaperSize;
     printMethod: 'escpos' | 'browser';
-    autoPrintKot: boolean; autoPrintBill: boolean;
+    autoPrintKot: boolean;
+    autoPrintBill: boolean;
     whatsappShareEnabled: boolean;
     printerUseUnicode: boolean;
     printerTrimDecimals: boolean;
-    billShowName: boolean; billShowAddress: boolean; billShowPhone: boolean; billShowTaxId: boolean;
-    billShowTaxBreakdown: boolean; billShowCustomerName: boolean; billShowCustomerPhone: boolean; billShowTableNumber: boolean;
+    billShowName: boolean;
+    billShowAddress: boolean;
+    billShowPhone: boolean;
+    billShowTaxId: boolean;
+    billShowTaxBreakdown: boolean;
+    billShowCustomerName: boolean;
+    billShowCustomerPhone: boolean;
+    billShowTableNumber: boolean;
   };
   const initPrinting = (): PrintingForm => ({
     printerEnabled: posSettings.printerEnabled,
@@ -1137,17 +1422,21 @@ export default function SettingsPage() {
     posSettings.setBillShowCustomerPhone(printingForm.billShowCustomerPhone);
     posSettings.setBillShowTableNumber(printingForm.billShowTableNumber);
     await Promise.all([
-      api.put('/settings/printer_trim_decimals', { value: printingForm.printerTrimDecimals ? 'true' : 'false' }),
-      ...([
-        ['bill_show_name', printingForm.billShowName],
-        ['bill_show_address', printingForm.billShowAddress],
-        ['bill_show_phone', printingForm.billShowPhone],
-        ['bill_show_tax_id', printingForm.billShowTaxId],
-        ['bill_show_tax_breakdown', printingForm.billShowTaxBreakdown],
-        ['bill_show_customer_name', printingForm.billShowCustomerName],
-        ['bill_show_customer_phone', printingForm.billShowCustomerPhone],
-        ['bill_show_table_number', printingForm.billShowTableNumber],
-      ] as const).map(([key, value]) => api.put(`/settings/${key}`, { value: value ? 'true' : 'false' })),
+      api.put('/settings/printer_trim_decimals', {
+        value: printingForm.printerTrimDecimals ? 'true' : 'false',
+      }),
+      ...(
+        [
+          ['bill_show_name', printingForm.billShowName],
+          ['bill_show_address', printingForm.billShowAddress],
+          ['bill_show_phone', printingForm.billShowPhone],
+          ['bill_show_tax_id', printingForm.billShowTaxId],
+          ['bill_show_tax_breakdown', printingForm.billShowTaxBreakdown],
+          ['bill_show_customer_name', printingForm.billShowCustomerName],
+          ['bill_show_customer_phone', printingForm.billShowCustomerPhone],
+          ['bill_show_table_number', printingForm.billShowTableNumber],
+        ] as const
+      ).map(([key, value]) => api.put(`/settings/${key}`, { value: value ? 'true' : 'false' })),
     ]);
     setSavedPrinting(printingForm);
     if (!silent) toast.success(t('settings.printingSettingsSaved'));
@@ -1176,17 +1465,30 @@ export default function SettingsPage() {
 
   // Store / business fields — local form state (saved only on explicit Save)
   type BusinessForm = {
-    businessName: string; countryCode: string; timezone: string; currency: string;
+    businessName: string;
+    countryCode: string;
+    timezone: string;
+    currency: string;
     billingType: 'postpaid' | 'prepaid';
     tablesRequired: boolean;
     taxRegistered: boolean;
-    taxRegistrationNumber: string; businessAddress: string; businessPhone: string; instagramHandle: string;
+    taxRegistrationNumber: string;
+    businessAddress: string;
+    businessPhone: string;
+    instagramHandle: string;
   };
   const [savedBusiness, setSavedBusiness] = useState<BusinessForm>({
-    businessName: '', countryCode: '', timezone: '', currency: '', billingType: 'postpaid',
+    businessName: '',
+    countryCode: '',
+    timezone: '',
+    currency: '',
+    billingType: 'postpaid',
     tablesRequired: true,
     taxRegistered: false,
-    taxRegistrationNumber: '', businessAddress: '', businessPhone: '', instagramHandle: '',
+    taxRegistrationNumber: '',
+    businessAddress: '',
+    businessPhone: '',
+    instagramHandle: '',
   });
   const [form, setForm] = useState<BusinessForm>(savedBusiness);
   const [savingBusiness, setSavingBusiness] = useState(false);
@@ -1208,14 +1510,19 @@ export default function SettingsPage() {
     cloud_last_error: null as string | null,
     cloud_deletion_status: '',
   });
-   
+
   const [savingCloud, setSavingCloud] = useState(false);
   const [registeringCloud, setRegisteringCloud] = useState(false);
   const [showInitializeCloudConfirm, setShowInitializeCloudConfirm] = useState(false);
 
   const cloudServicesStopped = cloudStatus.cloud_services_disabled_by_user;
-  const cloudDeletionFinal = cloudStatus.cloud_registration_status === 'deleted' || ['approved', 'completed', 'deleted'].includes(cloudStatus.cloud_deletion_status);
-  const cloudDeletionNeedsAction = !cloudDeletionFinal && (cloudDeletionNeedsResolution || ['processing', 'failed'].includes(cloudStatus.cloud_deletion_status));
+  const cloudDeletionFinal =
+    cloudStatus.cloud_registration_status === 'deleted' ||
+    ['approved', 'completed', 'deleted'].includes(cloudStatus.cloud_deletion_status);
+  const cloudDeletionNeedsAction =
+    !cloudDeletionFinal &&
+    (cloudDeletionNeedsResolution ||
+      ['processing', 'failed'].includes(cloudStatus.cloud_deletion_status));
 
   const refreshCloudStatus = async () => {
     try {
@@ -1317,7 +1624,9 @@ export default function SettingsPage() {
 
   type OrderNumberForm = { prefix: string; includeDate: boolean; resetDaily: boolean };
   const [savedOrderNumberForm, setSavedOrderNumberForm] = useState<OrderNumberForm>({
-    prefix: 'ORD', includeDate: true, resetDaily: true,
+    prefix: 'ORD',
+    includeDate: true,
+    resetDaily: true,
   });
   const [orderNumberForm, setOrderNumberForm] = useState<OrderNumberForm>(savedOrderNumberForm);
   const [savingOrderNumbering, setSavingOrderNumbering] = useState(false);
@@ -1332,7 +1641,9 @@ export default function SettingsPage() {
       ]);
 
       const d = businessRes.data;
-      const matchedCountry = COUNTRIES.find(c => c.currency === d.currency && c.timezone === d.timezone);
+      const matchedCountry = COUNTRIES.find(
+        (c) => c.currency === d.currency && c.timezone === d.timezone,
+      );
       const loaded: BusinessForm = {
         businessName: d.business_name || '',
         countryCode: matchedCountry?.code || '',
@@ -1340,7 +1651,8 @@ export default function SettingsPage() {
         currency: d.currency || '',
         billingType: d.billing_type === 'prepaid' ? 'prepaid' : 'postpaid',
         tablesRequired: typeof d.tables_required === 'boolean' ? d.tables_required : true,
-        taxRegistered: d.tax_registered === 'true' || d.tax_registered === true || d.tax_registered === 1,
+        taxRegistered:
+          d.tax_registered === 'true' || d.tax_registered === true || d.tax_registered === 1,
         taxRegistrationNumber: d.tax_registration_number || '',
         businessAddress: d.business_address || '',
         businessPhone: d.business_phone || '',
@@ -1384,8 +1696,14 @@ export default function SettingsPage() {
         setDiscountMaxAmount(value);
         setSavedDiscountMaxAmount(value);
       }
-      if (discountRes.data.discount_mode) { setDiscountMode(discountRes.data.discount_mode); setSavedDiscountMode(discountRes.data.discount_mode); }
-      if (discountRes.data.discount_requires_approval !== undefined) { setDiscountRequiresApproval(!!discountRes.data.discount_requires_approval); setSavedDiscountRequiresApproval(!!discountRes.data.discount_requires_approval); }
+      if (discountRes.data.discount_mode) {
+        setDiscountMode(discountRes.data.discount_mode);
+        setSavedDiscountMode(discountRes.data.discount_mode);
+      }
+      if (discountRes.data.discount_requires_approval !== undefined) {
+        setDiscountRequiresApproval(!!discountRes.data.discount_requires_approval);
+        setSavedDiscountRequiresApproval(!!discountRes.data.discount_requires_approval);
+      }
 
       const loadedOrderNumbering: OrderNumberForm = {
         prefix: orderNumberingRes.data.order_number_prefix ?? 'ORD',
@@ -1402,23 +1720,26 @@ export default function SettingsPage() {
   };
 
   const fetchGoogleDriveStatus = () => {
-    api.get('/settings/google-drive').then((res) => {
-      setGoogleDriveStatus({
-        configured: !!res.data.configured,
-        secure_storage_available: res.data.secure_storage_available !== false,
-        connected: !!res.data.connected,
-        account_email: res.data.account_email || null,
-        frequency: res.data.frequency === 'weekly' ? 'weekly' : 'daily',
-        retention_count: Number(res.data.retention_count) || 10,
-        last_backup_at: res.data.last_backup_at || null,
-        last_backup_status: res.data.last_backup_status || null,
-        last_backup_filename: res.data.last_backup_filename || null,
-        last_error: res.data.last_error || null,
+    api
+      .get('/settings/google-drive')
+      .then((res) => {
+        setGoogleDriveStatus({
+          configured: !!res.data.configured,
+          secure_storage_available: res.data.secure_storage_available !== false,
+          connected: !!res.data.connected,
+          account_email: res.data.account_email || null,
+          frequency: res.data.frequency === 'weekly' ? 'weekly' : 'daily',
+          retention_count: Number(res.data.retention_count) || 10,
+          last_backup_at: res.data.last_backup_at || null,
+          last_backup_status: res.data.last_backup_status || null,
+          last_backup_filename: res.data.last_backup_filename || null,
+          last_error: res.data.last_error || null,
+        });
+      })
+      .catch(() => {
+        // Leave defaults (not configured / not connected) — this section is
+        // optional and must never block the rest of Settings from loading.
       });
-    }).catch(() => {
-      // Leave defaults (not configured / not connected) — this section is
-      // optional and must never block the rest of Settings from loading.
-    });
   };
 
   const loadPairedDevices = async () => {
@@ -1437,13 +1758,15 @@ export default function SettingsPage() {
     fetchPrinters();
     // Inlined rather than calling fetchDetectedPrinters() (used by the manual "refresh"
     // button too) — detectingPrinters already starts true for this initial detection.
-    api.get('/printers/detect')
+    api
+      .get('/printers/detect')
       .then((res) => setDetectedPrinters(res.data.printers || []))
       .catch(() => setDetectedPrinters([]))
       .finally(() => setDetectingPrinters(false));
     // Inlined rather than calling fetchKdsInfo() (used by the manual "refresh" button too) —
     // kdsInfoLoading already starts true for this initial fetch.
-    api.get('/kds-info')
+    api
+      .get('/kds-info')
       .then((res) => {
         setKdsInfo(res.data);
         setKdsNetworkModeMsg(null);
@@ -1463,97 +1786,138 @@ export default function SettingsPage() {
     fetchStationCategories();
     fetchStationStaff();
 
-    api.get('/settings/loyalty').then((res) => {
-      setLoyaltyEnabled(!!res.data.loyalty_enabled);
-      setSavedLoyaltyEnabled(!!res.data.loyalty_enabled);
-      setGlobalCashbackPercent(String(res.data.global_cashback_percent ?? 0));
-      setSavedGlobalCashbackPercent(String(res.data.global_cashback_percent ?? 0));
-    }).catch(() => {});
+    api
+      .get('/settings/loyalty')
+      .then((res) => {
+        setLoyaltyEnabled(!!res.data.loyalty_enabled);
+        setSavedLoyaltyEnabled(!!res.data.loyalty_enabled);
+        setGlobalCashbackPercent(String(res.data.global_cashback_percent ?? 0));
+        setSavedGlobalCashbackPercent(String(res.data.global_cashback_percent ?? 0));
+      })
+      .catch(() => {});
 
-    api.get('/products/loyalty/global-rate-candidates')
+    api
+      .get('/products/loyalty/global-rate-candidates')
       .then((res) => setGlobalRateCandidates(Number(res.data.count) || 0))
       .catch(() => {});
 
-    api.get('/settings/discount').then((res) => {
-      if (res.data.discount_max_percentage !== undefined) {
-        const value = normalizeDiscountPercentage(res.data.discount_max_percentage);
-        setDiscountMaxPct(value);
-        setSavedDiscountMaxPct(value);
-      }
-      if (res.data.discount_max_amount !== undefined) {
-        const value = normalizeDiscountAmount(res.data.discount_max_amount);
-        setDiscountMaxAmount(value);
-        setSavedDiscountMaxAmount(value);
-      }
-      if (res.data.discount_mode) { setDiscountMode(res.data.discount_mode); setSavedDiscountMode(res.data.discount_mode); }
-      if (res.data.discount_requires_approval !== undefined) { setDiscountRequiresApproval(!!res.data.discount_requires_approval); setSavedDiscountRequiresApproval(!!res.data.discount_requires_approval); }
-    }).catch(() => {});
+    api
+      .get('/settings/discount')
+      .then((res) => {
+        if (res.data.discount_max_percentage !== undefined) {
+          const value = normalizeDiscountPercentage(res.data.discount_max_percentage);
+          setDiscountMaxPct(value);
+          setSavedDiscountMaxPct(value);
+        }
+        if (res.data.discount_max_amount !== undefined) {
+          const value = normalizeDiscountAmount(res.data.discount_max_amount);
+          setDiscountMaxAmount(value);
+          setSavedDiscountMaxAmount(value);
+        }
+        if (res.data.discount_mode) {
+          setDiscountMode(res.data.discount_mode);
+          setSavedDiscountMode(res.data.discount_mode);
+        }
+        if (res.data.discount_requires_approval !== undefined) {
+          setDiscountRequiresApproval(!!res.data.discount_requires_approval);
+          setSavedDiscountRequiresApproval(!!res.data.discount_requires_approval);
+        }
+      })
+      .catch(() => {});
 
-    api.get('/settings/telemetry_enabled').then((res) => {
-      setTelemetryEnabled(res.data.setting?.value === 'true');
-    }).catch(() => {
-      // No row yet = consent never given (setup predates this feature, or
-      // declined) = stays off until explicitly turned on here.
-      setTelemetryEnabled(false);
-    });
+    api
+      .get('/settings/telemetry_enabled')
+      .then((res) => {
+        setTelemetryEnabled(res.data.setting?.value === 'true');
+      })
+      .catch(() => {
+        // No row yet = consent never given (setup predates this feature, or
+        // declined) = stays off until explicitly turned on here.
+        setTelemetryEnabled(false);
+      });
 
-    api.get('/settings/diagnostics_consent').then((res) => {
-      setDiagnosticsConsent(res.data.setting?.value === 'true');
-    }).catch(() => {
-      setDiagnosticsConsent(false);
-    });
+    api
+      .get('/settings/diagnostics_consent')
+      .then((res) => {
+        setDiagnosticsConsent(res.data.setting?.value === 'true');
+      })
+      .catch(() => {
+        setDiagnosticsConsent(false);
+      });
 
     fetchGoogleDriveStatus();
 
-    api.get('/settings/kds_enabled').then((res) => {
-      const enabled = res.data.setting?.value !== 'false';
-      setKdsEnabledSetting(enabled);
-      posSettings.setKdsEnabled(enabled);
-    }).catch(() => {});
+    api
+      .get('/settings/kds_enabled')
+      .then((res) => {
+        const enabled = res.data.setting?.value !== 'false';
+        setKdsEnabledSetting(enabled);
+        posSettings.setKdsEnabled(enabled);
+      })
+      .catch(() => {});
 
-    api.get('/settings/network_mode').then((res) => {
-      const value = res.data.setting?.value;
-      if (value === 'localhost' || value === 'kds_lan' || value === 'lan') {
-        setNetworkMode(value);
-      }
-    }).catch(() => {});
+    api
+      .get('/settings/network_mode')
+      .then((res) => {
+        const value = res.data.setting?.value;
+        if (value === 'localhost' || value === 'kds_lan' || value === 'lan') {
+          setNetworkMode(value);
+        }
+      })
+      .catch(() => {});
 
-    api.get('/settings/server_app_enabled').then((res) => {
-      setServerAppEnabledSetting(res.data.setting?.value !== 'false');
-    }).catch(() => {});
+    api
+      .get('/settings/server_app_enabled')
+      .then((res) => {
+        setServerAppEnabledSetting(res.data.setting?.value !== 'false');
+      })
+      .catch(() => {});
 
-    api.get('/settings/kot_printing_enabled').then((res) => {
-      const enabled = res.data.setting?.value !== 'false';
-      setKotPrintingEnabledSetting(enabled);
-      posSettings.setKotPrintingEnabled(enabled);
-    }).catch(() => {});
+    api
+      .get('/settings/kot_printing_enabled')
+      .then((res) => {
+        const enabled = res.data.setting?.value !== 'false';
+        setKotPrintingEnabledSetting(enabled);
+        posSettings.setKotPrintingEnabled(enabled);
+      })
+      .catch(() => {});
 
-    api.get('/settings/shifts_enabled').then((res) => {
-      setShiftsEnabledSetting(res.data.setting?.value === 'true');
-    }).catch(() => {
-      setShiftsEnabledSetting(false);
-    });
-    api.get('/settings/require_open_shift_for_cash').then((res) => {
-      setRequireOpenShiftForCashSetting(res.data.setting?.value === 'true');
-    }).catch(() => {
-      setRequireOpenShiftForCashSetting(false);
-    });
+    api
+      .get('/settings/shifts_enabled')
+      .then((res) => {
+        setShiftsEnabledSetting(res.data.setting?.value === 'true');
+      })
+      .catch(() => {
+        setShiftsEnabledSetting(false);
+      });
+    api
+      .get('/settings/require_open_shift_for_cash')
+      .then((res) => {
+        setRequireOpenShiftForCashSetting(res.data.setting?.value === 'true');
+      })
+      .catch(() => {
+        setRequireOpenShiftForCashSetting(false);
+      });
 
-    api.get('/settings/printer_trim_decimals').then((res) => {
-      const enabled = res.data.setting?.value === 'true';
-      posSettings.setPrinterTrimDecimals(enabled);
-      setPrintingForm((p) => ({ ...p, printerTrimDecimals: enabled }));
-      setSavedPrinting((p) => ({ ...p, printerTrimDecimals: enabled }));
-    }).catch(() => {});
+    api
+      .get('/settings/printer_trim_decimals')
+      .then((res) => {
+        const enabled = res.data.setting?.value === 'true';
+        posSettings.setPrinterTrimDecimals(enabled);
+        setPrintingForm((p) => ({ ...p, printerTrimDecimals: enabled }));
+        setSavedPrinting((p) => ({ ...p, printerTrimDecimals: enabled }));
+      })
+      .catch(() => {});
     Promise.all([
       api.get('/settings/bill_template').catch(() => null),
       api.get('/settings/bill_footer_message').catch(() => null),
     ]).then(([templateResponse, footerResponse]) => {
       const storedTemplate = templateResponse?.data.setting?.value;
       const billTemplate: BillTemplate = ['classic', 'compact', 'detailed'].includes(storedTemplate)
-        ? storedTemplate as BillTemplate
+        ? (storedTemplate as BillTemplate)
         : posSettings.billTemplate;
-      const billFooterMessage = footerResponse?.data.setting?.value ?? posSettings.billFooterMessage;
+      const billFooterMessage =
+        footerResponse?.data.setting?.value ?? posSettings.billFooterMessage;
       const loadedBillForm = { billTemplate, billFooterMessage };
       posSettings.setBillTemplate(billTemplate);
       posSettings.setBillFooterMessage(billFooterMessage);
@@ -1561,100 +1925,117 @@ export default function SettingsPage() {
       setSavedBillForm(loadedBillForm);
     });
 
-    api.get('/settings/order-numbering').then((res) => {
-      const loaded: OrderNumberForm = {
-        prefix: res.data.order_number_prefix ?? 'ORD',
-        includeDate: res.data.order_number_include_date !== false,
-        resetDaily: res.data.order_number_reset_daily !== false,
-      };
-      setOrderNumberForm(loaded);
-      setSavedOrderNumberForm(loaded);
-    }).catch(() => {});
+    api
+      .get('/settings/order-numbering')
+      .then((res) => {
+        const loaded: OrderNumberForm = {
+          prefix: res.data.order_number_prefix ?? 'ORD',
+          includeDate: res.data.order_number_include_date !== false,
+          resetDaily: res.data.order_number_reset_daily !== false,
+        };
+        setOrderNumberForm(loaded);
+        setSavedOrderNumberForm(loaded);
+      })
+      .catch(() => {});
 
-
-    api.get('/settings/cloud').then((res) => {
-      const settings = {
-        cloud_api_key: res.data.cloud_api_key || '',
-        cloud_store_id: res.data.cloud_store_id || '',
-        cloud_sync_enabled: !!res.data.cloud_sync_enabled,
-        cloud_orders_enabled: !!res.data.cloud_orders_enabled,
-        cloud_last_sync: res.data.cloud_last_sync || null,
-      };
-      setCloudSettings(settings);
-      setSavedCloudSettings(settings);
-      setCloudStatus({
-        cloud_registration_status: res.data.cloud_registration_status || 'unregistered',
-        cloud_services_disabled_by_user: !!res.data.cloud_services_disabled_by_user,
-        cloud_connected: !!res.data.cloud_connected,
-        cloud_relay_mode: res.data.cloud_relay_mode || 'disconnected',
-        cloud_last_heartbeat: res.data.cloud_last_heartbeat || null,
-        cloud_last_error: res.data.cloud_last_error || null,
-        cloud_deletion_status: res.data.cloud_deletion_status || '',
-      });
-
-      // Mobile pairing requires cloud registration — skip the requests entirely
-      // for unregistered stores to avoid 502 noise in the console.
-      if (res.data.cloud_registration_status === 'registered') {
-        api.get('/mobile/pairing-code').then((pcRes) => {
-          setPairingCode(pcRes.data.pairing_code);
-          setPairingExpiresAt(pcRes.data.expires_at);
-          setPairingQrDataUrl(pcRes.data.qr_data_url || null);
-          setPairingUnavailable(false);
-        }).catch(() => {
-          setPairingUnavailable(true);
+    api
+      .get('/settings/cloud')
+      .then((res) => {
+        const settings = {
+          cloud_api_key: res.data.cloud_api_key || '',
+          cloud_store_id: res.data.cloud_store_id || '',
+          cloud_sync_enabled: !!res.data.cloud_sync_enabled,
+          cloud_orders_enabled: !!res.data.cloud_orders_enabled,
+          cloud_last_sync: res.data.cloud_last_sync || null,
+        };
+        setCloudSettings(settings);
+        setSavedCloudSettings(settings);
+        setCloudStatus({
+          cloud_registration_status: res.data.cloud_registration_status || 'unregistered',
+          cloud_services_disabled_by_user: !!res.data.cloud_services_disabled_by_user,
+          cloud_connected: !!res.data.cloud_connected,
+          cloud_relay_mode: res.data.cloud_relay_mode || 'disconnected',
+          cloud_last_heartbeat: res.data.cloud_last_heartbeat || null,
+          cloud_last_error: res.data.cloud_last_error || null,
+          cloud_deletion_status: res.data.cloud_deletion_status || '',
         });
-        loadPairedDevices();
-      } else {
-        setPairingUnavailable(true);
-      }
-    }).catch(() => {});
 
-    api.get('/settings/business').then((res) => {
-      const d = res.data;
-      const matchedCountry = COUNTRIES.find(c => c.currency === d.currency && c.timezone === d.timezone);
-      const loaded: BusinessForm = {
-        businessName: d.business_name || '',
-        countryCode: matchedCountry?.code || '',
-        timezone: d.timezone || '',
-        currency: d.currency || '',
-        billingType: d.billing_type === 'prepaid' ? 'prepaid' : 'postpaid',
-        tablesRequired: typeof d.tables_required === 'boolean' ? d.tables_required : true,
-        taxRegistered: d.tax_registered === 'true' || d.tax_registered === true || d.tax_registered === 1,
-        taxRegistrationNumber: d.tax_registration_number || '',
-        businessAddress: d.business_address || '',
-        businessPhone: d.business_phone || '',
-        instagramHandle: d.instagram_handle || '',
-      };
-      setSavedBusiness(loaded);
-      setForm(loaded);
-      // Sync to pos-settings store for bill printing
-      const billDisplay = {
-        billShowName: d.bill_show_name !== false,
-        billShowAddress: d.bill_show_address !== false,
-        billShowPhone: d.bill_show_phone !== false,
-        billShowTaxId: d.bill_show_tax_id === true,
-        billShowTaxBreakdown: d.bill_show_tax_breakdown !== false,
-        billShowCustomerName: d.bill_show_customer_name !== false,
-        billShowCustomerPhone: d.bill_show_customer_phone !== false,
-        billShowTableNumber: d.bill_show_table_number !== false,
-      };
-      setPrintingForm((previous) => ({ ...previous, ...billDisplay }));
-      setSavedPrinting((previous) => ({ ...previous, ...billDisplay }));
-      posSettings.setBillShowName(billDisplay.billShowName);
-      posSettings.setBillShowAddress(billDisplay.billShowAddress);
-      posSettings.setBillShowPhone(billDisplay.billShowPhone);
-      posSettings.setBillShowTaxId(billDisplay.billShowTaxId);
-      posSettings.setBillShowTaxBreakdown(billDisplay.billShowTaxBreakdown);
-      posSettings.setBillShowCustomerName(billDisplay.billShowCustomerName);
-      posSettings.setBillShowCustomerPhone(billDisplay.billShowCustomerPhone);
-      posSettings.setBillShowTableNumber(billDisplay.billShowTableNumber);
-      if (d.tax_registration_number) posSettings.setBillTaxRegistrationNumber(d.tax_registration_number);
-      if (d.business_address) posSettings.setBillAddress(d.business_address);
-      if (d.business_phone) posSettings.setBillPhone(d.business_phone);
-      posSettings.setBillingType(d.billing_type === 'prepaid' ? 'prepaid' : 'postpaid');
-      posSettings.setTablesRequired(typeof d.tables_required === 'boolean' ? d.tables_required : true);
-    }).catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+        // Mobile pairing requires cloud registration — skip the requests entirely
+        // for unregistered stores to avoid 502 noise in the console.
+        if (res.data.cloud_registration_status === 'registered') {
+          api
+            .get('/mobile/pairing-code')
+            .then((pcRes) => {
+              setPairingCode(pcRes.data.pairing_code);
+              setPairingExpiresAt(pcRes.data.expires_at);
+              setPairingQrDataUrl(pcRes.data.qr_data_url || null);
+              setPairingUnavailable(false);
+            })
+            .catch(() => {
+              setPairingUnavailable(true);
+            });
+          loadPairedDevices();
+        } else {
+          setPairingUnavailable(true);
+        }
+      })
+      .catch(() => {});
+
+    api
+      .get('/settings/business')
+      .then((res) => {
+        const d = res.data;
+        const matchedCountry = COUNTRIES.find(
+          (c) => c.currency === d.currency && c.timezone === d.timezone,
+        );
+        const loaded: BusinessForm = {
+          businessName: d.business_name || '',
+          countryCode: matchedCountry?.code || '',
+          timezone: d.timezone || '',
+          currency: d.currency || '',
+          billingType: d.billing_type === 'prepaid' ? 'prepaid' : 'postpaid',
+          tablesRequired: typeof d.tables_required === 'boolean' ? d.tables_required : true,
+          taxRegistered:
+            d.tax_registered === 'true' || d.tax_registered === true || d.tax_registered === 1,
+          taxRegistrationNumber: d.tax_registration_number || '',
+          businessAddress: d.business_address || '',
+          businessPhone: d.business_phone || '',
+          instagramHandle: d.instagram_handle || '',
+        };
+        setSavedBusiness(loaded);
+        setForm(loaded);
+        // Sync to pos-settings store for bill printing
+        const billDisplay = {
+          billShowName: d.bill_show_name !== false,
+          billShowAddress: d.bill_show_address !== false,
+          billShowPhone: d.bill_show_phone !== false,
+          billShowTaxId: d.bill_show_tax_id === true,
+          billShowTaxBreakdown: d.bill_show_tax_breakdown !== false,
+          billShowCustomerName: d.bill_show_customer_name !== false,
+          billShowCustomerPhone: d.bill_show_customer_phone !== false,
+          billShowTableNumber: d.bill_show_table_number !== false,
+        };
+        setPrintingForm((previous) => ({ ...previous, ...billDisplay }));
+        setSavedPrinting((previous) => ({ ...previous, ...billDisplay }));
+        posSettings.setBillShowName(billDisplay.billShowName);
+        posSettings.setBillShowAddress(billDisplay.billShowAddress);
+        posSettings.setBillShowPhone(billDisplay.billShowPhone);
+        posSettings.setBillShowTaxId(billDisplay.billShowTaxId);
+        posSettings.setBillShowTaxBreakdown(billDisplay.billShowTaxBreakdown);
+        posSettings.setBillShowCustomerName(billDisplay.billShowCustomerName);
+        posSettings.setBillShowCustomerPhone(billDisplay.billShowCustomerPhone);
+        posSettings.setBillShowTableNumber(billDisplay.billShowTableNumber);
+        if (d.tax_registration_number)
+          posSettings.setBillTaxRegistrationNumber(d.tax_registration_number);
+        if (d.business_address) posSettings.setBillAddress(d.business_address);
+        if (d.business_phone) posSettings.setBillPhone(d.business_phone);
+        posSettings.setBillingType(d.billing_type === 'prepaid' ? 'prepaid' : 'postpaid');
+        posSettings.setTablesRequired(
+          typeof d.tables_required === 'boolean' ? d.tables_required : true,
+        );
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const saveCloud = async (silent = false) => {
@@ -1803,7 +2184,10 @@ export default function SettingsPage() {
     }
   };
 
-  const updateGoogleDrivePrefs = async (patch: { frequency?: 'daily' | 'weekly'; retention_count?: number }) => {
+  const updateGoogleDrivePrefs = async (patch: {
+    frequency?: 'daily' | 'weekly';
+    retention_count?: number;
+  }) => {
     const previous = googleDriveStatus;
     setGoogleDriveStatus((prev) => ({ ...prev, ...patch }));
     setSavingGoogleDrivePrefs(true);
@@ -1845,7 +2229,11 @@ export default function SettingsPage() {
     setSavingKdsEnabled(true);
     try {
       await api.put('/settings/kds_enabled', { value: enabled ? 'true' : 'false' });
-      toast.success(enabled ? t('settings.kdsEnabledOn', { defaultValue: 'Kitchen Display System enabled' }) : t('settings.kdsEnabledOff', { defaultValue: 'Kitchen Display System disabled' }));
+      toast.success(
+        enabled
+          ? t('settings.kdsEnabledOn', { defaultValue: 'Kitchen Display System enabled' })
+          : t('settings.kdsEnabledOff', { defaultValue: 'Kitchen Display System disabled' }),
+      );
     } catch {
       setKdsEnabledSetting(previous);
       posSettings.setKdsEnabled(previous);
@@ -1862,9 +2250,11 @@ export default function SettingsPage() {
     try {
       await api.put('/settings/server_app_enabled', { value: enabled ? 'true' : 'false' });
       if (!enabled) setServerAppInfo(null);
-      toast.success(enabled
-        ? t('settings.serverAppEnabledOn', { defaultValue: 'Server App enabled' })
-        : t('settings.serverAppEnabledOff', { defaultValue: 'Server App disabled' }));
+      toast.success(
+        enabled
+          ? t('settings.serverAppEnabledOn', { defaultValue: 'Server App enabled' })
+          : t('settings.serverAppEnabledOff', { defaultValue: 'Server App disabled' }),
+      );
     } catch {
       setServerAppEnabledSetting(previous);
       toast.error(t('settings.saveFailed'));
@@ -1880,7 +2270,11 @@ export default function SettingsPage() {
     setSavingKotPrintingEnabled(true);
     try {
       await api.put('/settings/kot_printing_enabled', { value: enabled ? 'true' : 'false' });
-      toast.success(enabled ? t('settings.kotPrintingEnabledOn', { defaultValue: 'KOT printing enabled' }) : t('settings.kotPrintingEnabledOff', { defaultValue: 'KOT printing disabled' }));
+      toast.success(
+        enabled
+          ? t('settings.kotPrintingEnabledOn', { defaultValue: 'KOT printing enabled' })
+          : t('settings.kotPrintingEnabledOff', { defaultValue: 'KOT printing disabled' }),
+      );
     } catch {
       setKotPrintingEnabledSetting(previous);
       posSettings.setKotPrintingEnabled(previous);
@@ -1901,9 +2295,11 @@ export default function SettingsPage() {
       if (!enabled && previousCashGate) {
         await api.put('/settings/require_open_shift_for_cash', { value: 'false' });
       }
-      toast.success(enabled
-        ? t('settings.shiftsEnabledOn', { defaultValue: 'Shift management enabled' })
-        : t('settings.shiftsEnabledOff', { defaultValue: 'Shift management disabled' }));
+      toast.success(
+        enabled
+          ? t('settings.shiftsEnabledOn', { defaultValue: 'Shift management enabled' })
+          : t('settings.shiftsEnabledOff', { defaultValue: 'Shift management disabled' }),
+      );
     } catch {
       setShiftsEnabledSetting(previous);
       setRequireOpenShiftForCashSetting(previousCashGate);
@@ -1919,9 +2315,15 @@ export default function SettingsPage() {
     setSavingRequireOpenShiftForCash(true);
     try {
       await api.put('/settings/require_open_shift_for_cash', { value: enabled ? 'true' : 'false' });
-      toast.success(enabled
-        ? t('settings.requireOpenShiftForCashOn', { defaultValue: 'Open shift required for cash payments' })
-        : t('settings.requireOpenShiftForCashOff', { defaultValue: 'Cash payments allowed without an open shift' }));
+      toast.success(
+        enabled
+          ? t('settings.requireOpenShiftForCashOn', {
+              defaultValue: 'Open shift required for cash payments',
+            })
+          : t('settings.requireOpenShiftForCashOff', {
+              defaultValue: 'Cash payments allowed without an open shift',
+            }),
+      );
     } catch {
       setRequireOpenShiftForCashSetting(previous);
       toast.error(t('settings.saveFailed'));
@@ -1989,7 +2391,9 @@ export default function SettingsPage() {
   const saveBusinessInfo = async (silent = false) => {
     const phone = form.businessPhone.trim();
     if (phone && !/^\+?[\d\s\-().]{7,20}$/.test(phone)) {
-      toast.error(t('settings.invalidPhoneFormat', { defaultValue: 'Invalid phone number format' }));
+      toast.error(
+        t('settings.invalidPhoneFormat', { defaultValue: 'Invalid phone number format' }),
+      );
       return;
     }
 
@@ -2022,17 +2426,23 @@ export default function SettingsPage() {
               if (!requestSetting?.data.setting?.value) {
                 await api.put(`/settings/${key}`, { value: clientTicketId });
               }
-              await api.post('/support-ticket', {
-                client_ticket_id: clientTicketId,
-                subject: `Request tax support for ${form.countryCode}`,
-                event_code: 'tax.country_plugin_unavailable',
-                message: `The merchant changed country to ${form.countryCode} while taxes were enabled, but no verified country tax plugin is available. Please create and publish it.`,
-                diagnostics: { country: form.countryCode },
-              }).catch(() => {});
+              await api
+                .post('/support-ticket', {
+                  client_ticket_id: clientTicketId,
+                  subject: `Request tax support for ${form.countryCode}`,
+                  event_code: 'tax.country_plugin_unavailable',
+                  message: `The merchant changed country to ${form.countryCode} while taxes were enabled, but no verified country tax plugin is available. Please create and publish it.`,
+                  diagnostics: { country: form.countryCode },
+                })
+                .catch(() => {});
               await api.put('/settings/taxes_enabled', { value: 'false' }).catch(() => {});
-              toast.error(`Tax support for ${form.countryCode} is not available yet. We requested the plugin and will build it soon. Taxes are now off.`);
+              toast.error(
+                `Tax support for ${form.countryCode} is not available yet. We requested the plugin and will build it soon. Taxes are now off.`,
+              );
             } else {
-              toast.error('The country was saved, but its tax plugin could not be installed. Taxes remain enabled until it is resolved.');
+              toast.error(
+                'The country was saved, but its tax plugin could not be installed. Taxes remain enabled until it is resolved.',
+              );
             }
           }
         }
@@ -2043,11 +2453,17 @@ export default function SettingsPage() {
       posSettings.setBillPhone(form.businessPhone);
       posSettings.setBillingType(form.billingType);
       posSettings.setTablesRequired(form.tablesRequired);
-      updateCurrentTenant({ currency: form.currency, timezone: form.timezone, country: form.countryCode });
+      updateCurrentTenant({
+        currency: form.currency,
+        timezone: form.timezone,
+        country: form.countryCode,
+      });
       if (!silent) toast.success(t('settings.storeSaved'));
     } catch (err) {
       if (!silent) {
-        const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || t('settings.saveFailed');
+        const message =
+          (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+          t('settings.saveFailed');
         toast.error(message);
       }
       throw err;
@@ -2059,7 +2475,11 @@ export default function SettingsPage() {
   const saveOrderNumbering = async (silent = false) => {
     const prefix = orderNumberForm.prefix.trim();
     if (prefix && !/^[A-Za-z0-9_-]{0,12}$/.test(prefix)) {
-      toast.error(t('settings.orderNumberPrefixInvalid', { defaultValue: 'Prefix must be up to 12 characters (letters, numbers, - or _)' }));
+      toast.error(
+        t('settings.orderNumberPrefixInvalid', {
+          defaultValue: 'Prefix must be up to 12 characters (letters, numbers, - or _)',
+        }),
+      );
       return;
     }
     setSavingOrderNumbering(true);
@@ -2072,7 +2492,10 @@ export default function SettingsPage() {
       const saved = { ...orderNumberForm, prefix };
       setOrderNumberForm(saved);
       setSavedOrderNumberForm(saved);
-      if (!silent) toast.success(t('settings.orderNumberingSaved', { defaultValue: 'Order number settings saved' }));
+      if (!silent)
+        toast.success(
+          t('settings.orderNumberingSaved', { defaultValue: 'Order number settings saved' }),
+        );
     } catch (err) {
       if (!silent) toast.error(t('settings.saveFailed'));
       throw err;
@@ -2090,7 +2513,13 @@ export default function SettingsPage() {
 
   const saveAllSettings = async () => {
     try {
-      await Promise.all([saveBusinessInfo(true), saveLoyalty(true), saveDiscount(true), saveCloud(true), saveOrderNumbering(true)]);
+      await Promise.all([
+        saveBusinessInfo(true),
+        saveLoyalty(true),
+        saveDiscount(true),
+        saveCloud(true),
+        saveOrderNumbering(true),
+      ]);
       await savePrinting(true);
       await saveBillTemplate(true);
       toast.success(t('settings.allSaved'));
@@ -2133,7 +2562,7 @@ export default function SettingsPage() {
     { value: 'thermal80', label: t('settings.paperSize80') },
   ];
 
-  const isDirty = 
+  const isDirty =
     JSON.stringify(form) !== JSON.stringify(savedBusiness) ||
     JSON.stringify(printingForm) !== JSON.stringify(savedPrinting) ||
     JSON.stringify(billForm) !== JSON.stringify(savedBillForm) ||
@@ -2158,7 +2587,12 @@ export default function SettingsPage() {
     // Block Next.js client-side navigation (clicking links)
     const handleClick = (e: MouseEvent) => {
       const target = (e.target as HTMLElement).closest('a');
-      if (target && target.href && !target.href.includes(window.location.pathname) && target.target !== '_blank') {
+      if (
+        target &&
+        target.href &&
+        !target.href.includes(window.location.pathname) &&
+        target.target !== '_blank'
+      ) {
         e.preventDefault();
         e.stopPropagation();
         setShakeSaveBar(true);
@@ -2175,972 +2609,886 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <PageHeader
-        title={t('flo.settings.title')}
-        description={t('flo.settings.description')}
-      />
+      <PageHeader title={t('flo.settings.title')} description={t('flo.settings.description')} />
 
-      <Tabs orientation="vertical" value={activeTab} onValueChange={setActiveTab} className="flex flex-col md:flex-row gap-6 items-start">
-
+      <Tabs
+        orientation="vertical"
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex flex-col md:flex-row gap-6 items-start"
+      >
         {/* Settings sidebar nav */}
         <div className="w-full md:w-48 md:min-w-[12rem] shrink-0 md:sticky md:top-0">
           <Panel variant="compact" className="!p-2 md:!p-3">
-           <nav className="flex md:flex-col gap-0.5 overflow-x-auto md:overflow-x-visible border-b md:border-b-0 border-flo-border pb-2 md:pb-0">
+            <nav className="flex md:flex-col gap-0.5 overflow-x-auto md:overflow-x-visible border-b md:border-b-0 border-flo-border pb-2 md:pb-0">
+              {/* General group */}
+              <div className="hidden md:block px-3 pt-2 pb-2 mt-1 mb-1 border-b border-flo-border">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-flo-text-muted">
+                  {t('settings.navGroupGeneral')}
+                </p>
+              </div>
+              <SettingsNavItem
+                label={t('settings.storeDetails')}
+                value="store"
+                active={activeTab}
+                onClick={setActiveTab}
+              />
+              {showPrintingSettingsTab && (
+                <SettingsNavItem
+                  label={t('settings.tabPrinters')}
+                  value="receipts-printers"
+                  active={activeTab}
+                  onClick={setActiveTab}
+                />
+              )}
+              <SettingsNavItem
+                label={t('settings.paymentMethods', { defaultValue: 'Payments' })}
+                value="payments"
+                active={activeTab}
+                onClick={setActiveTab}
+              />
+              {showTaxSettingsTab && (
+                <SettingsNavItem
+                  label={t('settings.taxConfiguration')}
+                  value="tax"
+                  active={activeTab}
+                  onClick={setActiveTab}
+                />
+              )}
 
-            {/* General group */}
-            <div className="hidden md:block px-3 pt-2 pb-2 mt-1 mb-1 border-b border-flo-border">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-flo-text-muted">{t('settings.navGroupGeneral')}</p>
-            </div>
-            <SettingsNavItem label={t('settings.storeDetails')} value="store" active={activeTab} onClick={setActiveTab} />
-            {showPrintingSettingsTab && (
-              <SettingsNavItem label={t('settings.tabPrinters')} value="receipts-printers" active={activeTab} onClick={setActiveTab} />
-            )}
-            <SettingsNavItem label={t('settings.paymentMethods', { defaultValue: 'Payments' })} value="payments" active={activeTab} onClick={setActiveTab} />
-            {showTaxSettingsTab && (
-              <SettingsNavItem label={t('settings.taxConfiguration')} value="tax" active={activeTab} onClick={setActiveTab} />
-            )}
-
-            {/* Operations group */}
-            <div className="hidden md:block px-3 pt-4 pb-2 mt-3 mb-1 border-b border-flo-border">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-flo-text-muted">{t('settings.navGroupOperations')}</p>
-            </div>
-            <SettingsNavItem label={t('settings.posWorkflow')} value="pos" active={activeTab} onClick={setActiveTab} />
-            {showShiftsSettingsTab && (
-              <SettingsNavItem label={t('settings.tabShifts')} value="shifts" active={activeTab} onClick={setActiveTab} />
-            )}
-            {showKdsSettingsTab && (
-              <SettingsNavItem label={t('settings.tabKds')} value="kds" active={activeTab} onClick={setActiveTab} />
-            )}
-            <SettingsNavItem label={t('settings.tablesideOrdering')} value="server-app" active={activeTab} onClick={setActiveTab} />
-            {/* WhatsApp opt-in lives under Operations because the receive-bill
+              {/* Operations group */}
+              <div className="hidden md:block px-3 pt-4 pb-2 mt-3 mb-1 border-b border-flo-border">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-flo-text-muted">
+                  {t('settings.navGroupOperations')}
+                </p>
+              </div>
+              <SettingsNavItem
+                label={t('settings.posWorkflow')}
+                value="pos"
+                active={activeTab}
+                onClick={setActiveTab}
+              />
+              {showShiftsSettingsTab && (
+                <SettingsNavItem
+                  label={t('settings.tabShifts')}
+                  value="shifts"
+                  active={activeTab}
+                  onClick={setActiveTab}
+                />
+              )}
+              {showKdsSettingsTab && (
+                <SettingsNavItem
+                  label={t('settings.tabKds')}
+                  value="kds"
+                  active={activeTab}
+                  onClick={setActiveTab}
+                />
+              )}
+              <SettingsNavItem
+                label={t('settings.tablesideOrdering')}
+                value="server-app"
+                active={activeTab}
+                onClick={setActiveTab}
+              />
+              {/* WhatsApp opt-in lives under Operations because the receive-bill
                 workflow is what the cashier touches every time a customer pays. */}
-            {showNotificationSettingsTab && (
-              <SettingsNavItem label={t('settings.tabWhatsapp')} value="whatsapp" active={activeTab} onClick={setActiveTab} />
-            )}
+              {showNotificationSettingsTab && (
+                <SettingsNavItem
+                  label={t('settings.tabWhatsapp')}
+                  value="whatsapp"
+                  active={activeTab}
+                  onClick={setActiveTab}
+                />
+              )}
 
-            {/* Customers group */}
-            <div className="hidden md:block px-3 pt-4 pb-2 mt-3 mb-1 border-b border-flo-border">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-flo-text-muted">{t('settings.navGroupCustomers')}</p>
-            </div>
-            {showLoyaltySettingsTab && (
-              <SettingsNavItem label={t('settings.loyalty')} value="loyalty" active={activeTab} onClick={setActiveTab} />
-            )}
-            <SettingsNavItem label={t('settings.discounts')} value="discounts" active={activeTab} onClick={setActiveTab} />
+              {/* Customers group */}
+              <div className="hidden md:block px-3 pt-4 pb-2 mt-3 mb-1 border-b border-flo-border">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-flo-text-muted">
+                  {t('settings.navGroupCustomers')}
+                </p>
+              </div>
+              {showLoyaltySettingsTab && (
+                <SettingsNavItem
+                  label={t('settings.loyalty')}
+                  value="loyalty"
+                  active={activeTab}
+                  onClick={setActiveTab}
+                />
+              )}
+              <SettingsNavItem
+                label={t('settings.discounts')}
+                value="discounts"
+                active={activeTab}
+                onClick={setActiveTab}
+              />
 
-            {/* Integrations group (formerly "Data") */}
-            <div className="hidden md:block px-3 pt-4 pb-2 mt-3 mb-1 border-b border-flo-border">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-flo-text-muted">{t('settings.navGroupData')}</p>
-            </div>
-            <SettingsNavItem label={t('settings.tabMobileAccess')} value="mobile-access" active={activeTab} onClick={setActiveTab} />
-            {showBackupSettingsTab && (
-              <SettingsNavItem label={t('settings.tabBackupData')} value="data" active={activeTab} onClick={setActiveTab} />
-            )}
-            <SettingsNavItem label={t('settings.tabOrderflow')} value="orderflow" active={activeTab} onClick={setActiveTab} />
+              {/* Integrations group (formerly "Data") */}
+              <div className="hidden md:block px-3 pt-4 pb-2 mt-3 mb-1 border-b border-flo-border">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-flo-text-muted">
+                  {t('settings.navGroupData')}
+                </p>
+              </div>
+              <SettingsNavItem
+                label={t('settings.tabMobileAccess')}
+                value="mobile-access"
+                active={activeTab}
+                onClick={setActiveTab}
+              />
+              {showBackupSettingsTab && (
+                <SettingsNavItem
+                  label={t('settings.tabBackupData')}
+                  value="data"
+                  active={activeTab}
+                  onClick={setActiveTab}
+                />
+              )}
+              <SettingsNavItem
+                label={t('settings.tabOrderflow')}
+                value="orderflow"
+                active={activeTab}
+                onClick={setActiveTab}
+              />
 
-            {/* Account group */}
-            <div className="hidden md:block px-3 pt-4 pb-2 mt-3 mb-1 border-b border-flo-border">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-flo-text-muted">{t('settings.navGroupAccount')}</p>
-            </div>
-            <SettingsNavItem label={t('settings.account')} value="account" active={activeTab} onClick={setActiveTab} attention={cloudDeletionNeedsAction || (cloudAccountAvailable && Boolean(cloudAccount?.email && !cloudAccount?.verified))} />
-            <SettingsNavItem label={t('settings.privacy')} value="privacy" active={activeTab} onClick={setActiveTab} />
-            <SettingsNavItem label={t('settings.tabUpdates')} value="updates" active={activeTab} onClick={setActiveTab} />
-            <SettingsNavItem label={t('settings.tabAbout')} value="about" active={activeTab} onClick={setActiveTab} />
-
-          </nav>
+              {/* Account group */}
+              <div className="hidden md:block px-3 pt-4 pb-2 mt-3 mb-1 border-b border-flo-border">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-flo-text-muted">
+                  {t('settings.navGroupAccount')}
+                </p>
+              </div>
+              <SettingsNavItem
+                label={t('settings.account')}
+                value="account"
+                active={activeTab}
+                onClick={setActiveTab}
+                attention={
+                  cloudDeletionNeedsAction ||
+                  (cloudAccountAvailable && Boolean(cloudAccount?.email && !cloudAccount?.verified))
+                }
+              />
+              <SettingsNavItem
+                label={t('settings.privacy')}
+                value="privacy"
+                active={activeTab}
+                onClick={setActiveTab}
+              />
+              <SettingsNavItem
+                label={t('settings.tabUpdates')}
+                value="updates"
+                active={activeTab}
+                onClick={setActiveTab}
+              />
+              <SettingsNavItem
+                label={t('settings.tabAbout')}
+                value="about"
+                active={activeTab}
+                onClick={setActiveTab}
+              />
+            </nav>
           </Panel>
         </div>
 
         <div className="flex-1 min-w-0 overflow-hidden pb-32">
+          <TabsContent value="store">
+            <div className="pb-6 max-w-3xl space-y-6">
+              {/* Store Details — editable for admin, readonly otherwise */}
+              <Panel className="lg:col-span-2">
+                <div className="flex items-center gap-2 mb-4">
+                  <Building2 size={20} className="text-flo-text-secondary" />
+                  <h2 className="font-semibold text-flo-text">{t('settings.storeDetails')}</h2>
+                  {!isAdmin && (
+                    <span className="ml-auto flex items-center gap-1 text-xs text-flo-text-muted">
+                      <Lock size={12} /> {t('settings.adminOnly')}
+                    </span>
+                  )}
+                </div>
 
-        <TabsContent value="store">
-          <div className="pb-6 max-w-3xl space-y-6">
-            {/* Store Details — editable for admin, readonly otherwise */}
-            <Panel className="lg:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <Building2 size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.storeDetails')}</h2>
-                {!isAdmin && (
-                  <span className="ml-auto flex items-center gap-1 text-xs text-flo-text-muted">
-                    <Lock size={12} /> {t('settings.adminOnly')}
-                  </span>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-flo-text-secondary mb-1">{t('settings.businessName')}</label>
-                  {isAdmin ? (
-                    <input type="text" value={form.businessName} onChange={(e) => setForm((p) => ({ ...p, businessName: e.target.value }))}
-                      className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500" />
-                  ) : (
-                    <p className="font-medium text-flo-text">{form.businessName || currentTenant?.business_name}</p>
-                  )}
-                </div>
-                {/* Country, Timezone, Currency in single line with individual headings */}
-                <div className="md:col-span-2 space-y-2">
-                  {/* Headings */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <label className="text-sm text-flo-text-secondary">{t('settings.country')}</label>
-                    <label className="text-sm text-flo-text-secondary">{t('settings.timezone')}</label>
-                    <label className="text-sm text-flo-text-secondary">{t('settings.currency')}</label>
-                  </div>
-                  
-                  {/* Input fields */}
-                  {isAdmin ? (
-                    <div className="grid grid-cols-3 gap-2">
-                      <select
-                        value={form.countryCode}
-                        onChange={(e) => {
-                          const country = COUNTRIES.find(c => c.code === e.target.value);
-                          setForm((p) => ({
-                            ...p,
-                            countryCode: e.target.value,
-                            currency: country?.currency || p.currency,
-                            timezone: country?.timezone || p.timezone,
-                          }));
-                        }}
-                        aria-label={t('common.search')}
-                        className="px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-surface"
-                      >
-                        <option value="">{t('settings.selectCountry')}</option>
-                        {COUNTRIES.map((c) => (
-                          <option key={c.code} value={c.code}>{countryName(c.code)}</option>
-                        ))}
-                      </select>
-                      <input 
-                        type="text" 
-                        value={form.timezone} 
-                        onChange={(e) => setForm((p) => ({ ...p, timezone: e.target.value }))}
-                        placeholder={t('settings.timezoneAutoFilled')}
-                        className="px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-bg" 
-                        readOnly
-                      />
-                      <input 
-                        type="text" 
-                        value={form.currency} 
-                        onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
-                        placeholder={t('settings.currencyAutoFilled')}
-                        className="px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-bg" 
-                        readOnly
-                      />
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-3 gap-2">
-                      <p className="font-medium text-flo-text">
-                        {form.countryCode ? countryName(form.countryCode) : '—'}
-                      </p>
-                      <p className="font-medium text-flo-text">
-                        {form.timezone || '—'}
-                      </p>
-                      <p className="font-medium text-flo-text">
-                        {form.currency || '—'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm text-flo-text-secondary mb-1">{t('settings.billingType')}</label>
-                  {isAdmin ? (
-                    <select value={form.billingType}
-                      onChange={(e) => setForm((p) => ({ ...p, billingType: e.target.value as 'postpaid' | 'prepaid' }))}
-                      className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-surface">
-                      <option value="postpaid">{t('settings.billingTypePostpaid')}</option>
-                      <option value="prepaid">{t('settings.billingTypePrepaid')}</option>
-                    </select>
-                  ) : (
-                    <p className="font-medium text-flo-text capitalize">{form.billingType}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm text-flo-text-secondary mb-1">{t('settings.tablesRequired')}</label>
-                  {isAdmin ? (
-                    <select
-                      value={form.tablesRequired ? 'yes' : 'no'}
-                      onChange={(e) => setForm((p) => ({ ...p, tablesRequired: e.target.value === 'yes' }))}
-                      className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-surface"
-                    >
-                      <option value="yes">{t('settings.tablesRequiredYes')}</option>
-                      <option value="no">{t('settings.tablesRequiredNo')}</option>
-                    </select>
-                  ) : (
-                    <p className="font-medium text-flo-text">{form.tablesRequired ? t('settings.yes') : t('settings.no')}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm text-flo-text-secondary mb-1">{t('settings.taxRegistered', { defaultValue: 'Tax Registered' })}</label>
-                  {isAdmin ? (
-                    <select
-                      value={form.taxRegistered ? 'yes' : 'no'}
-                      onChange={(e) => setForm((p) => ({ ...p, taxRegistered: e.target.value === 'yes' }))}
-                      className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-surface"
-                    >
-                      <option value="yes">{t('settings.yes')}</option>
-                      <option value="no">{t('settings.no')}</option>
-                    </select>
-                  ) : (
-                    <p className="font-medium text-flo-text">{form.taxRegistered ? t('settings.yes') : t('settings.no')}</p>
-                  )}
-                </div>
-                {form.taxRegistered ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-flo-text-secondary mb-1">{t('settings.taxIdLabel')}</label>
+                    <label className="block text-sm text-flo-text-secondary mb-1">
+                      {t('settings.businessName')}
+                    </label>
                     {isAdmin ? (
-                      <input type="text" value={form.taxRegistrationNumber} onChange={(e) => setForm((p) => ({ ...p, taxRegistrationNumber: e.target.value }))}
-                        placeholder={t('settings.taxIdPlaceholder')}
-                        className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500" />
+                      <input
+                        type="text"
+                        value={form.businessName}
+                        onChange={(e) => setForm((p) => ({ ...p, businessName: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500"
+                      />
                     ) : (
-                      <p className="font-medium text-flo-text">{form.taxRegistrationNumber || '—'}</p>
+                      <p className="font-medium text-flo-text">
+                        {form.businessName || currentTenant?.business_name}
+                      </p>
                     )}
                   </div>
-                ) : <div className="hidden md:block" />}
-                <div>
-                  <label className="block text-sm text-flo-text-secondary mb-1">{t('settings.phone')}</label>
-                  {isAdmin ? (
-                    <input type="text" value={form.businessPhone} onChange={(e) => setForm((p) => ({ ...p, businessPhone: e.target.value }))}
-                      placeholder={t('settings.phonePlaceholder', { dialCode: dialCodeFor(form.countryCode) || '+1', defaultValue: '+1 555 000 0000' })}
-                      className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500" />
-                  ) : (
-                    <p className="font-medium text-flo-text">{form.businessPhone || '—'}</p>
-                  )}
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm text-flo-text-secondary mb-1">{t('settings.address')}</label>
-                  {isAdmin ? (
-                    <textarea value={form.businessAddress} onChange={(e) => setForm((p) => ({ ...p, businessAddress: e.target.value }))}
-                      rows={2} placeholder={t('settings.addressPlaceholder')}
-                      className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 resize-none" />
-                  ) : (
-                    <p className="font-medium text-flo-text">{form.businessAddress || '—'}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm text-flo-text-secondary mb-1">{t('settings.instagramHandle')}</label>
-                  {isAdmin ? (
-                    <input type="text" value={form.instagramHandle} onChange={(e) => setForm((p) => ({ ...p, instagramHandle: e.target.value }))}
-                      placeholder={t('settings.instagramPlaceholder')}
-                      className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500" />
-                  ) : (
-                    <p className="font-medium text-flo-text">{form.instagramHandle || '—'}</p>
-                  )}
-                  <p className="text-xs text-flo-text-secondary mt-1">{t('settings.instagramHint')}</p>
-                </div>
-              </div>
+                  {/* Country, Timezone, Currency in single line with individual headings */}
+                  <div className="md:col-span-2 space-y-2">
+                    {/* Headings */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <label className="text-sm text-flo-text-secondary">
+                        {t('settings.country')}
+                      </label>
+                      <label className="text-sm text-flo-text-secondary">
+                        {t('settings.timezone')}
+                      </label>
+                      <label className="text-sm text-flo-text-secondary">
+                        {t('settings.currency')}
+                      </label>
+                    </div>
 
-              {isAdmin && (
-                <div className="mt-4 flex gap-2">
-                </div>
-              )}
-            </Panel>
-
-            {/* Order Number Format */}
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <Hash size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.orderNumberFormat', { defaultValue: 'Order Number Format' })}</h2>
-                {!isAdmin && (
-                  <span className="ml-auto flex items-center gap-1 text-xs text-flo-text-muted">
-                    <Lock size={12} /> {t('settings.adminOnly')}
-                  </span>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-flo-text-secondary mb-1">{t('settings.orderNumberPrefix', { defaultValue: 'Prefix' })}</label>
-                  {isAdmin ? (
-                    <input
-                      type="text"
-                      value={orderNumberForm.prefix}
-                      onChange={(e) => setOrderNumberForm((p) => ({ ...p, prefix: e.target.value.toUpperCase() }))}
-                      placeholder="ORD"
-                      maxLength={12}
-                      className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500"
-                    />
-                  ) : (
-                    <p className="font-medium text-flo-text">{orderNumberForm.prefix || '—'}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm text-flo-text-secondary mb-1">{t('settings.orderNumberPreview', { defaultValue: 'Preview' })}</label>
-                  <p className="font-mono font-medium text-flo-text px-3 py-2 bg-flo-bg rounded-lg border border-flo-border">
-                    {[
-                      orderNumberForm.prefix,
-                      orderNumberForm.includeDate ? new Date().toISOString().slice(0, 10).replace(/-/g, '') : '',
-                      '0001',
-                    ].filter(Boolean).join('-')}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 pt-5 border-t border-flo-border space-y-3">
-                <div className="flex items-center justify-between py-2">
-                  <div>
-                    <span className="text-sm text-flo-text">{t('settings.orderNumberIncludeDate', { defaultValue: 'Include date in order number' })}</span>
-                    <p className="text-xs text-flo-text-secondary">{t('settings.orderNumberIncludeDateHint', { defaultValue: 'Adds the current date (YYYYMMDD) after the prefix.' })}</p>
+                    {/* Input fields */}
+                    {isAdmin ? (
+                      <div className="grid grid-cols-3 gap-2">
+                        <select
+                          value={form.countryCode}
+                          onChange={(e) => {
+                            const country = COUNTRIES.find((c) => c.code === e.target.value);
+                            setForm((p) => ({
+                              ...p,
+                              countryCode: e.target.value,
+                              currency: country?.currency || p.currency,
+                              timezone: country?.timezone || p.timezone,
+                            }));
+                          }}
+                          aria-label={t('common.search')}
+                          className="px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-surface"
+                        >
+                          <option value="">{t('settings.selectCountry')}</option>
+                          {COUNTRIES.map((c) => (
+                            <option key={c.code} value={c.code}>
+                              {countryName(c.code)}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="text"
+                          value={form.timezone}
+                          onChange={(e) => setForm((p) => ({ ...p, timezone: e.target.value }))}
+                          placeholder={t('settings.timezoneAutoFilled')}
+                          className="px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-bg"
+                          readOnly
+                        />
+                        <input
+                          type="text"
+                          value={form.currency}
+                          onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
+                          placeholder={t('settings.currencyAutoFilled')}
+                          className="px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-bg"
+                          readOnly
+                        />
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2">
+                        <p className="font-medium text-flo-text">
+                          {form.countryCode ? countryName(form.countryCode) : '—'}
+                        </p>
+                        <p className="font-medium text-flo-text">{form.timezone || '—'}</p>
+                        <p className="font-medium text-flo-text">{form.currency || '—'}</p>
+                      </div>
+                    )}
                   </div>
-                  <Toggle
-                    value={orderNumberForm.includeDate}
-                    onChange={isAdmin ? (v) => setOrderNumberForm((p) => ({ ...p, includeDate: v })) : () => {}}
-                  />
-                </div>
-                <div className="flex items-center justify-between py-2">
                   <div>
-                    <span className="text-sm text-flo-text">{t('settings.orderNumberResetDaily', { defaultValue: 'Reset series every 24 hours' })}</span>
-                    <p className="text-xs text-flo-text-secondary">{t('settings.orderNumberResetDailyHint', { defaultValue: 'Numbering restarts from 1 at midnight in the store’s timezone.' })}</p>
+                    <label className="block text-sm text-flo-text-secondary mb-1">
+                      {t('settings.billingType')}
+                    </label>
+                    {isAdmin ? (
+                      <select
+                        value={form.billingType}
+                        onChange={(e) =>
+                          setForm((p) => ({
+                            ...p,
+                            billingType: e.target.value as 'postpaid' | 'prepaid',
+                          }))
+                        }
+                        className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-surface"
+                      >
+                        <option value="postpaid">{t('settings.billingTypePostpaid')}</option>
+                        <option value="prepaid">{t('settings.billingTypePrepaid')}</option>
+                      </select>
+                    ) : (
+                      <p className="font-medium text-flo-text capitalize">{form.billingType}</p>
+                    )}
                   </div>
-                  <Toggle
-                    value={orderNumberForm.resetDaily}
-                    onChange={isAdmin ? (v) => setOrderNumberForm((p) => ({ ...p, resetDaily: v })) : () => {}}
-                  />
+                  <div>
+                    <label className="block text-sm text-flo-text-secondary mb-1">
+                      {t('settings.tablesRequired')}
+                    </label>
+                    {isAdmin ? (
+                      <select
+                        value={form.tablesRequired ? 'yes' : 'no'}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, tablesRequired: e.target.value === 'yes' }))
+                        }
+                        className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-surface"
+                      >
+                        <option value="yes">{t('settings.tablesRequiredYes')}</option>
+                        <option value="no">{t('settings.tablesRequiredNo')}</option>
+                      </select>
+                    ) : (
+                      <p className="font-medium text-flo-text">
+                        {form.tablesRequired ? t('settings.yes') : t('settings.no')}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-flo-text-secondary mb-1">
+                      {t('settings.taxRegistered', { defaultValue: 'Tax Registered' })}
+                    </label>
+                    {isAdmin ? (
+                      <select
+                        value={form.taxRegistered ? 'yes' : 'no'}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, taxRegistered: e.target.value === 'yes' }))
+                        }
+                        className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-surface"
+                      >
+                        <option value="yes">{t('settings.yes')}</option>
+                        <option value="no">{t('settings.no')}</option>
+                      </select>
+                    ) : (
+                      <p className="font-medium text-flo-text">
+                        {form.taxRegistered ? t('settings.yes') : t('settings.no')}
+                      </p>
+                    )}
+                  </div>
+                  {form.taxRegistered ? (
+                    <div>
+                      <label className="block text-sm text-flo-text-secondary mb-1">
+                        {t('settings.taxIdLabel')}
+                      </label>
+                      {isAdmin ? (
+                        <input
+                          type="text"
+                          value={form.taxRegistrationNumber}
+                          onChange={(e) =>
+                            setForm((p) => ({ ...p, taxRegistrationNumber: e.target.value }))
+                          }
+                          placeholder={t('settings.taxIdPlaceholder')}
+                          className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500"
+                        />
+                      ) : (
+                        <p className="font-medium text-flo-text">
+                          {form.taxRegistrationNumber || '—'}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="hidden md:block" />
+                  )}
+                  <div>
+                    <label className="block text-sm text-flo-text-secondary mb-1">
+                      {t('settings.phone')}
+                    </label>
+                    {isAdmin ? (
+                      <input
+                        type="text"
+                        value={form.businessPhone}
+                        onChange={(e) => setForm((p) => ({ ...p, businessPhone: e.target.value }))}
+                        placeholder={t('settings.phonePlaceholder', {
+                          dialCode: dialCodeFor(form.countryCode) || '+1',
+                          defaultValue: '+1 555 000 0000',
+                        })}
+                        className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500"
+                      />
+                    ) : (
+                      <p className="font-medium text-flo-text">{form.businessPhone || '—'}</p>
+                    )}
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm text-flo-text-secondary mb-1">
+                      {t('settings.address')}
+                    </label>
+                    {isAdmin ? (
+                      <textarea
+                        value={form.businessAddress}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, businessAddress: e.target.value }))
+                        }
+                        rows={2}
+                        placeholder={t('settings.addressPlaceholder')}
+                        className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 resize-none"
+                      />
+                    ) : (
+                      <p className="font-medium text-flo-text">{form.businessAddress || '—'}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-flo-text-secondary mb-1">
+                      {t('settings.instagramHandle')}
+                    </label>
+                    {isAdmin ? (
+                      <input
+                        type="text"
+                        value={form.instagramHandle}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, instagramHandle: e.target.value }))
+                        }
+                        placeholder={t('settings.instagramPlaceholder')}
+                        className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500"
+                      />
+                    ) : (
+                      <p className="font-medium text-flo-text">{form.instagramHandle || '—'}</p>
+                    )}
+                    <p className="text-xs text-flo-text-secondary mt-1">
+                      {t('settings.instagramHint')}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </Panel>
 
+                {isAdmin && <div className="mt-4 flex gap-2"></div>}
+              </Panel>
 
-            {/* Subscription */}
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <CreditCard size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.subscription')}</h2>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-flo-text-secondary">{t('settings.plan')}</p>
-                  <p className="font-medium text-flo-text capitalize">{currentTenant?.plan}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-flo-text-secondary">{t('settings.status')}</p>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                    currentTenant?.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {t(TENANT_STATUS_LABEL_KEYS[currentTenant?.status ?? ''] ?? currentTenant?.status ?? '')}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm text-flo-text-secondary mb-1">{t('settings.languages')}</p>
-                  <select
-                    value={language}
-                    onChange={(e) => {
-                      const lang = e.target.value as 'en' | 'es' | 'pt';
-                      setLanguage(lang);
-                      api.put('/settings/business', { language: lang }).catch(() => toast.error(t('settings.saveFailed')));
-                    }}
-                    className="block w-full rounded-md border-flo-border shadow-sm focus:border-flo-brand-500 focus:ring-flo-brand-500 sm:text-sm px-3 py-2 border"
-                  >
-                    <option value="en">{t('settings.languageEn')}</option>
-                    <option value="es">{t('settings.languageEs')}</option>
-                    <option value="pt">{t('settings.languagePt')}</option>
-                  </select>
-                </div>
-              </div>
-            </Panel>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="payments">
-          <PaymentMethodsSettings isAdmin={isAdmin} />
-        </TabsContent>
-
-        {showTaxSettingsTab && (
-          <TabsContent value="tax">
-            <TaxConfigurationPanel isOwner={currentTenant?.role === 'owner'} />
-          </TabsContent>
-        )}
-
-        {showShiftsSettingsTab && (
-          <TabsContent value="shifts">
-            <div className="pb-6 max-w-3xl space-y-4">
+              {/* Order Number Format */}
               <Panel>
                 <div className="flex items-center gap-2 mb-4">
-                  <Clock size={20} className="text-flo-text-secondary" />
+                  <Hash size={20} className="text-flo-text-secondary" />
                   <h2 className="font-semibold text-flo-text">
-                    {t('settings.shiftManagement', { defaultValue: 'Shift Management' })}
+                    {t('settings.orderNumberFormat', { defaultValue: 'Order Number Format' })}
                   </h2>
+                  {!isAdmin && (
+                    <span className="ml-auto flex items-center gap-1 text-xs text-flo-text-muted">
+                      <Lock size={12} /> {t('settings.adminOnly')}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-flo-text-secondary mb-1">
+                      {t('settings.orderNumberPrefix', { defaultValue: 'Prefix' })}
+                    </label>
+                    {isAdmin ? (
+                      <input
+                        type="text"
+                        value={orderNumberForm.prefix}
+                        onChange={(e) =>
+                          setOrderNumberForm((p) => ({
+                            ...p,
+                            prefix: e.target.value.toUpperCase(),
+                          }))
+                        }
+                        placeholder="ORD"
+                        maxLength={12}
+                        className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500"
+                      />
+                    ) : (
+                      <p className="font-medium text-flo-text">{orderNumberForm.prefix || '—'}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm text-flo-text-secondary mb-1">
+                      {t('settings.orderNumberPreview', { defaultValue: 'Preview' })}
+                    </label>
+                    <p className="font-mono font-medium text-flo-text px-3 py-2 bg-flo-bg rounded-lg border border-flo-border">
+                      {[
+                        orderNumberForm.prefix,
+                        orderNumberForm.includeDate
+                          ? new Date().toISOString().slice(0, 10).replace(/-/g, '')
+                          : '',
+                        '0001',
+                      ]
+                        .filter(Boolean)
+                        .join('-')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 pt-5 border-t border-flo-border space-y-3">
+                  <div className="flex items-center justify-between py-2">
+                    <div>
+                      <span className="text-sm text-flo-text">
+                        {t('settings.orderNumberIncludeDate', {
+                          defaultValue: 'Include date in order number',
+                        })}
+                      </span>
+                      <p className="text-xs text-flo-text-secondary">
+                        {t('settings.orderNumberIncludeDateHint', {
+                          defaultValue: 'Adds the current date (YYYYMMDD) after the prefix.',
+                        })}
+                      </p>
+                    </div>
+                    <Toggle
+                      value={orderNumberForm.includeDate}
+                      onChange={
+                        isAdmin
+                          ? (v) => setOrderNumberForm((p) => ({ ...p, includeDate: v }))
+                          : () => {}
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center justify-between py-2">
+                    <div>
+                      <span className="text-sm text-flo-text">
+                        {t('settings.orderNumberResetDaily', {
+                          defaultValue: 'Reset series every 24 hours',
+                        })}
+                      </span>
+                      <p className="text-xs text-flo-text-secondary">
+                        {t('settings.orderNumberResetDailyHint', {
+                          defaultValue:
+                            'Numbering restarts from 1 at midnight in the store’s timezone.',
+                        })}
+                      </p>
+                    </div>
+                    <Toggle
+                      value={orderNumberForm.resetDaily}
+                      onChange={
+                        isAdmin
+                          ? (v) => setOrderNumberForm((p) => ({ ...p, resetDaily: v }))
+                          : () => {}
+                      }
+                    />
+                  </div>
+                </div>
+              </Panel>
+
+              {/* Subscription */}
+              <Panel>
+                <div className="flex items-center gap-2 mb-4">
+                  <CreditCard size={20} className="text-flo-text-secondary" />
+                  <h2 className="font-semibold text-flo-text">{t('settings.subscription')}</h2>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-flo-text-secondary">{t('settings.plan')}</p>
+                    <p className="font-medium text-flo-text capitalize">{currentTenant?.plan}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-flo-text-secondary">{t('settings.status')}</p>
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                        currentTenant?.status === 'active'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}
+                    >
+                      {t(
+                        TENANT_STATUS_LABEL_KEYS[currentTenant?.status ?? ''] ??
+                          currentTenant?.status ??
+                          '',
+                      )}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-flo-text-secondary mb-1">{tSettings('languages')}</p>
+                    <select
+                      value={language}
+                      onChange={(e) => {
+                        const lang = e.target.value as 'en' | 'es' | 'pt';
+                        setLanguage(lang);
+                        api
+                          .put('/settings/business', { language: lang })
+                          .catch(() => toast.error(tSettings('saveFailed')));
+                      }}
+                      className="block w-full rounded-md border-flo-border shadow-sm focus:border-flo-brand-500 focus:ring-flo-brand-500 sm:text-sm px-3 py-2 border"
+                    >
+                      <option value="en">{tSettings('languageEn')}</option>
+                      <option value="es">{tSettings('languageEs')}</option>
+                      <option value="pt">{tSettings('languagePt')}</option>
+                    </select>
+                  </div>
+                </div>
+              </Panel>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="payments">
+            <PaymentMethodsSettings isAdmin={isAdmin} />
+          </TabsContent>
+
+          {showTaxSettingsTab && (
+            <TabsContent value="tax">
+              <TaxConfigurationPanel isOwner={currentTenant?.role === 'owner'} />
+            </TabsContent>
+          )}
+
+          {showShiftsSettingsTab && (
+            <TabsContent value="shifts">
+              <div className="pb-6 max-w-3xl space-y-4">
+                <Panel>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Clock size={20} className="text-flo-text-secondary" />
+                    <h2 className="font-semibold text-flo-text">
+                      {t('settings.shiftManagement', { defaultValue: 'Shift Management' })}
+                    </h2>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-flo-text">
+                          {t('settings.shiftsEnabled', { defaultValue: 'Enable Shift Management' })}
+                        </p>
+                        <p className="text-sm text-flo-text-secondary">
+                          {t('settings.shiftsEnabledHint', {
+                            defaultValue:
+                              'When enabled, staff can open and close terminal shifts for cash reconciliation.',
+                          })}
+                        </p>
+                      </div>
+                      <Toggle
+                        value={shiftsEnabledSetting}
+                        onChange={(v) => {
+                          if (!savingShiftsEnabled) void saveShiftsEnabled(v);
+                        }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-4 pt-2 border-t border-flo-border">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-flo-text">
+                          {t('settings.requireOpenShiftForCash', {
+                            defaultValue: 'Require Open Shift for Cash',
+                          })}
+                        </p>
+                        <p className="text-sm text-flo-text-secondary">
+                          {t('settings.requireOpenShiftForCashHint', {
+                            defaultValue:
+                              'Block cash payments unless this terminal has an open shift.',
+                          })}
+                        </p>
+                      </div>
+                      <Toggle
+                        value={requireOpenShiftForCashSetting}
+                        onChange={(v) => {
+                          if (!savingRequireOpenShiftForCash && shiftsEnabledSetting) {
+                            void saveRequireOpenShiftForCash(v);
+                          }
+                        }}
+                      />
+                    </div>
+                    {!shiftsEnabledSetting && (
+                      <p className="text-sm text-flo-text-secondary">
+                        {t('settings.requireOpenShiftForCashDisabledHint', {
+                          defaultValue:
+                            'Enable shift management before requiring an open shift for cash.',
+                        })}
+                      </p>
+                    )}
+                  </div>
+                </Panel>
+                <Panel variant="compact" className="bg-flo-surface-muted">
+                  <p className="text-small text-flo-text-secondary">
+                    {t('flo.settings.shiftsOpsNote')}{' '}
+                    <Link
+                      href="/operations"
+                      className="font-medium text-flo-brand-700 hover:underline"
+                    >
+                      {t('flo.settings.openOperations')}
+                    </Link>
+                  </p>
+                </Panel>
+                <ShiftHistoryPanel />
+              </div>
+            </TabsContent>
+          )}
+
+          <TabsContent value="pos">
+            <div className="pb-6 max-w-3xl space-y-6">
+              {/* POS Display */}
+              <Panel>
+                <div className="flex items-center gap-2 mb-4">
+                  <Monitor size={20} className="text-flo-text-secondary" />
+                  <h2 className="font-semibold text-flo-text">{t('settings.posDisplay')}</h2>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-flo-text">{t('settings.showProductImages')}</p>
+                    <p className="text-sm text-flo-text-secondary">
+                      {t('settings.showProductImagesHint')}
+                    </p>
+                  </div>
+                  <Toggle
+                    value={posSettings.showProductImages}
+                    onChange={(v) => {
+                      posSettings.setShowProductImages(v);
+                      toast.success(
+                        v
+                          ? t('settings.productImagesEnabled', {
+                              defaultValue: 'Product images enabled',
+                            })
+                          : t('settings.productImagesDisabled', {
+                              defaultValue: 'Product images disabled',
+                            }),
+                        { id: 'pos-local' },
+                      );
+                    }}
+                  />
+                </div>
+              </Panel>
+
+              {/* POS Workflow */}
+              <Panel>
+                <div className="flex items-center gap-2 mb-4">
+                  <Users size={20} className="text-flo-text-secondary" />
+                  <h2 className="font-semibold text-flo-text">{t('settings.posWorkflow')}</h2>
                 </div>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-flo-text">
-                        {t('settings.shiftsEnabled', { defaultValue: 'Enable Shift Management' })}
-                      </p>
+                      <p className="font-medium text-flo-text">{t('settings.customerMandatory')}</p>
                       <p className="text-sm text-flo-text-secondary">
-                        {t('settings.shiftsEnabledHint', {
-                          defaultValue: 'When enabled, staff can open and close terminal shifts for cash reconciliation.',
-                        })}
+                        {t('settings.customerMandatoryHint')}
                       </p>
                     </div>
                     <Toggle
-                      value={shiftsEnabledSetting}
+                      value={posSettings.customerMandatory}
                       onChange={(v) => {
-                        if (!savingShiftsEnabled) void saveShiftsEnabled(v);
+                        posSettings.setCustomerMandatory(v);
+                        toast.success(
+                          v
+                            ? t('settings.customerMandatoryEnabled', {
+                                defaultValue: 'Mandatory customer enabled',
+                              })
+                            : t('settings.customerMandatoryDisabled', {
+                                defaultValue: 'Mandatory customer disabled',
+                              }),
+                          { id: 'pos-local' },
+                        );
                       }}
                     />
                   </div>
+                  <p className="text-sm text-flo-text-secondary">
+                    {t('settings.phoneDigitsDerived')}
+                  </p>
                   <div className="flex items-center justify-between gap-4 pt-2 border-t border-flo-border">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-flo-text">
-                        {t('settings.requireOpenShiftForCash', {
-                          defaultValue: 'Require Open Shift for Cash',
+                        {t('settings.enforcePhoneLength', {
+                          defaultValue: 'Enforce Phone Number Length',
                         })}
                       </p>
                       <p className="text-sm text-flo-text-secondary">
-                        {t('settings.requireOpenShiftForCashHint', {
-                          defaultValue: 'Block cash payments unless this terminal has an open shift.',
+                        {t('settings.enforcePhoneLengthHint', {
+                          defaultValue:
+                            'Automatically jump to the Name field once a valid phone number for your country has been typed — e.g. 10 digits for India.',
                         })}
                       </p>
                     </div>
                     <Toggle
-                      value={requireOpenShiftForCashSetting}
+                      value={posSettings.enforcePhoneLength}
                       onChange={(v) => {
-                        if (!savingRequireOpenShiftForCash && shiftsEnabledSetting) {
-                          void saveRequireOpenShiftForCash(v);
-                        }
+                        posSettings.setEnforcePhoneLength(v);
+                        toast.success(
+                          v
+                            ? t('settings.enforcePhoneLengthEnabled', {
+                                defaultValue: 'Phone length enforcement enabled',
+                              })
+                            : t('settings.enforcePhoneLengthDisabled', {
+                                defaultValue: 'Phone length enforcement disabled',
+                              }),
+                          { id: 'pos-local' },
+                        );
                       }}
                     />
                   </div>
-                  {!shiftsEnabledSetting && (
-                    <p className="text-sm text-flo-text-secondary">
-                      {t('settings.requireOpenShiftForCashDisabledHint', {
-                        defaultValue: 'Enable shift management before requiring an open shift for cash.',
-                      })}
-                    </p>
-                  )}
                 </div>
               </Panel>
-              <Panel variant="compact" className="bg-flo-surface-muted">
-                <p className="text-small text-flo-text-secondary">
-                  {t('flo.settings.shiftsOpsNote')}{' '}
-                  <Link
-                    href="/operations"
-                    className="font-medium text-flo-brand-700 hover:underline"
-                  >
-                    {t('flo.settings.openOperations')}
-                  </Link>
-                </p>
-              </Panel>
-              <ShiftHistoryPanel />
-            </div>
-          </TabsContent>
-        )}
 
-        <TabsContent value="pos">
-          <div className="pb-6 max-w-3xl space-y-6">
-            {/* POS Display */}
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <Monitor size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.posDisplay')}</h2>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-flo-text">{t('settings.showProductImages')}</p>
-                  <p className="text-sm text-flo-text-secondary">{t('settings.showProductImagesHint')}</p>
-                </div>
-                <Toggle value={posSettings.showProductImages} onChange={(v) => {
-                  posSettings.setShowProductImages(v);
-                  toast.success(v ? t('settings.productImagesEnabled', { defaultValue: 'Product images enabled' }) : t('settings.productImagesDisabled', { defaultValue: 'Product images disabled' }), { id: 'pos-local' });
-                }} />
-              </div>
-            </Panel>
-
-            {/* POS Workflow */}
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <Users size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.posWorkflow')}</h2>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-flo-text">{t('settings.customerMandatory')}</p>
-                    <p className="text-sm text-flo-text-secondary">{t('settings.customerMandatoryHint')}</p>
-                  </div>
-                  <Toggle value={posSettings.customerMandatory} onChange={(v) => {
-                    posSettings.setCustomerMandatory(v);
-                    toast.success(v ? t('settings.customerMandatoryEnabled', { defaultValue: 'Mandatory customer enabled' }) : t('settings.customerMandatoryDisabled', { defaultValue: 'Mandatory customer disabled' }), { id: 'pos-local' });
-                  }} />
-                </div>
-                <p className="text-sm text-flo-text-secondary">{t('settings.phoneDigitsDerived')}</p>
-                <div className="flex items-center justify-between gap-4 pt-2 border-t border-flo-border">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-flo-text">{t('settings.enforcePhoneLength', { defaultValue: 'Enforce Phone Number Length' })}</p>
-                    <p className="text-sm text-flo-text-secondary">{t('settings.enforcePhoneLengthHint', { defaultValue: 'Automatically jump to the Name field once a valid phone number for your country has been typed — e.g. 10 digits for India.' })}</p>
-                  </div>
-                  <Toggle value={posSettings.enforcePhoneLength} onChange={(v) => {
-                    posSettings.setEnforcePhoneLength(v);
-                    toast.success(v ? t('settings.enforcePhoneLengthEnabled', { defaultValue: 'Phone length enforcement enabled' }) : t('settings.enforcePhoneLengthDisabled', { defaultValue: 'Phone length enforcement disabled' }), { id: 'pos-local' });
-                  }} />
-                </div>
-              </div>
-            </Panel>
-
-            {/* Add a cashier — pair another device onto the same POS over the local network */}
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <Smartphone size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.posPairing')}</h2>
-              </div>
-              <p className="text-sm text-flo-text-secondary mb-5">
-                {t('settings.posPairingHint')}
-              </p>
-
-              <div className="mb-5 pb-5 border-b border-flo-border space-y-2">
-                <p className="font-medium text-flo-text">{t('settings.networkMode')}</p>
-                <p className="text-sm text-flo-text-secondary">{t('settings.networkModeHint')}</p>
-                <select
-                  value={networkMode}
-                  disabled={savingNetworkMode}
-                  onChange={(e) => {
-                    const next = e.target.value as NetworkMode;
-                    if (next === networkMode) return;
-                    void saveNetworkMode(next);
-                  }}
-                  className="w-full max-w-md px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-surface text-flo-text"
-                >
-                  <option value="localhost">{t('settings.networkModeLocalhost')}</option>
-                  <option value="kds_lan">{t('settings.networkModeKdsLan')}</option>
-                  <option value="lan">{t('settings.networkModeLan')}</option>
-                </select>
-              </div>
-
-              {posInfoLoading && (
-                <div className="flex items-center justify-center py-10">
-                  <div className="w-6 h-6 border-2 border-flo-brand-600 border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-
-              {posInfo && !posInfoLoading && (
-                <div className="flex flex-col gap-6 w-full">
-                  {posInfo.ips_data && posInfo.ips_data.length > 0 ? (
-                    <>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                        {posInfo.ips_data.map((ipInfo: { ip: string; url: string; qr_data: string | null }, idx: number) => (
-                          <div key={idx} className="flex flex-col items-center p-4 bg-flo-bg border border-flo-border rounded-lg">
-                            <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-3">
-                              {ipInfo.ip.startsWith('100.') ? t('settings.vpnMeshNetwork') : t('settings.localNetwork')}
-                            </p>
-                            {ipInfo.qr_data ? (
-                              <img src={ipInfo.qr_data} alt={`QR Code for ${ipInfo.ip}`} className="w-40 h-40 rounded-lg mb-3 bg-flo-surface p-2 border border-flo-border" />
-                            ) : (
-                              <div className="w-40 h-40 bg-flo-surface-muted rounded-lg flex items-center justify-center mb-3">
-                                <QrCode size={40} className="text-flo-text-muted" />
-                              </div>
-                            )}
-                            <a href={ipInfo.url} target="_blank" rel="noopener noreferrer" className="text-xs font-mono text-flo-brand-600 hover:underline break-all text-center">
-                              {ipInfo.url}
-                            </a>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-1">
-                            <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">{t('settings.appleDevices')}</p>
-                            <a href={posInfo.mdns_url} target="_blank" rel="noopener noreferrer" className="block font-mono text-sm text-blue-600 break-all hover:underline">
-                              {posInfo.mdns_url}
-                            </a>
-                            <p className="text-xs text-blue-600 mt-2">
-                              {t('settings.appleDevicesHint')}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex flex-col sm:flex-row gap-6 items-start">
-                      <div className="shrink-0">
-                        {posInfo.qr_data_url ? (
-                          <img src={posInfo.qr_data_url} alt={t('settings.posQrAlt')} className="w-48 h-48 rounded-xl border border-flo-border" />
-                        ) : (
-                          <div className="w-48 h-48 rounded-xl border border-flo-border flex items-center justify-center text-flo-text-muted">
-                            <QrCode size={48} />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 space-y-4">
-                        <div>
-                          <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-1">{t('settings.directIp')}</p>
-                          <a href={posInfo.ip_url} target="_blank" rel="noopener noreferrer" className="block font-mono text-sm text-flo-brand-600 break-all hover:underline">
-                            {posInfo.ip_url}
-                          </a>
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-1">{t('settings.mdnsAlwaysStable')}</p>
-                          <a href={posInfo.mdns_url} target="_blank" rel="noopener noreferrer" className="block font-mono text-sm text-flo-text break-all hover:underline">
-                            {posInfo.mdns_url}
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-end border-t border-flo-border pt-4">
-                    <button onClick={fetchPosInfo} disabled={posInfoLoading}
-                      className="flex items-center gap-2 text-sm text-flo-text-secondary hover:text-flo-text">
-                      <RefreshCw size={14} className={posInfoLoading ? 'animate-spin' : ''} />
-                      {t('settings.refreshUrls')}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {!posInfo && !posInfoLoading && (
-                <>
-                  <p className="text-sm text-flo-text-secondary mb-3">
-                    {posNetworkModeMsg || t('settings.posLoadHint')}
-                  </p>
-                  <button onClick={fetchPosInfo}
-                    className="px-4 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 font-medium">
-                    {t('settings.loadPosInfo')}
-                  </button>
-                </>
-              )}
-            </Panel>
-          </div>
-        </TabsContent>
-
-        {/* Kitchen Display — own tab under Operations */}
-        {showKdsSettingsTab && (
-        <TabsContent value="kds">
-          <div className="pb-6 max-w-3xl space-y-6">
-            {/* KDS on/off (issue #133) — not every business runs a Kitchen Display. */}
-            <Panel>
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-flo-text">{t('settings.kdsEnabledToggle', { defaultValue: 'Kitchen Display System' })}</p>
-                  <p className="text-sm text-flo-text-secondary">{t('settings.kdsEnabledToggleHint', { defaultValue: 'Show the Kitchen Display and allow devices to pair over your network. Turn this off if this business doesn’t use a KDS.' })}</p>
-                </div>
-                <Toggle value={kdsEnabledSetting} onChange={(v) => { if (!savingKdsEnabled) saveKdsEnabled(v); }} />
-              </div>
-              {!kdsEnabledSetting && !kotPrintingEnabledSetting && (
-                <div className="mt-4 flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                  <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-800">
-                    {t('settings.kitchenWorkflowBothOffNote', { defaultValue: 'Both the Kitchen Display and KOT printing are off. Kitchen items won’t display or print anywhere — orders will need to be marked served directly at the counter.' })}
-                  </p>
-                </div>
-              )}
-            </Panel>
-
-            {!kdsEnabledSetting && (
-              <p className="text-sm text-flo-text-muted italic">
-                {t('settings.kdsPairingHiddenHint', { defaultValue: 'Pairing is hidden while the Kitchen Display System is disabled.' })}
-              </p>
-            )}
-
-            {kdsEnabledSetting && (
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <ChefHat size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.kds')}</h2>
-              </div>
-              <p className="text-sm text-flo-text-secondary mb-5">
-                {t('settings.kdsPairingHint')}
-              </p>
-
-              {kdsInfoLoading && (
-                <div className="flex items-center justify-center py-10">
-                  <div className="w-6 h-6 border-2 border-flo-brand-600 border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-
-              {kdsInfo && !kdsInfoLoading && (
-                <div className="flex flex-col gap-6 w-full">
-                  {kdsInfo.ips_data && kdsInfo.ips_data.length > 0 ? (
-                    <>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                        {kdsInfo.ips_data.map((ipInfo: { ip: string; url: string; qr_data: string | null }, idx: number) => (
-                          <div key={idx} className="flex flex-col items-center p-4 bg-flo-bg border border-flo-border rounded-lg">
-                            <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-3">
-                              {ipInfo.ip.startsWith('100.') ? t('settings.vpnMeshNetwork') : t('settings.localNetwork')}
-                            </p>
-                            {ipInfo.qr_data ? (
-                              <img src={ipInfo.qr_data} alt={`QR Code for ${ipInfo.ip}`} className="w-40 h-40 rounded-lg mb-3 bg-flo-surface p-2 border border-flo-border" />
-                            ) : (
-                              <div className="w-40 h-40 bg-flo-surface-muted rounded-lg flex items-center justify-center mb-3">
-                                <QrCode size={40} className="text-flo-text-muted" />
-                              </div>
-                            )}
-                            <a href={ipInfo.url} target="_blank" rel="noopener noreferrer" className="text-xs font-mono text-flo-brand-600 hover:underline break-all text-center">
-                              {ipInfo.url}
-                            </a>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="flex-1">
-                            <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">{t('settings.appleDevices')}</p>
-                            <a href={kdsInfo.mdns_url} target="_blank" rel="noopener noreferrer" className="block font-mono text-sm text-blue-600 break-all hover:underline">
-                              {kdsInfo.mdns_url}
-                            </a>
-                            <p className="text-xs text-blue-600 mt-2">
-                              {t('settings.appleDevicesHint')}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex flex-col sm:flex-row gap-6 items-start">
-                      <div className="shrink-0">
-                        {kdsInfo.qr_data_url ? (
-                          <img src={kdsInfo.qr_data_url} alt={t('settings.kdsQrAlt')} className="w-48 h-48 rounded-xl border border-flo-border" />
-                        ) : (
-                          <div className="w-48 h-48 rounded-xl border border-flo-border flex items-center justify-center text-flo-text-muted">
-                            <QrCode size={48} />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 space-y-4">
-                        <div>
-                          <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-1">{t('settings.directIp')}</p>
-                          <a href={kdsInfo.ip_url} target="_blank" rel="noopener noreferrer" className="block font-mono text-sm text-flo-brand-600 break-all hover:underline">
-                            {kdsInfo.ip_url}
-                          </a>
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-1">{t('settings.mdnsAlwaysStable')}</p>
-                          <a href={kdsInfo.mdns_url} target="_blank" rel="noopener noreferrer" className="block font-mono text-sm text-flo-text break-all hover:underline">
-                            {kdsInfo.mdns_url}
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-end border-t border-flo-border pt-4">
-                    <button onClick={fetchKdsInfo} disabled={kdsInfoLoading}
-                      className="flex items-center gap-2 text-sm text-flo-text-secondary hover:text-flo-text">
-                      <RefreshCw size={14} className={kdsInfoLoading ? 'animate-spin' : ''} />
-                      {t('settings.refreshUrls')}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {!kdsInfo && !kdsInfoLoading && (
-                <>
-                  <p className="text-sm text-flo-text-secondary mb-3">
-                    {kdsNetworkModeMsg || t('settings.kdsLoadHint', { defaultValue: 'Load connection details to pair kitchen display devices on your local network.' })}
-                  </p>
-                  <button onClick={fetchKdsInfo}
-                    className="px-4 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 font-medium">
-                    {t('settings.loadKdsInfo')}
-                  </button>
-                </>
-              )}
-            </Panel>
-            )}
-
-            <Panel>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <ChefHat size={20} className="text-flo-text-secondary" />
-                  <h2 className="font-semibold text-flo-text">{t('settings.kitchenStations')}</h2>
-                </div>
-                <button onClick={openAddStation}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 font-medium">
-                  <Plus size={14} />
-                  {t('settings.addStation')}
-                </button>
-              </div>
-              <p className="text-sm text-flo-text-secondary mb-5">{t('settings.kitchenStationsHint')}</p>
-
-              {stations.length === 0 ? (
-                <p className="text-sm text-flo-text-muted py-4 text-center">{t('settings.noStationsYet')}</p>
-              ) : (
-                <div className="space-y-2">
-                  {stations.map((station) => {
-                    let categoryIds: string[] = [];
-                    try { categoryIds = station.category_ids ? JSON.parse(station.category_ids) : []; } catch { categoryIds = []; }
-                    const categoryNames = categoryIds
-                      .map((id) => stationCategories.find((c) => c.id === id)?.name)
-                      .filter(Boolean);
-                    const printer = hwPrinters.find((p) => p.id === station.printer_id);
-                    const users = stationUsersByStation[station.id] || [];
-                    return (
-                      <div key={station.id} className="flex items-center justify-between p-3 border border-flo-border rounded-lg">
-                        <div className="min-w-0">
-                          <p className="font-medium text-flo-text">{station.name}</p>
-                          <p className="text-xs text-flo-text-secondary mt-0.5">
-                            {categoryNames.length > 0 ? categoryNames.join(', ') : t('settings.stationNoCategories')}
-                            {' · '}
-                            {printer ? printer.name : t('settings.stationNoPrinter')}
-                            {users.length > 0 && ` · ${users.map((u) => u.name).join(', ')}`}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button onClick={() => openEditStation(station)}
-                            className="px-2 py-1 text-xs text-flo-text-secondary hover:text-flo-text hover:bg-flo-bg rounded">
-                            {t('common.edit')}
-                          </button>
-                          <button onClick={() => deleteStation(station.id)}
-                            className="p-1.5 text-flo-text-muted hover:text-red-600 hover:bg-red-50 rounded">
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {showStationForm && (
-                <Dialog open={showStationForm} onOpenChange={setShowStationForm}>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{editingStationId ? t('settings.editStation') : t('settings.addStation')}</DialogTitle>
-                      <DialogDescription>{t('settings.stationFormHint')}</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-2">
-                      <div>
-                        <label className="block text-sm font-medium text-flo-text mb-1">{t('settings.stationName')}</label>
-                        <input type="text" value={stationForm.name}
-                          onChange={(e) => setStationForm((f) => ({ ...f, name: e.target.value }))}
-                          placeholder={t('settings.stationNamePlaceholder')}
-                          className="w-full px-3 py-2 border border-flo-border rounded-lg text-sm" />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-flo-text mb-1">{t('settings.stationCategories')}</label>
-                        {stationCategories.length === 0 ? (
-                          <p className="text-xs text-flo-text-muted">{t('settings.noCategoriesYet')}</p>
-                        ) : (
-                          <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                            {stationCategories.map((cat) => (
-                              <label key={cat.id} className="flex items-center gap-1.5 px-2.5 py-1 border border-flo-border rounded-full text-xs cursor-pointer hover:bg-flo-bg">
-                                <input type="checkbox" checked={stationForm.category_ids.includes(cat.id)}
-                                  onChange={() => toggleStationFormValue('category_ids', cat.id)}
-                                  className="rounded border-flo-border-strong text-flo-brand-600 focus:ring-flo-brand-500" />
-                                {cat.name}
-                              </label>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-flo-text mb-1">{t('settings.stationPrinter')}</label>
-                        <select value={stationForm.printer_id}
-                          onChange={(e) => setStationForm((f) => ({ ...f, printer_id: e.target.value }))}
-                          className="w-full px-3 py-2 border border-flo-border rounded-lg text-sm bg-flo-surface">
-                          <option value="">{t('settings.stationUseDefaultPrinter')}</option>
-                          {hwPrinters.map((p) => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-flo-text mb-1">{t('settings.stationStaff')}</label>
-                        {stationStaff.length === 0 ? (
-                          <p className="text-xs text-flo-text-muted">{t('settings.noStaffYet')}</p>
-                        ) : (
-                          <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                            {stationStaff.map((u) => (
-                              <label key={u.id} className="flex items-center gap-1.5 px-2.5 py-1 border border-flo-border rounded-full text-xs cursor-pointer hover:bg-flo-bg">
-                                <input type="checkbox" checked={stationForm.user_ids.includes(u.id)}
-                                  onChange={() => toggleStationFormValue('user_ids', u.id)}
-                                  className="rounded border-flo-border-strong text-flo-brand-600 focus:ring-flo-brand-500" />
-                                {u.name}
-                              </label>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setShowStationForm(false)}>{t('common.cancel')}</Button>
-                      <Button onClick={saveStation} disabled={savingStation}>
-                        {savingStation ? t('common.saving') : t('common.save')}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              )}
-            </Panel>
-
-            <KdsDefaultViewCard />
-
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
-              <strong>{t('settings.howItWorks')}</strong> {t('settings.howItWorksBody')}
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="server-app">
-          <div className="pb-6 max-w-3xl space-y-6">
-            <Panel>
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-flo-text">{t('settings.serverApp', { defaultValue: 'Server App' })}</p>
-                  <p className="text-sm text-flo-text-secondary">
-                    {t('settings.serverAppEnabledHint', { defaultValue: 'Let service staff open a mobile/tablet-friendly order pad for tableside ordering.' })}
-                  </p>
-                </div>
-                <Toggle value={serverAppEnabledSetting} onChange={(v) => { if (!savingServerAppEnabled) saveServerAppEnabled(v); }} />
-              </div>
-            </Panel>
-
-            {!serverAppEnabledSetting && (
-              <p className="text-sm text-flo-text-muted italic">
-                {t('settings.serverAppPairingHiddenHint', { defaultValue: 'Pairing is hidden while the Server App is disabled.' })}
-              </p>
-            )}
-
-            {serverAppEnabledSetting && (
+              {/* Add a cashier — pair another device onto the same POS over the local network */}
               <Panel>
                 <div className="flex items-center gap-2 mb-4">
                   <Smartphone size={20} className="text-flo-text-secondary" />
-                  <h2 className="font-semibold text-flo-text">{t('settings.tablesideOrdering', { defaultValue: 'Tableside Ordering' })}</h2>
+                  <h2 className="font-semibold text-flo-text">{t('settings.posPairing')}</h2>
                 </div>
                 <p className="text-sm text-flo-text-secondary mb-5">
-                  {t('settings.serverAppPairingHint', { defaultValue: 'Pair waiters’ phones or tablets on your local network. They can punch table orders and see compact kitchen status icons.' })}
+                  {t('settings.posPairingHint')}
                 </p>
 
-                {serverAppInfoLoading && (
+                <div className="mb-5 pb-5 border-b border-flo-border space-y-2">
+                  <p className="font-medium text-flo-text">{t('settings.networkMode')}</p>
+                  <p className="text-sm text-flo-text-secondary">{t('settings.networkModeHint')}</p>
+                  <select
+                    value={networkMode}
+                    disabled={savingNetworkMode}
+                    onChange={(e) => {
+                      const next = e.target.value as NetworkMode;
+                      if (next === networkMode) return;
+                      void saveNetworkMode(next);
+                    }}
+                    className="w-full max-w-md px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-surface text-flo-text"
+                  >
+                    <option value="localhost">{t('settings.networkModeLocalhost')}</option>
+                    <option value="kds_lan">{t('settings.networkModeKdsLan')}</option>
+                    <option value="lan">{t('settings.networkModeLan')}</option>
+                  </select>
+                </div>
+
+                {posInfoLoading && (
                   <div className="flex items-center justify-center py-10">
                     <div className="w-6 h-6 border-2 border-flo-brand-600 border-t-transparent rounded-full animate-spin" />
                   </div>
                 )}
 
-                {serverAppInfo && !serverAppInfoLoading && (
+                {posInfo && !posInfoLoading && (
                   <div className="flex flex-col gap-6 w-full">
-                    {serverAppInfo.ips_data && serverAppInfo.ips_data.length > 0 ? (
+                    {posInfo.ips_data && posInfo.ips_data.length > 0 ? (
                       <>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                          {serverAppInfo.ips_data.map((ipInfo: { ip: string; url: string; qr_data: string | null }, idx: number) => (
-                            <div key={idx} className="flex flex-col items-center p-4 bg-flo-bg border border-flo-border rounded-lg">
-                              <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-3">
-                                {ipInfo.ip.startsWith('100.') ? t('settings.vpnMeshNetwork') : t('settings.localNetwork')}
-                              </p>
-                              {ipInfo.qr_data ? (
-                                <img src={ipInfo.qr_data} alt={`QR Code for ${ipInfo.ip}`} className="w-40 h-40 rounded-lg mb-3 bg-flo-surface p-2 border border-flo-border" />
-                              ) : (
-                                <div className="w-40 h-40 bg-flo-surface-muted rounded-lg flex items-center justify-center mb-3">
-                                  <QrCode size={40} className="text-flo-text-muted" />
-                                </div>
-                              )}
-                              <a href={ipInfo.url} target="_blank" rel="noopener noreferrer" className="text-xs font-mono text-flo-brand-600 hover:underline break-all text-center">
-                                {ipInfo.url}
-                              </a>
-                            </div>
-                          ))}
+                          {posInfo.ips_data.map(
+                            (
+                              ipInfo: { ip: string; url: string; qr_data: string | null },
+                              idx: number,
+                            ) => (
+                              <div
+                                key={idx}
+                                className="flex flex-col items-center p-4 bg-flo-bg border border-flo-border rounded-lg"
+                              >
+                                <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-3">
+                                  {ipInfo.ip.startsWith('100.')
+                                    ? t('settings.vpnMeshNetwork')
+                                    : t('settings.localNetwork')}
+                                </p>
+                                {ipInfo.qr_data ? (
+                                  <img
+                                    src={ipInfo.qr_data}
+                                    alt={`QR Code for ${ipInfo.ip}`}
+                                    className="w-40 h-40 rounded-lg mb-3 bg-flo-surface p-2 border border-flo-border"
+                                  />
+                                ) : (
+                                  <div className="w-40 h-40 bg-flo-surface-muted rounded-lg flex items-center justify-center mb-3">
+                                    <QrCode size={40} className="text-flo-text-muted" />
+                                  </div>
+                                )}
+                                <a
+                                  href={ipInfo.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs font-mono text-flo-brand-600 hover:underline break-all text-center"
+                                >
+                                  {ipInfo.url}
+                                </a>
+                              </div>
+                            ),
+                          )}
                         </div>
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                          <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">{t('settings.appleDevices')}</p>
-                          <a href={serverAppInfo.mdns_url} target="_blank" rel="noopener noreferrer" className="block font-mono text-sm text-blue-600 break-all hover:underline">
-                            {serverAppInfo.mdns_url}
-                          </a>
-                          <p className="text-xs text-blue-600 mt-2">{t('settings.appleDevicesHint')}</p>
+                          <div className="flex items-start gap-3">
+                            <div className="flex-1">
+                              <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
+                                {t('settings.appleDevices')}
+                              </p>
+                              <a
+                                href={posInfo.mdns_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block font-mono text-sm text-blue-600 break-all hover:underline"
+                              >
+                                {posInfo.mdns_url}
+                              </a>
+                              <p className="text-xs text-blue-600 mt-2">
+                                {t('settings.appleDevicesHint')}
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </>
                     ) : (
                       <div className="flex flex-col sm:flex-row gap-6 items-start">
                         <div className="shrink-0">
-                          {serverAppInfo.qr_data_url ? (
-                            <img src={serverAppInfo.qr_data_url} alt={t('settings.serverAppQrAlt', { defaultValue: 'Server App QR code' })} className="w-48 h-48 rounded-xl border border-flo-border" />
+                          {posInfo.qr_data_url ? (
+                            <img
+                              src={posInfo.qr_data_url}
+                              alt={t('settings.posQrAlt')}
+                              className="w-48 h-48 rounded-xl border border-flo-border"
+                            />
                           ) : (
                             <div className="w-48 h-48 rounded-xl border border-flo-border flex items-center justify-center text-flo-text-muted">
                               <QrCode size={48} />
@@ -3149,15 +3497,29 @@ export default function SettingsPage() {
                         </div>
                         <div className="flex-1 space-y-4">
                           <div>
-                            <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-1">{t('settings.directIp')}</p>
-                            <a href={serverAppInfo.ip_url} target="_blank" rel="noopener noreferrer" className="block font-mono text-sm text-flo-brand-600 break-all hover:underline">
-                              {serverAppInfo.ip_url}
+                            <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-1">
+                              {t('settings.directIp')}
+                            </p>
+                            <a
+                              href={posInfo.ip_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block font-mono text-sm text-flo-brand-600 break-all hover:underline"
+                            >
+                              {posInfo.ip_url}
                             </a>
                           </div>
                           <div>
-                            <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-1">{t('settings.mdnsAlwaysStable')}</p>
-                            <a href={serverAppInfo.mdns_url} target="_blank" rel="noopener noreferrer" className="block font-mono text-sm text-flo-text break-all hover:underline">
-                              {serverAppInfo.mdns_url}
+                            <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-1">
+                              {t('settings.mdnsAlwaysStable')}
+                            </p>
+                            <a
+                              href={posInfo.mdns_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block font-mono text-sm text-flo-text break-all hover:underline"
+                            >
+                              {posInfo.mdns_url}
                             </a>
                           </div>
                         </div>
@@ -3165,1603 +3527,2968 @@ export default function SettingsPage() {
                     )}
 
                     <div className="flex justify-end border-t border-flo-border pt-4">
-                      <button onClick={fetchServerAppInfo} disabled={serverAppInfoLoading}
-                        className="flex items-center gap-2 text-sm text-flo-text-secondary hover:text-flo-text">
-                        <RefreshCw size={14} className={serverAppInfoLoading ? 'animate-spin' : ''} />
+                      <button
+                        onClick={fetchPosInfo}
+                        disabled={posInfoLoading}
+                        className="flex items-center gap-2 text-sm text-flo-text-secondary hover:text-flo-text"
+                      >
+                        <RefreshCw size={14} className={posInfoLoading ? 'animate-spin' : ''} />
                         {t('settings.refreshUrls')}
                       </button>
                     </div>
                   </div>
                 )}
 
-                {!serverAppInfo && !serverAppInfoLoading && (
+                {!posInfo && !posInfoLoading && (
                   <>
                     <p className="text-sm text-flo-text-secondary mb-3">
-                      {serverAppNetworkModeMsg || t('settings.serverAppLoadHint', { defaultValue: 'Load connection details to pair tableside ordering devices on your local network.' })}
+                      {posNetworkModeMsg || t('settings.posLoadHint')}
                     </p>
-                    <button onClick={fetchServerAppInfo}
-                      className="px-4 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 font-medium">
-                      {t('settings.loadServerAppInfo', { defaultValue: 'Load Server App Info' })}
+                    <button
+                      onClick={fetchPosInfo}
+                      className="px-4 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 font-medium"
+                    >
+                      {t('settings.loadPosInfo')}
                     </button>
                   </>
                 )}
               </Panel>
-            )}
-          </div>
-        </TabsContent>
-        )}
+            </div>
+          </TabsContent>
 
-        {showLoyaltySettingsTab && (
-        <TabsContent value="loyalty">
-          <div className="pb-6 max-w-3xl space-y-6">
-            {/* Loyalty */}
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <Gift size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.loyaltyProgram')}</h2>
-              </div>
-              <div className="space-y-5">
-                {/* Enable toggle */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-flo-text">{t('settings.enableLoyalty')}</p>
-                    <p className="text-sm text-flo-text-secondary">{t('settings.loyaltyHint')}</p>
-                  </div>
-                  <button
-                    onClick={() => setLoyaltyEnabled(!loyaltyEnabled)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      loyaltyEnabled ? 'bg-flo-brand-600' : 'bg-flo-border'
-                    }`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-flo-surface transition-transform ${
-                      loyaltyEnabled ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
-                </div>
-                {/* Global Cashback Input */}
-                {loyaltyEnabled && (
-                  <div className="pt-4 border-t border-flo-border flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-flo-text">{t('settings.globalLoyaltyRate')}</p>
-                      <p className="text-sm text-flo-text-secondary">{t('settings.globalLoyaltyRateHint')}</p>
+          {/* Kitchen Display — own tab under Operations */}
+          {showKdsSettingsTab && (
+            <TabsContent value="kds">
+              <div className="pb-6 max-w-3xl space-y-6">
+                {/* KDS on/off (issue #133) — not every business runs a Kitchen Display. */}
+                <Panel>
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-flo-text">
+                        {t('settings.kdsEnabledToggle', { defaultValue: 'Kitchen Display System' })}
+                      </p>
+                      <p className="text-sm text-flo-text-secondary">
+                        {t('settings.kdsEnabledToggleHint', {
+                          defaultValue:
+                            'Show the Kitchen Display and allow devices to pair over your network. Turn this off if this business doesn’t use a KDS.',
+                        })}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        value={globalCashbackPercent}
-                        onChange={(e) => setGlobalCashbackPercent(e.target.value)}
-                        placeholder="0"
-                        className="w-20 px-3 py-2 border border-flo-border-strong rounded-lg focus:ring-2 focus:ring-flo-brand-500 focus:border-flo-brand-500 transition-shadow text-right"
-                      />
-                      <span className="text-flo-text-secondary font-medium">%</span>
+                    <Toggle
+                      value={kdsEnabledSetting}
+                      onChange={(v) => {
+                        if (!savingKdsEnabled) saveKdsEnabled(v);
+                      }}
+                    />
+                  </div>
+                  {!kdsEnabledSetting && !kotPrintingEnabledSetting && (
+                    <div className="mt-4 flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                      <p className="text-xs text-amber-800">
+                        {t('settings.kitchenWorkflowBothOffNote', {
+                          defaultValue:
+                            'Both the Kitchen Display and KOT printing are off. Kitchen items won’t display or print anywhere — orders will need to be marked served directly at the counter.',
+                        })}
+                      </p>
                     </div>
-                  </div>
-                )}
-                {/* Products upgraded from before the tri-state all sit at 0%
-                    ("earns nothing"), so the global rate does nothing for them
-                    until the owner explicitly opts them in. */}
-                {loyaltyEnabled && globalRateCandidates > 0 && (
-                  <div className="pt-4 border-t border-flo-border">
-                    <p className="font-medium text-flo-text">{t('settings.applyGlobalRateTitle')}</p>
-                    <p className="text-sm text-flo-text-secondary mt-1">
-                      {t('settings.applyGlobalRateHint', { count: globalRateCandidates })}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={applyGlobalRateToProducts}
-                      disabled={applyingGlobalRate}
-                      className="mt-3 px-4 py-2 text-sm font-medium rounded-lg border border-flo-border-strong hover:bg-flo-bg disabled:opacity-50"
-                    >
-                      {applyingGlobalRate
-                        ? t('settings.applyGlobalRateWorking')
-                        : t('settings.applyGlobalRateAction', { count: globalRateCandidates })}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </Panel>
-          </div>
-        </TabsContent>
-        )}
-
-        <TabsContent value="discounts">
-          <div className="pb-6 max-w-3xl space-y-6">
-            {/* Discount Limits */}
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <Percent size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.discountLimits')}</h2>
-              </div>
-              <div className="space-y-5">
-                {/* Discount mode */}
-                <div>
-                  <p className="font-medium text-flo-text">{t('settings.discountMode')}</p>
-                  <p className="text-sm text-flo-text-secondary mb-2">{t('settings.discountModeHint')}</p>
-                  <select value={discountMode}
-                    onChange={(e) => setDiscountMode(e.target.value)}
-                    className="w-48 px-3 py-1.5 text-sm border border-flo-border rounded-lg outline-none focus:ring-1 focus:ring-flo-brand-500 bg-flo-surface">
-                    <option value="both">{t('settings.discountBoth')}</option>
-                    <option value="percentage">{t('settings.discountPercentageOnly')}</option>
-                    <option value="flat">{t('settings.discountFlatOnly')}</option>
-                  </select>
-                </div>
-
-                {(discountMode === 'percentage' || discountMode === 'both') && (
-                  <div>
-                    <p className="font-medium text-flo-text">{t('settings.maxDiscountPercentage')}</p>
-                    <p className="text-sm text-flo-text-secondary mb-2">{t('settings.maxDiscountPercentageHint')}</p>
-                    <div className="flex items-center gap-3">
-                      <input type="number" min={1} max={100} value={discountMaxPct}
-                        onChange={(e) => setDiscountMaxPct(normalizeDiscountPercentage(e.target.value))}
-                        className="w-24 px-3 py-1.5 text-sm border border-flo-border rounded-lg outline-none focus:ring-1 focus:ring-flo-brand-500" />
-                      <span className="text-sm text-flo-text-secondary">{t('settings.percentMaximum')}</span>
-                    </div>
-                  </div>
-                )}
-
-                {(discountMode === 'flat' || discountMode === 'both') && (
-                  <div>
-                    <p className="font-medium text-flo-text">{t('settings.maxDiscountAmount')}</p>
-                    <p className="text-sm text-flo-text-secondary mb-2">{t('settings.maxDiscountAmountHint')}</p>
-                    <div className="flex items-center gap-3">
-                      <input type="number" min={0} max={999999} value={discountMaxAmount}
-                        onChange={(e) => setDiscountMaxAmount(normalizeDiscountAmount(e.target.value))}
-                        className="w-24 px-3 py-1.5 text-sm border border-flo-border rounded-lg outline-none focus:ring-1 focus:ring-flo-brand-500" />
-                      <span className="text-sm text-flo-text-secondary">{t('settings.zeroNoLimit')}</span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-flo-text">{t('settings.requireApproval')}</p>
-                    <p className="text-sm text-flo-text-secondary">{t('settings.requireApprovalHint')}</p>
-                  </div>
-                  <button
-                    onClick={() => setDiscountRequiresApproval(!discountRequiresApproval)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      discountRequiresApproval ? 'bg-flo-brand-600' : 'bg-flo-border'
-                    }`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-flo-surface transition-transform ${
-                      discountRequiresApproval ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
-                </div>
-
-              </div>
-            </Panel>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="account">
-          <div className="pb-6 max-w-3xl space-y-6">
-            {/* Account */}
-            <Panel>
-              <h2 className="font-semibold text-flo-text mb-4">{t('settings.account')}</h2>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-flo-text-secondary">{t('settings.name')}</p>
-                  <p className="font-medium text-flo-text">{user?.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-flo-text-secondary">{t('settings.email')}</p>
-                  <p className="font-medium text-flo-text">{user?.email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-flo-text-secondary">{t('settings.role')}</p>
-                  <p className="font-medium text-flo-text capitalize">{currentTenant?.role || '—'}</p>
-                </div>
-              </div>
-            </Panel>
-            {currentTenant?.role === 'owner' && (
-              <div className={`rounded-flo-lg border p-6 ${cloudAccountAvailable && cloudAccount?.email && !cloudAccount.verified ? 'border-red-200 bg-red-50/40' : 'border-flo-border bg-flo-surface'}`}>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="font-semibold text-flo-text">Contact email</h2>
-                    <p className="mt-1 text-sm text-flo-text-secondary">{cloudAccountLoadFailed ? 'Unable to load cloud account status' : cloudAccountAvailable ? (cloudAccount?.email || user?.email || 'No cloud contact email') : 'Cloud account services are currently unavailable'}</p>
-                  </div>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${!cloudAccountAvailable ? 'bg-flo-surface-muted text-flo-text-secondary' : cloudAccount?.verified ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {cloudAccountLoadFailed ? 'Status unavailable' : !cloudAccountAvailable ? 'Unavailable' : cloudAccount?.verified ? 'Verified' : 'Pending verification'}
-                  </span>
-                </div>
-                <p className="mt-3 text-sm text-flo-text-secondary">{cloudAccountLoadFailed ? 'Check the local API connection and retry. No cloud account changes were made.' : cloudAccountAvailable ? 'Verification is important for product service notices, security updates, and other account communication.' : cloudDeletionPending ? 'A cloud deletion request is pending review. Cancel it or wait for review before re-enabling Cloud Services.' : cloudDeletionStatus === 'processing' ? 'Cloud deletion is being processed. Refresh its status or cancel it if cancellation is available.' : cloudDeletionStatus === 'failed' || cloudStatus.cloud_deletion_status === 'failed' ? 'The cloud deletion request needs attention. Refresh its status or retry the request from the privacy controls.' : 'Enable Cloud Services from Mobile Access to use cloud account features.'}</p>
-                {cloudAccountLoadFailed && (
-                  <Button variant="outline" className="mt-4" onClick={() => void fetchCloudAccount()}>Retry</Button>
-                )}
-                {cloudAccountAvailable && !cloudAccount?.verified && (
-                  <Button className="mt-4" disabled={cloudAccountBusy} onClick={async () => {
-                    setCloudAccountBusy(true);
-                    try { await api.post('/settings/cloud/account/verification'); toast.success('Verification email queued'); await fetchCloudAccount(); }
-                    catch (err: unknown) {
-                      const error = err as { response?: { data?: { error?: string } } };
-                      toast.error(error.response?.data?.error || 'Could not send verification email');
-                    }
-                    finally { setCloudAccountBusy(false); }
-                  }}>{cloudAccountBusy ? 'Sending…' : 'Send verification email'}</Button>
-                )}
-                {cloudAccountAvailable && (
-                  <div className="mt-5 space-y-3 border-t border-flo-border pt-4">
-                    <label className="flex items-center justify-between gap-4 text-sm"><span>Product updates and release notes</span><Toggle value={Boolean(cloudAccount?.product_updates)} onChange={async (value) => { setCloudAccountBusy(true); try { const { data } = await api.put('/settings/cloud/account/preferences', { product_updates: value }); setCloudAccount(data); } catch { toast.error('Could not save preference'); } finally { setCloudAccountBusy(false); } }} /></label>
-                    <label className="flex items-center justify-between gap-4 text-sm"><span>Marketing messages, offers, and surveys</span><Toggle value={Boolean(cloudAccount?.marketing)} onChange={async (value) => { setCloudAccountBusy(true); try { const { data } = await api.put('/settings/cloud/account/preferences', { marketing: value }); setCloudAccount(data); } catch { toast.error('Could not save preference'); } finally { setCloudAccountBusy(false); } }} /></label>
-                    <p className="text-xs text-flo-text-secondary">Essential service and security notices are separate from these optional subscriptions.</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </TabsContent>
-
-        {/* Privacy — anonymous telemetry (from the old Integrations tab) + cloud privacy controls (from Account) */}
-        <TabsContent value="privacy">
-          <div className="pb-6 max-w-3xl space-y-6">
-            <Panel className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Lock size={20} className="text-flo-text-secondary" />
-                <div>
-                  <h2 className="font-semibold text-flo-text">{t('settings.privacy')}</h2>
-                </div>
-              </div>
-
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={telemetryEnabled}
-                  disabled={savingTelemetry}
-                  onChange={(e) => saveTelemetry(e.target.checked)}
-                  className="rounded border-flo-border-strong text-flo-brand-600 focus:ring-flo-brand-500"
-                />
-                <span className="text-sm text-flo-text">{t('settings.anonymousTelemetry')}</span>
-              </label>
-              <p className="text-xs text-flo-text-secondary">{t('settings.anonymousTelemetryHint')}</p>
-
-              <div className="border-t border-flo-border pt-4">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={diagnosticsConsent}
-                    disabled={savingDiagnosticsConsent}
-                    onChange={(e) => saveDiagnosticsConsent(e.target.checked)}
-                    className="rounded border-flo-border-strong text-flo-brand-600 focus:ring-flo-brand-500"
-                  />
-                  <span className="text-sm text-flo-text">{t('settings.storeDiagnostics')}</span>
-                </label>
-                <p className="text-xs text-flo-text-secondary mt-1">{t('settings.storeDiagnosticsHint')}</p>
-              </div>
-            </Panel>
-
-            {currentTenant?.role === 'owner' && (
-              <div className="rounded-flo-lg border border-flo-border bg-flo-surface p-6">
-                <h2 className="font-semibold text-flo-text">Cloud privacy controls</h2>
-                <p className="mt-2 text-sm text-flo-text-secondary">Stopping cloud services is reversible. A cloud deletion request is reviewed manually in FloAdmin before data is permanently removed. Neither action deletes your local orders, bills, customers, products, or database.</p>
-                {cloudAccount?.deletion_request && (
-                  <div className={`mt-4 rounded-lg border p-3 text-sm ${cloudAccount.deletion_request.status === 'pending' || cloudAccount.deletion_request.status === 'processing' ? 'border-amber-200 bg-amber-50 text-amber-900' : cloudAccount.deletion_request.status === 'approved' || cloudAccount.deletion_request.status === 'completed' || cloudAccount.deletion_request.status === 'deleted' ? 'border-green-200 bg-green-50 text-green-800' : cloudAccount.deletion_request.status === 'failed' ? 'border-red-200 bg-red-50 text-red-800' : 'border-flo-border bg-flo-bg text-flo-text'}`}>
-                    <p className="font-semibold">Deletion request: {cloudAccount.deletion_request.status}</p>
-                    {cloudAccount.deletion_request.id && <p className="mt-1 font-mono text-xs">{cloudAccount.deletion_request.id}</p>}
-                    {cloudAccount.deletion_request.decision_note && <p className="mt-2">{cloudAccount.deletion_request.decision_note}</p>}
-                  </div>
-                )}
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <Button variant="outline" onClick={async () => {
-                    if (!await confirm('Stop all Nexora cloud services, identified diagnostics, and future anonymous telemetry on this device? Local POS data will remain available.')) return;
-                    try {
-                      const { data } = await api.post('/settings/cloud/stop-all');
-                      setCloudStatus({
-                        cloud_registration_status: data.cloud_registration_status || 'unregistered',
-                        cloud_services_disabled_by_user: !!data.cloud_services_disabled_by_user,
-                        cloud_connected: !!data.cloud_connected,
-                        cloud_relay_mode: data.cloud_relay_mode || 'disconnected',
-                        cloud_last_heartbeat: data.cloud_last_heartbeat || null,
-                        cloud_last_error: data.cloud_last_error || null,
-                        cloud_deletion_status: data.cloud_deletion_status || '',
-                      });
-                      setCloudSettings((previous) => ({ ...previous, cloud_sync_enabled: !!data.cloud_sync_enabled, cloud_orders_enabled: !!data.cloud_orders_enabled, cloud_last_sync: data.cloud_last_sync || null }));
-                      setSavedCloudSettings((previous) => ({ ...previous, cloud_sync_enabled: !!data.cloud_sync_enabled, cloud_orders_enabled: !!data.cloud_orders_enabled, cloud_last_sync: data.cloud_last_sync || null }));
-                      setTelemetryEnabled(false);
-                      setDiagnosticsConsent(false);
-                      await fetchCloudAccount();
-                      notifyCloudAccountStatusChanged();
-                      toast.success('All cloud services and telemetry stopped');
-                    }
-                    catch { toast.error('Could not stop cloud services'); }
-                  }}><CloudOff size={16} className="mr-2" />Stop all cloud services</Button>
-                  {!cloudDeletionFinal && <Button variant="destructive" disabled={cloudAccount?.deletion_request?.status === 'pending' || cloudAccount?.deletion_request?.status === 'processing' || cloudAccount?.deletion_request?.status === 'approved' || cloudStatus.cloud_deletion_status === 'processing'} onClick={() => {
-                    const phrase = window.prompt('This submits a deletion request to FloAdmin for manual review and immediately stops cloud services here. After approval, store-linked server data is permanently deleted. Local POS data stays on this device. Type DELETE CLOUD DATA to continue.');
-                    if (phrase === 'DELETE CLOUD DATA') setPinGate({ mode: 'delete-cloud' });
-                    else if (phrase !== null) toast.error('Confirmation phrase did not match');
-                  }}><Trash2 size={16} className="mr-2" />Request cloud data deletion</Button>}
-                  {cloudDeletionNeedsAction && (
-                    <>
-                      <Button variant="outline" onClick={() => void refreshDeletionStatus()} disabled={refreshingDeletionStatus}>
-                        {refreshingDeletionStatus ? 'Refreshing…' : 'Refresh deletion status'}
-                      </Button>
-                      {cloudDeletionCanCancel && <Button variant="outline" onClick={() => setPinGate({ mode: 'cancel-cloud-deletion' })}>Cancel deletion request</Button>}
-                    </>
                   )}
-                </div>
-                <p className="mt-3 text-xs text-flo-text-secondary">Anonymous telemetry has no store or email link, so existing anonymous events cannot be identified as yours. This action stops future telemetry and rotates the anonymous identifier.</p>
-              </div>
-            )}
-          </div>
-        </TabsContent>
+                </Panel>
 
-        {/* Printers sub-page */}
-        {showPrintingSettingsTab && (
-        <TabsContent value="receipts-printers">
-          <div className="pb-6 max-w-6xl space-y-6">
-            <div className="space-y-6">
-            <Panel>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Printer size={20} className="text-flo-text-secondary" />
-                  <h2 className="font-semibold text-flo-text">{t('settings.printers')}</h2>
-                </div>
-                {!showPrinterForm && (
-                  <div className="flex items-center gap-2">
-                    <button onClick={fetchDetectedPrinters} disabled={detectingPrinters}
-                      title={t('settings.refreshList')}
-                      className="flex items-center gap-2 px-3 py-2 text-sm border border-flo-border text-flo-text-secondary rounded-lg hover:bg-flo-bg font-medium disabled:opacity-50">
-                      <RefreshCw size={14} className={detectingPrinters ? 'animate-spin' : ''} /> {t('settings.refresh')}
-                    </button>
-                    <button onClick={openAddPrinter}
-                      className="flex items-center gap-2 px-4 py-2 text-sm border border-flo-border text-flo-text-secondary rounded-lg hover:bg-flo-bg font-medium">
-                      <Plus size={14} /> {t('settings.addPrinterManually')}
+                {!kdsEnabledSetting && (
+                  <p className="text-sm text-flo-text-muted italic">
+                    {t('settings.kdsPairingHiddenHint', {
+                      defaultValue:
+                        'Pairing is hidden while the Kitchen Display System is disabled.',
+                    })}
+                  </p>
+                )}
+
+                {kdsEnabledSetting && (
+                  <Panel>
+                    <div className="flex items-center gap-2 mb-4">
+                      <ChefHat size={20} className="text-flo-text-secondary" />
+                      <h2 className="font-semibold text-flo-text">{t('settings.kds')}</h2>
+                    </div>
+                    <p className="text-sm text-flo-text-secondary mb-5">
+                      {t('settings.kdsPairingHint')}
+                    </p>
+
+                    {kdsInfoLoading && (
+                      <div className="flex items-center justify-center py-10">
+                        <div className="w-6 h-6 border-2 border-flo-brand-600 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
+
+                    {kdsInfo && !kdsInfoLoading && (
+                      <div className="flex flex-col gap-6 w-full">
+                        {kdsInfo.ips_data && kdsInfo.ips_data.length > 0 ? (
+                          <>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                              {kdsInfo.ips_data.map(
+                                (
+                                  ipInfo: { ip: string; url: string; qr_data: string | null },
+                                  idx: number,
+                                ) => (
+                                  <div
+                                    key={idx}
+                                    className="flex flex-col items-center p-4 bg-flo-bg border border-flo-border rounded-lg"
+                                  >
+                                    <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-3">
+                                      {ipInfo.ip.startsWith('100.')
+                                        ? t('settings.vpnMeshNetwork')
+                                        : t('settings.localNetwork')}
+                                    </p>
+                                    {ipInfo.qr_data ? (
+                                      <img
+                                        src={ipInfo.qr_data}
+                                        alt={`QR Code for ${ipInfo.ip}`}
+                                        className="w-40 h-40 rounded-lg mb-3 bg-flo-surface p-2 border border-flo-border"
+                                      />
+                                    ) : (
+                                      <div className="w-40 h-40 bg-flo-surface-muted rounded-lg flex items-center justify-center mb-3">
+                                        <QrCode size={40} className="text-flo-text-muted" />
+                                      </div>
+                                    )}
+                                    <a
+                                      href={ipInfo.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xs font-mono text-flo-brand-600 hover:underline break-all text-center"
+                                    >
+                                      {ipInfo.url}
+                                    </a>
+                                  </div>
+                                ),
+                              )}
+                            </div>
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                              <div className="flex items-start gap-3">
+                                <div className="flex-1">
+                                  <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
+                                    {t('settings.appleDevices')}
+                                  </p>
+                                  <a
+                                    href={kdsInfo.mdns_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block font-mono text-sm text-blue-600 break-all hover:underline"
+                                  >
+                                    {kdsInfo.mdns_url}
+                                  </a>
+                                  <p className="text-xs text-blue-600 mt-2">
+                                    {t('settings.appleDevicesHint')}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="flex flex-col sm:flex-row gap-6 items-start">
+                            <div className="shrink-0">
+                              {kdsInfo.qr_data_url ? (
+                                <img
+                                  src={kdsInfo.qr_data_url}
+                                  alt={t('settings.kdsQrAlt')}
+                                  className="w-48 h-48 rounded-xl border border-flo-border"
+                                />
+                              ) : (
+                                <div className="w-48 h-48 rounded-xl border border-flo-border flex items-center justify-center text-flo-text-muted">
+                                  <QrCode size={48} />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 space-y-4">
+                              <div>
+                                <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-1">
+                                  {t('settings.directIp')}
+                                </p>
+                                <a
+                                  href={kdsInfo.ip_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block font-mono text-sm text-flo-brand-600 break-all hover:underline"
+                                >
+                                  {kdsInfo.ip_url}
+                                </a>
+                              </div>
+                              <div>
+                                <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-1">
+                                  {t('settings.mdnsAlwaysStable')}
+                                </p>
+                                <a
+                                  href={kdsInfo.mdns_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block font-mono text-sm text-flo-text break-all hover:underline"
+                                >
+                                  {kdsInfo.mdns_url}
+                                </a>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex justify-end border-t border-flo-border pt-4">
+                          <button
+                            onClick={fetchKdsInfo}
+                            disabled={kdsInfoLoading}
+                            className="flex items-center gap-2 text-sm text-flo-text-secondary hover:text-flo-text"
+                          >
+                            <RefreshCw size={14} className={kdsInfoLoading ? 'animate-spin' : ''} />
+                            {t('settings.refreshUrls')}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {!kdsInfo && !kdsInfoLoading && (
+                      <>
+                        <p className="text-sm text-flo-text-secondary mb-3">
+                          {kdsNetworkModeMsg ||
+                            t('settings.kdsLoadHint', {
+                              defaultValue:
+                                'Load connection details to pair kitchen display devices on your local network.',
+                            })}
+                        </p>
+                        <button
+                          onClick={fetchKdsInfo}
+                          className="px-4 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 font-medium"
+                        >
+                          {t('settings.loadKdsInfo')}
+                        </button>
+                      </>
+                    )}
+                  </Panel>
+                )}
+
+                <Panel>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <ChefHat size={20} className="text-flo-text-secondary" />
+                      <h2 className="font-semibold text-flo-text">
+                        {t('settings.kitchenStations')}
+                      </h2>
+                    </div>
+                    <button
+                      onClick={openAddStation}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 font-medium"
+                    >
+                      <Plus size={14} />
+                      {t('settings.addStation')}
                     </button>
                   </div>
-                )}
-              </div>
+                  <p className="text-sm text-flo-text-secondary mb-5">
+                    {t('settings.kitchenStationsHint')}
+                  </p>
 
-              {/* Detected (OS-installed) printers — one-click add */}
-              {!showPrinterForm && (
-                <div className="mb-5">
-                  <button
-                    type="button"
-                    onClick={() => setInstalledPrintersOpen((open) => !open)}
-                    className="flex w-full items-center justify-between gap-3 border-y border-flo-border py-3 text-left"
-                    aria-expanded={installedPrintersOpen}
-                  >
-                    <span className="text-xs font-semibold uppercase tracking-wide text-flo-text-secondary">
-                      {t('settings.installedOnThisComputer')} ({detectedPrinters.length})
-                    </span>
-                    <ChevronDown size={16} className={`text-flo-text-muted transition-transform ${installedPrintersOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                  {installedPrintersOpen && (detectingPrinters && detectedPrinters.length === 0 ? (
-                    <div className="py-6 text-center text-flo-text-muted text-sm">{t('settings.scanningForPrinters')}</div>
-                  ) : detectedPrinters.length === 0 ? (
-                    <div className="mt-2 py-6 text-center text-flo-text-muted text-sm border border-dashed border-flo-border rounded-lg">
-                      {t('settings.noInstalledPrinters')}
-                    </div>
+                  {stations.length === 0 ? (
+                    <p className="text-sm text-flo-text-muted py-4 text-center">
+                      {t('settings.noStationsYet')}
+                    </p>
                   ) : (
-                    <div className="mt-2 space-y-2">
-                      {detectedPrinters.map((p) => {
-                        const alreadyAdded = hwPrinters.some((h) => h.name.toLowerCase() === p.name.toLowerCase());
-                        const isAdding = addingDetectedName === p.name;
-                        const dotColor = p.status === 'idle' ? 'bg-green-500' : p.status === 'printing' ? 'bg-yellow-500' : 'bg-flo-border-strong';
-                        const statusLabel = p.status === 'idle' ? t('settings.printerOnline') : p.status === 'printing' ? t('settings.printerPrinting') : t('settings.printerOffline');
+                    <div className="space-y-2">
+                      {stations.map((station) => {
+                        let categoryIds: string[] = [];
+                        try {
+                          categoryIds = station.category_ids
+                            ? JSON.parse(station.category_ids)
+                            : [];
+                        } catch {
+                          categoryIds = [];
+                        }
+                        const categoryNames = categoryIds
+                          .map((id) => stationCategories.find((c) => c.id === id)?.name)
+                          .filter(Boolean);
+                        const printer = hwPrinters.find((p) => p.id === station.printer_id);
+                        const users = stationUsersByStation[station.id] || [];
                         return (
-                          <div key={p.name} className="flex items-center gap-3 rounded-xl border border-flo-border p-3">
-                            <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-flo-surface-muted shrink-0">
-                              {p.connectionType === 'network' ? <Wifi size={18} className="text-flo-text-secondary" /> : <Usb size={18} className="text-flo-text-secondary" />}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium text-flo-text text-sm truncate">{p.name}</span>
-                                <span className="flex items-center gap-1 text-[11px] text-flo-text-secondary">
-                                  <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
-                                  {statusLabel}
-                                </span>
-                              </div>
-                              <p className="text-xs text-flo-text-secondary mt-0.5 truncate">
-                                {p.make !== 'Unknown' ? `${p.make} ${p.model}` : p.model}
-                                {p.connectionType === 'network' && p.ipAddress ? ` · ${p.ipAddress}${p.port ? ':' + p.port : ''}` : ''}
-                                {p.paperWidth ? ` · ${printWidthLabel(p.paperWidth)}` : ''}
-                                {p.profileId ? ` · ${t('settings.printerSupportedProfile')}` : ''}
+                          <div
+                            key={station.id}
+                            className="flex items-center justify-between p-3 border border-flo-border rounded-lg"
+                          >
+                            <div className="min-w-0">
+                              <p className="font-medium text-flo-text">{station.name}</p>
+                              <p className="text-xs text-flo-text-secondary mt-0.5">
+                                {categoryNames.length > 0
+                                  ? categoryNames.join(', ')
+                                  : t('settings.stationNoCategories')}
+                                {' · '}
+                                {printer ? printer.name : t('settings.stationNoPrinter')}
+                                {users.length > 0 && ` · ${users.map((u) => u.name).join(', ')}`}
                               </p>
                             </div>
-                            {alreadyAdded ? (
-                              <span className="text-xs text-flo-text-muted px-3 py-1.5 flex items-center gap-1">
-                                <CheckCircle2 size={14} className="text-green-500" /> {t('settings.printerAdded')}
-                              </span>
-                            ) : (
-                              <button onClick={() => quickAddDetected(p)} disabled={isAdding}
-                                className="px-3 py-1.5 text-xs bg-flo-brand-600 text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium flex items-center gap-1">
-                                <Plus size={13} /> {isAdding ? t('settings.printerAdding') : t('common.add')}
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                onClick={() => openEditStation(station)}
+                                className="px-2 py-1 text-xs text-flo-text-secondary hover:text-flo-text hover:bg-flo-bg rounded"
+                              >
+                                {t('common.edit')}
                               </button>
-                            )}
+                              <button
+                                onClick={() => deleteStation(station.id)}
+                                className="p-1.5 text-flo-text-muted hover:text-red-600 hover:bg-red-50 rounded"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
                     </div>
-                  ))}
-                </div>
-              )}
+                  )}
 
-              {/* Configured printer list */}
-              {hwPrinters.length === 0 && !showPrinterForm && (
-                <div className="py-6 text-center text-flo-text-muted">
-                  <p className="text-sm">{t('settings.noPrintersConfigured')}</p>
-                  <p className="text-xs mt-1">{t('settings.printerHint')}</p>
-                </div>
-              )}
+                  {showStationForm && (
+                    <Dialog open={showStationForm} onOpenChange={setShowStationForm}>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>
+                            {editingStationId
+                              ? t('settings.editStation')
+                              : t('settings.addStation')}
+                          </DialogTitle>
+                          <DialogDescription>{t('settings.stationFormHint')}</DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-2">
+                          <div>
+                            <label className="block text-sm font-medium text-flo-text mb-1">
+                              {t('settings.stationName')}
+                            </label>
+                            <input
+                              type="text"
+                              value={stationForm.name}
+                              onChange={(e) =>
+                                setStationForm((f) => ({ ...f, name: e.target.value }))
+                              }
+                              placeholder={t('settings.stationNamePlaceholder')}
+                              className="w-full px-3 py-2 border border-flo-border rounded-lg text-sm"
+                            />
+                          </div>
 
-              {hwPrinters.length > 0 && !showPrinterForm && (
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-flo-text-secondary mb-2">{t('settings.configuredPrinters')}</h3>
-              )}
-              <div className="space-y-3">
-                {hwPrinters.map((p) => (
-                  <div key={p.id} className={`flex items-center gap-3 rounded-xl border p-4 ${p.is_default ? 'border-flo-brand-600 bg-flo-brand-50' : 'border-flo-border'}`}>
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-flo-surface-muted shrink-0">
-                      {p.connection_type === 'network' ? <Wifi size={18} className="text-flo-text-secondary" /> :
-                       p.connection_type === 'webusb' ? <Usb size={18} className="text-blue-500" /> :
-                       <Usb size={18} className="text-flo-text-secondary" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-flo-text text-sm">{p.name}</span>
-                        {p.is_default === 1 && (
-                          <span className="text-[10px] bg-flo-brand-100 text-flo-brand-600 px-2 py-0.5 rounded-full font-medium">{t('settings.defaultPrinter')}</span>
-                        )}
-                      </div>
-                      <p className="text-xs text-flo-text-secondary mt-0.5">
-                        {p.connection_type === 'network' ? `${p.ip_address}:${p.port}` :
-                         p.connection_type === 'usb' ? t('settings.connectionUsb') :
-                         t('settings.browserWebusb')}
-                        {' · '}{printWidthLabel(p.paper_width)}
-                        {p.profile_name ? ` · ${p.profile_name}` : ''}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => testPrinterHw(p)} disabled={testingPrinterId === p.id}
-                        title={t('settings.testPrint')}
-                        className="p-2 rounded-lg hover:bg-flo-surface-muted text-flo-text-muted hover:text-flo-text disabled:opacity-40">
-                        <TestTube2 size={15} />
-                      </button>
-                      {p.is_default !== 1 && (
-                        <button onClick={() => setDefaultPrinter(p.id)} title={t('settings.setAsDefault')}
-                          className="p-2 rounded-lg hover:bg-yellow-50 text-flo-text-muted hover:text-yellow-600">
-                          <Star size={15} />
-                        </button>
-                      )}
-                      <button onClick={() => openEditPrinter(p)} title={t('settings.edit')}
-                        className="p-2 rounded-lg hover:bg-flo-surface-muted text-flo-text-muted hover:text-flo-text">
-                        <Settings size={15} />
-                      </button>
-                      <button onClick={() => deletePrinterHw(p.id)} title={t('settings.delete')}
-                        className="p-2 rounded-lg hover:bg-red-50 text-flo-text-muted hover:text-red-600">
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                          <div>
+                            <label className="block text-sm font-medium text-flo-text mb-1">
+                              {t('settings.stationCategories')}
+                            </label>
+                            {stationCategories.length === 0 ? (
+                              <p className="text-xs text-flo-text-muted">
+                                {t('settings.noCategoriesYet')}
+                              </p>
+                            ) : (
+                              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                                {stationCategories.map((cat) => (
+                                  <label
+                                    key={cat.id}
+                                    className="flex items-center gap-1.5 px-2.5 py-1 border border-flo-border rounded-full text-xs cursor-pointer hover:bg-flo-bg"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={stationForm.category_ids.includes(cat.id)}
+                                      onChange={() =>
+                                        toggleStationFormValue('category_ids', cat.id)
+                                      }
+                                      className="rounded border-flo-border-strong text-flo-brand-600 focus:ring-flo-brand-500"
+                                    />
+                                    {cat.name}
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-flo-text mb-1">
+                              {t('settings.stationPrinter')}
+                            </label>
+                            <select
+                              value={stationForm.printer_id}
+                              onChange={(e) =>
+                                setStationForm((f) => ({ ...f, printer_id: e.target.value }))
+                              }
+                              className="w-full px-3 py-2 border border-flo-border rounded-lg text-sm bg-flo-surface"
+                            >
+                              <option value="">{t('settings.stationUseDefaultPrinter')}</option>
+                              {hwPrinters.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                  {p.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-flo-text mb-1">
+                              {t('settings.stationStaff')}
+                            </label>
+                            {stationStaff.length === 0 ? (
+                              <p className="text-xs text-flo-text-muted">
+                                {t('settings.noStaffYet')}
+                              </p>
+                            ) : (
+                              <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                                {stationStaff.map((u) => (
+                                  <label
+                                    key={u.id}
+                                    className="flex items-center gap-1.5 px-2.5 py-1 border border-flo-border rounded-full text-xs cursor-pointer hover:bg-flo-bg"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={stationForm.user_ids.includes(u.id)}
+                                      onChange={() => toggleStationFormValue('user_ids', u.id)}
+                                      className="rounded border-flo-border-strong text-flo-brand-600 focus:ring-flo-brand-500"
+                                    />
+                                    {u.name}
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" onClick={() => setShowStationForm(false)}>
+                            {t('common.cancel')}
+                          </Button>
+                          <Button onClick={saveStation} disabled={savingStation}>
+                            {savingStation ? t('common.saving') : t('common.save')}
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                </Panel>
+
+                <KdsDefaultViewCard />
+
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+                  <strong>{t('settings.howItWorks')}</strong> {t('settings.howItWorksBody')}
+                </div>
               </div>
+            </TabsContent>
+          )}
 
-              {/* Add / Edit form */}
-              {showPrinterForm && (
-                <div className="mt-5 pt-5 border-t border-flo-border">
-                  <h3 className="font-semibold text-flo-text text-sm mb-4">
-                    {editingPrinterId ? t('settings.editPrinter') : t('settings.addPrinter')}
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs text-flo-text-secondary mb-1">{t('settings.printerName')}</label>
-                      <input type="text" value={printerForm.name}
-                        onChange={(e) => setPrinterForm((p) => ({ ...p, name: e.target.value }))}
-                        placeholder={t('settings.printerNamePlaceholder')}
-                        className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500" />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-flo-text-secondary mb-1">{t('settings.connectionType')}</label>
-                      <select value={printerForm.connection_type}
-                        onChange={(e) => setPrinterForm((p) => ({ ...p, connection_type: e.target.value as HwPrinter['connection_type'] }))}
-                        className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500">
-                        <option value="network">{t('settings.connectionNetwork')}</option>
-                        <option value="usb">{t('settings.connectionUsb')}</option>
-                        <option value="webusb">{t('settings.connectionWebusb')}</option>
-                      </select>
-                    </div>
-
-                    {printerForm.connection_type === 'network' && (<>
-                      <div>
-                        <label className="block text-xs text-flo-text-secondary mb-1">{t('settings.ipAddress')}</label>
-                        <input type="text" value={printerForm.ip_address}
-                          onChange={(e) => setPrinterForm((p) => ({ ...p, ip_address: e.target.value }))}
-                          placeholder={t('settings.ipAddressPlaceholder')}
-                          className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500" />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-flo-text-secondary mb-1">{t('settings.port')}</label>
-                        <input type="number" value={printerForm.port}
-                          onChange={(e) => setPrinterForm((p) => ({ ...p, port: e.target.value }))}
-                          placeholder={t('settings.portPlaceholder')}
-                          className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500" />
-                      </div>
-                    </>)}
-
-                    {printerForm.connection_type === 'webusb' && (
-                      <div className="md:col-span-2 bg-blue-50 rounded-lg p-3 text-sm text-blue-700">
-                        {t('settings.webusbHint')}
-                      </div>
-                    )}
-
-                    <div>
-                      <label className="block text-xs text-flo-text-secondary mb-1">{t('settings.paperWidth')}</label>
-                      <select value={printerForm.paper_width}
-                        onChange={(e) => setPrinterForm((p) => ({ ...p, paper_width: e.target.value }))}
-                        className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500">
-                        <option value="cols-32">{t('settings.printColumns32')}</option>
-                        <option value="cols-36">{t('settings.printColumns36')}</option>
-                        <option value="cols-40">{t('settings.printColumns40')}</option>
-                        <option value="cols-42">{t('settings.printColumns42')}</option>
-                        <option value="cols-44">{t('settings.printColumns44')}</option>
-                        <option value="cols-48">{t('settings.printColumns48')}</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex gap-2">
-                    <button onClick={savePrinterHw} disabled={savingPrinter}
-                      className="px-5 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium">
-                      {savingPrinter ? t('settings.saving') : editingPrinterId ? t('common.update') : t('settings.addPrinter')}
-                    </button>
-                    <button onClick={() => setShowPrinterForm(false)}
-                      className="px-5 py-2 text-sm border border-flo-border text-flo-text-secondary rounded-lg hover:bg-flo-bg font-medium">
-                      {t('settings.cancel')}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </Panel>
-
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
-              <strong>{t('settings.defaultPrinterTipTitle')}</strong> {t('settings.defaultPrinterTipBody')}
-            </div>
-
-            {/* Print Options — merged into the same Printers page rather than a separate tab */}
-            <div className="pt-4 border-t border-flo-border">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-flo-text-muted">{t('settings.tabPrinting')}</h2>
-            </div>
-
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <Printer size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.printing')}</h2>
-              </div>
-              <div className="space-y-4">
+          <TabsContent value="server-app">
+            <div className="pb-6 max-w-3xl space-y-6">
+              <Panel>
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-flo-text">{t('settings.enablePrinter')}</p>
-                    <p className="text-sm text-flo-text-secondary">{t('settings.enablePrinterHint')}</p>
-                  </div>
-                  <Toggle value={printingForm.printerEnabled} onChange={(v) => setPrintingForm((p) => ({ ...p, printerEnabled: v }))} />
-                </div>
-                <div>
-                  <p className="font-medium text-flo-text mb-2">{t('settings.paperSize')}</p>
-                  <select value={printingForm.printerPaperSize}
-                    onChange={(e) => setPrintingForm((p) => ({ ...p, printerPaperSize: e.target.value as PaperSize }))}
-                    className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500">
-                    {paperSizeOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <p className="font-medium text-flo-text mb-2">{t('settings.printMethod')}</p>
-                  <select value={printingForm.printMethod}
-                    onChange={(e) => setPrintingForm((p) => ({ ...p, printMethod: e.target.value as 'escpos' | 'browser' }))}
-                    className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500">
-                    <option value="escpos">{t('settings.printMethodEscpos')}</option>
-                    <option value="browser">{t('settings.printMethodBrowser')}</option>
-                  </select>
-                  <p className="text-xs text-flo-text-secondary mt-1">
-                    {printingForm.printMethod === 'escpos'
-                      ? t('settings.printMethodEscposHint')
-                      : t('settings.printMethodBrowserHint')}
-                  </p>
-                </div>
-                <div className="flex items-center justify-between gap-4 border-t border-flo-border pt-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-flo-text">{t('settings.kotPrintingEnabledToggle', { defaultValue: 'KOT Ticket Printing' })}</p>
-                    <p className="text-sm text-flo-text-secondary">{t('settings.kotPrintingEnabledToggleHint', { defaultValue: 'Allow KOT tickets to print at all, automatically or manually. Turn this off if this business doesn’t use a KOT printer.' })}</p>
-                  </div>
-                  <Toggle value={kotPrintingEnabledSetting} onChange={(v) => { if (!savingKotPrintingEnabled) saveKotPrintingEnabled(v); }} />
-                </div>
-                <div className={`flex items-center justify-between gap-4 ${!kotPrintingEnabledSetting ? 'opacity-50' : ''}`}>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-flo-text">{t('settings.autoPrintKot')}</p>
+                    <p className="font-medium text-flo-text">
+                      {t('settings.serverApp', { defaultValue: 'Server App' })}
+                    </p>
                     <p className="text-sm text-flo-text-secondary">
-                      {kotPrintingEnabledSetting
-                        ? t('settings.autoPrintKotHint')
-                        : t('settings.autoPrintKotDisabledHint', { defaultValue: 'KOT printing is turned off above, so this has no effect.' })}
+                      {t('settings.serverAppEnabledHint', {
+                        defaultValue:
+                          'Let service staff open a mobile/tablet-friendly order pad for tableside ordering.',
+                      })}
                     </p>
                   </div>
                   <Toggle
-                    value={printingForm.autoPrintKot && kotPrintingEnabledSetting}
-                    onChange={(v) => { if (kotPrintingEnabledSetting) setPrintingForm((p) => ({ ...p, autoPrintKot: v })); }}
+                    value={serverAppEnabledSetting}
+                    onChange={(v) => {
+                      if (!savingServerAppEnabled) saveServerAppEnabled(v);
+                    }}
                   />
                 </div>
-                {!kdsEnabledSetting && !kotPrintingEnabledSetting && (
-                  <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                    <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-800">
-                      {t('settings.kitchenWorkflowBothOffNote', { defaultValue: 'Both the Kitchen Display and KOT printing are off. Kitchen items won’t display or print anywhere — orders will need to be marked served directly at the counter.' })}
-                    </p>
-                  </div>
-                )}
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-flo-text">{t('settings.autoPrintBill')}</p>
-                    <p className="text-sm text-flo-text-secondary">{t('settings.autoPrintBillHint')}</p>
-                  </div>
-                  <Toggle value={printingForm.autoPrintBill} onChange={(v) => setPrintingForm((p) => ({ ...p, autoPrintBill: v }))} />
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-flo-text">{t('settings.printerUnicode')}</p>
-                    <p className="text-sm text-flo-text-secondary">
-                      {t('settings.printerUnicodeHint')}
-                    </p>
-                  </div>
-                  <Toggle value={printingForm.printerUseUnicode} onChange={(v) => setPrintingForm((p) => ({ ...p, printerUseUnicode: v }))} />
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-flo-text">{t('settings.trimDecimals')}</p>
-                    <p className="text-sm text-flo-text-secondary">{t('settings.trimDecimalsHint')}</p>
-                  </div>
-                  <Toggle value={printingForm.printerTrimDecimals} onChange={(v) => setPrintingForm((p) => ({ ...p, printerTrimDecimals: v }))} />
-                </div>
-                <div className="pt-4 border-t border-flo-border">
-                  <p className="font-medium text-flo-text mb-1">{t('settings.billContent')}</p>
-                  <p className="text-sm text-flo-text-secondary mb-3">{t('settings.billContentHint')}</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
-                    {([
-                      { label: t('settings.showRestaurantName'), key: 'billShowName' as const },
-                      { label: t('settings.showRestaurantAddress'), key: 'billShowAddress' as const },
-                      { label: t('settings.showRestaurantPhone'), key: 'billShowPhone' as const },
-                      { label: t('settings.showTaxId'), key: 'billShowTaxId' as const },
-                      { label: t('settings.showTaxBreakdown'), key: 'billShowTaxBreakdown' as const },
-                      { label: t('settings.showCustomerName'), key: 'billShowCustomerName' as const },
-                      { label: t('settings.showCustomerPhone'), key: 'billShowCustomerPhone' as const },
-                      { label: t('settings.showTableNumber'), key: 'billShowTableNumber' as const },
-                    ] as const).map((item) => (
-                      <div key={item.key} className="flex min-h-11 items-center justify-between gap-3 py-1">
-                        <span className="text-sm text-flo-text">{item.label}</span>
-                        <Toggle
-                          value={printingForm[item.key]}
-                          onChange={(value) => setPrintingForm((previous) => ({ ...previous, [item.key]: value }))}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4 border-t border-flo-border pt-4">
-                    <label htmlFor="footer-message" className="block text-sm font-medium text-flo-text mb-1">{t('settings.footerMessage')}</label>
-                    <textarea id="footer-message" rows={2}
-                      placeholder={t('settings.footerMessagePlaceholder')}
-                      value={billForm.billFooterMessage}
-                      onChange={(e) => setBillForm((p) => ({ ...p, billFooterMessage: e.target.value }))}
-                      className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 resize-none" />
-                    <p className="text-xs text-flo-text-muted mt-1">{t('settings.footerMessageHint')}</p>
-                  </div>
-                </div>
-              </div>
-            </Panel>
+              </Panel>
 
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <Share2 size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.whatsappSharing')}</h2>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-flo-text">{t('settings.enableWhatsappShare')}</p>
-                  <p className="text-sm text-flo-text-secondary">{t('settings.enableWhatsappShareHint')}</p>
-                </div>
-                <Toggle value={printingForm.whatsappShareEnabled} onChange={(v) => setPrintingForm((p) => ({ ...p, whatsappShareEnabled: v }))} />
-              </div>
-            </Panel>
-          </div>
-
-            <div className="space-y-6">
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <FileText size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.billTemplate')}</h2>
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {TEMPLATE_CARDS.map((card) => {
-                  const isSelected = billForm.billTemplate === card.id;
-                  return (
-                    <button key={card.id} onClick={() => setBillForm((p) => ({ ...p, billTemplate: card.id }))}
-                      className={`text-left rounded-xl border-2 p-4 transition-all ${
-                        isSelected ? 'border-flo-brand-600 bg-flo-brand-50' : 'border-flo-border hover:border-flo-border-strong bg-flo-surface'
-                      }`}>
-                      <p className="font-semibold text-flo-text mb-2">{t(card.nameKey)}</p>
-                      <pre className="font-mono text-[9px] leading-tight text-flo-text-secondary bg-flo-bg p-2 rounded overflow-hidden mb-3 whitespace-pre">
-                        {card.preview}
-                      </pre>
-                      <p className="text-xs text-flo-text-secondary">
-                        {card.id === 'classic'
-                          ? t('settings.billTemplateClassicDesc')
-                          : card.id === 'compact'
-                            ? t('settings.billTemplateCompactDesc')
-                            : t('settings.billTemplateDetailedDesc')}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            </Panel>
-
-          </div>
-          </div>
-        </TabsContent>
-        )}
-
-
-        {/* Backup & Data tab — database tools only */}
-        {showBackupSettingsTab && (
-        <TabsContent value="data">
-          <div className="pb-6 max-w-3xl space-y-6">
-            <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-flo-text">{t('settings.tabBackupData')}</h2>
-            {/* Database Export */}
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <FileText size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.exportDatabase')}</h2>
-              </div>
-              <p className="text-sm text-flo-text-secondary mb-4">
-                {t('settings.exportDatabaseHint')}
-              </p>
-              <button
-                onClick={async () => {
-                  try {
-                    const response = await api.get('/db/export', { responseType: 'blob' });
-                    const blob = new Blob([response.data], { type: 'application/json' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `flo-export-${new Date().toISOString().split('T')[0]}.json`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                    toast.success(t('settings.databaseExported'));
-                  } catch {
-                    toast.error(t('settings.exportFailed'));
-                  }
-                }}
-                className="px-5 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 font-medium"
-              >
-                {t('settings.exportToJson')}
-              </button>
-            </Panel>
-
-            {/* Database Backup */}
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <FileText size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.createBackup')}</h2>
-              </div>
-              <p className="text-sm text-flo-text-secondary mb-4">
-                {t('settings.createBackupHint')}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={handleCreateBackup}
-                  className="px-5 py-2 text-sm bg-flo-text-secondary text-white rounded-lg hover:opacity-90 font-medium"
-                >
-                  {t('settings.createBackup')}
-                </button>
-                <button
-                  onClick={handleChooseBackupLocation}
-                  className="px-5 py-2 text-sm bg-flo-surface-muted text-flo-text rounded-lg hover:bg-flo-border font-medium"
-                >
-                  {t('settings.chooseBackupLocation')}
-                </button>
-              </div>
-            </Panel>
-
-            {/* Backup History */}
-            <Panel>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Database size={20} className="text-flo-text-secondary" />
-                  <h2 className="font-semibold text-flo-text">{t('settings.backupHistory')}</h2>
-                </div>
-                <button
-                  onClick={fetchBackups}
-                  disabled={backupsLoading}
-                  className="p-1.5 text-flo-text-muted hover:text-flo-text-secondary rounded-lg hover:bg-flo-bg disabled:opacity-50"
-                  title={t('settings.refresh')}
-                >
-                  <RefreshCw size={16} className={backupsLoading ? 'animate-spin' : ''} />
-                </button>
-              </div>
-              <p className="text-sm text-flo-text-secondary mb-4">
-                {t('settings.backupHistoryHint')}
-              </p>
-              {backups.length === 0 ? (
-                <p className="text-sm text-flo-text-muted py-4 text-center">
-                  {backupsLoading ? t('common.loading') : t('settings.backupHistoryEmpty')}
+              {!serverAppEnabledSetting && (
+                <p className="text-sm text-flo-text-muted italic">
+                  {t('settings.serverAppPairingHiddenHint', {
+                    defaultValue: 'Pairing is hidden while the Server App is disabled.',
+                  })}
                 </p>
-              ) : (
-                <div className="divide-y divide-gray-100">
-                  {backups.map((backup) => (
-                    <div key={backup.path} className="flex items-center justify-between py-3 gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-flo-text">{formatDateTime(backup.createdAt)}</span>
-                          {backup.kind === 'auto' && (
-                            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-100">
-                              {t('settings.backupKindAuto')}
-                            </span>
-                          )}
-                          {googleDriveStatus.last_backup_filename === backup.fileName && (
-                            <span className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100">
-                              <HardDrive size={11} />
-                              {t('settings.googleDriveUploadedBadge')}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-flo-text-muted truncate">
-                          {formatBackupSize(backup.sizeBytes)}
-                          {backup.schemaVersion != null && ` · ${t('settings.backupSchemaVersion', { version: backup.schemaVersion })}`}
-                        </p>
-                      </div>
-                      <div className="shrink-0 flex items-center gap-2">
-                        <button
-                          onClick={() => handleRestoreFromHistory(backup)}
-                          className="px-3 py-1.5 text-xs bg-flo-surface-muted text-flo-text rounded-lg hover:bg-flo-border font-medium"
-                        >
-                          {t('settings.restoreBackup')}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteBackup(backup)}
-                          className="p-1.5 text-flo-text-muted hover:text-red-600 rounded-lg hover:bg-red-50"
-                          title={t('settings.deleteBackup')}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               )}
-            </Panel>
 
-            {/* Google Drive — automated off-device backups (#129) */}
-            <Panel className="space-y-4">
-              <div className="flex items-center gap-2">
-                <HardDrive size={20} className="text-flo-text-secondary" />
-                <div>
-                  <h2 className="font-semibold text-flo-text">{t('settings.googleDrive')}</h2>
-                  <p className="text-xs text-flo-text-secondary mt-0.5">{t('settings.googleDriveHint')}</p>
-                </div>
-              </div>
-
-              {!googleDriveStatus.configured ? (
-                <div className="bg-flo-bg rounded-xl p-6 flex flex-col items-center justify-center text-center space-y-2">
-                  <div className="p-3 bg-flo-surface rounded-full shadow-sm">
-                    <HardDrive className="w-6 h-6 text-flo-text-muted" />
+              {serverAppEnabledSetting && (
+                <Panel>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Smartphone size={20} className="text-flo-text-secondary" />
+                    <h2 className="font-semibold text-flo-text">
+                      {t('settings.tablesideOrdering', { defaultValue: 'Tableside Ordering' })}
+                    </h2>
                   </div>
-                  <p className="text-sm font-medium text-flo-text">{t('settings.googleDriveNotConfigured')}</p>
-                  <p className="text-xs text-flo-text-secondary max-w-sm">{t('settings.googleDriveNotConfiguredHint')}</p>
-                </div>
-              ) : !googleDriveStatus.secure_storage_available ? (
-                <div className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
-                  <AlertTriangle size={16} className="text-amber-600 shrink-0" />
-                  <p className="text-sm text-amber-800">{t('settings.googleDriveSecureStorageUnavailable')}</p>
-                </div>
-              ) : (
-                <>
-                  <div className="rounded-lg border border-flo-border px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
-                    <div className="flex items-center gap-2">
-                      {googleDriveStatus.connected ? (
-                        <CheckCircle2 size={16} className="text-green-600 shrink-0" />
+                  <p className="text-sm text-flo-text-secondary mb-5">
+                    {t('settings.serverAppPairingHint', {
+                      defaultValue:
+                        'Pair waiters’ phones or tablets on your local network. They can punch table orders and see compact kitchen status icons.',
+                    })}
+                  </p>
+
+                  {serverAppInfoLoading && (
+                    <div className="flex items-center justify-center py-10">
+                      <div className="w-6 h-6 border-2 border-flo-brand-600 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+
+                  {serverAppInfo && !serverAppInfoLoading && (
+                    <div className="flex flex-col gap-6 w-full">
+                      {serverAppInfo.ips_data && serverAppInfo.ips_data.length > 0 ? (
+                        <>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                            {serverAppInfo.ips_data.map(
+                              (
+                                ipInfo: { ip: string; url: string; qr_data: string | null },
+                                idx: number,
+                              ) => (
+                                <div
+                                  key={idx}
+                                  className="flex flex-col items-center p-4 bg-flo-bg border border-flo-border rounded-lg"
+                                >
+                                  <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-3">
+                                    {ipInfo.ip.startsWith('100.')
+                                      ? t('settings.vpnMeshNetwork')
+                                      : t('settings.localNetwork')}
+                                  </p>
+                                  {ipInfo.qr_data ? (
+                                    <img
+                                      src={ipInfo.qr_data}
+                                      alt={`QR Code for ${ipInfo.ip}`}
+                                      className="w-40 h-40 rounded-lg mb-3 bg-flo-surface p-2 border border-flo-border"
+                                    />
+                                  ) : (
+                                    <div className="w-40 h-40 bg-flo-surface-muted rounded-lg flex items-center justify-center mb-3">
+                                      <QrCode size={40} className="text-flo-text-muted" />
+                                    </div>
+                                  )}
+                                  <a
+                                    href={ipInfo.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs font-mono text-flo-brand-600 hover:underline break-all text-center"
+                                  >
+                                    {ipInfo.url}
+                                  </a>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-1">
+                              {t('settings.appleDevices')}
+                            </p>
+                            <a
+                              href={serverAppInfo.mdns_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block font-mono text-sm text-blue-600 break-all hover:underline"
+                            >
+                              {serverAppInfo.mdns_url}
+                            </a>
+                            <p className="text-xs text-blue-600 mt-2">
+                              {t('settings.appleDevicesHint')}
+                            </p>
+                          </div>
+                        </>
                       ) : (
-                        <CloudOff size={16} className="text-flo-text-muted shrink-0" />
+                        <div className="flex flex-col sm:flex-row gap-6 items-start">
+                          <div className="shrink-0">
+                            {serverAppInfo.qr_data_url ? (
+                              <img
+                                src={serverAppInfo.qr_data_url}
+                                alt={t('settings.serverAppQrAlt', {
+                                  defaultValue: 'Server App QR code',
+                                })}
+                                className="w-48 h-48 rounded-xl border border-flo-border"
+                              />
+                            ) : (
+                              <div className="w-48 h-48 rounded-xl border border-flo-border flex items-center justify-center text-flo-text-muted">
+                                <QrCode size={48} />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 space-y-4">
+                            <div>
+                              <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-1">
+                                {t('settings.directIp')}
+                              </p>
+                              <a
+                                href={serverAppInfo.ip_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block font-mono text-sm text-flo-brand-600 break-all hover:underline"
+                              >
+                                {serverAppInfo.ip_url}
+                              </a>
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold text-flo-text-secondary uppercase tracking-wide mb-1">
+                                {t('settings.mdnsAlwaysStable')}
+                              </p>
+                              <a
+                                href={serverAppInfo.mdns_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block font-mono text-sm text-flo-text break-all hover:underline"
+                              >
+                                {serverAppInfo.mdns_url}
+                              </a>
+                            </div>
+                          </div>
+                        </div>
                       )}
-                      <div>
-                        <p className="text-sm font-medium text-flo-text">
-                          {googleDriveStatus.connected ? t('settings.googleDriveConnected') : t('settings.googleDriveNotConnected')}
-                        </p>
-                        {googleDriveStatus.connected && googleDriveStatus.account_email && (
-                          <p className="text-xs text-flo-text-secondary">{t('settings.googleDriveAccount')}: {googleDriveStatus.account_email}</p>
-                        )}
+
+                      <div className="flex justify-end border-t border-flo-border pt-4">
+                        <button
+                          onClick={fetchServerAppInfo}
+                          disabled={serverAppInfoLoading}
+                          className="flex items-center gap-2 text-sm text-flo-text-secondary hover:text-flo-text"
+                        >
+                          <RefreshCw
+                            size={14}
+                            className={serverAppInfoLoading ? 'animate-spin' : ''}
+                          />
+                          {t('settings.refreshUrls')}
+                        </button>
                       </div>
                     </div>
-                    {(currentTenant?.role === 'owner') && (
-                      googleDriveStatus.connected ? (
-                        <button
-                          onClick={disconnectGoogleDrive}
-                          disabled={disconnectingGoogleDrive}
-                          className="px-4 py-2 text-sm border border-flo-border rounded-lg hover:bg-flo-bg disabled:opacity-50 font-medium shrink-0"
-                        >
-                          {disconnectingGoogleDrive ? t('settings.googleDriveDisconnecting') : t('settings.googleDriveDisconnect')}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={connectGoogleDrive}
-                          disabled={connectingGoogleDrive}
-                          className="px-4 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium shrink-0"
-                        >
-                          {connectingGoogleDrive ? t('settings.googleDriveConnecting') : t('settings.googleDriveConnect')}
-                        </button>
-                      )
-                    )}
-                  </div>
+                  )}
 
-                  {googleDriveStatus.connected && (
+                  {!serverAppInfo && !serverAppInfoLoading && (
                     <>
-                      <div className="grid sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-flo-text mb-1">{t('settings.googleDriveFrequency')}</label>
-                          <select
-                            value={googleDriveStatus.frequency}
-                            disabled={savingGoogleDrivePrefs}
-                            onChange={(e) => updateGoogleDrivePrefs({ frequency: e.target.value as 'daily' | 'weekly' })}
-                            className="w-full px-3 py-2 border border-flo-border-strong rounded-lg text-sm focus:ring-2 focus:ring-flo-brand-500 outline-none disabled:opacity-50"
-                          >
-                            <option value="daily">{t('settings.googleDriveFrequencyDaily')}</option>
-                            <option value="weekly">{t('settings.googleDriveFrequencyWeekly')}</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-flo-text mb-1">{t('settings.googleDriveRetention')}</label>
-                          <input
-                            type="number"
-                            min={1}
-                            max={100}
-                            value={googleDriveStatus.retention_count}
-                            disabled={savingGoogleDrivePrefs}
-                            onChange={(e) => setGoogleDriveStatus((prev) => ({ ...prev, retention_count: Number(e.target.value) || prev.retention_count }))}
-                            onBlur={(e) => {
-                              const n = Number(e.target.value);
-                              if (Number.isInteger(n) && n >= 1 && n <= 100) updateGoogleDrivePrefs({ retention_count: n });
-                            }}
-                            className="w-full px-3 py-2 border border-flo-border-strong rounded-lg text-sm focus:ring-2 focus:ring-flo-brand-500 outline-none disabled:opacity-50"
-                          />
-                        </div>
-                      </div>
-                      <p className="text-xs text-flo-text-secondary">{t('settings.googleDriveRetentionHint')}</p>
-
-                      <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
-                        <div className="text-xs text-flo-text-secondary">
-                          {googleDriveStatus.last_backup_at ? (
-                            googleDriveStatus.last_backup_status === 'error' ? (
-                              <span className="flex items-center gap-1 text-red-600">
-                                <AlertTriangle size={13} />
-                                {t('settings.googleDriveLastBackupErrorAt', { time: formatDateTime(googleDriveStatus.last_backup_at) })}
-                              </span>
-                            ) : (
-                              <span className="flex items-center gap-1 text-flo-text-secondary">
-                                <CheckCircle2 size={13} className="text-green-600" />
-                                {t('settings.googleDriveLastBackupSuccessAt', { time: formatDateTime(googleDriveStatus.last_backup_at) })}
-                              </span>
-                            )
-                          ) : (
-                            <span>{t('settings.googleDriveLastBackup')}: {t('settings.googleDriveLastBackupNever')}</span>
-                          )}
-                        </div>
-                        {(currentTenant?.role === 'owner') && (
-                          <button
-                            onClick={backupToGoogleDriveNow}
-                            disabled={backingUpGoogleDrive}
-                            className="flex items-center gap-1.5 px-4 py-2 text-sm bg-flo-text-secondary text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium shrink-0"
-                          >
-                            <UploadCloud size={15} />
-                            {backingUpGoogleDrive ? t('settings.googleDriveBackingUp') : t('settings.googleDriveBackupNow')}
-                          </button>
-                        )}
-                      </div>
+                      <p className="text-sm text-flo-text-secondary mb-3">
+                        {serverAppNetworkModeMsg ||
+                          t('settings.serverAppLoadHint', {
+                            defaultValue:
+                              'Load connection details to pair tableside ordering devices on your local network.',
+                          })}
+                      </p>
+                      <button
+                        onClick={fetchServerAppInfo}
+                        className="px-4 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 font-medium"
+                      >
+                        {t('settings.loadServerAppInfo', { defaultValue: 'Load Server App Info' })}
+                      </button>
                     </>
                   )}
-                </>
+                </Panel>
               )}
-            </Panel>
-
-            {/* Database Import */}
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <FileText size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.importDatabase')}</h2>
-              </div>
-              <p className="text-sm text-flo-text-secondary mb-4">
-                {t('settings.importDatabaseHint')}
-              </p>
-              <input
-                type="file"
-                accept=".json"
-                id="import-file"
-                className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-
-                  const reader = new FileReader();
-                  reader.onload = async (event) => {
-                    try {
-                      const data = JSON.parse(event.target?.result as string);
-                      if (!data.app || data.app !== 'FloDesktop') {
-                        toast.error(t('settings.invalidExportFile'));
-                        return;
-                      }
-
-                      const overwrite = await confirm(t('settings.importOverwriteConfirm'), { confirmLabel: t('settings.replaceAll') });
-
-                      if (overwrite && masterPinStatus.available) {
-                        if (!masterPinStatus.isSet) {
-                          toast.error(t('settings.masterPinRequiredForReplace'));
-                          return;
-                        }
-                        setPinGate({ mode: 'import', payload: { data, overwrite } });
-                        return;
-                      }
-
-                      await runImport(data, overwrite);
-                    } catch {
-                      toast.error(t('settings.importFailed'));
-                    }
-                  };
-                  reader.readAsText(file);
-                  e.target.value = '';
-                }}
-              />
-              <div className="flex gap-2">
-                <label
-                  htmlFor="import-file"
-                  className="px-5 py-2 text-sm bg-flo-surface-muted text-flo-text rounded-lg hover:bg-flo-border cursor-pointer font-medium"
-                >
-                  {t('settings.selectFileAndImport')}
-                </label>
-              </div>
-            </Panel>
-
-            {/* Database Info */}
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <Database size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.databaseInformation')}</h2>
-              </div>
-              <button
-                onClick={async () => {
-                  try {
-                    const response = await api.get('/db/tables');
-                    const { tables } = response.data;
-                    setTableInfo(tables);
-                    setTableInfoOpen(true);
-                  } catch {
-                    toast.error(t('settings.tableInfoFailed'));
-                  }
-                }}
-                className="px-5 py-2 text-sm border border-flo-border text-flo-text-secondary rounded-lg hover:bg-flo-bg font-medium"
-              >
-                {t('settings.viewTableInfo')}
-              </button>
-            </Panel>
-
-            {/* Database Health Check */}
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <Wrench size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.databaseHealthCheck')}</h2>
-              </div>
-              <p className="text-sm text-flo-text-secondary mb-4">
-                {t('settings.databaseHealthCheckDescription')}
-              </p>
-              <button
-                onClick={runHealthCheck}
-                className="px-5 py-2 text-sm border border-flo-border text-flo-text-secondary rounded-lg hover:bg-flo-bg font-medium"
-              >
-                {t('settings.databaseHealthCheck')}
-              </button>
-            </Panel>
-
-            {/* Master PIN */}
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <KeyRound size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.masterPin')}</h2>
-              </div>
-              <p className="text-sm text-flo-text-secondary mb-4">
-                {t('settings.masterPinDataDescription')}
-              </p>
-              {!masterPinStatus.available ? (
-                <p className="text-sm text-amber-600">{t('settings.notAvailableOnDevice')}</p>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <span className={`text-sm font-medium ${masterPinStatus.isSet ? 'text-green-600' : 'text-amber-600'}`}>
-                    {masterPinStatus.isSet ? t('settings.masterPinStatusSet') : t('settings.masterPinStatusNotSet')}
-                  </span>
-                  <button
-                    onClick={() => setPinGate({ mode: 'set' })}
-                    className="px-5 py-2 text-sm border border-flo-border text-flo-text-secondary rounded-lg hover:bg-flo-bg font-medium"
-                  >
-                    {masterPinStatus.isSet ? t('settings.masterPinChangeButton') : t('settings.masterPinSetButton')}
-                  </button>
-                </div>
-              )}
-            </Panel>
-
-            {/* Danger Zone: Initialize Database */}
-            <div className="bg-flo-surface rounded-xl border border-red-200 p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle size={20} className="text-red-600" />
-                <h2 className="font-semibold text-red-600">{t('settings.initializeDatabase')}</h2>
-              </div>
-              <p className="text-sm text-flo-text-secondary mb-4">
-                {t('settings.initializeDatabaseDescription')}
-              </p>
-              <button
-                onClick={() => setInitializeDbOpen(true)}
-                className="px-5 py-2 text-sm bg-red-600 text-white rounded-lg hover:opacity-90 font-medium"
-              >
-                {t('settings.initializeDatabaseButton')}
-              </button>
             </div>
-          </div>
-          </div>
-        </TabsContent>
-        )}
+          </TabsContent>
 
-        {/* Integrations tab — cloud + OrderFlow + More Apps */}
-        {showNotificationSettingsTab && (
-        <TabsContent value="whatsapp">
-          <div className="pb-6 max-w-3xl space-y-6">
-            {!whatsappEnabled ? (
-              <WhatsAppEnableCard />
-            ) : (
-              <Panel className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="font-semibold text-flo-text">{t('whatsapp.settings.enabled')}</p>
-                  <p className="text-xs text-flo-text-secondary mt-0.5">{t('whatsapp.settings.enabledHint')}</p>
-                </div>
-                <Button asChild variant="outline" size="sm">
-                  <Link href="/whatsapp">{t('whatsapp.settings.openConnection')}</Link>
-                </Button>
-              </Panel>
-            )}
-          </div>
-        </TabsContent>
-        )}
-
-        <TabsContent value="mobile-access">
-          <div className="pb-6 max-w-3xl space-y-6">
-            <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-flo-text">{t('settings.tabMobileAccess')}</h2>
-
-            {/* FloAdmin — reporting sync */}
-            <Panel className="space-y-5">
-              <div className="flex items-center gap-2">
-                <Cloud size={20} className="text-flo-brand-600" />
-                <div>
-                  <h2 className="font-semibold text-flo-text">{t('settings.floadminSalesReporting')}</h2>
-                  <p className="text-xs text-flo-text-secondary mt-0.5">{t('settings.floadminSalesReportingHint')}</p>
-                </div>
-              </div>
-
-              {cloudStatus.cloud_registration_status === 'unregistered' ? (
-                <div className="bg-flo-bg rounded-xl p-6 flex flex-col items-center justify-center text-center space-y-4">
-                  <div className="p-3 bg-flo-surface rounded-full shadow-sm">
-                    <Cloud className="w-6 h-6 text-flo-brand-600" />
+          {showLoyaltySettingsTab && (
+            <TabsContent value="loyalty">
+              <div className="pb-6 max-w-3xl space-y-6">
+                {/* Loyalty */}
+                <Panel>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Gift size={20} className="text-flo-text-secondary" />
+                    <h2 className="font-semibold text-flo-text">{t('settings.loyaltyProgram')}</h2>
                   </div>
-                  <div>
-                    <h3 className="font-medium text-flo-text">Cloud Services Disabled</h3>
-                    <p className="text-sm text-flo-text-secondary mt-1 max-w-sm">Initialize cloud services to enable remote sales reporting, bill sync, and online dashboard access.</p>
-                  </div>
-                  <button
-                    onClick={() => setShowInitializeCloudConfirm(true)}
-                    className="px-4 py-2 bg-flo-brand-600 text-white text-sm font-medium rounded-lg hover:opacity-90"
-                  >
-                    Initialize Cloud Services
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="rounded-lg border border-flo-border px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
-                    <div className="flex items-center gap-2">
-                  {cloudStatus.cloud_registration_status === 'registered' && !cloudServicesStopped ? (
-                    <CheckCircle2 size={16} className="text-green-600 shrink-0" />
-                  ) : (
-                    <CloudOff size={16} className="text-flo-text-muted shrink-0" />
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-flo-text">
-                      {cloudStatus.cloud_registration_status === 'registered' && cloudServicesStopped && 'Cloud services stopped'}
-                      {cloudStatus.cloud_registration_status === 'registered' && !cloudServicesStopped && (cloudStatus.cloud_connected ? t('settings.connectedToFloadmin') : t('settings.registeredReconnecting'))}
-                      {cloudStatus.cloud_registration_status === 'rejected' && t('settings.registrationRejected')}
-                      {cloudStatus.cloud_registration_status === 'deletion_pending' && (cloudStatus.cloud_last_error || cloudStatus.cloud_deletion_status === 'failed') && 'Cloud deletion request failed'}
-                      {cloudStatus.cloud_registration_status === 'deletion_pending' && cloudStatus.cloud_deletion_status === 'processing' && 'Cloud deletion processing'}
-                      {cloudStatus.cloud_registration_status === 'deletion_pending' && !cloudStatus.cloud_last_error && cloudStatus.cloud_deletion_status !== 'failed' && cloudStatus.cloud_deletion_status !== 'processing' && 'Cloud deletion request pending'}
-                      {cloudStatus.cloud_registration_status === 'deleted' && 'Cloud data deleted'}
-                      {(cloudStatus.cloud_registration_status === 'unregistered' || cloudStatus.cloud_registration_status === 'registration_failed') && t('settings.notRegistered')}
-                    </p>
-                    <p className="text-xs text-flo-text-secondary">
-                      {cloudStatus.cloud_registration_status === 'registered' && cloudServicesStopped && 'Enable Cloud Services below and save changes to resume cloud services.'}
-                      {cloudStatus.cloud_registration_status === 'registered' && !cloudServicesStopped && (cloudStatus.cloud_last_heartbeat ? t('settings.liveChannelHeartbeat', { mode: cloudStatus.cloud_relay_mode.replace('_', ' '), time: formatTime(cloudStatus.cloud_last_heartbeat) }) : t('settings.liveChannel', { mode: cloudStatus.cloud_relay_mode.replace('_', ' ') }))}
-                      {cloudStatus.cloud_registration_status === 'rejected' && t('settings.registrationContactSupport')}
-                      {cloudStatus.cloud_registration_status === 'registration_failed' && (cloudStatus.cloud_last_error ? t('settings.registrationLastError', { error: cloudStatus.cloud_last_error }) : t('settings.registrationLastFailed'))}
-                      {cloudStatus.cloud_registration_status === 'deletion_pending' && (cloudStatus.cloud_last_error || cloudStatus.cloud_deletion_status === 'failed') && 'The deletion request failed. You can refresh its status or retry the request from the privacy controls below.'}
-                      {cloudStatus.cloud_registration_status === 'deletion_pending' && cloudStatus.cloud_deletion_status === 'processing' && 'Cloud deletion is being processed. Refresh its status or cancel it if cancellation is available.'}
-                      {cloudStatus.cloud_registration_status === 'deletion_pending' && !cloudStatus.cloud_last_error && cloudStatus.cloud_deletion_status !== 'failed' && cloudStatus.cloud_deletion_status !== 'processing' && 'Cloud services remain stopped until the deletion request is resolved.'}
-                      {cloudStatus.cloud_registration_status === 'deleted' && 'Cloud data has been deleted from Nexora servers. Cloud services cannot be re-enabled on this installation.'}
-                      {cloudStatus.cloud_registration_status === 'unregistered' && t('settings.registrationRegisterHelp')}
-                    </p>
-                  </div>
-                </div>
-                {cloudStatus.cloud_registration_status !== 'registered' && cloudStatus.cloud_registration_status !== 'deletion_pending' && cloudStatus.cloud_registration_status !== 'deleted' && (
-                  <button
-                    onClick={() => registerCloud('')}
-                    disabled={registeringCloud}
-                    className="px-4 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium shrink-0"
-                  >
-                    {registeringCloud ? t('settings.registering') : t('settings.registerWithFloadmin')}
-                  </button>
-                )}
-              </div>
-
-              {cloudStatus.cloud_registration_status !== 'deleted' && (
-              <div className="space-y-3">
-                <p className="text-sm text-flo-text-secondary">{t('settings.cloudManagedAutomatically')}</p>
-
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={cloudSettings.cloud_sync_enabled}
-                    onChange={(e) => setCloudSettings({ ...cloudSettings, cloud_sync_enabled: e.target.checked })}
-                    className="mt-0.5 rounded border-flo-border-strong text-flo-brand-600 focus:ring-flo-brand-500"
-                  />
-                  <div>
-                    <span className="text-sm font-medium text-flo-text block">{cloudServicesStopped ? 'Enable Cloud Services' : t('settings.enableBillSync')}</span>
-                    <p className="text-xs text-flo-text-secondary mt-1">{cloudServicesStopped ? 'Resume cloud services and bill sync on this device.' : t('settings.enableBillSyncHint')}</p>
-                  </div>
-                </label>
-
-                    {cloudSettings.cloud_last_sync && (
-                      <p className="text-xs text-flo-text-muted">{t('settings.lastSync', { time: formatDateTime(cloudSettings.cloud_last_sync) })}</p>
-                    )}
-                  </div>
-              )}
-                </>
-              )}
-            </Panel>
-
-            {/* RevFlo — consolidated: download/QR + app (pairing) code + paired devices */}
-            <Panel className="space-y-5">
-              <div className="flex items-center gap-2">
-                <Smartphone size={20} className="text-flo-text-secondary" />
-                <div>
-                  <h2 className="font-semibold text-flo-text">{revflo?.name || t('settings.revflo')}</h2>
-                  <p className="text-xs text-flo-text-secondary mt-0.5">{revflo?.tagline || t('settings.revfloHint')}</p>
-                </div>
-              </div>
-
-              {revflo?.available && (
-                <div className="flex flex-col sm:flex-row gap-5 items-start border border-flo-border rounded-xl p-5">
-                  <div className="shrink-0">
-                    {revflo.qr_data_url ? (
-                      <img src={revflo.qr_data_url} alt={t('settings.appQrAlt', { name: revflo.name })}
-                        className="w-28 h-28 rounded-lg border border-flo-border" />
-                    ) : (
-                      <div className="w-28 h-28 rounded-lg border border-flo-border flex items-center justify-center text-flo-text-muted">
-                        <QrCode size={32} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex gap-3 text-sm">
-                    {revflo.ios_url && (
-                      <a href={revflo.ios_url} target="_blank" rel="noopener noreferrer" className="text-flo-brand-600 hover:underline">
-                        {t('settings.downloadForIos')}
-                      </a>
-                    )}
-                    {revflo.android_url && (
-                      <a href={revflo.android_url} target="_blank" rel="noopener noreferrer" className="text-flo-brand-600 hover:underline">
-                        {t('settings.downloadForAndroid')}
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <p className="text-sm font-medium text-flo-text mb-1">{t('settings.mobileApp')}</p>
-                <p className="text-xs text-flo-text-secondary mb-4">{t('settings.mobileAppHint')}</p>
-                {pairingUnavailable ? (
-                  <p className="text-sm text-flo-text-secondary">{t('settings.mobilePairingNeedsCloud')}</p>
-                ) : pairingCode ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-4">
-                      {pairingQrDataUrl && (
-                        <img src={pairingQrDataUrl} alt={t('settings.pairingQrAlt')} className="w-28 h-28 rounded-lg border border-flo-border" />
-                      )}
-                      <div className="flex items-center gap-3 flex-1">
-                      <div className="flex-1 bg-flo-bg border border-flo-border rounded-lg px-4 py-3 text-center">
-                        <span className="font-mono text-2xl font-bold tracking-[0.3em] text-flo-text">
-                          {pairingCode.toUpperCase()}
-                        </span>
+                  <div className="space-y-5">
+                    {/* Enable toggle */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-flo-text">{t('settings.enableLoyalty')}</p>
+                        <p className="text-sm text-flo-text-secondary">
+                          {t('settings.loyaltyHint')}
+                        </p>
                       </div>
                       <button
-                        onClick={copyPairingCode}
-                        className="p-2.5 border border-flo-border rounded-lg hover:bg-flo-bg text-flo-text-secondary"
-                        title={t('settings.copyCode')}
+                        onClick={() => setLoyaltyEnabled(!loyaltyEnabled)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          loyaltyEnabled ? 'bg-flo-brand-600' : 'bg-flo-border'
+                        }`}
                       >
-                        {copiedCode ? <Check size={18} className="text-green-600" /> : <Copy size={18} />}
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-flo-surface transition-transform ${
+                            loyaltyEnabled ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
                       </button>
+                    </div>
+                    {/* Global Cashback Input */}
+                    {loyaltyEnabled && (
+                      <div className="pt-4 border-t border-flo-border flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-flo-text">
+                            {t('settings.globalLoyaltyRate')}
+                          </p>
+                          <p className="text-sm text-flo-text-secondary">
+                            {t('settings.globalLoyaltyRateHint')}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.1"
+                            value={globalCashbackPercent}
+                            onChange={(e) => setGlobalCashbackPercent(e.target.value)}
+                            placeholder="0"
+                            className="w-20 px-3 py-2 border border-flo-border-strong rounded-lg focus:ring-2 focus:ring-flo-brand-500 focus:border-flo-brand-500 transition-shadow text-right"
+                          />
+                          <span className="text-flo-text-secondary font-medium">%</span>
+                        </div>
+                      </div>
+                    )}
+                    {/* Products upgraded from before the tri-state all sit at 0%
+                    ("earns nothing"), so the global rate does nothing for them
+                    until the owner explicitly opts them in. */}
+                    {loyaltyEnabled && globalRateCandidates > 0 && (
+                      <div className="pt-4 border-t border-flo-border">
+                        <p className="font-medium text-flo-text">
+                          {t('settings.applyGlobalRateTitle')}
+                        </p>
+                        <p className="text-sm text-flo-text-secondary mt-1">
+                          {t('settings.applyGlobalRateHint', { count: globalRateCandidates })}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={applyGlobalRateToProducts}
+                          disabled={applyingGlobalRate}
+                          className="mt-3 px-4 py-2 text-sm font-medium rounded-lg border border-flo-border-strong hover:bg-flo-bg disabled:opacity-50"
+                        >
+                          {applyingGlobalRate
+                            ? t('settings.applyGlobalRateWorking')
+                            : t('settings.applyGlobalRateAction', { count: globalRateCandidates })}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </Panel>
+              </div>
+            </TabsContent>
+          )}
+
+          <TabsContent value="discounts">
+            <div className="pb-6 max-w-3xl space-y-6">
+              {/* Discount Limits */}
+              <Panel>
+                <div className="flex items-center gap-2 mb-4">
+                  <Percent size={20} className="text-flo-text-secondary" />
+                  <h2 className="font-semibold text-flo-text">{t('settings.discountLimits')}</h2>
+                </div>
+                <div className="space-y-5">
+                  {/* Discount mode */}
+                  <div>
+                    <p className="font-medium text-flo-text">{t('settings.discountMode')}</p>
+                    <p className="text-sm text-flo-text-secondary mb-2">
+                      {t('settings.discountModeHint')}
+                    </p>
+                    <select
+                      value={discountMode}
+                      onChange={(e) => setDiscountMode(e.target.value)}
+                      className="w-48 px-3 py-1.5 text-sm border border-flo-border rounded-lg outline-none focus:ring-1 focus:ring-flo-brand-500 bg-flo-surface"
+                    >
+                      <option value="both">{t('settings.discountBoth')}</option>
+                      <option value="percentage">{t('settings.discountPercentageOnly')}</option>
+                      <option value="flat">{t('settings.discountFlatOnly')}</option>
+                    </select>
+                  </div>
+
+                  {(discountMode === 'percentage' || discountMode === 'both') && (
+                    <div>
+                      <p className="font-medium text-flo-text">
+                        {t('settings.maxDiscountPercentage')}
+                      </p>
+                      <p className="text-sm text-flo-text-secondary mb-2">
+                        {t('settings.maxDiscountPercentageHint')}
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="number"
+                          min={1}
+                          max={100}
+                          value={discountMaxPct}
+                          onChange={(e) =>
+                            setDiscountMaxPct(normalizeDiscountPercentage(e.target.value))
+                          }
+                          className="w-24 px-3 py-1.5 text-sm border border-flo-border rounded-lg outline-none focus:ring-1 focus:ring-flo-brand-500"
+                        />
+                        <span className="text-sm text-flo-text-secondary">
+                          {t('settings.percentMaximum')}
+                        </span>
                       </div>
                     </div>
-                    {pairingExpiresAt && (
-                      <p className="text-xs text-flo-text-muted">
-                        {t('settings.codeExpires', { date: formatDate(pairingExpiresAt) })}
+                  )}
+
+                  {(discountMode === 'flat' || discountMode === 'both') && (
+                    <div>
+                      <p className="font-medium text-flo-text">{t('settings.maxDiscountAmount')}</p>
+                      <p className="text-sm text-flo-text-secondary mb-2">
+                        {t('settings.maxDiscountAmountHint')}
                       </p>
-                    )}
-                    <p className="text-xs text-flo-text-secondary">
-                      {t('settings.pairingCodeSingleUse')}
-                    </p>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="number"
+                          min={0}
+                          max={999999}
+                          value={discountMaxAmount}
+                          onChange={(e) =>
+                            setDiscountMaxAmount(normalizeDiscountAmount(e.target.value))
+                          }
+                          className="w-24 px-3 py-1.5 text-sm border border-flo-border rounded-lg outline-none focus:ring-1 focus:ring-flo-brand-500"
+                        />
+                        <span className="text-sm text-flo-text-secondary">
+                          {t('settings.zeroNoLimit')}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-flo-text">{t('settings.requireApproval')}</p>
+                      <p className="text-sm text-flo-text-secondary">
+                        {t('settings.requireApprovalHint')}
+                      </p>
+                    </div>
                     <button
-                      onClick={rotatePairingCode}
-                      disabled={rotatingCode}
-                      className="flex items-center gap-2 text-sm text-flo-text-secondary hover:text-flo-text disabled:opacity-50"
+                      onClick={() => setDiscountRequiresApproval(!discountRequiresApproval)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        discountRequiresApproval ? 'bg-flo-brand-600' : 'bg-flo-border'
+                      }`}
                     >
-                      <RefreshCw size={14} className={rotatingCode ? 'animate-spin' : ''} />
-                      {rotatingCode ? t('settings.generating') : t('settings.generateNewCode')}
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-flo-surface transition-transform ${
+                          discountRequiresApproval ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
                     </button>
-                    <p className="text-xs text-amber-600">
-                      {t('settings.disconnectDevicesWarning')}
+                  </div>
+                </div>
+              </Panel>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="account">
+            <div className="pb-6 max-w-3xl space-y-6">
+              {/* Account */}
+              <Panel>
+                <h2 className="font-semibold text-flo-text mb-4">{t('settings.account')}</h2>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-flo-text-secondary">{t('settings.name')}</p>
+                    <p className="font-medium text-flo-text">{user?.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-flo-text-secondary">{t('settings.email')}</p>
+                    <p className="font-medium text-flo-text">{user?.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-flo-text-secondary">{t('settings.role')}</p>
+                    <p className="font-medium text-flo-text capitalize">
+                      {currentTenant?.role || '—'}
                     </p>
                   </div>
-                ) : (
-                  <button
-                    onClick={rotatePairingCode}
-                    disabled={rotatingCode}
-                    className="px-5 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium"
-                  >
-                    {rotatingCode ? t('settings.generating') : t('settings.generatePairingCode')}
-                  </button>
-                )}
-              </div>
+                </div>
+              </Panel>
+              {currentTenant?.role === 'owner' && (
+                <div
+                  className={`rounded-flo-lg border p-6 ${cloudAccountAvailable && cloudAccount?.email && !cloudAccount.verified ? 'border-red-200 bg-red-50/40' : 'border-flo-border bg-flo-surface'}`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h2 className="font-semibold text-flo-text">Contact email</h2>
+                      <p className="mt-1 text-sm text-flo-text-secondary">
+                        {cloudAccountLoadFailed
+                          ? 'Unable to load cloud account status'
+                          : cloudAccountAvailable
+                            ? cloudAccount?.email || user?.email || 'No cloud contact email'
+                            : 'Cloud account services are currently unavailable'}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${!cloudAccountAvailable ? 'bg-flo-surface-muted text-flo-text-secondary' : cloudAccount?.verified ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                    >
+                      {cloudAccountLoadFailed
+                        ? 'Status unavailable'
+                        : !cloudAccountAvailable
+                          ? 'Unavailable'
+                          : cloudAccount?.verified
+                            ? 'Verified'
+                            : 'Pending verification'}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm text-flo-text-secondary">
+                    {cloudAccountLoadFailed
+                      ? 'Check the local API connection and retry. No cloud account changes were made.'
+                      : cloudAccountAvailable
+                        ? 'Verification is important for product service notices, security updates, and other account communication.'
+                        : cloudDeletionPending
+                          ? 'A cloud deletion request is pending review. Cancel it or wait for review before re-enabling Cloud Services.'
+                          : cloudDeletionStatus === 'processing'
+                            ? 'Cloud deletion is being processed. Refresh its status or cancel it if cancellation is available.'
+                            : cloudDeletionStatus === 'failed' ||
+                                cloudStatus.cloud_deletion_status === 'failed'
+                              ? 'The cloud deletion request needs attention. Refresh its status or retry the request from the privacy controls.'
+                              : 'Enable Cloud Services from Mobile Access to use cloud account features.'}
+                  </p>
+                  {cloudAccountLoadFailed && (
+                    <Button
+                      variant="outline"
+                      className="mt-4"
+                      onClick={() => void fetchCloudAccount()}
+                    >
+                      Retry
+                    </Button>
+                  )}
+                  {cloudAccountAvailable && !cloudAccount?.verified && (
+                    <Button
+                      className="mt-4"
+                      disabled={cloudAccountBusy}
+                      onClick={async () => {
+                        setCloudAccountBusy(true);
+                        try {
+                          await api.post('/settings/cloud/account/verification');
+                          toast.success('Verification email queued');
+                          await fetchCloudAccount();
+                        } catch (err: unknown) {
+                          const error = err as { response?: { data?: { error?: string } } };
+                          toast.error(
+                            error.response?.data?.error || 'Could not send verification email',
+                          );
+                        } finally {
+                          setCloudAccountBusy(false);
+                        }
+                      }}
+                    >
+                      {cloudAccountBusy ? 'Sending…' : 'Send verification email'}
+                    </Button>
+                  )}
+                  {cloudAccountAvailable && (
+                    <div className="mt-5 space-y-3 border-t border-flo-border pt-4">
+                      <label className="flex items-center justify-between gap-4 text-sm">
+                        <span>Product updates and release notes</span>
+                        <Toggle
+                          value={Boolean(cloudAccount?.product_updates)}
+                          onChange={async (value) => {
+                            setCloudAccountBusy(true);
+                            try {
+                              const { data } = await api.put(
+                                '/settings/cloud/account/preferences',
+                                { product_updates: value },
+                              );
+                              setCloudAccount(data);
+                            } catch {
+                              toast.error('Could not save preference');
+                            } finally {
+                              setCloudAccountBusy(false);
+                            }
+                          }}
+                        />
+                      </label>
+                      <label className="flex items-center justify-between gap-4 text-sm">
+                        <span>Marketing messages, offers, and surveys</span>
+                        <Toggle
+                          value={Boolean(cloudAccount?.marketing)}
+                          onChange={async (value) => {
+                            setCloudAccountBusy(true);
+                            try {
+                              const { data } = await api.put(
+                                '/settings/cloud/account/preferences',
+                                { marketing: value },
+                              );
+                              setCloudAccount(data);
+                            } catch {
+                              toast.error('Could not save preference');
+                            } finally {
+                              setCloudAccountBusy(false);
+                            }
+                          }}
+                        />
+                      </label>
+                      <p className="text-xs text-flo-text-secondary">
+                        Essential service and security notices are separate from these optional
+                        subscriptions.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </TabsContent>
 
-              {!pairingUnavailable && (
-                <div className="pt-5 border-t border-flo-border">
-                  <p className="text-sm font-medium text-flo-text mb-3">{t('settings.pairedDevices')}</p>
-                  {devicesLoading ? (
-                    <p className="text-sm text-flo-text-muted">{t('settings.loading')}</p>
-                  ) : pairedDevices.length === 0 ? (
-                    <p className="text-sm text-flo-text-secondary">{t('settings.noPairedDevices')}</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {pairedDevices.map((d) => (
-                        <div key={d.id} className="bg-flo-bg border border-flo-border rounded-lg px-4 py-3 text-sm">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-flo-text capitalize">
-                              {d.platform || t('settings.unknownPlatform')}
-                              {d.country ? ` · ${d.country}` : ''}
-                            </span>
-                            <span className="text-xs text-flo-text-muted">
-                              {t('settings.lastActive', { date: formatDate(d.last_seen_at) })}
-                            </span>
+          {/* Privacy — anonymous telemetry (from the old Integrations tab) + cloud privacy controls (from Account) */}
+          <TabsContent value="privacy">
+            <div className="pb-6 max-w-3xl space-y-6">
+              <Panel className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Lock size={20} className="text-flo-text-secondary" />
+                  <div>
+                    <h2 className="font-semibold text-flo-text">{t('settings.privacy')}</h2>
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={telemetryEnabled}
+                    disabled={savingTelemetry}
+                    onChange={(e) => saveTelemetry(e.target.checked)}
+                    className="rounded border-flo-border-strong text-flo-brand-600 focus:ring-flo-brand-500"
+                  />
+                  <span className="text-sm text-flo-text">{t('settings.anonymousTelemetry')}</span>
+                </label>
+                <p className="text-xs text-flo-text-secondary">
+                  {t('settings.anonymousTelemetryHint')}
+                </p>
+
+                <div className="border-t border-flo-border pt-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={diagnosticsConsent}
+                      disabled={savingDiagnosticsConsent}
+                      onChange={(e) => saveDiagnosticsConsent(e.target.checked)}
+                      className="rounded border-flo-border-strong text-flo-brand-600 focus:ring-flo-brand-500"
+                    />
+                    <span className="text-sm text-flo-text">{t('settings.storeDiagnostics')}</span>
+                  </label>
+                  <p className="text-xs text-flo-text-secondary mt-1">
+                    {t('settings.storeDiagnosticsHint')}
+                  </p>
+                </div>
+              </Panel>
+
+              {currentTenant?.role === 'owner' && (
+                <div className="rounded-flo-lg border border-flo-border bg-flo-surface p-6">
+                  <h2 className="font-semibold text-flo-text">Cloud privacy controls</h2>
+                  <p className="mt-2 text-sm text-flo-text-secondary">
+                    Stopping cloud services is reversible. A cloud deletion request is reviewed
+                    manually in FloAdmin before data is permanently removed. Neither action deletes
+                    your local orders, bills, customers, products, or database.
+                  </p>
+                  {cloudAccount?.deletion_request && (
+                    <div
+                      className={`mt-4 rounded-lg border p-3 text-sm ${cloudAccount.deletion_request.status === 'pending' || cloudAccount.deletion_request.status === 'processing' ? 'border-amber-200 bg-amber-50 text-amber-900' : cloudAccount.deletion_request.status === 'approved' || cloudAccount.deletion_request.status === 'completed' || cloudAccount.deletion_request.status === 'deleted' ? 'border-green-200 bg-green-50 text-green-800' : cloudAccount.deletion_request.status === 'failed' ? 'border-red-200 bg-red-50 text-red-800' : 'border-flo-border bg-flo-bg text-flo-text'}`}
+                    >
+                      <p className="font-semibold">
+                        Deletion request: {cloudAccount.deletion_request.status}
+                      </p>
+                      {cloudAccount.deletion_request.id && (
+                        <p className="mt-1 font-mono text-xs">{cloudAccount.deletion_request.id}</p>
+                      )}
+                      {cloudAccount.deletion_request.decision_note && (
+                        <p className="mt-2">{cloudAccount.deletion_request.decision_note}</p>
+                      )}
+                    </div>
+                  )}
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        if (
+                          !(await confirm(
+                            'Stop all Nexora cloud services, identified diagnostics, and future anonymous telemetry on this device? Local POS data will remain available.',
+                          ))
+                        )
+                          return;
+                        try {
+                          const { data } = await api.post('/settings/cloud/stop-all');
+                          setCloudStatus({
+                            cloud_registration_status:
+                              data.cloud_registration_status || 'unregistered',
+                            cloud_services_disabled_by_user: !!data.cloud_services_disabled_by_user,
+                            cloud_connected: !!data.cloud_connected,
+                            cloud_relay_mode: data.cloud_relay_mode || 'disconnected',
+                            cloud_last_heartbeat: data.cloud_last_heartbeat || null,
+                            cloud_last_error: data.cloud_last_error || null,
+                            cloud_deletion_status: data.cloud_deletion_status || '',
+                          });
+                          setCloudSettings((previous) => ({
+                            ...previous,
+                            cloud_sync_enabled: !!data.cloud_sync_enabled,
+                            cloud_orders_enabled: !!data.cloud_orders_enabled,
+                            cloud_last_sync: data.cloud_last_sync || null,
+                          }));
+                          setSavedCloudSettings((previous) => ({
+                            ...previous,
+                            cloud_sync_enabled: !!data.cloud_sync_enabled,
+                            cloud_orders_enabled: !!data.cloud_orders_enabled,
+                            cloud_last_sync: data.cloud_last_sync || null,
+                          }));
+                          setTelemetryEnabled(false);
+                          setDiagnosticsConsent(false);
+                          await fetchCloudAccount();
+                          notifyCloudAccountStatusChanged();
+                          toast.success('All cloud services and telemetry stopped');
+                        } catch {
+                          toast.error('Could not stop cloud services');
+                        }
+                      }}
+                    >
+                      <CloudOff size={16} className="mr-2" />
+                      Stop all cloud services
+                    </Button>
+                    {!cloudDeletionFinal && (
+                      <Button
+                        variant="destructive"
+                        disabled={
+                          cloudAccount?.deletion_request?.status === 'pending' ||
+                          cloudAccount?.deletion_request?.status === 'processing' ||
+                          cloudAccount?.deletion_request?.status === 'approved' ||
+                          cloudStatus.cloud_deletion_status === 'processing'
+                        }
+                        onClick={() => {
+                          const phrase = window.prompt(
+                            'This submits a deletion request to FloAdmin for manual review and immediately stops cloud services here. After approval, store-linked server data is permanently deleted. Local POS data stays on this device. Type DELETE CLOUD DATA to continue.',
+                          );
+                          if (phrase === 'DELETE CLOUD DATA') setPinGate({ mode: 'delete-cloud' });
+                          else if (phrase !== null)
+                            toast.error('Confirmation phrase did not match');
+                        }}
+                      >
+                        <Trash2 size={16} className="mr-2" />
+                        Request cloud data deletion
+                      </Button>
+                    )}
+                    {cloudDeletionNeedsAction && (
+                      <>
+                        <Button
+                          variant="outline"
+                          onClick={() => void refreshDeletionStatus()}
+                          disabled={refreshingDeletionStatus}
+                        >
+                          {refreshingDeletionStatus ? 'Refreshing…' : 'Refresh deletion status'}
+                        </Button>
+                        {cloudDeletionCanCancel && (
+                          <Button
+                            variant="outline"
+                            onClick={() => setPinGate({ mode: 'cancel-cloud-deletion' })}
+                          >
+                            Cancel deletion request
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  <p className="mt-3 text-xs text-flo-text-secondary">
+                    Anonymous telemetry has no store or email link, so existing anonymous events
+                    cannot be identified as yours. This action stops future telemetry and rotates
+                    the anonymous identifier.
+                  </p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Printers sub-page */}
+          {showPrintingSettingsTab && (
+            <TabsContent value="receipts-printers">
+              <div className="pb-6 max-w-6xl space-y-6">
+                <div className="space-y-6">
+                  <Panel>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Printer size={20} className="text-flo-text-secondary" />
+                        <h2 className="font-semibold text-flo-text">{t('settings.printers')}</h2>
+                      </div>
+                      {!showPrinterForm && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={fetchDetectedPrinters}
+                            disabled={detectingPrinters}
+                            title={t('settings.refreshList')}
+                            className="flex items-center gap-2 px-3 py-2 text-sm border border-flo-border text-flo-text-secondary rounded-lg hover:bg-flo-bg font-medium disabled:opacity-50"
+                          >
+                            <RefreshCw
+                              size={14}
+                              className={detectingPrinters ? 'animate-spin' : ''}
+                            />{' '}
+                            {t('settings.refresh')}
+                          </button>
+                          <button
+                            onClick={openAddPrinter}
+                            className="flex items-center gap-2 px-4 py-2 text-sm border border-flo-border text-flo-text-secondary rounded-lg hover:bg-flo-bg font-medium"
+                          >
+                            <Plus size={14} /> {t('settings.addPrinterManually')}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Detected (OS-installed) printers — one-click add */}
+                    {!showPrinterForm && (
+                      <div className="mb-5">
+                        <button
+                          type="button"
+                          onClick={() => setInstalledPrintersOpen((open) => !open)}
+                          className="flex w-full items-center justify-between gap-3 border-y border-flo-border py-3 text-left"
+                          aria-expanded={installedPrintersOpen}
+                        >
+                          <span className="text-xs font-semibold uppercase tracking-wide text-flo-text-secondary">
+                            {t('settings.installedOnThisComputer')} ({detectedPrinters.length})
+                          </span>
+                          <ChevronDown
+                            size={16}
+                            className={`text-flo-text-muted transition-transform ${installedPrintersOpen ? 'rotate-180' : ''}`}
+                          />
+                        </button>
+                        {installedPrintersOpen &&
+                          (detectingPrinters && detectedPrinters.length === 0 ? (
+                            <div className="py-6 text-center text-flo-text-muted text-sm">
+                              {t('settings.scanningForPrinters')}
+                            </div>
+                          ) : detectedPrinters.length === 0 ? (
+                            <div className="mt-2 py-6 text-center text-flo-text-muted text-sm border border-dashed border-flo-border rounded-lg">
+                              {t('settings.noInstalledPrinters')}
+                            </div>
+                          ) : (
+                            <div className="mt-2 space-y-2">
+                              {detectedPrinters.map((p) => {
+                                const alreadyAdded = hwPrinters.some(
+                                  (h) => h.name.toLowerCase() === p.name.toLowerCase(),
+                                );
+                                const isAdding = addingDetectedName === p.name;
+                                const dotColor =
+                                  p.status === 'idle'
+                                    ? 'bg-green-500'
+                                    : p.status === 'printing'
+                                      ? 'bg-yellow-500'
+                                      : 'bg-flo-border-strong';
+                                const statusLabel =
+                                  p.status === 'idle'
+                                    ? t('settings.printerOnline')
+                                    : p.status === 'printing'
+                                      ? t('settings.printerPrinting')
+                                      : t('settings.printerOffline');
+                                return (
+                                  <div
+                                    key={p.name}
+                                    className="flex items-center gap-3 rounded-xl border border-flo-border p-3"
+                                  >
+                                    <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-flo-surface-muted shrink-0">
+                                      {p.connectionType === 'network' ? (
+                                        <Wifi size={18} className="text-flo-text-secondary" />
+                                      ) : (
+                                        <Usb size={18} className="text-flo-text-secondary" />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-medium text-flo-text text-sm truncate">
+                                          {p.name}
+                                        </span>
+                                        <span className="flex items-center gap-1 text-[11px] text-flo-text-secondary">
+                                          <span
+                                            className={`w-1.5 h-1.5 rounded-full ${dotColor}`}
+                                          />
+                                          {statusLabel}
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-flo-text-secondary mt-0.5 truncate">
+                                        {p.make !== 'Unknown' ? `${p.make} ${p.model}` : p.model}
+                                        {p.connectionType === 'network' && p.ipAddress
+                                          ? ` · ${p.ipAddress}${p.port ? ':' + p.port : ''}`
+                                          : ''}
+                                        {p.paperWidth ? ` · ${printWidthLabel(p.paperWidth)}` : ''}
+                                        {p.profileId
+                                          ? ` · ${t('settings.printerSupportedProfile')}`
+                                          : ''}
+                                      </p>
+                                    </div>
+                                    {alreadyAdded ? (
+                                      <span className="text-xs text-flo-text-muted px-3 py-1.5 flex items-center gap-1">
+                                        <CheckCircle2 size={14} className="text-green-500" />{' '}
+                                        {t('settings.printerAdded')}
+                                      </span>
+                                    ) : (
+                                      <button
+                                        onClick={() => quickAddDetected(p)}
+                                        disabled={isAdding}
+                                        className="px-3 py-1.5 text-xs bg-flo-brand-600 text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium flex items-center gap-1"
+                                      >
+                                        <Plus size={13} />{' '}
+                                        {isAdding ? t('settings.printerAdding') : t('common.add')}
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+
+                    {/* Configured printer list */}
+                    {hwPrinters.length === 0 && !showPrinterForm && (
+                      <div className="py-6 text-center text-flo-text-muted">
+                        <p className="text-sm">{t('settings.noPrintersConfigured')}</p>
+                        <p className="text-xs mt-1">{t('settings.printerHint')}</p>
+                      </div>
+                    )}
+
+                    {hwPrinters.length > 0 && !showPrinterForm && (
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-flo-text-secondary mb-2">
+                        {t('settings.configuredPrinters')}
+                      </h3>
+                    )}
+                    <div className="space-y-3">
+                      {hwPrinters.map((p) => (
+                        <div
+                          key={p.id}
+                          className={`flex items-center gap-3 rounded-xl border p-4 ${p.is_default ? 'border-flo-brand-600 bg-flo-brand-50' : 'border-flo-border'}`}
+                        >
+                          <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-flo-surface-muted shrink-0">
+                            {p.connection_type === 'network' ? (
+                              <Wifi size={18} className="text-flo-text-secondary" />
+                            ) : p.connection_type === 'webusb' ? (
+                              <Usb size={18} className="text-blue-500" />
+                            ) : (
+                              <Usb size={18} className="text-flo-text-secondary" />
+                            )}
                           </div>
-                          <p className="text-xs text-flo-text-secondary mt-1">
-                            {t('settings.firstPaired', { date: formatDate(d.first_seen_at) })}
-                            {d.app_version ? ` · v${d.app_version}` : ''}
-                          </p>
-                          {d.user_agent && (
-                            <p className="text-xs text-flo-text-muted mt-1 truncate" title={d.user_agent}>{d.user_agent}</p>
-                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-flo-text text-sm">{p.name}</span>
+                              {p.is_default === 1 && (
+                                <span className="text-[10px] bg-flo-brand-100 text-flo-brand-600 px-2 py-0.5 rounded-full font-medium">
+                                  {t('settings.defaultPrinter')}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-flo-text-secondary mt-0.5">
+                              {p.connection_type === 'network'
+                                ? `${p.ip_address}:${p.port}`
+                                : p.connection_type === 'usb'
+                                  ? t('settings.connectionUsb')
+                                  : t('settings.browserWebusb')}
+                              {' · '}
+                              {printWidthLabel(p.paper_width)}
+                              {p.profile_name ? ` · ${p.profile_name}` : ''}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              onClick={() => testPrinterHw(p)}
+                              disabled={testingPrinterId === p.id}
+                              title={t('settings.testPrint')}
+                              className="p-2 rounded-lg hover:bg-flo-surface-muted text-flo-text-muted hover:text-flo-text disabled:opacity-40"
+                            >
+                              <TestTube2 size={15} />
+                            </button>
+                            {p.is_default !== 1 && (
+                              <button
+                                onClick={() => setDefaultPrinter(p.id)}
+                                title={t('settings.setAsDefault')}
+                                className="p-2 rounded-lg hover:bg-yellow-50 text-flo-text-muted hover:text-yellow-600"
+                              >
+                                <Star size={15} />
+                              </button>
+                            )}
+                            <button
+                              onClick={() => openEditPrinter(p)}
+                              title={t('settings.edit')}
+                              className="p-2 rounded-lg hover:bg-flo-surface-muted text-flo-text-muted hover:text-flo-text"
+                            >
+                              <Settings size={15} />
+                            </button>
+                            <button
+                              onClick={() => deletePrinterHw(p.id)}
+                              title={t('settings.delete')}
+                              className="p-2 rounded-lg hover:bg-red-50 text-flo-text-muted hover:text-red-600"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
+
+                    {/* Add / Edit form */}
+                    {showPrinterForm && (
+                      <div className="mt-5 pt-5 border-t border-flo-border">
+                        <h3 className="font-semibold text-flo-text text-sm mb-4">
+                          {editingPrinterId ? t('settings.editPrinter') : t('settings.addPrinter')}
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs text-flo-text-secondary mb-1">
+                              {t('settings.printerName')}
+                            </label>
+                            <input
+                              type="text"
+                              value={printerForm.name}
+                              onChange={(e) =>
+                                setPrinterForm((p) => ({ ...p, name: e.target.value }))
+                              }
+                              placeholder={t('settings.printerNamePlaceholder')}
+                              className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-flo-text-secondary mb-1">
+                              {t('settings.connectionType')}
+                            </label>
+                            <select
+                              value={printerForm.connection_type}
+                              onChange={(e) =>
+                                setPrinterForm((p) => ({
+                                  ...p,
+                                  connection_type: e.target.value as HwPrinter['connection_type'],
+                                }))
+                              }
+                              className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500"
+                            >
+                              <option value="network">{t('settings.connectionNetwork')}</option>
+                              <option value="usb">{t('settings.connectionUsb')}</option>
+                              <option value="webusb">{t('settings.connectionWebusb')}</option>
+                            </select>
+                          </div>
+
+                          {printerForm.connection_type === 'network' && (
+                            <>
+                              <div>
+                                <label className="block text-xs text-flo-text-secondary mb-1">
+                                  {t('settings.ipAddress')}
+                                </label>
+                                <input
+                                  type="text"
+                                  value={printerForm.ip_address}
+                                  onChange={(e) =>
+                                    setPrinterForm((p) => ({ ...p, ip_address: e.target.value }))
+                                  }
+                                  placeholder={t('settings.ipAddressPlaceholder')}
+                                  className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs text-flo-text-secondary mb-1">
+                                  {t('settings.port')}
+                                </label>
+                                <input
+                                  type="number"
+                                  value={printerForm.port}
+                                  onChange={(e) =>
+                                    setPrinterForm((p) => ({ ...p, port: e.target.value }))
+                                  }
+                                  placeholder={t('settings.portPlaceholder')}
+                                  className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500"
+                                />
+                              </div>
+                            </>
+                          )}
+
+                          {printerForm.connection_type === 'webusb' && (
+                            <div className="md:col-span-2 bg-blue-50 rounded-lg p-3 text-sm text-blue-700">
+                              {t('settings.webusbHint')}
+                            </div>
+                          )}
+
+                          <div>
+                            <label className="block text-xs text-flo-text-secondary mb-1">
+                              {t('settings.paperWidth')}
+                            </label>
+                            <select
+                              value={printerForm.paper_width}
+                              onChange={(e) =>
+                                setPrinterForm((p) => ({ ...p, paper_width: e.target.value }))
+                              }
+                              className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500"
+                            >
+                              <option value="cols-32">{t('settings.printColumns32')}</option>
+                              <option value="cols-36">{t('settings.printColumns36')}</option>
+                              <option value="cols-40">{t('settings.printColumns40')}</option>
+                              <option value="cols-42">{t('settings.printColumns42')}</option>
+                              <option value="cols-44">{t('settings.printColumns44')}</option>
+                              <option value="cols-48">{t('settings.printColumns48')}</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex gap-2">
+                          <button
+                            onClick={savePrinterHw}
+                            disabled={savingPrinter}
+                            className="px-5 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium"
+                          >
+                            {savingPrinter
+                              ? t('settings.saving')
+                              : editingPrinterId
+                                ? t('common.update')
+                                : t('settings.addPrinter')}
+                          </button>
+                          <button
+                            onClick={() => setShowPrinterForm(false)}
+                            className="px-5 py-2 text-sm border border-flo-border text-flo-text-secondary rounded-lg hover:bg-flo-bg font-medium"
+                          >
+                            {t('settings.cancel')}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </Panel>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+                    <strong>{t('settings.defaultPrinterTipTitle')}</strong>{' '}
+                    {t('settings.defaultPrinterTipBody')}
+                  </div>
+
+                  {/* Print Options — merged into the same Printers page rather than a separate tab */}
+                  <div className="pt-4 border-t border-flo-border">
+                    <h2 className="text-sm font-semibold uppercase tracking-wide text-flo-text-muted">
+                      {t('settings.tabPrinting')}
+                    </h2>
+                  </div>
+
+                  <Panel>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Printer size={20} className="text-flo-text-secondary" />
+                      <h2 className="font-semibold text-flo-text">{t('settings.printing')}</h2>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-flo-text">{t('settings.enablePrinter')}</p>
+                          <p className="text-sm text-flo-text-secondary">
+                            {t('settings.enablePrinterHint')}
+                          </p>
+                        </div>
+                        <Toggle
+                          value={printingForm.printerEnabled}
+                          onChange={(v) => setPrintingForm((p) => ({ ...p, printerEnabled: v }))}
+                        />
+                      </div>
+                      <div>
+                        <p className="font-medium text-flo-text mb-2">{t('settings.paperSize')}</p>
+                        <select
+                          value={printingForm.printerPaperSize}
+                          onChange={(e) =>
+                            setPrintingForm((p) => ({
+                              ...p,
+                              printerPaperSize: e.target.value as PaperSize,
+                            }))
+                          }
+                          className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500"
+                        >
+                          {paperSizeOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <p className="font-medium text-flo-text mb-2">
+                          {t('settings.printMethod')}
+                        </p>
+                        <select
+                          value={printingForm.printMethod}
+                          onChange={(e) =>
+                            setPrintingForm((p) => ({
+                              ...p,
+                              printMethod: e.target.value as 'escpos' | 'browser',
+                            }))
+                          }
+                          className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500"
+                        >
+                          <option value="escpos">{t('settings.printMethodEscpos')}</option>
+                          <option value="browser">{t('settings.printMethodBrowser')}</option>
+                        </select>
+                        <p className="text-xs text-flo-text-secondary mt-1">
+                          {printingForm.printMethod === 'escpos'
+                            ? t('settings.printMethodEscposHint')
+                            : t('settings.printMethodBrowserHint')}
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between gap-4 border-t border-flo-border pt-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-flo-text">
+                            {t('settings.kotPrintingEnabledToggle', {
+                              defaultValue: 'KOT Ticket Printing',
+                            })}
+                          </p>
+                          <p className="text-sm text-flo-text-secondary">
+                            {t('settings.kotPrintingEnabledToggleHint', {
+                              defaultValue:
+                                'Allow KOT tickets to print at all, automatically or manually. Turn this off if this business doesn’t use a KOT printer.',
+                            })}
+                          </p>
+                        </div>
+                        <Toggle
+                          value={kotPrintingEnabledSetting}
+                          onChange={(v) => {
+                            if (!savingKotPrintingEnabled) saveKotPrintingEnabled(v);
+                          }}
+                        />
+                      </div>
+                      <div
+                        className={`flex items-center justify-between gap-4 ${!kotPrintingEnabledSetting ? 'opacity-50' : ''}`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-flo-text">{t('settings.autoPrintKot')}</p>
+                          <p className="text-sm text-flo-text-secondary">
+                            {kotPrintingEnabledSetting
+                              ? t('settings.autoPrintKotHint')
+                              : t('settings.autoPrintKotDisabledHint', {
+                                  defaultValue:
+                                    'KOT printing is turned off above, so this has no effect.',
+                                })}
+                          </p>
+                        </div>
+                        <Toggle
+                          value={printingForm.autoPrintKot && kotPrintingEnabledSetting}
+                          onChange={(v) => {
+                            if (kotPrintingEnabledSetting)
+                              setPrintingForm((p) => ({ ...p, autoPrintKot: v }));
+                          }}
+                        />
+                      </div>
+                      {!kdsEnabledSetting && !kotPrintingEnabledSetting && (
+                        <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                          <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                          <p className="text-xs text-amber-800">
+                            {t('settings.kitchenWorkflowBothOffNote', {
+                              defaultValue:
+                                'Both the Kitchen Display and KOT printing are off. Kitchen items won’t display or print anywhere — orders will need to be marked served directly at the counter.',
+                            })}
+                          </p>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-flo-text">{t('settings.autoPrintBill')}</p>
+                          <p className="text-sm text-flo-text-secondary">
+                            {t('settings.autoPrintBillHint')}
+                          </p>
+                        </div>
+                        <Toggle
+                          value={printingForm.autoPrintBill}
+                          onChange={(v) => setPrintingForm((p) => ({ ...p, autoPrintBill: v }))}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-flo-text">
+                            {t('settings.printerUnicode')}
+                          </p>
+                          <p className="text-sm text-flo-text-secondary">
+                            {t('settings.printerUnicodeHint')}
+                          </p>
+                        </div>
+                        <Toggle
+                          value={printingForm.printerUseUnicode}
+                          onChange={(v) => setPrintingForm((p) => ({ ...p, printerUseUnicode: v }))}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-flo-text">{t('settings.trimDecimals')}</p>
+                          <p className="text-sm text-flo-text-secondary">
+                            {t('settings.trimDecimalsHint')}
+                          </p>
+                        </div>
+                        <Toggle
+                          value={printingForm.printerTrimDecimals}
+                          onChange={(v) =>
+                            setPrintingForm((p) => ({ ...p, printerTrimDecimals: v }))
+                          }
+                        />
+                      </div>
+                      <div className="pt-4 border-t border-flo-border">
+                        <p className="font-medium text-flo-text mb-1">
+                          {t('settings.billContent')}
+                        </p>
+                        <p className="text-sm text-flo-text-secondary mb-3">
+                          {t('settings.billContentHint')}
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1">
+                          {(
+                            [
+                              {
+                                label: t('settings.showRestaurantName'),
+                                key: 'billShowName' as const,
+                              },
+                              {
+                                label: t('settings.showRestaurantAddress'),
+                                key: 'billShowAddress' as const,
+                              },
+                              {
+                                label: t('settings.showRestaurantPhone'),
+                                key: 'billShowPhone' as const,
+                              },
+                              { label: t('settings.showTaxId'), key: 'billShowTaxId' as const },
+                              {
+                                label: t('settings.showTaxBreakdown'),
+                                key: 'billShowTaxBreakdown' as const,
+                              },
+                              {
+                                label: t('settings.showCustomerName'),
+                                key: 'billShowCustomerName' as const,
+                              },
+                              {
+                                label: t('settings.showCustomerPhone'),
+                                key: 'billShowCustomerPhone' as const,
+                              },
+                              {
+                                label: t('settings.showTableNumber'),
+                                key: 'billShowTableNumber' as const,
+                              },
+                            ] as const
+                          ).map((item) => (
+                            <div
+                              key={item.key}
+                              className="flex min-h-11 items-center justify-between gap-3 py-1"
+                            >
+                              <span className="text-sm text-flo-text">{item.label}</span>
+                              <Toggle
+                                value={printingForm[item.key]}
+                                onChange={(value) =>
+                                  setPrintingForm((previous) => ({
+                                    ...previous,
+                                    [item.key]: value,
+                                  }))
+                                }
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-4 border-t border-flo-border pt-4">
+                          <label
+                            htmlFor="footer-message"
+                            className="block text-sm font-medium text-flo-text mb-1"
+                          >
+                            {t('settings.footerMessage')}
+                          </label>
+                          <textarea
+                            id="footer-message"
+                            rows={2}
+                            placeholder={t('settings.footerMessagePlaceholder')}
+                            value={billForm.billFooterMessage}
+                            onChange={(e) =>
+                              setBillForm((p) => ({ ...p, billFooterMessage: e.target.value }))
+                            }
+                            className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 resize-none"
+                          />
+                          <p className="text-xs text-flo-text-muted mt-1">
+                            {t('settings.footerMessageHint')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </Panel>
+
+                  <Panel>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Share2 size={20} className="text-flo-text-secondary" />
+                      <h2 className="font-semibold text-flo-text">
+                        {t('settings.whatsappSharing')}
+                      </h2>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-flo-text">
+                          {t('settings.enableWhatsappShare')}
+                        </p>
+                        <p className="text-sm text-flo-text-secondary">
+                          {t('settings.enableWhatsappShareHint')}
+                        </p>
+                      </div>
+                      <Toggle
+                        value={printingForm.whatsappShareEnabled}
+                        onChange={(v) =>
+                          setPrintingForm((p) => ({ ...p, whatsappShareEnabled: v }))
+                        }
+                      />
+                    </div>
+                  </Panel>
+                </div>
+
+                <div className="space-y-6">
+                  <Panel>
+                    <div className="flex items-center gap-2 mb-4">
+                      <FileText size={20} className="text-flo-text-secondary" />
+                      <h2 className="font-semibold text-flo-text">{t('settings.billTemplate')}</h2>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      {TEMPLATE_CARDS.map((card) => {
+                        const isSelected = billForm.billTemplate === card.id;
+                        return (
+                          <button
+                            key={card.id}
+                            onClick={() => setBillForm((p) => ({ ...p, billTemplate: card.id }))}
+                            className={`text-left rounded-xl border-2 p-4 transition-all ${
+                              isSelected
+                                ? 'border-flo-brand-600 bg-flo-brand-50'
+                                : 'border-flo-border hover:border-flo-border-strong bg-flo-surface'
+                            }`}
+                          >
+                            <p className="font-semibold text-flo-text mb-2">{t(card.nameKey)}</p>
+                            <pre className="font-mono text-[9px] leading-tight text-flo-text-secondary bg-flo-bg p-2 rounded overflow-hidden mb-3 whitespace-pre">
+                              {card.preview}
+                            </pre>
+                            <p className="text-xs text-flo-text-secondary">
+                              {card.id === 'classic'
+                                ? t('settings.billTemplateClassicDesc')
+                                : card.id === 'compact'
+                                  ? t('settings.billTemplateCompactDesc')
+                                  : t('settings.billTemplateDetailedDesc')}
+                            </p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </Panel>
+                </div>
+              </div>
+            </TabsContent>
+          )}
+
+          {/* Backup & Data tab — database tools only */}
+          {showBackupSettingsTab && (
+            <TabsContent value="data">
+              <div className="pb-6 max-w-3xl space-y-6">
+                <div className="space-y-6">
+                  <h2 className="text-lg font-semibold text-flo-text">
+                    {t('settings.tabBackupData')}
+                  </h2>
+                  {/* Database Export */}
+                  <Panel>
+                    <div className="flex items-center gap-2 mb-4">
+                      <FileText size={20} className="text-flo-text-secondary" />
+                      <h2 className="font-semibold text-flo-text">
+                        {t('settings.exportDatabase')}
+                      </h2>
+                    </div>
+                    <p className="text-sm text-flo-text-secondary mb-4">
+                      {t('settings.exportDatabaseHint')}
+                    </p>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const response = await api.get('/db/export', { responseType: 'blob' });
+                          const blob = new Blob([response.data], { type: 'application/json' });
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `flo-export-${new Date().toISOString().split('T')[0]}.json`;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                          window.URL.revokeObjectURL(url);
+                          toast.success(t('settings.databaseExported'));
+                        } catch {
+                          toast.error(t('settings.exportFailed'));
+                        }
+                      }}
+                      className="px-5 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 font-medium"
+                    >
+                      {t('settings.exportToJson')}
+                    </button>
+                  </Panel>
+
+                  {/* Database Backup */}
+                  <Panel>
+                    <div className="flex items-center gap-2 mb-4">
+                      <FileText size={20} className="text-flo-text-secondary" />
+                      <h2 className="font-semibold text-flo-text">{t('settings.createBackup')}</h2>
+                    </div>
+                    <p className="text-sm text-flo-text-secondary mb-4">
+                      {t('settings.createBackupHint')}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={handleCreateBackup}
+                        className="px-5 py-2 text-sm bg-flo-text-secondary text-white rounded-lg hover:opacity-90 font-medium"
+                      >
+                        {t('settings.createBackup')}
+                      </button>
+                      <button
+                        onClick={handleChooseBackupLocation}
+                        className="px-5 py-2 text-sm bg-flo-surface-muted text-flo-text rounded-lg hover:bg-flo-border font-medium"
+                      >
+                        {t('settings.chooseBackupLocation')}
+                      </button>
+                    </div>
+                  </Panel>
+
+                  {/* Backup History */}
+                  <Panel>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Database size={20} className="text-flo-text-secondary" />
+                        <h2 className="font-semibold text-flo-text">
+                          {t('settings.backupHistory')}
+                        </h2>
+                      </div>
+                      <button
+                        onClick={fetchBackups}
+                        disabled={backupsLoading}
+                        className="p-1.5 text-flo-text-muted hover:text-flo-text-secondary rounded-lg hover:bg-flo-bg disabled:opacity-50"
+                        title={t('settings.refresh')}
+                      >
+                        <RefreshCw size={16} className={backupsLoading ? 'animate-spin' : ''} />
+                      </button>
+                    </div>
+                    <p className="text-sm text-flo-text-secondary mb-4">
+                      {t('settings.backupHistoryHint')}
+                    </p>
+                    {backups.length === 0 ? (
+                      <p className="text-sm text-flo-text-muted py-4 text-center">
+                        {backupsLoading ? t('common.loading') : t('settings.backupHistoryEmpty')}
+                      </p>
+                    ) : (
+                      <div className="divide-y divide-gray-100">
+                        {backups.map((backup) => (
+                          <div
+                            key={backup.path}
+                            className="flex items-center justify-between py-3 gap-3"
+                          >
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-flo-text">
+                                  {formatDateTime(backup.createdAt)}
+                                </span>
+                                {backup.kind === 'auto' && (
+                                  <span className="text-xs px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-100">
+                                    {t('settings.backupKindAuto')}
+                                  </span>
+                                )}
+                                {googleDriveStatus.last_backup_filename === backup.fileName && (
+                                  <span className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100">
+                                    <HardDrive size={11} />
+                                    {t('settings.googleDriveUploadedBadge')}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-flo-text-muted truncate">
+                                {formatBackupSize(backup.sizeBytes)}
+                                {backup.schemaVersion != null &&
+                                  ` · ${t('settings.backupSchemaVersion', { version: backup.schemaVersion })}`}
+                              </p>
+                            </div>
+                            <div className="shrink-0 flex items-center gap-2">
+                              <button
+                                onClick={() => handleRestoreFromHistory(backup)}
+                                className="px-3 py-1.5 text-xs bg-flo-surface-muted text-flo-text rounded-lg hover:bg-flo-border font-medium"
+                              >
+                                {t('settings.restoreBackup')}
+                              </button>
+                              <button
+                                onClick={() => handleDeleteBackup(backup)}
+                                className="p-1.5 text-flo-text-muted hover:text-red-600 rounded-lg hover:bg-red-50"
+                                title={t('settings.deleteBackup')}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Panel>
+
+                  {/* Google Drive — automated off-device backups (#129) */}
+                  <Panel className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <HardDrive size={20} className="text-flo-text-secondary" />
+                      <div>
+                        <h2 className="font-semibold text-flo-text">{t('settings.googleDrive')}</h2>
+                        <p className="text-xs text-flo-text-secondary mt-0.5">
+                          {t('settings.googleDriveHint')}
+                        </p>
+                      </div>
+                    </div>
+
+                    {!googleDriveStatus.configured ? (
+                      <div className="bg-flo-bg rounded-xl p-6 flex flex-col items-center justify-center text-center space-y-2">
+                        <div className="p-3 bg-flo-surface rounded-full shadow-sm">
+                          <HardDrive className="w-6 h-6 text-flo-text-muted" />
+                        </div>
+                        <p className="text-sm font-medium text-flo-text">
+                          {t('settings.googleDriveNotConfigured')}
+                        </p>
+                        <p className="text-xs text-flo-text-secondary max-w-sm">
+                          {t('settings.googleDriveNotConfiguredHint')}
+                        </p>
+                      </div>
+                    ) : !googleDriveStatus.secure_storage_available ? (
+                      <div className="flex items-center gap-2 bg-amber-50 border border-amber-100 rounded-lg px-4 py-3">
+                        <AlertTriangle size={16} className="text-amber-600 shrink-0" />
+                        <p className="text-sm text-amber-800">
+                          {t('settings.googleDriveSecureStorageUnavailable')}
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="rounded-lg border border-flo-border px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            {googleDriveStatus.connected ? (
+                              <CheckCircle2 size={16} className="text-green-600 shrink-0" />
+                            ) : (
+                              <CloudOff size={16} className="text-flo-text-muted shrink-0" />
+                            )}
+                            <div>
+                              <p className="text-sm font-medium text-flo-text">
+                                {googleDriveStatus.connected
+                                  ? t('settings.googleDriveConnected')
+                                  : t('settings.googleDriveNotConnected')}
+                              </p>
+                              {googleDriveStatus.connected && googleDriveStatus.account_email && (
+                                <p className="text-xs text-flo-text-secondary">
+                                  {t('settings.googleDriveAccount')}:{' '}
+                                  {googleDriveStatus.account_email}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {currentTenant?.role === 'owner' &&
+                            (googleDriveStatus.connected ? (
+                              <button
+                                onClick={disconnectGoogleDrive}
+                                disabled={disconnectingGoogleDrive}
+                                className="px-4 py-2 text-sm border border-flo-border rounded-lg hover:bg-flo-bg disabled:opacity-50 font-medium shrink-0"
+                              >
+                                {disconnectingGoogleDrive
+                                  ? t('settings.googleDriveDisconnecting')
+                                  : t('settings.googleDriveDisconnect')}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={connectGoogleDrive}
+                                disabled={connectingGoogleDrive}
+                                className="px-4 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium shrink-0"
+                              >
+                                {connectingGoogleDrive
+                                  ? t('settings.googleDriveConnecting')
+                                  : t('settings.googleDriveConnect')}
+                              </button>
+                            ))}
+                        </div>
+
+                        {googleDriveStatus.connected && (
+                          <>
+                            <div className="grid sm:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-flo-text mb-1">
+                                  {t('settings.googleDriveFrequency')}
+                                </label>
+                                <select
+                                  value={googleDriveStatus.frequency}
+                                  disabled={savingGoogleDrivePrefs}
+                                  onChange={(e) =>
+                                    updateGoogleDrivePrefs({
+                                      frequency: e.target.value as 'daily' | 'weekly',
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-flo-border-strong rounded-lg text-sm focus:ring-2 focus:ring-flo-brand-500 outline-none disabled:opacity-50"
+                                >
+                                  <option value="daily">
+                                    {t('settings.googleDriveFrequencyDaily')}
+                                  </option>
+                                  <option value="weekly">
+                                    {t('settings.googleDriveFrequencyWeekly')}
+                                  </option>
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-flo-text mb-1">
+                                  {t('settings.googleDriveRetention')}
+                                </label>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={100}
+                                  value={googleDriveStatus.retention_count}
+                                  disabled={savingGoogleDrivePrefs}
+                                  onChange={(e) =>
+                                    setGoogleDriveStatus((prev) => ({
+                                      ...prev,
+                                      retention_count:
+                                        Number(e.target.value) || prev.retention_count,
+                                    }))
+                                  }
+                                  onBlur={(e) => {
+                                    const n = Number(e.target.value);
+                                    if (Number.isInteger(n) && n >= 1 && n <= 100)
+                                      updateGoogleDrivePrefs({ retention_count: n });
+                                  }}
+                                  className="w-full px-3 py-2 border border-flo-border-strong rounded-lg text-sm focus:ring-2 focus:ring-flo-brand-500 outline-none disabled:opacity-50"
+                                />
+                              </div>
+                            </div>
+                            <p className="text-xs text-flo-text-secondary">
+                              {t('settings.googleDriveRetentionHint')}
+                            </p>
+
+                            <div className="flex items-center justify-between gap-3 flex-wrap pt-1">
+                              <div className="text-xs text-flo-text-secondary">
+                                {googleDriveStatus.last_backup_at ? (
+                                  googleDriveStatus.last_backup_status === 'error' ? (
+                                    <span className="flex items-center gap-1 text-red-600">
+                                      <AlertTriangle size={13} />
+                                      {t('settings.googleDriveLastBackupErrorAt', {
+                                        time: formatDateTime(googleDriveStatus.last_backup_at),
+                                      })}
+                                    </span>
+                                  ) : (
+                                    <span className="flex items-center gap-1 text-flo-text-secondary">
+                                      <CheckCircle2 size={13} className="text-green-600" />
+                                      {t('settings.googleDriveLastBackupSuccessAt', {
+                                        time: formatDateTime(googleDriveStatus.last_backup_at),
+                                      })}
+                                    </span>
+                                  )
+                                ) : (
+                                  <span>
+                                    {t('settings.googleDriveLastBackup')}:{' '}
+                                    {t('settings.googleDriveLastBackupNever')}
+                                  </span>
+                                )}
+                              </div>
+                              {currentTenant?.role === 'owner' && (
+                                <button
+                                  onClick={backupToGoogleDriveNow}
+                                  disabled={backingUpGoogleDrive}
+                                  className="flex items-center gap-1.5 px-4 py-2 text-sm bg-flo-text-secondary text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium shrink-0"
+                                >
+                                  <UploadCloud size={15} />
+                                  {backingUpGoogleDrive
+                                    ? t('settings.googleDriveBackingUp')
+                                    : t('settings.googleDriveBackupNow')}
+                                </button>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </Panel>
+
+                  {/* Database Import */}
+                  <Panel>
+                    <div className="flex items-center gap-2 mb-4">
+                      <FileText size={20} className="text-flo-text-secondary" />
+                      <h2 className="font-semibold text-flo-text">
+                        {t('settings.importDatabase')}
+                      </h2>
+                    </div>
+                    <p className="text-sm text-flo-text-secondary mb-4">
+                      {t('settings.importDatabaseHint')}
+                    </p>
+                    <input
+                      type="file"
+                      accept=".json"
+                      id="import-file"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+
+                        const reader = new FileReader();
+                        reader.onload = async (event) => {
+                          try {
+                            const data = JSON.parse(event.target?.result as string);
+                            if (!data.app || data.app !== 'FloDesktop') {
+                              toast.error(t('settings.invalidExportFile'));
+                              return;
+                            }
+
+                            const overwrite = await confirm(t('settings.importOverwriteConfirm'), {
+                              confirmLabel: t('settings.replaceAll'),
+                            });
+
+                            if (overwrite && masterPinStatus.available) {
+                              if (!masterPinStatus.isSet) {
+                                toast.error(t('settings.masterPinRequiredForReplace'));
+                                return;
+                              }
+                              setPinGate({ mode: 'import', payload: { data, overwrite } });
+                              return;
+                            }
+
+                            await runImport(data, overwrite);
+                          } catch {
+                            toast.error(t('settings.importFailed'));
+                          }
+                        };
+                        reader.readAsText(file);
+                        e.target.value = '';
+                      }}
+                    />
+                    <div className="flex gap-2">
+                      <label
+                        htmlFor="import-file"
+                        className="px-5 py-2 text-sm bg-flo-surface-muted text-flo-text rounded-lg hover:bg-flo-border cursor-pointer font-medium"
+                      >
+                        {t('settings.selectFileAndImport')}
+                      </label>
+                    </div>
+                  </Panel>
+
+                  {/* Database Info */}
+                  <Panel>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Database size={20} className="text-flo-text-secondary" />
+                      <h2 className="font-semibold text-flo-text">
+                        {t('settings.databaseInformation')}
+                      </h2>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const response = await api.get('/db/tables');
+                          const { tables } = response.data;
+                          setTableInfo(tables);
+                          setTableInfoOpen(true);
+                        } catch {
+                          toast.error(t('settings.tableInfoFailed'));
+                        }
+                      }}
+                      className="px-5 py-2 text-sm border border-flo-border text-flo-text-secondary rounded-lg hover:bg-flo-bg font-medium"
+                    >
+                      {t('settings.viewTableInfo')}
+                    </button>
+                  </Panel>
+
+                  {/* Database Health Check */}
+                  <Panel>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Wrench size={20} className="text-flo-text-secondary" />
+                      <h2 className="font-semibold text-flo-text">
+                        {t('settings.databaseHealthCheck')}
+                      </h2>
+                    </div>
+                    <p className="text-sm text-flo-text-secondary mb-4">
+                      {t('settings.databaseHealthCheckDescription')}
+                    </p>
+                    <button
+                      onClick={runHealthCheck}
+                      className="px-5 py-2 text-sm border border-flo-border text-flo-text-secondary rounded-lg hover:bg-flo-bg font-medium"
+                    >
+                      {t('settings.databaseHealthCheck')}
+                    </button>
+                  </Panel>
+
+                  {/* Master PIN */}
+                  <Panel>
+                    <div className="flex items-center gap-2 mb-4">
+                      <KeyRound size={20} className="text-flo-text-secondary" />
+                      <h2 className="font-semibold text-flo-text">{t('settings.masterPin')}</h2>
+                    </div>
+                    <p className="text-sm text-flo-text-secondary mb-4">
+                      {t('settings.masterPinDataDescription')}
+                    </p>
+                    {!masterPinStatus.available ? (
+                      <p className="text-sm text-amber-600">{t('settings.notAvailableOnDevice')}</p>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`text-sm font-medium ${masterPinStatus.isSet ? 'text-green-600' : 'text-amber-600'}`}
+                        >
+                          {masterPinStatus.isSet
+                            ? t('settings.masterPinStatusSet')
+                            : t('settings.masterPinStatusNotSet')}
+                        </span>
+                        <button
+                          onClick={() => setPinGate({ mode: 'set' })}
+                          className="px-5 py-2 text-sm border border-flo-border text-flo-text-secondary rounded-lg hover:bg-flo-bg font-medium"
+                        >
+                          {masterPinStatus.isSet
+                            ? t('settings.masterPinChangeButton')
+                            : t('settings.masterPinSetButton')}
+                        </button>
+                      </div>
+                    )}
+                  </Panel>
+
+                  {/* Danger Zone: Initialize Database */}
+                  <div className="bg-flo-surface rounded-xl border border-red-200 p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <AlertTriangle size={20} className="text-red-600" />
+                      <h2 className="font-semibold text-red-600">
+                        {t('settings.initializeDatabase')}
+                      </h2>
+                    </div>
+                    <p className="text-sm text-flo-text-secondary mb-4">
+                      {t('settings.initializeDatabaseDescription')}
+                    </p>
+                    <button
+                      onClick={() => setInitializeDbOpen(true)}
+                      className="px-5 py-2 text-sm bg-red-600 text-white rounded-lg hover:opacity-90 font-medium"
+                    >
+                      {t('settings.initializeDatabaseButton')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          )}
+
+          {/* Integrations tab — cloud + OrderFlow + More Apps */}
+          {showNotificationSettingsTab && (
+            <TabsContent value="whatsapp">
+              <div className="pb-6 max-w-3xl space-y-6">
+                {!whatsappEnabled ? (
+                  <WhatsAppEnableCard />
+                ) : (
+                  <Panel className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="font-semibold text-flo-text">
+                        {t('whatsapp.settings.enabled')}
+                      </p>
+                      <p className="text-xs text-flo-text-secondary mt-0.5">
+                        {t('whatsapp.settings.enabledHint')}
+                      </p>
+                    </div>
+                    <Button asChild variant="outline" size="sm">
+                      <Link href="/whatsapp">{t('whatsapp.settings.openConnection')}</Link>
+                    </Button>
+                  </Panel>
+                )}
+              </div>
+            </TabsContent>
+          )}
+
+          <TabsContent value="mobile-access">
+            <div className="pb-6 max-w-3xl space-y-6">
+              <div className="space-y-6">
+                <h2 className="text-lg font-semibold text-flo-text">
+                  {t('settings.tabMobileAccess')}
+                </h2>
+
+                {/* FloAdmin — reporting sync */}
+                <Panel className="space-y-5">
+                  <div className="flex items-center gap-2">
+                    <Cloud size={20} className="text-flo-brand-600" />
+                    <div>
+                      <h2 className="font-semibold text-flo-text">
+                        {t('settings.floadminSalesReporting')}
+                      </h2>
+                      <p className="text-xs text-flo-text-secondary mt-0.5">
+                        {t('settings.floadminSalesReportingHint')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {cloudStatus.cloud_registration_status === 'unregistered' ? (
+                    <div className="bg-flo-bg rounded-xl p-6 flex flex-col items-center justify-center text-center space-y-4">
+                      <div className="p-3 bg-flo-surface rounded-full shadow-sm">
+                        <Cloud className="w-6 h-6 text-flo-brand-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-flo-text">Cloud Services Disabled</h3>
+                        <p className="text-sm text-flo-text-secondary mt-1 max-w-sm">
+                          Initialize cloud services to enable remote sales reporting, bill sync, and
+                          online dashboard access.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setShowInitializeCloudConfirm(true)}
+                        className="px-4 py-2 bg-flo-brand-600 text-white text-sm font-medium rounded-lg hover:opacity-90"
+                      >
+                        Initialize Cloud Services
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="rounded-lg border border-flo-border px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          {cloudStatus.cloud_registration_status === 'registered' &&
+                          !cloudServicesStopped ? (
+                            <CheckCircle2 size={16} className="text-green-600 shrink-0" />
+                          ) : (
+                            <CloudOff size={16} className="text-flo-text-muted shrink-0" />
+                          )}
+                          <div>
+                            <p className="text-sm font-medium text-flo-text">
+                              {cloudStatus.cloud_registration_status === 'registered' &&
+                                cloudServicesStopped &&
+                                'Cloud services stopped'}
+                              {cloudStatus.cloud_registration_status === 'registered' &&
+                                !cloudServicesStopped &&
+                                (cloudStatus.cloud_connected
+                                  ? t('settings.connectedToFloadmin')
+                                  : t('settings.registeredReconnecting'))}
+                              {cloudStatus.cloud_registration_status === 'rejected' &&
+                                t('settings.registrationRejected')}
+                              {cloudStatus.cloud_registration_status === 'deletion_pending' &&
+                                (cloudStatus.cloud_last_error ||
+                                  cloudStatus.cloud_deletion_status === 'failed') &&
+                                'Cloud deletion request failed'}
+                              {cloudStatus.cloud_registration_status === 'deletion_pending' &&
+                                cloudStatus.cloud_deletion_status === 'processing' &&
+                                'Cloud deletion processing'}
+                              {cloudStatus.cloud_registration_status === 'deletion_pending' &&
+                                !cloudStatus.cloud_last_error &&
+                                cloudStatus.cloud_deletion_status !== 'failed' &&
+                                cloudStatus.cloud_deletion_status !== 'processing' &&
+                                'Cloud deletion request pending'}
+                              {cloudStatus.cloud_registration_status === 'deleted' &&
+                                'Cloud data deleted'}
+                              {(cloudStatus.cloud_registration_status === 'unregistered' ||
+                                cloudStatus.cloud_registration_status === 'registration_failed') &&
+                                t('settings.notRegistered')}
+                            </p>
+                            <p className="text-xs text-flo-text-secondary">
+                              {cloudStatus.cloud_registration_status === 'registered' &&
+                                cloudServicesStopped &&
+                                'Enable Cloud Services below and save changes to resume cloud services.'}
+                              {cloudStatus.cloud_registration_status === 'registered' &&
+                                !cloudServicesStopped &&
+                                (cloudStatus.cloud_last_heartbeat
+                                  ? t('settings.liveChannelHeartbeat', {
+                                      mode: cloudStatus.cloud_relay_mode.replace('_', ' '),
+                                      time: formatTime(cloudStatus.cloud_last_heartbeat),
+                                    })
+                                  : t('settings.liveChannel', {
+                                      mode: cloudStatus.cloud_relay_mode.replace('_', ' '),
+                                    }))}
+                              {cloudStatus.cloud_registration_status === 'rejected' &&
+                                t('settings.registrationContactSupport')}
+                              {cloudStatus.cloud_registration_status === 'registration_failed' &&
+                                (cloudStatus.cloud_last_error
+                                  ? t('settings.registrationLastError', {
+                                      error: cloudStatus.cloud_last_error,
+                                    })
+                                  : t('settings.registrationLastFailed'))}
+                              {cloudStatus.cloud_registration_status === 'deletion_pending' &&
+                                (cloudStatus.cloud_last_error ||
+                                  cloudStatus.cloud_deletion_status === 'failed') &&
+                                'The deletion request failed. You can refresh its status or retry the request from the privacy controls below.'}
+                              {cloudStatus.cloud_registration_status === 'deletion_pending' &&
+                                cloudStatus.cloud_deletion_status === 'processing' &&
+                                'Cloud deletion is being processed. Refresh its status or cancel it if cancellation is available.'}
+                              {cloudStatus.cloud_registration_status === 'deletion_pending' &&
+                                !cloudStatus.cloud_last_error &&
+                                cloudStatus.cloud_deletion_status !== 'failed' &&
+                                cloudStatus.cloud_deletion_status !== 'processing' &&
+                                'Cloud services remain stopped until the deletion request is resolved.'}
+                              {cloudStatus.cloud_registration_status === 'deleted' &&
+                                'Cloud data has been deleted from Nexora servers. Cloud services cannot be re-enabled on this installation.'}
+                              {cloudStatus.cloud_registration_status === 'unregistered' &&
+                                t('settings.registrationRegisterHelp')}
+                            </p>
+                          </div>
+                        </div>
+                        {cloudStatus.cloud_registration_status !== 'registered' &&
+                          cloudStatus.cloud_registration_status !== 'deletion_pending' &&
+                          cloudStatus.cloud_registration_status !== 'deleted' && (
+                            <button
+                              onClick={() => registerCloud('')}
+                              disabled={registeringCloud}
+                              className="px-4 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium shrink-0"
+                            >
+                              {registeringCloud
+                                ? t('settings.registering')
+                                : t('settings.registerWithFloadmin')}
+                            </button>
+                          )}
+                      </div>
+
+                      {cloudStatus.cloud_registration_status !== 'deleted' && (
+                        <div className="space-y-3">
+                          <p className="text-sm text-flo-text-secondary">
+                            {t('settings.cloudManagedAutomatically')}
+                          </p>
+
+                          <label className="flex items-start gap-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={cloudSettings.cloud_sync_enabled}
+                              onChange={(e) =>
+                                setCloudSettings({
+                                  ...cloudSettings,
+                                  cloud_sync_enabled: e.target.checked,
+                                })
+                              }
+                              className="mt-0.5 rounded border-flo-border-strong text-flo-brand-600 focus:ring-flo-brand-500"
+                            />
+                            <div>
+                              <span className="text-sm font-medium text-flo-text block">
+                                {cloudServicesStopped
+                                  ? 'Enable Cloud Services'
+                                  : t('settings.enableBillSync')}
+                              </span>
+                              <p className="text-xs text-flo-text-secondary mt-1">
+                                {cloudServicesStopped
+                                  ? 'Resume cloud services and bill sync on this device.'
+                                  : t('settings.enableBillSyncHint')}
+                              </p>
+                            </div>
+                          </label>
+
+                          {cloudSettings.cloud_last_sync && (
+                            <p className="text-xs text-flo-text-muted">
+                              {t('settings.lastSync', {
+                                time: formatDateTime(cloudSettings.cloud_last_sync),
+                              })}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
-                </div>
-              )}
-            </Panel>
-          </div>
-          </div>
-        </TabsContent>
+                </Panel>
 
-        <TabsContent value="orderflow">
-          <div className="pb-6 max-w-3xl space-y-6">
-            <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-flo-text">{t('settings.tabOrderflow')}</h2>
+                {/* RevFlo — consolidated: download/QR + app (pairing) code + paired devices */}
+                <Panel className="space-y-5">
+                  <div className="flex items-center gap-2">
+                    <Smartphone size={20} className="text-flo-text-secondary" />
+                    <div>
+                      <h2 className="font-semibold text-flo-text">
+                        {revflo?.name || t('settings.revflo')}
+                      </h2>
+                      <p className="text-xs text-flo-text-secondary mt-0.5">
+                        {revflo?.tagline || t('settings.revfloHint')}
+                      </p>
+                    </div>
+                  </div>
 
-            {/* OrderFlow — online orders */}
-            <Panel className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Zap size={20} className="text-amber-500" />
-                <div>
-                  <h2 className="font-semibold text-flo-text">{t('settings.orderflowOnlineOrders')}</h2>
-                  <p className="text-xs text-flo-text-secondary mt-0.5">{t('settings.orderflowOnlineOrdersHint')}</p>
-                </div>
-              </div>
-
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={cloudSettings.cloud_orders_enabled}
-                  onChange={(e) => setCloudSettings({ ...cloudSettings, cloud_orders_enabled: e.target.checked })}
-                  className="rounded border-flo-border-strong text-flo-brand-600 focus:ring-flo-brand-500"
-                />
-                <span className="text-sm text-flo-text">{t('settings.enableOnlineOrderPolling')}</span>
-              </label>
-
-            </Panel>
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* About tab */}
-        <TabsContent value="about">
-          <div className="pb-6 max-w-3xl space-y-6">
-            <Panel>
-              <h2 className="font-semibold text-flo-text mb-4">{t('settings.aboutOpervia')}</h2>
-              <p className="text-sm text-flo-text-secondary mb-6">
-                {t('settings.aboutDescription')}
-              </p>
-              <div className="space-y-3">
-                <a href="https://github.com/FreeOpenSourcePOS/FloCafe" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-flo-brand-600 hover:underline">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-                  GitHub Repository
-                </a>
-                <a href="https://flopos.com/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-flo-brand-600 hover:underline">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-                  App Website
-                </a>
-              </div>
-            </Panel>
-
-            {/* More Apps — moved here from the old Integrations tab */}
-            <Panel>
-              <div className="flex items-center gap-2 mb-4">
-                <Smartphone size={20} className="text-flo-text-secondary" />
-                <h2 className="font-semibold text-flo-text">{t('settings.moreApps')}</h2>
-              </div>
-              <p className="text-sm text-flo-text-secondary mb-5">
-                {t('settings.moreAppsHint')}
-              </p>
-
-              {moreAppsLoading && (
-                <div className="flex items-center justify-center py-10">
-                  <div className="w-6 h-6 border-2 border-flo-brand-600 border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
-
-              {!moreAppsLoading && (
-                <div className="space-y-4">
-                  {moreApps.map((app) => (
-                    <div key={app.id} className="flex flex-col sm:flex-row gap-5 items-start border border-flo-border rounded-xl p-5">
+                  {revflo?.available && (
+                    <div className="flex flex-col sm:flex-row gap-5 items-start border border-flo-border rounded-xl p-5">
                       <div className="shrink-0">
-                        {app.qr_data_url ? (
-                          <img src={app.qr_data_url} alt={t('settings.appQrAlt', { name: app.name })}
-                            className="w-32 h-32 rounded-lg border border-flo-border" />
+                        {revflo.qr_data_url ? (
+                          <img
+                            src={revflo.qr_data_url}
+                            alt={t('settings.appQrAlt', { name: revflo.name })}
+                            className="w-28 h-28 rounded-lg border border-flo-border"
+                          />
                         ) : (
-                          <div className="w-32 h-32 rounded-lg border border-flo-border flex items-center justify-center text-flo-text-muted">
-                            <QrCode size={36} />
+                          <div className="w-28 h-28 rounded-lg border border-flo-border flex items-center justify-center text-flo-text-muted">
+                            <QrCode size={32} />
                           </div>
                         )}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-flo-text">{app.name}</h3>
-                          {!app.available && (
-                            <span className="text-xs font-medium text-flo-text-muted bg-flo-surface-muted px-2 py-0.5 rounded-full">{t('settings.comingSoon')}</span>
-                          )}
-                        </div>
-                        <p className="text-sm text-flo-text-secondary mb-3">{app.tagline}</p>
-                        <div className="flex gap-3 text-sm">
-                          {app.ios_url && (
-                            <a href={app.ios_url} target="_blank" rel="noopener noreferrer" className="text-flo-brand-600 hover:underline">
-                              {t('settings.downloadForIos')}
-                            </a>
-                          )}
-                          {app.android_url && (
-                            <a href={app.android_url} target="_blank" rel="noopener noreferrer" className="text-flo-brand-600 hover:underline">
-                              {t('settings.downloadForAndroid')}
-                            </a>
-                          )}
-                        </div>
+                      <div className="flex gap-3 text-sm">
+                        {revflo.ios_url && (
+                          <a
+                            href={revflo.ios_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-flo-brand-600 hover:underline"
+                          >
+                            {t('settings.downloadForIos')}
+                          </a>
+                        )}
+                        {revflo.android_url && (
+                          <a
+                            href={revflo.android_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-flo-brand-600 hover:underline"
+                          >
+                            {t('settings.downloadForAndroid')}
+                          </a>
+                        )}
                       </div>
                     </div>
-                  ))}
-                  {moreApps.length === 0 && (
-                    <p className="text-sm text-flo-text-muted text-center py-10">{t('settings.noAppsToShow')}</p>
                   )}
-                </div>
-              )}
-            </Panel>
-          </div>
-        </TabsContent>
 
-        {/* Software Updates tab */}
-        <TabsContent value="updates">
-          <div className="pb-6 max-w-3xl space-y-6">
-            <Panel>
-            <div className="flex items-center gap-2 mb-4">
-              <RefreshCw size={20} className="text-flo-text-secondary" />
-              <h2 className="font-semibold text-flo-text">{t('settings.updates')}</h2>
-            </div>
-            <p className="text-sm text-flo-text-secondary mb-6">
-              {updateStatus?.status === 'store'
-                ? t('settings.softwareUpdatesHintStore')
-                : updateStatus?.status === 'linux-managed'
-                ? t('settings.softwareUpdatesHintLinuxManaged')
-                : t('settings.softwareUpdatesHintDefault')}
-            </p>
+                  <div>
+                    <p className="text-sm font-medium text-flo-text mb-1">
+                      {t('settings.mobileApp')}
+                    </p>
+                    <p className="text-xs text-flo-text-secondary mb-4">
+                      {t('settings.mobileAppHint')}
+                    </p>
+                    {pairingUnavailable ? (
+                      <p className="text-sm text-flo-text-secondary">
+                        {t('settings.mobilePairingNeedsCloud')}
+                      </p>
+                    ) : pairingCode ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-4">
+                          {pairingQrDataUrl && (
+                            <img
+                              src={pairingQrDataUrl}
+                              alt={t('settings.pairingQrAlt')}
+                              className="w-28 h-28 rounded-lg border border-flo-border"
+                            />
+                          )}
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className="flex-1 bg-flo-bg border border-flo-border rounded-lg px-4 py-3 text-center">
+                              <span className="font-mono text-2xl font-bold tracking-[0.3em] text-flo-text">
+                                {pairingCode.toUpperCase()}
+                              </span>
+                            </div>
+                            <button
+                              onClick={copyPairingCode}
+                              className="p-2.5 border border-flo-border rounded-lg hover:bg-flo-bg text-flo-text-secondary"
+                              title={t('settings.copyCode')}
+                            >
+                              {copiedCode ? (
+                                <Check size={18} className="text-green-600" />
+                              ) : (
+                                <Copy size={18} />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                        {pairingExpiresAt && (
+                          <p className="text-xs text-flo-text-muted">
+                            {t('settings.codeExpires', { date: formatDate(pairingExpiresAt) })}
+                          </p>
+                        )}
+                        <p className="text-xs text-flo-text-secondary">
+                          {t('settings.pairingCodeSingleUse')}
+                        </p>
+                        <button
+                          onClick={rotatePairingCode}
+                          disabled={rotatingCode}
+                          className="flex items-center gap-2 text-sm text-flo-text-secondary hover:text-flo-text disabled:opacity-50"
+                        >
+                          <RefreshCw size={14} className={rotatingCode ? 'animate-spin' : ''} />
+                          {rotatingCode ? t('settings.generating') : t('settings.generateNewCode')}
+                        </button>
+                        <p className="text-xs text-amber-600">
+                          {t('settings.disconnectDevicesWarning')}
+                        </p>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={rotatePairingCode}
+                        disabled={rotatingCode}
+                        className="px-5 py-2 text-sm bg-flo-brand-600 text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium"
+                      >
+                        {rotatingCode
+                          ? t('settings.generating')
+                          : t('settings.generatePairingCode')}
+                      </button>
+                    )}
+                  </div>
 
-            {updateStatus && updateStatus.status !== 'store' && updateStatus.status !== 'linux-managed' && (
-              <div className={`p-4 rounded-lg mb-4 ${
-                updateStatus.status === 'available' || updateStatus.status === 'ready-to-install'
-                  ? 'bg-green-50 border border-green-200'
-                  : updateStatus.status === 'error'
-                  ? 'bg-red-50 border border-red-200'
-                  : updateStatus.status === 'dev-mode'
-                  ? 'bg-yellow-50 border border-yellow-200'
-                  : 'bg-flo-bg border border-flo-border'
-              }`}>
-                <div className="flex items-center gap-2 mb-2">
-                  {updateStatus.status === 'checking' && <RefreshCw size={16} className="animate-spin text-flo-brand-600" />}
-                  {updateStatus.status === 'available' && <Check size={16} className="text-green-600" />}
-                  {updateStatus.status === 'up-to-date' && <CheckCircle2 size={16} className="text-green-600" />}
-                  {updateStatus.status === 'ready-to-install' && <CheckCircle2 size={16} className="text-green-600" />}
-                  {updateStatus.status === 'downloading' && <RefreshCw size={16} className="animate-spin text-flo-brand-600" />}
-                  {updateStatus.status === 'error' && <span className="text-red-600">✕</span>}
-                  {updateStatus.status === 'dev-mode' && <span className="text-yellow-600">⚠</span>}
-                  <span className="font-medium capitalize">
-                    {updateStatus.status === 'available' ? t('settings.updateStatusAvailable')
-                     : updateStatus.status === 'up-to-date' ? t('settings.updateStatusUpToDate')
-                     : updateStatus.status === 'ready-to-install' ? t('settings.updateStatusReadyToInstall')
-                     : updateStatus.status.replace(/-/g, ' ')}
-                  </span>
-                </div>
-                {appVersion && (
-                  <p className="text-sm font-medium text-flo-text">{t('settings.version')}: {appVersion}</p>
-                )}
-                {updateStatus.version && updateStatus.version !== appVersion && (
-                  <p className="text-sm text-flo-text-secondary mt-1">Latest Available: {updateStatus.version}</p>
-                )}
-                {updateStatus.percent !== undefined && (
-                  <div className="mt-2">
-                    <div className="w-full bg-flo-border rounded-full h-2">
-                      <div
-                        className="bg-flo-brand-600 h-2 rounded-full transition-all"
-                        style={{ width: `${updateStatus.percent}%` }}
-                      />
+                  {!pairingUnavailable && (
+                    <div className="pt-5 border-t border-flo-border">
+                      <p className="text-sm font-medium text-flo-text mb-3">
+                        {t('settings.pairedDevices')}
+                      </p>
+                      {devicesLoading ? (
+                        <p className="text-sm text-flo-text-muted">{t('settings.loading')}</p>
+                      ) : pairedDevices.length === 0 ? (
+                        <p className="text-sm text-flo-text-secondary">
+                          {t('settings.noPairedDevices')}
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {pairedDevices.map((d) => (
+                            <div
+                              key={d.id}
+                              className="bg-flo-bg border border-flo-border rounded-lg px-4 py-3 text-sm"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium text-flo-text capitalize">
+                                  {d.platform || t('settings.unknownPlatform')}
+                                  {d.country ? ` · ${d.country}` : ''}
+                                </span>
+                                <span className="text-xs text-flo-text-muted">
+                                  {t('settings.lastActive', { date: formatDate(d.last_seen_at) })}
+                                </span>
+                              </div>
+                              <p className="text-xs text-flo-text-secondary mt-1">
+                                {t('settings.firstPaired', { date: formatDate(d.first_seen_at) })}
+                                {d.app_version ? ` · v${d.app_version}` : ''}
+                              </p>
+                              {d.user_agent && (
+                                <p
+                                  className="text-xs text-flo-text-muted mt-1 truncate"
+                                  title={d.user_agent}
+                                >
+                                  {d.user_agent}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <p className="text-xs text-flo-text-secondary mt-1">{t('settings.percentDownloaded', { percent: updateStatus.percent.toFixed(1) })}</p>
+                  )}
+                </Panel>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="orderflow">
+            <div className="pb-6 max-w-3xl space-y-6">
+              <div className="space-y-6">
+                <h2 className="text-lg font-semibold text-flo-text">
+                  {t('settings.tabOrderflow')}
+                </h2>
+
+                {/* OrderFlow — online orders */}
+                <Panel className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Zap size={20} className="text-amber-500" />
+                    <div>
+                      <h2 className="font-semibold text-flo-text">
+                        {t('settings.orderflowOnlineOrders')}
+                      </h2>
+                      <p className="text-xs text-flo-text-secondary mt-0.5">
+                        {t('settings.orderflowOnlineOrdersHint')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={cloudSettings.cloud_orders_enabled}
+                      onChange={(e) =>
+                        setCloudSettings({
+                          ...cloudSettings,
+                          cloud_orders_enabled: e.target.checked,
+                        })
+                      }
+                      className="rounded border-flo-border-strong text-flo-brand-600 focus:ring-flo-brand-500"
+                    />
+                    <span className="text-sm text-flo-text">
+                      {t('settings.enableOnlineOrderPolling')}
+                    </span>
+                  </label>
+                </Panel>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* About tab */}
+          <TabsContent value="about">
+            <div className="pb-6 max-w-3xl space-y-6">
+              <Panel>
+                <h2 className="font-semibold text-flo-text mb-4">{t('settings.aboutOpervia')}</h2>
+                <p className="text-sm text-flo-text-secondary mb-6">
+                  {t('settings.aboutDescription')}
+                </p>
+                <div className="space-y-3">
+                  <a
+                    href="https://github.com/FreeOpenSourcePOS/FloCafe"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-flo-brand-600 hover:underline"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+                      <path d="M9 18c-4.51 2-5-2-7-2" />
+                    </svg>
+                    GitHub Repository
+                  </a>
+                  <a
+                    href="https://flopos.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-flo-brand-600 hover:underline"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+                      <path d="M2 12h20" />
+                    </svg>
+                    App Website
+                  </a>
+                </div>
+              </Panel>
+
+              {/* More Apps — moved here from the old Integrations tab */}
+              <Panel>
+                <div className="flex items-center gap-2 mb-4">
+                  <Smartphone size={20} className="text-flo-text-secondary" />
+                  <h2 className="font-semibold text-flo-text">{t('settings.moreApps')}</h2>
+                </div>
+                <p className="text-sm text-flo-text-secondary mb-5">{t('settings.moreAppsHint')}</p>
+
+                {moreAppsLoading && (
+                  <div className="flex items-center justify-center py-10">
+                    <div className="w-6 h-6 border-2 border-flo-brand-600 border-t-transparent rounded-full animate-spin" />
                   </div>
                 )}
-                {updateStatus.error && (
-                  <p className="text-sm text-red-600 mt-1">{updateStatus.error}</p>
-                )}
-                {updateStatus.status === 'up-to-date' && (
-                  <p className="text-sm text-flo-text-secondary">{t('settings.upToDate')}</p>
-                )}
-                {updateStatus.status === 'dev-mode' && (
-                  <p className="text-sm text-yellow-600">{t('settings.devModeDisabled')}</p>
-                )}
-              </div>
-            )}
 
-            {updateStatus?.status !== 'store' && updateStatus?.status !== 'linux-managed' && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleCheckUpdates}
-                  disabled={updateStatus?.status === 'checking' || updateStatus?.status === 'downloading'}
-                  className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50 bg-flo-brand-600 text-white hover:opacity-90"
-                >
-                  <RefreshCw size={16} className={updateStatus?.status === 'checking' ? 'animate-spin' : ''} />
-                  {updateStatus?.status === 'checking' ? t('settings.checking') : t('settings.checkForUpdates')}
-                </button>
-              </div>
-            )}
-            </Panel>
-          </div>
-        </TabsContent>
+                {!moreAppsLoading && (
+                  <div className="space-y-4">
+                    {moreApps.map((app) => (
+                      <div
+                        key={app.id}
+                        className="flex flex-col sm:flex-row gap-5 items-start border border-flo-border rounded-xl p-5"
+                      >
+                        <div className="shrink-0">
+                          {app.qr_data_url ? (
+                            <img
+                              src={app.qr_data_url}
+                              alt={t('settings.appQrAlt', { name: app.name })}
+                              className="w-32 h-32 rounded-lg border border-flo-border"
+                            />
+                          ) : (
+                            <div className="w-32 h-32 rounded-lg border border-flo-border flex items-center justify-center text-flo-text-muted">
+                              <QrCode size={36} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-flo-text">{app.name}</h3>
+                            {!app.available && (
+                              <span className="text-xs font-medium text-flo-text-muted bg-flo-surface-muted px-2 py-0.5 rounded-full">
+                                {t('settings.comingSoon')}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-flo-text-secondary mb-3">{app.tagline}</p>
+                          <div className="flex gap-3 text-sm">
+                            {app.ios_url && (
+                              <a
+                                href={app.ios_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-flo-brand-600 hover:underline"
+                              >
+                                {t('settings.downloadForIos')}
+                              </a>
+                            )}
+                            {app.android_url && (
+                              <a
+                                href={app.android_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-flo-brand-600 hover:underline"
+                              >
+                                {t('settings.downloadForAndroid')}
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {moreApps.length === 0 && (
+                      <p className="text-sm text-flo-text-muted text-center py-10">
+                        {t('settings.noAppsToShow')}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </Panel>
+            </div>
+          </TabsContent>
 
-</div>
-</Tabs>
+          {/* Software Updates tab */}
+          <TabsContent value="updates">
+            <div className="pb-6 max-w-3xl space-y-6">
+              <Panel>
+                <div className="flex items-center gap-2 mb-4">
+                  <RefreshCw size={20} className="text-flo-text-secondary" />
+                  <h2 className="font-semibold text-flo-text">{t('settings.updates')}</h2>
+                </div>
+                <p className="text-sm text-flo-text-secondary mb-6">
+                  {updateStatus?.status === 'store'
+                    ? t('settings.softwareUpdatesHintStore')
+                    : updateStatus?.status === 'linux-managed'
+                      ? t('settings.softwareUpdatesHintLinuxManaged')
+                      : t('settings.softwareUpdatesHintDefault')}
+                </p>
+
+                {updateStatus &&
+                  updateStatus.status !== 'store' &&
+                  updateStatus.status !== 'linux-managed' && (
+                    <div
+                      className={`p-4 rounded-lg mb-4 ${
+                        updateStatus.status === 'available' ||
+                        updateStatus.status === 'ready-to-install'
+                          ? 'bg-green-50 border border-green-200'
+                          : updateStatus.status === 'error'
+                            ? 'bg-red-50 border border-red-200'
+                            : updateStatus.status === 'dev-mode'
+                              ? 'bg-yellow-50 border border-yellow-200'
+                              : 'bg-flo-bg border border-flo-border'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        {updateStatus.status === 'checking' && (
+                          <RefreshCw size={16} className="animate-spin text-flo-brand-600" />
+                        )}
+                        {updateStatus.status === 'available' && (
+                          <Check size={16} className="text-green-600" />
+                        )}
+                        {updateStatus.status === 'up-to-date' && (
+                          <CheckCircle2 size={16} className="text-green-600" />
+                        )}
+                        {updateStatus.status === 'ready-to-install' && (
+                          <CheckCircle2 size={16} className="text-green-600" />
+                        )}
+                        {updateStatus.status === 'downloading' && (
+                          <RefreshCw size={16} className="animate-spin text-flo-brand-600" />
+                        )}
+                        {updateStatus.status === 'error' && <span className="text-red-600">✕</span>}
+                        {updateStatus.status === 'dev-mode' && (
+                          <span className="text-yellow-600">⚠</span>
+                        )}
+                        <span className="font-medium capitalize">
+                          {updateStatus.status === 'available'
+                            ? t('settings.updateStatusAvailable')
+                            : updateStatus.status === 'up-to-date'
+                              ? t('settings.updateStatusUpToDate')
+                              : updateStatus.status === 'ready-to-install'
+                                ? t('settings.updateStatusReadyToInstall')
+                                : updateStatus.status.replace(/-/g, ' ')}
+                        </span>
+                      </div>
+                      {appVersion && (
+                        <p className="text-sm font-medium text-flo-text">
+                          {t('settings.version')}: {appVersion}
+                        </p>
+                      )}
+                      {updateStatus.version && updateStatus.version !== appVersion && (
+                        <p className="text-sm text-flo-text-secondary mt-1">
+                          Latest Available: {updateStatus.version}
+                        </p>
+                      )}
+                      {updateStatus.percent !== undefined && (
+                        <div className="mt-2">
+                          <div className="w-full bg-flo-border rounded-full h-2">
+                            <div
+                              className="bg-flo-brand-600 h-2 rounded-full transition-all"
+                              style={{ width: `${updateStatus.percent}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-flo-text-secondary mt-1">
+                            {t('settings.percentDownloaded', {
+                              percent: updateStatus.percent.toFixed(1),
+                            })}
+                          </p>
+                        </div>
+                      )}
+                      {updateStatus.error && (
+                        <p className="text-sm text-red-600 mt-1">{updateStatus.error}</p>
+                      )}
+                      {updateStatus.status === 'up-to-date' && (
+                        <p className="text-sm text-flo-text-secondary">{t('settings.upToDate')}</p>
+                      )}
+                      {updateStatus.status === 'dev-mode' && (
+                        <p className="text-sm text-yellow-600">{t('settings.devModeDisabled')}</p>
+                      )}
+                    </div>
+                  )}
+
+                {updateStatus?.status !== 'store' && updateStatus?.status !== 'linux-managed' && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleCheckUpdates}
+                      disabled={
+                        updateStatus?.status === 'checking' ||
+                        updateStatus?.status === 'downloading'
+                      }
+                      className="px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50 bg-flo-brand-600 text-white hover:opacity-90"
+                    >
+                      <RefreshCw
+                        size={16}
+                        className={updateStatus?.status === 'checking' ? 'animate-spin' : ''}
+                      />
+                      {updateStatus?.status === 'checking'
+                        ? t('settings.checking')
+                        : t('settings.checkForUpdates')}
+                    </button>
+                  </div>
+                )}
+              </Panel>
+            </div>
+          </TabsContent>
+        </div>
+      </Tabs>
       {ConfirmDialog}
 
       {/* Table Info Dialog */}
@@ -4775,12 +6502,16 @@ export default function SettingsPage() {
             {tableInfo.map((row) => (
               <div key={row.name} className="flex justify-between text-sm">
                 <span className="text-flo-text font-mono">{row.name}</span>
-                <span className="text-flo-text-secondary">{row.rows.toLocaleString()} {t('settings.rows')}</span>
+                <span className="text-flo-text-secondary">
+                  {row.rows.toLocaleString()} {t('settings.rows')}
+                </span>
               </div>
             ))}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setTableInfoOpen(false)}>{t('settings.close')}</Button>
+            <Button variant="outline" onClick={() => setTableInfoOpen(false)}>
+              {t('settings.close')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -4792,15 +6523,22 @@ export default function SettingsPage() {
             <DialogTitle>Initialize Cloud Services</DialogTitle>
             <DialogDescription>
               Allow diagnostic and usage data collection to improve the product.
-              <br /><br />
-              This enables basic telemetry and provisions your local database to communicate with the FloAdmin cloud servers for remote reporting and sync.
+              <br />
+              <br />
+              This enables basic telemetry and provisions your local database to communicate with
+              the FloAdmin cloud servers for remote reporting and sync.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowInitializeCloudConfirm(false)}>{t('settings.cancel')}</Button>
+            <Button variant="outline" onClick={() => setShowInitializeCloudConfirm(false)}>
+              {t('settings.cancel')}
+            </Button>
             <Button
               disabled={registeringCloud}
-              onClick={() => { setShowInitializeCloudConfirm(false); registerCloud(''); }}
+              onClick={() => {
+                setShowInitializeCloudConfirm(false);
+                registerCloud('');
+              }}
             >
               {registeringCloud ? t('settings.registering') : 'Accept & Initialize'}
             </Button>
@@ -4812,12 +6550,17 @@ export default function SettingsPage() {
         open={pinGate !== null}
         mode={pinGate?.mode === 'set' ? 'set' : 'verify'}
         title={
-          pinGate?.mode === 'backup' || pinGate?.mode === 'backup-custom' ? t('settings.confirmBackupTitle')
-          : pinGate?.mode === 'import' ? t('settings.confirmImportTitle')
-          : pinGate?.mode === 'restore' ? t('settings.confirmRestoreTitle')
-          : pinGate?.mode === 'delete-cloud' ? 'Confirm cloud deletion request'
-          : pinGate?.mode === 'cancel-cloud-deletion' ? 'Cancel cloud deletion request'
-          : undefined
+          pinGate?.mode === 'backup' || pinGate?.mode === 'backup-custom'
+            ? t('settings.confirmBackupTitle')
+            : pinGate?.mode === 'import'
+              ? t('settings.confirmImportTitle')
+              : pinGate?.mode === 'restore'
+                ? t('settings.confirmRestoreTitle')
+                : pinGate?.mode === 'delete-cloud'
+                  ? 'Confirm cloud deletion request'
+                  : pinGate?.mode === 'cancel-cloud-deletion'
+                    ? 'Cancel cloud deletion request'
+                    : undefined
         }
         onCancel={() => setPinGate(null)}
         onSubmit={handlePinGateSubmit}
@@ -4842,11 +6585,45 @@ export default function SettingsPage() {
       />
       {isAdmin && isDirty && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-in slide-in-from-bottom-5 duration-300">
-          <div className={`bg-flo-sidebar text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-6 pointer-events-auto ${shakeSaveBar ? 'animate-shake' : ''}`}>
-            <span className="text-sm font-medium">{t('settings.unsavedChanges', { defaultValue: 'You have unsaved changes' })}</span>
+          <div
+            className={`bg-flo-sidebar text-white px-6 py-4 rounded-full shadow-2xl flex items-center gap-6 pointer-events-auto ${shakeSaveBar ? 'animate-shake' : ''}`}
+          >
+            <span className="text-sm font-medium">
+              {t('settings.unsavedChanges', { defaultValue: 'You have unsaved changes' })}
+            </span>
             <div className="flex items-center gap-2">
-              <button onClick={resetAllSettings} disabled={savingBusiness || savingLoyalty || savingDiscount || savingCloud || savingOrderNumbering} className="px-4 py-1.5 text-sm bg-flo-sidebar-hover hover:bg-flo-sidebar-hover rounded-full transition-colors disabled:opacity-50 text-white">{t('settings.discard', { defaultValue: 'Discard' })}</button>
-              <button onClick={saveAllSettings} disabled={savingBusiness || savingLoyalty || savingDiscount || savingCloud || savingOrderNumbering} className="px-4 py-1.5 text-sm bg-flo-brand-600 hover:opacity-90 rounded-full font-medium transition-colors disabled:opacity-50 text-white">{(savingBusiness || savingLoyalty || savingDiscount || savingCloud || savingOrderNumbering) ? t('settings.saving') : t('settings.saveChanges', { defaultValue: 'Save Changes' })}</button>
+              <button
+                onClick={resetAllSettings}
+                disabled={
+                  savingBusiness ||
+                  savingLoyalty ||
+                  savingDiscount ||
+                  savingCloud ||
+                  savingOrderNumbering
+                }
+                className="px-4 py-1.5 text-sm bg-flo-sidebar-hover hover:bg-flo-sidebar-hover rounded-full transition-colors disabled:opacity-50 text-white"
+              >
+                {t('settings.discard', { defaultValue: 'Discard' })}
+              </button>
+              <button
+                onClick={saveAllSettings}
+                disabled={
+                  savingBusiness ||
+                  savingLoyalty ||
+                  savingDiscount ||
+                  savingCloud ||
+                  savingOrderNumbering
+                }
+                className="px-4 py-1.5 text-sm bg-flo-brand-600 hover:opacity-90 rounded-full font-medium transition-colors disabled:opacity-50 text-white"
+              >
+                {savingBusiness ||
+                savingLoyalty ||
+                savingDiscount ||
+                savingCloud ||
+                savingOrderNumbering
+                  ? t('settings.saving')
+                  : t('settings.saveChanges', { defaultValue: 'Save Changes' })}
+              </button>
             </div>
           </div>
         </div>

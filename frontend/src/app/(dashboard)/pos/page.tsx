@@ -11,9 +11,7 @@ import toast from 'react-hot-toast';
 import { ShoppingCart } from 'lucide-react';
 import type { Addon, Category, Product, Table, Bill, Order, CartItem } from '@/lib/types';
 import { useConfirm } from '@/hooks/use-confirm';
-import {
-  Drawer, DrawerContent, DrawerTrigger,
-} from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
 import {
   Dialog,
   DialogContent,
@@ -29,7 +27,10 @@ import CustomerSearch from '@/components/pos/CustomerSearch';
 import TablePickerModal from '@/components/pos/TablePickerModal';
 import TableCheckoutModal from '@/components/pos/TableCheckoutModal';
 import PaymentModal from '@/components/pos/PaymentModal';
-import PrepaidCheckoutModal, { type PrepaidPayment, type PrepaidDiscount } from '@/components/pos/PrepaidCheckoutModal';
+import PrepaidCheckoutModal, {
+  type PrepaidPayment,
+  type PrepaidDiscount,
+} from '@/components/pos/PrepaidCheckoutModal';
 import PosTopbar from '@/components/pos/PosTopbar';
 import { PosWorkspace } from '@/components/flo/pos/PosWorkspace';
 import { usePrinterStore } from '@/hooks/usePrinter';
@@ -70,7 +71,17 @@ export default function POSPage() {
   const addonsModuleEnabled = isModuleEnabled('addons');
   const cart = useCartStore();
   const heldOrders = useHeldOrdersStore();
-  const { customerMandatory, autoPrintKot, autoPrintBill, billingType, tablesRequired, kotPrintingEnabled, setBillingType, setTablesRequired, setKotPrintingEnabled } = usePosSettingsStore();
+  const {
+    customerMandatory,
+    autoPrintKot,
+    autoPrintBill,
+    billingType,
+    tablesRequired,
+    kotPrintingEnabled,
+    setBillingType,
+    setTablesRequired,
+    setKotPrintingEnabled,
+  } = usePosSettingsStore();
   const { open: leftSidebarOpen } = useSidebar();
   const { t } = useI18n();
   const currencyFmt = useFormatCurrency();
@@ -93,7 +104,11 @@ export default function POSPage() {
   const [showCustomerPrompt, setShowCustomerPrompt] = useState(false);
   const [showPrepaidCheckout, setShowPrepaidCheckout] = useState(false);
   const [pendingOrder, setPendingOrder] = useState<Order | null>(null);
-  const [supportError, setSupportError] = useState<{ code: string; message: string; payload: Record<string, unknown> } | null>(null);
+  const [supportError, setSupportError] = useState<{
+    code: string;
+    message: string;
+    payload: Record<string, unknown>;
+  } | null>(null);
   const [sentTicketId, setSentTicketId] = useState<string | null>(null);
   const delivery = useSupportTicketStatus(sentTicketId);
   const diagnosticsPreview = useSupportDiagnosticsPreview(
@@ -110,7 +125,7 @@ export default function POSPage() {
     if (typeof window === 'undefined') return null;
     try {
       const stored = window.localStorage.getItem(POSTPAID_ATTEMPT_STORAGE_KEY);
-      const parsed = stored ? JSON.parse(stored) as PostpaidAttempt : null;
+      const parsed = stored ? (JSON.parse(stored) as PostpaidAttempt) : null;
       if (parsed && parsed.userId === activeUserId) postpaidAttemptRef.current = parsed;
       else window.localStorage.removeItem(POSTPAID_ATTEMPT_STORAGE_KEY);
     } catch {
@@ -142,7 +157,7 @@ export default function POSPage() {
     if (typeof window === 'undefined') return null;
     try {
       const stored = window.localStorage.getItem(PREPAID_ATTEMPT_STORAGE_KEY);
-      const parsed = stored ? JSON.parse(stored) as PrepaidAttempt : null;
+      const parsed = stored ? (JSON.parse(stored) as PrepaidAttempt) : null;
       if (parsed && parsed.userId === activeUserId) {
         if (parsed.discount && 'override_pin' in parsed.discount) {
           const safeDiscount = { ...parsed.discount };
@@ -180,11 +195,15 @@ export default function POSPage() {
       // Ignore storage cleanup failures.
     }
   };
-  const newIdempotencyKey = () => typeof globalThis.crypto?.randomUUID === 'function'
-    ? globalThis.crypto.randomUUID()
-    : `payment-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const newIdempotencyKey = () =>
+    typeof globalThis.crypto?.randomUUID === 'function'
+      ? globalThis.crypto.randomUUID()
+      : `payment-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
-  const currency = getCurrencySymbol(currentTenant?.currency || 'INR', getCountryByCode(currentTenant?.country ?? 'IN')?.locale);
+  const currency = getCurrencySymbol(
+    currentTenant?.currency || 'INR',
+    getCountryByCode(currentTenant?.country ?? 'IN')?.locale,
+  );
   const { printBill, printKot } = usePrinterStore();
   const billingIsPrepaid = billingType === 'prepaid';
   const shouldTakePaymentNow = billingIsPrepaid;
@@ -206,7 +225,12 @@ export default function POSPage() {
       setSupportError({
         code,
         message: msg,
-        payload: { event_code: code, message: msg, category: 'printer', diagnostics: { order_id: order.id, stage: 'kot_print' } },
+        payload: {
+          event_code: code,
+          message: msg,
+          category: 'printer',
+          diagnostics: { order_id: order.id, stage: 'kot_print' },
+        },
       });
       toast.error(`${t('pos.kotPrintFailed')}: ${msg}`);
     }
@@ -235,7 +259,12 @@ export default function POSPage() {
       setSupportError({
         code,
         message: msg,
-        payload: { event_code: code, message: msg, category: 'printer', diagnostics: { bill_id: bill.id, stage: 'receipt_print' } },
+        payload: {
+          event_code: code,
+          message: msg,
+          category: 'printer',
+          diagnostics: { bill_id: bill.id, stage: 'receipt_print' },
+        },
       });
       toast.error(t('pos.receiptPrintFailed'));
     }
@@ -246,7 +275,9 @@ export default function POSPage() {
     try {
       const { data } = await api.get('/tables?active=1');
       setTables(data.tables || []);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
   useEffect(() => {
@@ -259,7 +290,8 @@ export default function POSPage() {
         const isTablesRequired = typeof d.tables_required === 'boolean' ? d.tables_required : true;
         setTablesRequired(isTablesRequired);
 
-        api.get('/settings/kot_printing_enabled')
+        api
+          .get('/settings/kot_printing_enabled')
           .then((res) => setKotPrintingEnabled(res.data.setting?.value !== 'false'))
           .catch(() => {});
 
@@ -268,15 +300,15 @@ export default function POSPage() {
           api.get('/categories?active=1'),
           api.get('/products?active=1'),
         ];
-        
+
         if (tablesModuleEnabled && isTablesRequired) {
           requests.push(api.get('/tables?active=1'));
         }
-        
+
         const [catRes, prodRes, tableRes] = await Promise.all(requests);
         setCategories((catRes.data.categories as Category[]) || []);
         setProducts((prodRes.data.products as Product[]) || []);
-        
+
         if (tableRes) {
           setTables((tableRes.data.tables as Table[]) || []);
         } else {
@@ -292,7 +324,7 @@ export default function POSPage() {
       }
     };
     fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tablesModuleEnabled, setBillingType, setTablesRequired, setKotPrintingEnabled]);
 
   const handleProductClick = (product: Product) => {
@@ -305,19 +337,35 @@ export default function POSPage() {
     cart.addItem(product, 1, [], '');
   };
 
-  const handleAddonAdd = (product: Product, quantity: number, addons: Addon[], instructions: string) => {
+  const handleAddonAdd = (
+    product: Product,
+    quantity: number,
+    addons: Addon[],
+    instructions: string,
+  ) => {
     cart.addItem(product, quantity, addons, instructions);
   };
 
-  const handleEditItemSave = (_product: Product, quantity: number, addons: Addon[], instructions: string) => {
+  const handleEditItemSave = (
+    _product: Product,
+    quantity: number,
+    addons: Addon[],
+    instructions: string,
+  ) => {
     if (!editingCartItem) return;
     cart.updateItemDetails(editingCartItem.id, quantity, addons, instructions);
   };
 
   // A modal already open means the scan (if one lands) isn't meant for the
   // product grid — e.g. it could be a barcode field inside that modal.
-  const anyModalOpen = showTablePicker || !!addonProduct || !!editingCartItem || !!checkoutTable
-    || !!paymentBill || showCustomerPrompt || showPrepaidCheckout;
+  const anyModalOpen =
+    showTablePicker ||
+    !!addonProduct ||
+    !!editingCartItem ||
+    !!checkoutTable ||
+    !!paymentBill ||
+    showCustomerPrompt ||
+    showPrepaidCheckout;
 
   useBarcodeScanner((code) => {
     const product = products.find((p) => p.barcode === code);
@@ -358,16 +406,32 @@ export default function POSPage() {
         const newItems = cart.items.map((item) => ({
           product_id: item.product.id,
           quantity: item.quantity,
-          addons: item.addons.length > 0
-            ? item.addons.map((a) => ({ id: a.id, name: a.name, price: a.price, quantity: a.quantity || 1 }))
-            : null,
+          addons:
+            item.addons.length > 0
+              ? item.addons.map((a) => ({
+                  id: a.id,
+                  name: a.name,
+                  price: a.price,
+                  quantity: a.quantity || 1,
+                }))
+              : null,
           special_instructions: item.special_instructions || null,
         }));
-        const itemFingerprint = JSON.stringify({ order_id: pendingOrder.id, items: newItems, special_instructions: cart.orderNotes || undefined });
+        const itemFingerprint = JSON.stringify({
+          order_id: pendingOrder.id,
+          items: newItems,
+          special_instructions: cart.orderNotes || undefined,
+        });
         const priorItemsAttempt = readPostpaidAttempt();
-        const itemAttempt: PostpaidAttempt = priorItemsAttempt?.userId === activeUserId && priorItemsAttempt.fingerprint === itemFingerprint
-          ? priorItemsAttempt
-          : { userId: activeUserId || '', fingerprint: itemFingerprint, idempotencyKey: newIdempotencyKey() };
+        const itemAttempt: PostpaidAttempt =
+          priorItemsAttempt?.userId === activeUserId &&
+          priorItemsAttempt.fingerprint === itemFingerprint
+            ? priorItemsAttempt
+            : {
+                userId: activeUserId || '',
+                fingerprint: itemFingerprint,
+                idempotencyKey: newIdempotencyKey(),
+              };
         if (!savePostpaidAttempt(itemAttempt)) throw new Error(t('pos.placeOrderFailed'));
         const { order } = await placePostpaidOrder(api, {
           mode: 'add-items',
@@ -389,17 +453,29 @@ export default function POSPage() {
           items: cart.items.map((item) => ({
             product_id: item.product.id,
             quantity: item.quantity,
-            addons: item.addons.length > 0
-              ? item.addons.map((a) => ({ id: a.id, name: a.name, price: a.price, quantity: a.quantity || 1 }))
-              : null,
+            addons:
+              item.addons.length > 0
+                ? item.addons.map((a) => ({
+                    id: a.id,
+                    name: a.name,
+                    price: a.price,
+                    quantity: a.quantity || 1,
+                  }))
+                : null,
             special_instructions: item.special_instructions || null,
           })),
         };
         const orderFingerprint = JSON.stringify(orderPayload);
         const priorOrderAttempt = readPostpaidAttempt();
-        const orderAttempt: PostpaidAttempt = priorOrderAttempt?.userId === activeUserId && priorOrderAttempt.fingerprint === orderFingerprint
-          ? priorOrderAttempt
-          : { userId: activeUserId || '', fingerprint: orderFingerprint, idempotencyKey: newIdempotencyKey() };
+        const orderAttempt: PostpaidAttempt =
+          priorOrderAttempt?.userId === activeUserId &&
+          priorOrderAttempt.fingerprint === orderFingerprint
+            ? priorOrderAttempt
+            : {
+                userId: activeUserId || '',
+                fingerprint: orderFingerprint,
+                idempotencyKey: newIdempotencyKey(),
+              };
         if (!savePostpaidAttempt(orderAttempt)) throw new Error(t('pos.placeOrderFailed'));
         const { order } = await placePostpaidOrder(api, {
           mode: 'create',
@@ -408,7 +484,7 @@ export default function POSPage() {
           existingOrder: orderAttempt.order,
         });
         if (!orderAttempt.order) savePostpaidAttempt({ ...orderAttempt, order: order as Order });
-        toast.success(t('pos.orderPlaced', { number: order.order_number }));
+        toast.success(t('pos.orderPlaced', { number: order.order_number ?? '' }));
         orderForKot = order as Order;
         clearPostpaidAttempt();
       }
@@ -429,23 +505,35 @@ export default function POSPage() {
       await printKotIfEnabled(orderForKot);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string; error?: string } } };
-      toast.error(error.response?.data?.message || error.response?.data?.error || t('pos.placeOrderFailed'));
+      toast.error(
+        error.response?.data?.message || error.response?.data?.error || t('pos.placeOrderFailed'),
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
   // Handle prepaid checkout - place order and pay in one step
-  const handlePrepaidCheckout = async (payments: PrepaidPayment[], walletAmount: number, discount: PrepaidDiscount | null) => {
+  const handlePrepaidCheckout = async (
+    payments: PrepaidPayment[],
+    walletAmount: number,
+    discount: PrepaidDiscount | null,
+  ) => {
     const isPrepaidCheckout = shouldTakePaymentNow;
     setShowPrepaidCheckout(false);
     setSubmitting(true);
     const orderItems = cart.items.map((item) => ({
       product_id: item.product.id,
       quantity: item.quantity,
-      addons: item.addons.length > 0
-        ? item.addons.map((a) => ({ id: a.id, name: a.name, price: a.price, quantity: a.quantity || 1 }))
-        : null,
+      addons:
+        item.addons.length > 0
+          ? item.addons.map((a) => ({
+              id: a.id,
+              name: a.name,
+              price: a.price,
+              quantity: a.quantity || 1,
+            }))
+          : null,
       special_instructions: item.special_instructions || null,
     }));
     const paymentLines = payments
@@ -456,7 +544,10 @@ export default function POSPage() {
         amount: p.amount,
       }));
     if (walletAmount > 0) paymentLines.push({ method: 'wallet', amount: walletAmount });
-    const paymentFingerprint = JSON.stringify({ payments: paymentLines, customer_id: cart.customerId });
+    const paymentFingerprint = JSON.stringify({
+      payments: paymentLines,
+      customer_id: cart.customerId,
+    });
     const cartFingerprint = JSON.stringify({
       table_id: cart.tableId,
       customer_id: cart.customerId,
@@ -466,35 +557,40 @@ export default function POSPage() {
       items: orderItems,
     });
     const storedAttempt = readPrepaidAttempt();
-    const existingAttempt = storedAttempt && storedAttempt.userId === activeUserId && storedAttempt.cartFingerprint === cartFingerprint
-      && storedAttempt.orderIdempotencyKey && storedAttempt.paymentIdempotencyKey
-      ? storedAttempt
-      : null;
+    const existingAttempt =
+      storedAttempt &&
+      storedAttempt.userId === activeUserId &&
+      storedAttempt.cartFingerprint === cartFingerprint &&
+      storedAttempt.orderIdempotencyKey &&
+      storedAttempt.paymentIdempotencyKey
+        ? storedAttempt
+        : null;
     const currentDiscount = discount && discount.value > 0 ? discount : null;
-    const discountFingerprint = (value: PrepaidDiscount | null | undefined) => JSON.stringify(
-      value ? { type: value.type, value: value.value, reason: value.reason } : null,
-    );
-    const discountChanged = !!existingAttempt
-      && discountFingerprint(existingAttempt.discount) !== discountFingerprint(currentDiscount);
+    const discountFingerprint = (value: PrepaidDiscount | null | undefined) =>
+      JSON.stringify(value ? { type: value.type, value: value.value, reason: value.reason } : null);
+    const discountChanged =
+      !!existingAttempt &&
+      discountFingerprint(existingAttempt.discount) !== discountFingerprint(currentDiscount);
     const retryDiscount = currentDiscount;
     let attempt: PrepaidAttempt = existingAttempt
       ? {
-        ...existingAttempt,
-        discount: retryDiscount,
-        bill: discountChanged ? undefined : existingAttempt.bill,
-        paymentFingerprint,
-        paymentIdempotencyKey: existingAttempt.paymentFingerprint === paymentFingerprint && !discountChanged
-          ? existingAttempt.paymentIdempotencyKey
-          : newIdempotencyKey(),
-      }
+          ...existingAttempt,
+          discount: retryDiscount,
+          bill: discountChanged ? undefined : existingAttempt.bill,
+          paymentFingerprint,
+          paymentIdempotencyKey:
+            existingAttempt.paymentFingerprint === paymentFingerprint && !discountChanged
+              ? existingAttempt.paymentIdempotencyKey
+              : newIdempotencyKey(),
+        }
       : {
-        userId: activeUserId || '',
-        cartFingerprint,
-        paymentFingerprint,
-        discount: discount && discount.value > 0 ? discount : null,
-        orderIdempotencyKey: newIdempotencyKey(),
-        paymentIdempotencyKey: newIdempotencyKey(),
-      };
+          userId: activeUserId || '',
+          cartFingerprint,
+          paymentFingerprint,
+          discount: discount && discount.value > 0 ? discount : null,
+          orderIdempotencyKey: newIdempotencyKey(),
+          paymentIdempotencyKey: newIdempotencyKey(),
+        };
     // Persist the key before the first order mutation. The server replays the
     // order response if this renderer loses the response or restarts.
     if (!savePrepaidAttempt(attempt)) {
@@ -540,37 +636,47 @@ export default function POSPage() {
       // CURRENT DEBT: discount reconciliation (GET order) stays in the page;
       // the coordinator only issues the mutation sequence.
       const effectiveDiscount = attempt.discount;
-      const discountForRequest = effectiveDiscount && currentDiscount
-        && discountFingerprint(effectiveDiscount) === discountFingerprint(currentDiscount)
-        ? { ...effectiveDiscount, override_pin: currentDiscount.override_pin }
-        : effectiveDiscount;
+      const discountForRequest =
+        effectiveDiscount &&
+        currentDiscount &&
+        discountFingerprint(effectiveDiscount) === discountFingerprint(currentDiscount)
+          ? { ...effectiveDiscount, override_pin: currentDiscount.override_pin }
+          : effectiveDiscount;
       let discountAlreadyApplied = false;
-      if (!attempt.bill && (discountChanged || (effectiveDiscount && effectiveDiscount.value > 0)) && attempt.order) {
+      if (
+        !attempt.bill &&
+        (discountChanged || (effectiveDiscount && effectiveDiscount.value > 0)) &&
+        attempt.order
+      ) {
         try {
           const { data: currentOrderData } = await api.get(`/orders/${attempt.order.id}`);
-          const serverDiscount = currentOrderData.order?.discount_type && Number(currentOrderData.order.discount_value) > 0
-            ? {
-              type: currentOrderData.order.discount_type,
-              value: Number(currentOrderData.order.discount_value),
-              reason: currentOrderData.order.discount_reason || undefined,
-            }
-            : null;
-          discountAlreadyApplied = discountFingerprint(serverDiscount) === discountFingerprint(effectiveDiscount);
+          const serverDiscount =
+            currentOrderData.order?.discount_type &&
+            Number(currentOrderData.order.discount_value) > 0
+              ? {
+                  type: currentOrderData.order.discount_type,
+                  value: Number(currentOrderData.order.discount_value),
+                  reason: currentOrderData.order.discount_reason || undefined,
+                }
+              : null;
+          discountAlreadyApplied =
+            discountFingerprint(serverDiscount) === discountFingerprint(effectiveDiscount);
         } catch {
           // If the order cannot be read, retain the safe retry behavior below;
           // an approval PIN may be required to reapply an uncertain discount.
         }
       }
-      const shouldPatchDiscount = !attempt.bill
-        && !discountAlreadyApplied
-        && (discountChanged || !!(effectiveDiscount && effectiveDiscount.value > 0));
+      const shouldPatchDiscount =
+        !attempt.bill &&
+        !discountAlreadyApplied &&
+        (discountChanged || !!(effectiveDiscount && effectiveDiscount.value > 0));
       const discountBody = shouldPatchDiscount
         ? {
-          discount_type: discountForRequest?.type || 'percentage',
-          discount_value: discountForRequest?.value || 0,
-          discount_reason: discountForRequest?.reason,
-          override_pin: discountForRequest?.override_pin,
-        }
+            discount_type: discountForRequest?.type || 'percentage',
+            discount_value: discountForRequest?.value || 0,
+            discount_reason: discountForRequest?.reason,
+            override_pin: discountForRequest?.override_pin,
+          }
         : null;
 
       const prepaidResult = await placePrepaidOrder(api, {
@@ -598,19 +704,26 @@ export default function POSPage() {
       orderData = { order: prepaidResult.order as Order };
       billData = { bill: prepaidResult.bill as Bill };
       const paidBill: Bill = (prepaidResult.paymentData?.bill as Bill) || billData.bill;
-      const pointsEarned = (prepaidResult.paymentData?.loyaltyPointsEarned ?? 0) > 0
-        ? prepaidResult.paymentData.loyaltyPointsEarned!
-        : 0;
+      const pointsEarned =
+        (prepaidResult.paymentData?.loyaltyPointsEarned ?? 0) > 0
+          ? prepaidResult.paymentData.loyaltyPointsEarned!
+          : 0;
 
       if (paidBill.payment_status !== 'paid') {
-        throw new Error(t('pos.paymentIncomplete', {
-          amount: currencyFmt(Number(paidBill.balance) || 0),
-        }));
+        throw new Error(
+          t('pos.paymentIncomplete', {
+            amount: currencyFmt(Number(paidBill.balance) || 0),
+          }),
+        );
       }
 
-      const successMsg = pointsEarned > 0
-        ? t('pos.orderPaidWithPoints', { number: orderData.order.order_number, points: pointsEarned })
-        : t('pos.orderPaid', { number: orderData.order.order_number });
+      const successMsg =
+        pointsEarned > 0
+          ? t('pos.orderPaidWithPoints', {
+              number: orderData.order.order_number ?? '',
+              points: pointsEarned,
+            })
+          : t('pos.orderPaid', { number: orderData.order.order_number ?? '' });
       toast.success(successMsg);
       if (cart.tableId) {
         try {
@@ -629,18 +742,35 @@ export default function POSPage() {
 
       await printBillForTenant(paidBill, isPrepaidCheckout);
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string; error?: string } }; message?: string };
-      toast.error(error.response?.data?.message || error.response?.data?.error || error.message || t('pos.processOrderFailed'));
+      const error = err as {
+        response?: { data?: { message?: string; error?: string } };
+        message?: string;
+      };
+      toast.error(
+        error.response?.data?.message ||
+          error.response?.data?.error ||
+          error.message ||
+          t('pos.processOrderFailed'),
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
-
-  const handleSelectAvailableTable = (tableId: string, customer?: { id: number; name: string; phone: string } | null) => {
+  const handleSelectAvailableTable = (
+    tableId: string,
+    customer?: { id: number; name: string; phone: string } | null,
+  ) => {
     cart.setTableId(tableId);
     if (customer) {
-      cart.setCustomer({ ...customer, email: null, visits_count: 0, total_spent: 0, last_visit_at: null, country_code: '' });
+      cart.setCustomer({
+        ...customer,
+        email: null,
+        visits_count: 0,
+        total_spent: 0,
+        last_visit_at: null,
+        country_code: '',
+      });
     }
     setShowTablePicker(false);
   };
@@ -687,7 +817,13 @@ export default function POSPage() {
     }
     const tableName = tables.find((t) => t.id === tableId)?.name || tableId;
     try {
-      await heldOrders.holdOrder(tableId, cart.items, cart.customerId, cart.guestCount, cart.orderNotes);
+      await heldOrders.holdOrder(
+        tableId,
+        cart.items,
+        cart.customerId,
+        cart.guestCount,
+        cart.orderNotes,
+      );
       cart.clearCart();
       setShowTablePicker(false);
       toast.success(t('pos.orderHeld', { tableName }));
@@ -705,7 +841,10 @@ export default function POSPage() {
     cart.setGuestCount(order.guest_count || 1);
     cart.setOrderNotes(order.special_instructions || '');
     setPendingOrder(order);
-    toast(`${t('pos.addingItemsToOrder', { number: order.order_number })} ${t('pos.placeOrderReady')}`, { icon: 'ℹ️' });
+    toast(
+      `${t('pos.addingItemsToOrder', { number: order.order_number })} ${t('pos.placeOrderReady')}`,
+      { icon: 'ℹ️' },
+    );
   };
 
   // Add cart items directly to existing order
@@ -717,21 +856,30 @@ export default function POSPage() {
     setSubmitting(true);
     try {
       const existingAttempt = addItemsAttemptRef.current;
-      const idempotencyKey = existingAttempt?.orderId === String(order.id)
-        ? existingAttempt.key
-        : newIdempotencyKey();
+      const idempotencyKey =
+        existingAttempt?.orderId === String(order.id) ? existingAttempt.key : newIdempotencyKey();
       addItemsAttemptRef.current = { orderId: String(order.id), key: idempotencyKey };
-      await api.post(`/orders/${order.id}/items`, {
-        items: cart.items.map((item) => ({
-          product_id: item.product.id,
-          quantity: item.quantity,
-          addons: item.addons.length > 0
-            ? item.addons.map((a) => ({ id: a.id, name: a.name, price: a.price, quantity: a.quantity || 1 }))
-            : null,
-          special_instructions: item.special_instructions || null,
-        })),
-        special_instructions: order.special_instructions || undefined,
-      }, { headers: { 'Idempotency-Key': idempotencyKey } });
+      await api.post(
+        `/orders/${order.id}/items`,
+        {
+          items: cart.items.map((item) => ({
+            product_id: item.product.id,
+            quantity: item.quantity,
+            addons:
+              item.addons.length > 0
+                ? item.addons.map((a) => ({
+                    id: a.id,
+                    name: a.name,
+                    price: a.price,
+                    quantity: a.quantity || 1,
+                  }))
+                : null,
+            special_instructions: item.special_instructions || null,
+          })),
+          special_instructions: order.special_instructions || undefined,
+        },
+        { headers: { 'Idempotency-Key': idempotencyKey } },
+      );
       addItemsAttemptRef.current = null;
       toast.success(t('pos.itemsAddedToOrder', { number: order.order_number }));
       cart.clearCart();
@@ -781,16 +929,32 @@ export default function POSPage() {
               <p className="font-semibold text-flo-danger">{t('support.requestQueued')}</p>
               {delivery.status === 'delivered' && delivery.supportCode ? (
                 <>
-                  <p className="mt-1 text-sm font-semibold text-flo-text">{t('support.supportCode')}: <span className="font-mono">{delivery.supportCode}</span></p>
-                  <p className="mt-0.5 text-xs text-flo-text-secondary">{t('support.supportCodeHint')}</p>
+                  <p className="mt-1 text-sm font-semibold text-flo-text">
+                    {t('support.supportCode')}:{' '}
+                    <span className="font-mono">{delivery.supportCode}</span>
+                  </p>
+                  <p className="mt-0.5 text-xs text-flo-text-secondary">
+                    {t('support.supportCodeHint')}
+                  </p>
                 </>
               ) : (
                 <p className="mt-1 text-xs text-flo-text-secondary">
-                  {delivery.status === 'failed' ? t('support.stillQueuedLocally') : t('support.confirmingDelivery')}
+                  {delivery.status === 'failed'
+                    ? t('support.stillQueuedLocally')
+                    : t('support.confirmingDelivery')}
                 </p>
               )}
               <div className="mt-3">
-                <button type="button" className="rounded-flo-md border border-flo-border px-3 py-2 text-sm min-h-11 text-flo-text" onClick={() => { setSupportError(null); setSentTicketId(null); }}>Dismiss</button>
+                <button
+                  type="button"
+                  className="rounded-flo-md border border-flo-border px-3 py-2 text-sm min-h-11 text-flo-text"
+                  onClick={() => {
+                    setSupportError(null);
+                    setSentTicketId(null);
+                  }}
+                >
+                  Dismiss
+                </button>
               </div>
             </>
           ) : (
@@ -799,12 +963,22 @@ export default function POSPage() {
               <p className="mt-1 text-sm text-flo-text-secondary">{supportError.message}</p>
               <details className="mt-2 text-xs text-flo-text-secondary">
                 <summary className="cursor-pointer">{t('support.showPayload')}</summary>
-                <pre className="mt-2 max-h-32 overflow-auto rounded-flo-md bg-flo-bg p-2 text-flo-text">{JSON.stringify(
-                  diagnosticsPreview
-                    ? { ...supportError.payload, diagnostics: { ...(supportError.payload.diagnostics as Record<string, unknown> | undefined), ...diagnosticsPreview } }
-                    : supportError.payload,
-                  null, 2,
-                )}</pre>
+                <pre className="mt-2 max-h-32 overflow-auto rounded-flo-md bg-flo-bg p-2 text-flo-text">
+                  {JSON.stringify(
+                    diagnosticsPreview
+                      ? {
+                          ...supportError.payload,
+                          diagnostics: {
+                            ...(supportError.payload.diagnostics as
+                              Record<string, unknown> | undefined),
+                            ...diagnosticsPreview,
+                          },
+                        }
+                      : supportError.payload,
+                    null,
+                    2,
+                  )}
+                </pre>
               </details>
               <div className="mt-3 flex gap-2">
                 <button
@@ -825,8 +999,16 @@ export default function POSPage() {
                       toast.error('Could not queue the support request');
                     }
                   }}
-                >Get help</button>
-                <button type="button" className="rounded-flo-md border border-flo-border px-3 py-2 text-sm min-h-11 text-flo-text" onClick={() => setSupportError(null)}>Dismiss</button>
+                >
+                  Get help
+                </button>
+                <button
+                  type="button"
+                  className="rounded-flo-md border border-flo-border px-3 py-2 text-sm min-h-11 text-flo-text"
+                  onClick={() => setSupportError(null)}
+                >
+                  Dismiss
+                </button>
               </div>
             </>
           )}
@@ -916,7 +1098,10 @@ export default function POSPage() {
           cartItemCount={cart.itemCount()}
           onClose={() => setCheckoutTable(null)}
           onAddItems={handleAddItemsToOrder}
-          onPayment={(bill) => { setCheckoutTable(null); setPaymentBill(bill); }}
+          onPayment={(bill) => {
+            setCheckoutTable(null);
+            setPaymentBill(bill);
+          }}
           onAddCartToOrder={handleAddCartToOrder}
         />
       )}
@@ -953,7 +1138,6 @@ export default function POSPage() {
           onConfirm={handlePrepaidCheckout}
         />
       )}
-
     </>
   );
 }
