@@ -14,6 +14,7 @@ import {
 } from '../services/tax';
 import { assertStockAvailable, decrementTrackedStock, restoreTrackedStock } from '../services/inventory';
 import { notifyKdsUpdate, notifyOrderUpdated } from '../services/kds';
+import { isModuleEnabled } from '../modules';
 import { cloudSync } from '../services/cloud-sync';
 import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
@@ -530,7 +531,8 @@ router.post('/', requireRole('owner', 'manager', 'cashier', 'waiter'), (req: Req
         taxRollup.snapshotJson, total, roundOff, now(), orderId,
       );
 
-      if (table_id && type === 'dine_in') {
+      // Phase 2.17 — soft-gate restaurant table occupy (Restaurant vertical keeps tables enabled).
+      if (isModuleEnabled('tables') && table_id && type === 'dine_in') {
         db.prepare("UPDATE tables SET status = 'occupied', updated_at = ? WHERE id = ?").run(now(), table_id);
       }
 
@@ -545,7 +547,7 @@ router.post('/', requireRole('owner', 'manager', 'cashier', 'waiter'), (req: Req
     });
 
     if (!result.idempotentReplay) {
-      notifyKdsUpdate();
+      if (isModuleEnabled('kds')) notifyKdsUpdate();
       cloudSync.recordOrderChanged(result.order.id, 'order.created');
 
       if (customer_id) {
@@ -807,7 +809,7 @@ router.post('/:id/items', requireRole('owner', 'manager', 'cashier', 'waiter'), 
 
     if (result.replayResponse) return res.json(result.replayResponse);
     cloudSync.recordOrderChanged(req.params.id as string, 'order.updated');
-    notifyKdsUpdate();
+    if (isModuleEnabled('kds')) notifyKdsUpdate();
 
     res.json({ order: Object.assign({}, result.updatedOrder, { items: result.updatedItems }) });
   } catch (error: any) {
@@ -899,7 +901,7 @@ router.patch('/:id/status', requireRole('owner', 'manager', 'cashier', 'chef', '
             UPDATE order_items SET status = 'served', updated_at = ?
             WHERE order_id = ? AND status IN ('pending', 'preparing', 'ready')
           `).run(nowStr, req.params.id);
-          if ((order as any).table_id) {
+          if (isModuleEnabled('tables') && (order as any).table_id) {
             db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?")
               .run(nowStr, (order as any).table_id);
           }
@@ -918,7 +920,7 @@ router.patch('/:id/status', requireRole('owner', 'manager', 'cashier', 'chef', '
           db.prepare('UPDATE orders SET status = ?, cancelled_at = ?, cancellation_reason = ?, updated_at = ? WHERE id = ?')
             .run(status, nowStr, reason, nowStr, req.params.id);
           // Only free table if explicitly requested (default: true for backward compatibility)
-          if ((order as any).table_id && free_table !== false) {
+          if (isModuleEnabled('tables') && (order as any).table_id && free_table !== false) {
             db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?")
               .run(nowStr, (order as any).table_id);
           }
@@ -934,7 +936,7 @@ router.patch('/:id/status', requireRole('owner', 'manager', 'cashier', 'chef', '
     });
 
     cloudSync.recordOrderChanged(req.params.id as string, `order.${status}`);
-    notifyKdsUpdate();
+    if (isModuleEnabled('kds')) notifyKdsUpdate();
 
     res.json({ order: Object.assign({}, updatedOrder, { items: orderItems, table }) });
   } catch (error: any) {
@@ -1010,7 +1012,7 @@ router.patch('/:id/convert-to-takeaway', requireRole('owner', 'manager', 'cashie
       db.prepare("UPDATE orders SET type = 'takeaway', table_id = NULL, updated_at = ? WHERE id = ?")
         .run(nowStr, req.params.id);
 
-      if (order.table_id) {
+      if (isModuleEnabled('tables') && order.table_id) {
         db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?")
           .run(nowStr, order.table_id);
       }
@@ -1021,7 +1023,7 @@ router.patch('/:id/convert-to-takeaway', requireRole('owner', 'manager', 'cashie
     const orderItems = attachEffectiveAddons(db, db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(req.params.id).map(parseItemJson) as any[]);
 
     cloudSync.recordOrderChanged(req.params.id as string, 'order.type_changed');
-    notifyKdsUpdate();
+    if (isModuleEnabled('kds')) notifyKdsUpdate();
 
     res.json({ order: Object.assign({}, updatedOrder, { items: orderItems, table: null }) });
   } catch (error: any) {
@@ -1648,7 +1650,7 @@ router.patch('/:orderId/items/:itemId/cancel', (req, res) => {
           UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?,
             status = 'cancelled', cancelled_at = ?, cancellation_reason = ?, updated_at = ? WHERE id = ?
         `).run(subtotal, taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, newDiscountAmount, total, roundOff, now(), 'All items cancelled', now(), orderId);
-        if (order.table_id) {
+        if (isModuleEnabled('tables') && order.table_id) {
           db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?")
             .run(now(), order.table_id);
         }
@@ -1697,7 +1699,7 @@ router.patch('/:orderId/items/:itemId/cancel', (req, res) => {
       orderId,
       result.orderCancelled ? 'order.cancelled' : (isInProgressVoid ? 'order.item_voided' : 'order.item_cancelled'),
     );
-    notifyKdsUpdate();
+    if (isModuleEnabled('kds')) notifyKdsUpdate();
     res.json({ order: { ...result.updatedOrder, items: result.items } });
   } catch (error: any) {
     console.error('[Orders] Cancel item error:', error);
@@ -1834,7 +1836,7 @@ router.patch('/:orderId/items/:itemId/restore', (req, res) => {
     });
 
     cloudSync.recordOrderChanged(orderId, 'order.item_restored');
-    notifyKdsUpdate();
+    if (isModuleEnabled('kds')) notifyKdsUpdate();
     res.json({ order: { ...result.updatedOrder, items: result.items } });
   } catch (error: any) {
     console.error('[Orders] Restore item error:', error);

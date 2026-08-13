@@ -19,10 +19,10 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 | **Opervia** | Canonical platform brand |
 | **Opervia Restaurant** | Active production vertical (`ACTIVE_VERTICAL_ID = restaurant`) |
 | **retail-test** | Synthetic composition fixture only (`SYNTHETIC_VERTICALS`) — not production |
-| **Phase 2** | **CONTINUATION in progress** — CURRENT **2.15 Payment** domain boundary; prior **2.14 Order**; INTERIM exit gate preserved (`docs/03-architecture/phase-2-exit-gate.md`) |
-| **Phase 3** | **FUTURE** — package extraction, fail-closed deps, multi-vertical runtime, production Retail+, deeper `db.ts` split |
+| **Phase 2** | **CONTINUATION in progress** — CURRENT **2.16 POS orchestration** + **2.17 Restaurant isolation**; prior **2.15 Payment** / **2.14 Order**; INTERIM exit gate preserved (`docs/03-architecture/phase-2-exit-gate.md`) |
+| **Phase 3** | **FUTURE** — package extraction, fail-closed deps/remount, multi-vertical runtime, production Retail+, deeper `db.ts` split |
 
-Phase 2 delivered so far: registry → consumers → composition → contract/capabilities → Inventory/Tax boundaries → ledger → product stock ownership → tax HTTP/snapshot → product/tax ownership → INTERIM 2.14 exit → 2.14 Order → **CURRENT 2.15 Payment** (tender service + soft-gated tables/kds).
+Phase 2 delivered so far: registry → consumers → composition → contract/capabilities → Inventory/Tax boundaries → ledger → product stock ownership → tax HTTP/snapshot → product/tax ownership → INTERIM 2.14 exit → 2.14 Order → 2.15 Payment → **2.16 POS orchestration** (checkout coordinator + module gates) → **2.17 Restaurant isolation** (Order soft-gates tables/kds).
 
 ## Active work — Opervia Restaurant v1.0 / pilot hardening
 
@@ -41,13 +41,13 @@ Phase 2 delivered so far: registry → consumers → composition → contract/ca
 
 ## Already shipped (do not rebuild)
 
-M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close · **M6 refunds API** · Flo UI redesign Phases 1–12 · KDS · printing · tax · payments · loyalty · WhatsApp · Drive · FloAdmin outbound bridge · **Phase 2 modular foundation (2.1–2.15 Payment)** — Phase 2 continuation in progress.
+M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close · **M6 refunds API** · Flo UI redesign Phases 1–12 · KDS · printing · tax · payments · loyalty · WhatsApp · Drive · FloAdmin outbound bridge · **Phase 2 modular foundation (2.1–2.17 Restaurant isolation)** — Phase 2 continuation in progress.
 
 ## Architecture anchors
 
 - Modules: `main/modules/` (catalog, registry, diagnostics, composition, verticals, fixtures)
 - Inventory: `main/services/inventory.ts`, `main/routes/inventory.ts`
-- Order: `main/services/order.ts` (ownership facade), `main/routes/orders.ts` (incl. item cancel/restore)
+- Order: `main/services/order.ts` (ownership facade), `main/routes/orders.ts` (incl. item cancel/restore; soft-gated tables/kds)
 - Payment: `main/services/payment-tender.ts` (prepare/apply tender), `main/routes/bills.ts` (HTTP); soft-gates tables/kds on paid
 - Tax: `main/services/tax.ts` facade (not direct `tax-engine` from routes)
 - Shifts: `main/services/shift.ts`, `main/routes/shifts.ts`, `frontend/src/lib/shifts.ts`
@@ -67,4 +67,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 2 CONTINUATION** — CURRENT 2.15 Payment domain boundary landed (tender extract + soft-gated tables/kds; money unchanged). Do **not** claim Phase 2 complete. Next: pilot P0/P1 reliability, or further Order/Payment facade depth only if tasked. Deferred: void×cancel restock fix, Inventory UI, legacy tax columns, package extraction.
+**Phase 2 CONTINUATION** — CURRENT 2.17 Restaurant isolation landed (Order soft-gates tables/kds; shared must not depend on Restaurant; fail-closed remount deferred). Do **not** claim Phase 2 complete. Next: pilot P0/P1 reliability, or further facade depth only if tasked. Deferred: void×cancel restock fix, Inventory UI, legacy tax columns, package extraction, fail-closed remount.

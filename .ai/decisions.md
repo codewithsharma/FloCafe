@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.17 Restaurant isolation (Accepted + Implemented)
+
+Soft-gated Order restaurant side effects behind `isModuleEnabled('tables')` / `isModuleEnabled('kds')` in `main/routes/orders.ts` (occupy, free on complete/cancel/convert/last-item-cancel, all `notifyKdsUpdate`). Catalog documents that restaurant modules must not be dependencies of shared/core modules. Restaurant ACTIVE vertical keeps tables+kds → identical UX. Express routes remain mounted; no production Retail; no money/inventory/tax/schema change (v75). Fail-closed remount deferred Phase 3. Tests: `restaurant-isolation`, `order-restaurant-isolation`. Doc: `phase-2.17-restaurant-isolation.md`.
+
 ## 2026-08-13 — Phase 2.15 Payment domain boundary (Accepted + Implemented)
 
 Extracted `preparePaymentBatch` / `applyPaymentBatch` into `main/services/payment-tender.ts` with ownership markers (`PAYMENT_OWNED` / `PAYMENT_DOES_NOT_OWN`). Soft-gated bill-paid restaurant side effects: table free behind `isModuleEnabled('tables')`; KDS notify behind `isModuleEnabled('kds')`. Restaurant ACTIVE vertical keeps both modules enabled → identical behavior. Synthetic `retail-test` excludes both (composition-only; not production). No FIN-01 / refund / tax / money math change; no schema migration; no API contract change; `payment-cash.ts` and `refund.ts` untouched. Tests: `payment-boundary`, `payment-without-restaurant`. Doc: `phase-2.15-payment-domain-boundary.md`.

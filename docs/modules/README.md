@@ -1,6 +1,6 @@
 # Opervia Modules
 
-**Status:** Phase 2 **CONTINUATION in progress** — CURRENT **2.15 Payment** domain boundary ([phase-2.15-payment-domain-boundary.md](../03-architecture/phase-2.15-payment-domain-boundary.md)). Prior **2.14 Order**; INTERIM exit gate preserved ([phase-2-exit-gate.md](../03-architecture/phase-2-exit-gate.md) — PASS WITH DOCUMENTED DEFERMENTS). Phase 3 = extraction / multi-vertical / fail-closed.
+**Status:** Phase 2 **CONTINUATION in progress** — CURRENT **2.16 POS orchestration** ([phase-2.16-pos-orchestration-boundary.md](../03-architecture/phase-2.16-pos-orchestration-boundary.md)) + **2.17 Restaurant isolation** ([phase-2.17-restaurant-isolation.md](../03-architecture/phase-2.17-restaurant-isolation.md)). Prior **2.15 Payment** / **2.14 Order**; INTERIM exit gate preserved ([phase-2-exit-gate.md](../03-architecture/phase-2-exit-gate.md) — PASS WITH DOCUMENTED DEFERMENTS). Phase 3 = extraction / multi-vertical / fail-closed remount.
 **Contract:** [module-system.md](../03-architecture/module-system.md)
 **Platform:** [opervia-platform.md](../00-product/opervia-platform.md)
 
@@ -40,8 +40,8 @@ Modules are reusable business capabilities. Phase 2 ships a **lightweight regist
 
 | Module | Status | Phase 1 mapping |
 |--------|--------|-----------------|
-| POS (`pos`) | CURRENT · REGISTERED | POS UI + sell flows |
-| Order (`order`) | CURRENT · REGISTERED · **2.14 ownership facade** | Orders / held orders; item cancel/restore on `orderRoutes`; stock via Inventory |
+| POS (`pos`) | CURRENT · REGISTERED · **2.16 orchestration** | POS UI + checkout coordinator; composes Order/Payment; does not own tax/stock/tender |
+| Order (`order`) | CURRENT · REGISTERED · **2.14 ownership + 2.17 soft-gates** | Orders / held orders; item cancel/restore on `orderRoutes`; stock via Inventory; table/KDS soft-gated |
 | Payment (`payment`) | CURRENT · REGISTERED · **2.15 tender service** | Bills / tender via `payment-tender`; soft-gated tables/kds side effects |
 | Refund (`refund`) | CURRENT · REGISTERED | M6 refunds |
 | Tax (`tax`) | CURRENT · REGISTERED | Tax facade + engine + **tax-packs** |
@@ -85,17 +85,21 @@ Modules are reusable business capabilities. Phase 2 ships a **lightweight regist
 14. ~~Phase 2 exit gate~~ — **INTERIM Phase 2.14 done** ([phase-2-exit-gate.md](../03-architecture/phase-2-exit-gate.md)) — preserved; not deleted
 15. ~~Order domain boundary~~ — **CURRENT Phase 2.14 done** ([phase-2.14-order-domain-boundary.md](../03-architecture/phase-2.14-order-domain-boundary.md)) — ownership facade + cancel/restore on `orderRoutes`; void×cancel pinned
 16. ~~Payment domain boundary~~ — **Phase 2.15 done** ([phase-2.15-payment-domain-boundary.md](../03-architecture/phase-2.15-payment-domain-boundary.md)) — PaymentTenderService + soft-gated tables/kds; money unchanged
-17. Fail-closed dependency enforcement — **Phase 3**
-18. Inventory UI / legacy tax column cleanup — **Phase 3**
-19. Formal events bus for modules — **Phase 3**
-20. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — **Phase 3**
+17. ~~POS orchestration boundary~~ — **Phase 2.16 done** ([phase-2.16-pos-orchestration-boundary.md](../03-architecture/phase-2.16-pos-orchestration-boundary.md)) — checkout coordinator + addons/kds gates; no domain math on client
+18. ~~Restaurant isolation~~ — **Phase 2.17 done** ([phase-2.17-restaurant-isolation.md](../03-architecture/phase-2.17-restaurant-isolation.md)) — Order soft-gates tables/kds; shared ↛ restaurant deps; fail-closed remount deferred
+19. Fail-closed dependency enforcement / route remount — **Phase 3**
+20. Inventory UI / legacy tax column cleanup — **Phase 3**
+21. Formal events bus for modules — **Phase 3**
+22. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — **Phase 3**
 
 **Do not** create Opervia Custom or extract every folder into packages yet.
 
 ## Related architecture
 
-- [phase-2.15-payment-domain-boundary.md](../03-architecture/phase-2.15-payment-domain-boundary.md) (CURRENT 2.15)
-- [phase-2.14-order-domain-boundary.md](../03-architecture/phase-2.14-order-domain-boundary.md) (CURRENT 2.14)
+- [phase-2.17-restaurant-isolation.md](../03-architecture/phase-2.17-restaurant-isolation.md) (2.17)
+- [phase-2.16-pos-orchestration-boundary.md](../03-architecture/phase-2.16-pos-orchestration-boundary.md) (CURRENT 2.16)
+- [phase-2.15-payment-domain-boundary.md](../03-architecture/phase-2.15-payment-domain-boundary.md) (2.15)
+- [phase-2.14-order-domain-boundary.md](../03-architecture/phase-2.14-order-domain-boundary.md) (2.14)
 - [phase-2-exit-gate.md](../03-architecture/phase-2-exit-gate.md) (INTERIM 2.14)
 - [modular-architecture.md](../03-architecture/modular-architecture.md)
 - [module-system.md](../03-architecture/module-system.md)

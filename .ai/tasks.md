@@ -82,8 +82,9 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **P2.14 INTERIM Phase 2 exit gate** (2026-08-13) — catalog metadata truth + exit docs; **PASS WITH DOCUMENTED DEFERMENTS**; doc preserved (not deleted)
 - [x] **P2.14 CURRENT Order domain boundary** (2026-08-13) — characterize cancel/stock + void×cancel; `main/services/order.ts`; relocate item cancel/restore onto `orderRoutes`; no money/inventory policy change
 - [x] **P2.15 Payment domain boundary** (2026-08-13) — `main/services/payment-tender.ts`; soft-gate tables/kds on bill-paid; no FIN-01/money/schema/API change; retail-test not production
-- [ ] Phase 2 continuation — further Order/Payment facade depth if tasked; do **not** claim Phase 2 complete
-- [ ] **Phase 3** Fail-closed dependency enforcement (still no packages; after pilot proof)
+- [x] **P2.17 Restaurant isolation** (2026-08-13) — Order soft-gate table occupy/free + KDS notify; shared catalog must not depend on restaurant modules; UX unchanged when modules ON; fail-closed remount deferred Phase 3
+- [ ] Phase 2 continuation — further facade depth if tasked; do **not** claim Phase 2 complete
+- [ ] **Phase 3** Fail-closed dependency enforcement / route remount (still no packages; after pilot proof)
 - [ ] **Phase 3** Inventory stock ledger UI
 - [ ] **Phase 3** Legacy product tax_type/tax_rate cleanup (deferred; characterized in 2.13)
 - [ ] **Phase 3** Void×cancel restock semantic hardening (pinned in `order-void-cancel-stock.test.ts`; do not change casually)

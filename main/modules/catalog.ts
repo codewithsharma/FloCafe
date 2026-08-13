@@ -2,6 +2,10 @@
  * Opervia module catalog — describes Phase 1 capabilities in place.
  * Implementations remain in existing routes/services; this is metadata only.
  * Phase 2.6: each module declares domain-level capabilities (not authz).
+ *
+ * Phase 2.17 — Restaurant isolation: restaurant-kind modules (tables, kitchen,
+ * kds, menu, addons) must NOT appear in dependencies of shared/core modules.
+ * Restaurant modules may depend on shared (e.g. tables → order); reverse is forbidden.
  */
 import type { ModuleId, OperviaModule } from './types';
 
