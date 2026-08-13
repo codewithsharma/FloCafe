@@ -7,7 +7,8 @@ import type { ProductsTabType } from './types';
 export interface ProductsTabBarProps {
   activeTab: ProductsTabType;
   onTabChange: (tab: ProductsTabType) => void;
-  isRestaurant: boolean;
+  /** Additive product options — gated by Opervia `addons` module. */
+  addonsEnabled: boolean;
   labels: {
     products: string;
     categories: string;
@@ -15,16 +16,16 @@ export interface ProductsTabBarProps {
   };
 }
 
-const tabs: { id: ProductsTabType; icon: typeof Package; restaurantOnly?: boolean }[] = [
+const tabs: { id: ProductsTabType; icon: typeof Package; requiresAddons?: boolean }[] = [
   { id: 'products', icon: Package },
   { id: 'categories', icon: Folder },
-  { id: 'addons', icon: Puzzle, restaurantOnly: true },
+  { id: 'addons', icon: Puzzle, requiresAddons: true },
 ];
 
 export function ProductsTabBar({
   activeTab,
   onTabChange,
-  isRestaurant,
+  addonsEnabled,
   labels,
 }: ProductsTabBarProps) {
   const labelFor = (id: ProductsTabType) => {
@@ -38,8 +39,8 @@ export function ProductsTabBar({
       className="flex gap-1 mb-6 border-b border-flo-border"
       aria-label="Menu inventory sections"
     >
-      {tabs.map(({ id, icon: Icon, restaurantOnly }) => {
-        if (restaurantOnly && !isRestaurant) return null;
+      {tabs.map(({ id, icon: Icon, requiresAddons }) => {
+        if (requiresAddons && !addonsEnabled) return null;
         const active = activeTab === id;
         return (
           <button

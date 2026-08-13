@@ -25,6 +25,7 @@ import {
   LoadingState,
   type AttentionItem,
 } from '@/components/flo';
+import { isModuleEnabled } from '@/lib/modules';
 
 interface DailyStats {
   sales: number;
@@ -91,7 +92,7 @@ export default function DashboardPage() {
         icon: ChefHat,
       });
     }
-    if (stats.tablesOccupied > 0) {
+    if (stats.tablesOccupied > 0 && isModuleEnabled('tables')) {
       items.push({
         id: 'tables',
         label: t('dashboard.tablesOccupied'),
@@ -128,13 +129,15 @@ export default function DashboardPage() {
       href: '/orders',
       variant: 'warning' as const,
     },
-    {
-      label: t('dashboard.tablesOccupied'),
-      value: stats?.tablesOccupied ?? 0,
-      icon: LayoutGrid,
-      href: '/tables',
-      variant: 'default' as const,
-    },
+    ...(isModuleEnabled('tables')
+      ? [{
+          label: t('dashboard.tablesOccupied'),
+          value: stats?.tablesOccupied ?? 0,
+          icon: LayoutGrid,
+          href: '/tables',
+          variant: 'default' as const,
+        }]
+      : []),
   ];
 
   return (

@@ -21,8 +21,8 @@
 - ⚠️ RISK: Upgrades seed `network_mode=localhost`. Existing LAN KDS/POS/waiter setups need Settings → `kds_lan` or `lan` + restart before tablets reconnect.
 - ⚠️ RISK: Electron renderer `flo_terminal_id` and host `settings.terminal_id` may differ. POS requests send the client id; header-less `openShift` still uses the host id.
 - ⚠️ RISK: Lost `terminal_id` (cleared localStorage) orphans an open shift; managers must force-close.
-- ⚠️ RISK: Doc drift — roadmap/feature-list still mark shifts/day-close as NOT BUILT while code has M4–M5 (P0.7).
-- ⚠️ RISK: Brand fragmentation (FloCafe / Flo POS / Nexora) confuses pilots and packaging.
+- ⚠️ RISK: Doc drift — roadmap/feature-list may lag Opervia modular CURRENT (registry + Phase 2.2 consumers are built; multi-vertical / packages are not).
+- ⚠️ RISK: Brand consolidation to **Opervia** (ADR-010) — living docs/STRATEGY/`productName`/UI i18n updated; historical `15-*` audits still say Nexora/FloCafe; `appId`/`executableName` remain flo\* for upgrade continuity; Drive folder is `Opervia Backups` (old `Nexora Backups` not auto-migrated).
 
 ## Debt (do not giant-rewrite)
 

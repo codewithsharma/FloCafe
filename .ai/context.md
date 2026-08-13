@@ -1,8 +1,10 @@
-# Nexora POS context
+# Opervia context
 
-**Product (current):** Nexora POS — local-first, offline-capable Electron café/restaurant POS.  
-**Vision (future):** Nexora RestaurantOS — inventory, multi-location, integrations, AI (not the current product).  
-**Canonical strategy:** `STRATEGY.md` (2026-08-12 CEO+CTO mandate).
+**Product brand (canonical):** Opervia — modular business platform; Phase 1 vertical = **Opervia Restaurant**.
+**Nexora POS:** retired as active product name (historical audits may still say Nexora).
+**Repo legacy:** FloCafe / Flo POS naming may linger in code/docs until branding consolidation.
+**Modular vision:** ADR-010 + Phase 2.1 registry (`main/modules/`) — Restaurant vertical declarative; no Phase 1 rewrite.
+**Canonical strategy:** `STRATEGY.md` (pilot KPI unchanged).
 
 Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v74**) + statically exported Next.js (`frontend/`).
 
@@ -10,7 +12,7 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 
 Advanced single-location café POS. Executive scores (audit 2026-08-12): Product 68 · Eng 78 · Arch 70 · Sec 66 · Rel 74 · Test 84 · Prod 62 · **Overall 64/100**. CEO: GO WITH CHANGES. CTO: ARCHITECTURE READY WITH CHANGES.
 
-## Active work — Nexora POS v1.0 / pilot hardening
+## Active work — Opervia Restaurant v1.0 / pilot hardening
 
 **North-star KPI:** 3 cafés × 30 days × zero critical failures.
 
@@ -48,4 +50,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**CTO release control re-verified (2026-08-13 session 2): YELLOW — READY WITH CONDITIONS. READY FOR PILOT: NO.** Fresh pre-RC suites all PASS; local codesigning identities = 0; GitHub Actions secrets `total_count=0` (MAC_CERTS / Apple API secrets missing); training `release/mac-arm64/Nexora.app` remains ADHOC. **PATH C — PRODUCTION SIGNING BLOCKED.** Dirty `develop` (41 files) awaits explicit commit/tag authorization for `v3.0.5-rc.1` (engineering marker only; CI `release.yml` requires strict tag `3.0.5`). Evidence: `$HOME/nexora-full-app-test/evidence/release-eng-cto-20260813T045225Z/`. **NO COMMIT/PUSH/TAG until user authorizes.**
+**Phase 2.2 module consumers + soft diagnostics shipped (2026-08-13).** Pilot path unchanged: production signing + human gates still block READY FOR PILOT. Architecture follow-up: **P2.3** optional read-only composition API / settings consumer depth — still no package extraction.

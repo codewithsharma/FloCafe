@@ -40,6 +40,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useSupportTicketStatus } from '@/hooks/useSupportTicketStatus';
 import { useSupportDiagnosticsPreview } from '@/hooks/useSupportDiagnosticsPreview';
 import { getCurrencySymbol, getCountryByCode } from '@/lib/countries';
+import { isModuleEnabled } from '@/lib/modules';
 
 const PREPAID_ATTEMPT_STORAGE_KEY = 'flo.prepaid.checkout.attempt';
 const POSTPAID_ATTEMPT_STORAGE_KEY = 'flo.postpaid.order.attempt';
@@ -64,7 +65,7 @@ interface PrepaidAttempt {
 
 export default function POSPage() {
   const { currentTenant, user } = useAuthStore();
-  const isRestaurant = (currentTenant?.business_type ?? 'restaurant') === 'restaurant';
+  const tablesModuleEnabled = isModuleEnabled('tables');
   const cart = useCartStore();
   const heldOrders = useHeldOrdersStore();
   const { customerMandatory, autoPrintKot, autoPrintBill, billingType, tablesRequired, kotPrintingEnabled, setBillingType, setTablesRequired, setKotPrintingEnabled } = usePosSettingsStore();
@@ -239,7 +240,7 @@ export default function POSPage() {
   };
 
   const refreshTables = async () => {
-    if (!isRestaurant || !tablesRequired) return;
+    if (!tablesModuleEnabled || !tablesRequired) return;
     try {
       const { data } = await api.get('/tables?active=1');
       setTables(data.tables || []);
@@ -266,7 +267,7 @@ export default function POSPage() {
           api.get('/products?active=1'),
         ];
         
-        if (isRestaurant && isTablesRequired) {
+        if (tablesModuleEnabled && isTablesRequired) {
           requests.push(api.get('/tables?active=1'));
         }
         
@@ -290,7 +291,7 @@ export default function POSPage() {
     };
     fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRestaurant, setBillingType, setTablesRequired, setKotPrintingEnabled]);
+  }, [tablesModuleEnabled, setBillingType, setTablesRequired, setKotPrintingEnabled]);
 
   const handleProductClick = (product: Product) => {
     // Always open modal so user can add notes and adjust quantity
@@ -329,7 +330,7 @@ export default function POSPage() {
       setShowCustomerPrompt(true);
       return;
     }
-    if (isRestaurant && cart.orderType === 'dine_in' && tablesRequired && !cart.tableId) {
+    if (tablesModuleEnabled && cart.orderType === 'dine_in' && tablesRequired && !cart.tableId) {
       setShowTablePicker(true);
       return;
     }
@@ -864,7 +865,7 @@ export default function POSPage() {
       />
 
       {/* Modals */}
-      {isRestaurant && showTablePicker && (
+      {tablesModuleEnabled && showTablePicker && (
         <TablePickerModal
           tables={tables}
           selectedTableId={cart.tableId}

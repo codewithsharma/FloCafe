@@ -1,5 +1,5 @@
 /**
- * Centralized Flo POS navigation configuration.
+ * Centralized Opervia navigation configuration.
  * Single source of truth for AppShell sidebar items.
  */
 import type { LucideIcon } from 'lucide-react';
@@ -18,6 +18,12 @@ import {
   MessageCircle,
   LifeBuoy,
 } from 'lucide-react';
+import {
+  isFeatureAvailable,
+  isModuleEnabled,
+  verticalIdForBusinessType,
+  type ModuleId,
+} from '../lib/modules';
 
 export type FloNavRole = 'owner' | 'manager' | 'cashier' | 'waiter' | 'chef';
 
@@ -31,11 +37,17 @@ export interface FloNavItem {
   labelKey: string;
   icon: LucideIcon;
   roles: FloNavRole[];
-  /** null = all business types */
+  /**
+   * Legacy business_type gate (Phase 1). Prefer `requiresModule` for vertical
+   * composition. When both are set, both must pass.
+   * null = no business-type restriction.
+   */
   businessTypes: string[] | null;
   section: FloNavSection;
   status: FloNavStatus;
-  /** Feature flag gates (all must pass when set) */
+  /** Opervia module that must be enabled for the active vertical (Phase 2.1). */
+  requiresModule?: ModuleId;
+  /** Feature flag gates (all must pass when set) — still required on top of module enablement */
   requiresTables?: boolean;
   requiresKds?: boolean;
   requiresWhatsapp?: boolean;
@@ -70,6 +82,7 @@ export const FLO_NAV_ITEMS: FloNavItem[] = [
     businessTypes: null,
     section: 'primary',
     status: 'live',
+    requiresModule: 'pos',
   },
   {
     id: 'tables',
@@ -77,9 +90,11 @@ export const FLO_NAV_ITEMS: FloNavItem[] = [
     labelKey: 'flo.nav.tables',
     icon: Grid3X3,
     roles: ['owner', 'manager'],
-    businessTypes: ['restaurant'],
+    // Capability gate is requiresModule=tables (+ tables_required flag); not business_type.
+    businessTypes: null,
     section: 'primary',
     status: 'live',
+    requiresModule: 'tables',
     requiresTables: true,
   },
   {
@@ -91,6 +106,7 @@ export const FLO_NAV_ITEMS: FloNavItem[] = [
     businessTypes: null,
     section: 'primary',
     status: 'live',
+    requiresModule: 'order',
   },
   {
     id: 'kitchen',
@@ -98,9 +114,11 @@ export const FLO_NAV_ITEMS: FloNavItem[] = [
     labelKey: 'flo.nav.kitchen',
     icon: ChefHat,
     roles: ['owner', 'manager'],
-    businessTypes: ['restaurant'],
+    // Capability gate is requiresModule=kds (+ kds_enabled flag); not business_type.
+    businessTypes: null,
     section: 'primary',
     status: 'live',
+    requiresModule: 'kds',
     requiresKds: true,
   },
   {
@@ -112,6 +130,7 @@ export const FLO_NAV_ITEMS: FloNavItem[] = [
     businessTypes: null,
     section: 'primary',
     status: 'live',
+    requiresModule: 'customer',
   },
   {
     id: 'inventory',
@@ -122,6 +141,7 @@ export const FLO_NAV_ITEMS: FloNavItem[] = [
     businessTypes: null,
     section: 'primary',
     status: 'live',
+    requiresModule: 'product',
   },
   {
     id: 'reports',
@@ -132,6 +152,7 @@ export const FLO_NAV_ITEMS: FloNavItem[] = [
     businessTypes: null,
     section: 'primary',
     status: 'live',
+    requiresModule: 'reporting',
   },
   {
     id: 'operations',
@@ -142,6 +163,7 @@ export const FLO_NAV_ITEMS: FloNavItem[] = [
     businessTypes: null,
     section: 'primary',
     status: 'live',
+    requiresModule: 'core',
   },
   {
     id: 'team',
@@ -152,6 +174,7 @@ export const FLO_NAV_ITEMS: FloNavItem[] = [
     businessTypes: null,
     section: 'primary',
     status: 'live',
+    requiresModule: 'staff',
   },
   {
     id: 'settings',
@@ -162,6 +185,7 @@ export const FLO_NAV_ITEMS: FloNavItem[] = [
     businessTypes: null,
     section: 'primary',
     status: 'live',
+    requiresModule: 'core',
   },
   {
     id: 'whatsapp',
@@ -172,6 +196,7 @@ export const FLO_NAV_ITEMS: FloNavItem[] = [
     businessTypes: null,
     section: 'secondary',
     status: 'live',
+    requiresModule: 'notification',
     requiresWhatsapp: true,
   },
   {
@@ -193,13 +218,26 @@ export function getNavItemById(id: string): FloNavItem | undefined {
 export function filterNavItems(ctx: NavFilterContext): FloNavItem[] {
   const role = (ctx.role || 'cashier') as FloNavRole;
   const businessType = ctx.businessType || 'restaurant';
+  const verticalId = verticalIdForBusinessType(businessType);
 
   return FLO_NAV_ITEMS.filter((item) => {
     if (!item.roles.includes(role)) return false;
     if (item.businessTypes !== null && !item.businessTypes.includes(businessType)) return false;
-    if (item.requiresTables && !ctx.tablesRequired) return false;
-    if (item.requiresKds && !ctx.kdsEnabled) return false;
-    if (item.requiresWhatsapp && !ctx.whatsappEnabled) return false;
+    if (item.requiresModule && !isModuleEnabled(item.requiresModule, verticalId)) return false;
+    // Feature flags still gate availability on top of module enablement:
+    // isFeatureAvailable(module, flag) ≡ moduleEnabled ∧ flagEnabled (Phase 1 semantics).
+    if (item.requiresTables && !isFeatureAvailable('tables', ctx.tablesRequired, verticalId)) {
+      return false;
+    }
+    if (item.requiresKds && !isFeatureAvailable('kds', ctx.kdsEnabled, verticalId)) {
+      return false;
+    }
+    if (
+      item.requiresWhatsapp
+      && !isFeatureAvailable('notification', ctx.whatsappEnabled, verticalId)
+    ) {
+      return false;
+    }
     return true;
   });
 }

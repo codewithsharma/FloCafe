@@ -1,5 +1,17 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.2 Module consumers + soft diagnostics (Accepted + Implemented)
+
+Registry becomes a capability-discovery layer: broader nav/`isFeatureAvailable` consumers; Category-2 restaurant gates → modules (`tables`, `addons`, `kds`); soft `validateVerticalDependencies` + integrity + dev-only `[Opervia Modules]` log. No fail-closed deps, no route remount, no schema change, no package extraction. Tests: `module-diagnostics.test.ts`, extended flo-ui-shell/registry. Docs: `phase-2.2-module-consumers.md`. Next: P2.3 optional composition API / deeper settings gates.
+
+## 2026-08-13 — Phase 2.1 Module registry + Restaurant vertical (Accepted + Implemented)
+
+Lightweight metadata seam only: `main/modules/` catalog + Opervia Restaurant vertical definition + read-only `isModuleEnabled` / `getEnabledModules` / `isFeatureAvailable`. Nav tables/kitchen use `requiresModule` alongside existing flags/`businessTypes`. No package extraction, no route rewrite, no schema change, no dep enforcement. Tests: `tests/module-registry.test.ts`. Docs: `phase-2.1-module-registry.md`. Next: P2.2 broaden consumers.
+
+## 2026-08-13 — ADR-010 Opervia platform brand + modular vision (Accepted)
+
+Opervia is canonical platform and product brand. Nexora POS retired as active name. Phase 1 product = Opervia Restaurant on shared codebase. Docs: `docs/00-product/opervia-platform.md`, `verticals.md`, `principles.md`; `docs/03-architecture/modular-architecture.md`, `module-system.md`, `vertical-architecture.md`, `dependency-model.md`, `architecture-gap-report.md`; `docs/modules/README.md`; ADR-010. Branding consolidation (same day): STRATEGY, vision, docs/README, `productName: Opervia`, UI i18n/manifest/layout, user-facing main strings. Historical `15-*` audits preserved. `appId` / linux `executableName` unchanged for upgrades. Next technical step when approved: lightweight module registry + vertical definition without package extraction. Opervia Custom / microservices / per-vertical repos deferred.
+
 ## 2026-08-13 — P1.6 Pilot release readiness (Accepted — docs + verification)
 
 Docs-first release readiness: `pilot-release-checklist.md`, `pilot-signoff.md`, `pilot-incident-log.md`, `p1.6-pilot-release-readiness.md`. No production-code changes. Verification: `npm test` PASS, `npm run build` PASS, focused REC-01/backup/refunds/financial/shift/security PASS, isolated fresh-install smoke PASS, P1.5 DR evidence accepted. Verdict **READY WITH CONDITIONS** (not READY FOR PILOT): production signing, Master PIN escrow, OPS-01, backup policy approval, human sign-off still PENDING. Phase C / REC-01/FIN-01/B2/JWT redesign out of scope.

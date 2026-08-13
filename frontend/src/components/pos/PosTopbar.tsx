@@ -3,12 +3,12 @@
 import PrinterStatus from './PrinterStatus';
 import CustomerSearch from './CustomerSearch';
 import { useCartStore } from '@/store/cart';
-import { useAuthStore } from '@/store/auth';
 import { usePosSettingsStore } from '@/store/pos-settings';
 import { LayoutGrid } from 'lucide-react';
 import type { Table } from '@/lib/types';
 import { useI18n } from '@/hooks/useI18n';
 import { cn } from '@/lib/utils';
+import { isModuleEnabled } from '@/lib/modules';
 
 interface Props {
   tables: Table[];
@@ -17,11 +17,10 @@ interface Props {
 
 export default function PosTopbar({ tables, onShowTablePicker }: Props) {
   const cart = useCartStore();
-  const { currentTenant } = useAuthStore();
   const tablesRequired = usePosSettingsStore((s) => s.tablesRequired);
   const { t } = useI18n();
-  const isRestaurant = (currentTenant?.business_type ?? 'restaurant') === 'restaurant';
-  const showTableBtn = isRestaurant && cart.orderType === 'dine_in' && tablesRequired;
+  const showTableBtn =
+    isModuleEnabled('tables') && cart.orderType === 'dine_in' && tablesRequired;
 
   return (
     <header className="flex shrink-0 items-center gap-2 md:gap-3 border-b border-flo-border bg-flo-surface px-3 md:px-4 py-2 min-h-[52px]">

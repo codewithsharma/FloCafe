@@ -26,6 +26,7 @@ const nextConfig: NextConfig = {
     root: path.resolve(process.cwd(), '..'),
     resolveAlias: {
       '@countries': '../main/countries.ts',
+      '@modules': '../main/modules/index.ts',
     },
   },
 };

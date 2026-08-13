@@ -27,6 +27,7 @@ import { getCurrencySymbol, getCountryByCode } from '@/lib/countries';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useConfirm } from '@/hooks/use-confirm';
 import { useI18n } from '@/hooks/useI18n';
+import { isModuleEnabled } from '@/lib/modules';
 
 export default function ProductsPage() {
   const { t } = useI18n();
@@ -76,7 +77,7 @@ export default function ProductsPage() {
 
   const currency = getCurrencySymbol(currentTenant?.currency || 'INR', getCountryByCode(currentTenant?.country ?? 'IN')?.locale);
   const fmt = useFormatCurrency();
-  const isRestaurant = (currentTenant?.business_type ?? 'restaurant') === 'restaurant';
+  const addonsEnabled = isModuleEnabled('addons');
   const isOwnerOrManager = currentTenant?.role === 'owner' || currentTenant?.role === 'manager';
 
   const fetchData = async () => {
@@ -85,7 +86,7 @@ export default function ProductsPage() {
         api.get('/products'),
         api.get('/categories'),
       ];
-      if (isRestaurant) requests.push(api.get('/addon-groups'));
+      if (addonsEnabled) requests.push(api.get('/addon-groups'));
       const [prodRes, catRes, agRes] = await Promise.all(requests);
       setProducts((prodRes.data.products as Product[]) || []);
       setCategories((catRes.data.categories as Category[]) || []);
@@ -103,7 +104,7 @@ export default function ProductsPage() {
       api.get('/products', { signal: controller.signal }),
       api.get('/categories', { signal: controller.signal }),
     ];
-    if (isRestaurant) requests.push(api.get('/addon-groups', { signal: controller.signal }));
+    if (addonsEnabled) requests.push(api.get('/addon-groups', { signal: controller.signal }));
     Promise.all(requests)
       .then(([prodRes, catRes, agRes]) => {
         setProducts((prodRes.data.products as Product[]) || []);
@@ -436,7 +437,7 @@ export default function ProductsPage() {
       <ProductsTabBar
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        isRestaurant={isRestaurant}
+        addonsEnabled={addonsEnabled}
         labels={{
           products: t('products.tabProducts'),
           categories: t('products.tabCategories'),
@@ -487,7 +488,7 @@ export default function ProductsPage() {
         taxCategories={taxCategories}
         loyaltyEnabled={loyaltyEnabled}
         globalCashbackPercent={globalCashbackPercent}
-        isRestaurant={isRestaurant}
+        addonsEnabled={addonsEnabled}
         currency={currency}
       />
         </>
@@ -522,7 +523,7 @@ export default function ProductsPage() {
         </>
       )}
 
-      {activeTab === 'addons' && isRestaurant && (
+      {activeTab === 'addons' && addonsEnabled && (
         <>
           <div className="flex justify-end gap-2 mb-4">
             <Button variant="outline" onClick={() => openCsvModal('addons')}>

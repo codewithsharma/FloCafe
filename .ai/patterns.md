@@ -1,6 +1,7 @@
 # Patterns
 
 - Feature modules: `main/services/<name>.ts` + `main/routes/<name>.ts` + `requireRole()`.
+- Opervia module registry (Phase 2.1–2.2): `main/modules/` describes capabilities; `isModuleEnabled` / `isFeatureAvailable(module, flag)`; soft diagnostics in `diagnostics.ts` (warn-only); vertical = `main/modules/verticals.ts`. Nav uses `requiresModule` + flags. Does not replace settings flags or static `registerRoutes`. Frontend re-exports via `frontend/src/lib/modules.ts` (no duplicate catalog).
 - Mutations that need audit: `withTxn(() => { write; logAuditEvent(); })`.
 - Typed `*ServiceError` with `statusCode`; routes map to `{ error }` without SQL/stack leakage.
 - Feature flags live in `settings` (`'true'` / `'false'` strings).

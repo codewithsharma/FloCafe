@@ -10,7 +10,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] M5 Cash reconciliation + day close (A–H)
 - [x] Flo UI redesign Phases 1–12 + dark mode + component/route guards
 
-## P0 — Production blockers (Nexora POS v1.0)
+## P0 — Production blockers (Opervia Restaurant v1.0)
 
 - [x] P0.1 M6 Refund workflow (API + UI green; print deferred)
 - [x] P0.2 Financial-ops audit — YELLOW (`docs/15-project-management/p0.2-financial-ops-audit.md`)
@@ -38,7 +38,11 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P1.5 Pilot ops + DR readiness discovery — COMPLETE (`p1.5-pilot-ops-dr-readiness-audit.md`)
 - [x] P1.5 Pilot ops pack (docs) — runbook + DR drill worksheet + ops doc updates → **docs GREEN; re-drill after shift-enablement + REC-01 hotfixes**
 - [ ] P0.6 Phase C — CSP / session JWT / GPU sandbox (deferred)
-- [ ] P0.7 Documentation truth — roadmap/feature-list/production-readiness match code; Nexora POS vs RestaurantOS identity
+- [x] P0.7a Opervia platform architecture docs — ADR-010 + product/architecture/modules docs (2026-08-13)
+- [x] P0.7b Opervia branding consolidation — STRATEGY, vision, docs/README, package `productName`, UI i18n/manifest, user-facing main strings (2026-08-13); historical audits preserved; `appId`/linux `executableName` unchanged for upgrade continuity
+- [x] P2.1 Lightweight module registry + Opervia Restaurant vertical (`main/modules/`; `tests/module-registry.test.ts`) — **IMPLEMENTED** (metadata seam; no package extraction)
+- [ ] P0.7 Documentation truth — roadmap/feature-list/production-readiness match code; CURRENT Opervia Restaurant vs TARGET modular platform
+- [x] P2.2 Broaden module consumers (nav/UI) + soft dep diagnostics — **IMPLEMENTED** (`phase-2.2-module-consumers.md`; settings tab gates deferred; still no package extraction)
 
 ## P1 — Pilot reliability
 
@@ -56,14 +60,18 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P1.6 Pilot release readiness audit + checklists — **READY WITH CONDITIONS** (`p1.6-pilot-release-readiness.md`; signoff/incident log/checklist)
 - [ ] P1.6 Deploy 3 real café pilots and feed production issue loop (blocked on human gates + signed production artifact)
 
-## P2 — After successful pilots (RestaurantOS foundation)
+## P2 — After successful pilots (Opervia modular foundation)
 
+- [x] P2.1 Module registry + Restaurant vertical definition (2026-08-13) — may land before pilots as a non-behavioral seam
+- [x] P2.2 Broaden registry consumers + soft dependency diagnostics (2026-08-13)
+- [ ] P2.3 Optional read-only composition surface / deeper settings module gates (still no packages)
 - [ ] Inventory stock ledger (movements + adjustments) before BOM/procurement
 - [ ] Recipes/BOM, wastage (after ledger)
 - [ ] Suppliers / PO / receiving
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet
 - [ ] ADR-006 Multi-Location Architecture (design only; no code until approved)
 - [ ] Analytics/accounting export
+- [ ] Additional verticals (Retail/Grocery/Salon/…) only after Restaurant composition model is real
 
 ## P3 — Explicitly frozen
 

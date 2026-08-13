@@ -8,13 +8,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cart';
 import { useHeldOrdersStore } from '@/store/held-orders';
-import { useAuthStore } from '@/store/auth';
 import { usePosSettingsStore } from '@/store/pos-settings';
 import { useI18n } from '@/hooks/useI18n';
 import toast from 'react-hot-toast';
 import type { Table, Order, OrderItem, CartItem } from '@/lib/types';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
+import { isModuleEnabled } from '@/lib/modules';
 
 interface Props {
   tables: Table[];
@@ -38,12 +38,16 @@ export default function CartPanel({
 }: Props) {
   const cart = useCartStore();
   const heldOrders = useHeldOrdersStore();
-  const { currentTenant } = useAuthStore();
   const billingType = usePosSettingsStore((s) => s.billingType);
   const { t } = useI18n();
-  const isRestaurant = (currentTenant?.business_type ?? 'restaurant') === 'restaurant';
+  const tablesModuleEnabled = isModuleEnabled('tables');
   const fmt = useFormatCurrency();
-  const canHold = isRestaurant && cart.orderType === 'dine_in' && cart.tableId && cart.items.length > 0 && billingType === 'postpaid';
+  const canHold =
+    tablesModuleEnabled
+    && cart.orderType === 'dine_in'
+    && cart.tableId
+    && cart.items.length > 0
+    && billingType === 'postpaid';
   const isDrawer = variant === 'drawer';
 
   const handleHold = async () => {
@@ -77,7 +81,7 @@ export default function CartPanel({
       <div className="shrink-0 p-3 md:p-4 border-b border-flo-border space-y-2">
         <div className="flex gap-1 bg-flo-surface-muted rounded-flo-md p-1">
           {(['dine_in', 'takeaway', 'delivery'] as const)
-            .filter((type) => isRestaurant || type !== 'dine_in')
+            .filter((type) => tablesModuleEnabled || type !== 'dine_in')
             .map((type) => {
               const Icon = orderTypeIcons[type];
               const label = type === 'dine_in' ? t('pos.orderTypeDineIn') : type === 'takeaway' ? t('pos.orderTypeTakeaway') : t('pos.orderTypeDelivery');

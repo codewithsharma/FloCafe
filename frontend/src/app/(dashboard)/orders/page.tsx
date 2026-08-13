@@ -22,6 +22,7 @@ import { useI18n } from '@/hooks/useI18n';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useWhatsAppReady } from '@/hooks/useWhatsAppReady';
 import { PageHeader, LoadingState, EmptyState } from '@/components/flo';
+import { isFeatureAvailable, isModuleEnabled } from '@/lib/modules';
 import {
   OrdersFilterBar,
   OrderCard,
@@ -157,8 +158,11 @@ export default function OrdersPage() {
 
   useEffect(() => {
     api.get('/settings/kds_enabled')
-      .then((res) => setKdsEnabled(res.data?.setting?.value !== 'false'))
-      .catch(() => setKdsEnabled(true));
+      .then((res) => {
+        const flagOn = res.data?.setting?.value !== 'false';
+        setKdsEnabled(isFeatureAvailable('kds', flagOn));
+      })
+      .catch(() => setKdsEnabled(isFeatureAvailable('kds', true)));
   }, []);
 
   useEffect(() => {
@@ -179,7 +183,7 @@ export default function OrdersPage() {
 
       fetchOrders();
 
-      if (isTablesRequired) {
+      if (isTablesRequired && isModuleEnabled('tables')) {
         heldOrdersStore.fetchHeldOrders();
         api.get('/tables')
           .then((res) => setTables(res.data.tables || []))

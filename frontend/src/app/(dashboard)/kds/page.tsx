@@ -10,18 +10,26 @@ import { KdsWorkspace } from '@/components/kds/KdsWorkspace';
 import { useKdsConnection } from '@/hooks/useKdsConnection';
 import { useSyncServerLanguage } from '@/lib/i18n';
 import type { KdsViewMode } from '@/hooks/useKdsView';
+import { isFeatureAvailable } from '@/lib/modules';
 
 // Reads the kds_enabled setting directly (not the cached posSettings copy) so
 // this route reflects the current state even if the sidebar hasn't refreshed
 // its own copy yet. `null` = still loading. Never throws — a fetch failure
 // falls back to "enabled" so a network hiccup doesn't lock owners out.
+// Availability = kds module enabled ∧ kds_enabled flag (Phase 2.2).
 function useKdsEnabledCheck(): boolean | null {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   useEffect(() => {
     let cancelled = false;
     api.get('/settings/kds_enabled')
-      .then((res) => { if (!cancelled) setEnabled(res.data?.setting?.value !== 'false'); })
-      .catch(() => { if (!cancelled) setEnabled(true); });
+      .then((res) => {
+        if (cancelled) return;
+        const flagOn = res.data?.setting?.value !== 'false';
+        setEnabled(isFeatureAvailable('kds', flagOn));
+      })
+      .catch(() => {
+        if (!cancelled) setEnabled(isFeatureAvailable('kds', true));
+      });
     return () => { cancelled = true; };
   }, []);
   return enabled;

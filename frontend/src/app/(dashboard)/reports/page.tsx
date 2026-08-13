@@ -24,6 +24,7 @@ import toast from 'react-hot-toast';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { getCountryByCode } from '@/lib/countries';
 import { PAYMENT_METHODS } from '@/lib/payment-methods';
+import { isModuleEnabled } from '@/lib/modules';
 import {
   PageHeader,
   Panel,
@@ -231,13 +232,15 @@ export default function ReportsPage() {
           href: '/orders',
           variant: 'warning' as const,
         },
-        {
-          label: t('dashboard.tablesOccupied'),
-          value: stats?.tablesOccupied ?? 0,
-          icon: LayoutGrid,
-          href: '/tables',
-          variant: 'default' as const,
-        },
+        ...(isModuleEnabled('tables')
+          ? [{
+              label: t('dashboard.tablesOccupied'),
+              value: stats?.tablesOccupied ?? 0,
+              icon: LayoutGrid,
+              href: '/tables',
+              variant: 'default' as const,
+            }]
+          : []),
       ]
     : [
         {

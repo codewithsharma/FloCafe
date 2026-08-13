@@ -35,7 +35,8 @@ function main(): void {
   assert.ok(productsPage.includes('handleBulkTaxAssign'), 'bulk tax assign preserved');
   assert.ok(productsPage.includes('/menu-csv/import/'), 'CSV import preserved');
   assert.ok(productsPage.includes('isOwnerOrManager'), 'role gate preserved');
-  assert.ok(productsPage.includes('isRestaurant'), 'restaurant addon tab gate preserved');
+  assert.ok(productsPage.includes("isModuleEnabled('addons')") || productsPage.includes('isModuleEnabled("addons")'), 'addons module gate on products page');
+  assert.ok(productsPage.includes('addonsEnabled'), 'addonsEnabled prop wiring preserved');
   assert.ok(productsPage.includes('parseProductsTab'), 'tab URL param support');
   assert.ok(!productsPage.includes('bg-white rounded-xl border border-gray-100'), 'legacy table card pattern removed from page');
   assert.ok(!productsPage.includes('fixed inset-0 bg-black/50'), 'legacy modal overlay removed from page');

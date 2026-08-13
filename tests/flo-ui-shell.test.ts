@@ -99,6 +99,24 @@ function main(): void {
   assert.ok(!noTables.some((i) => i.id === 'tables'), 'tables hidden when tablesRequired false');
   assert.ok(!noTables.some((i) => i.id === 'kitchen'), 'kitchen hidden when kds disabled');
 
+  const tablesItem = getNavItemById('tables');
+  assert.equal(tablesItem?.requiresModule, 'tables', 'tables nav requires tables module');
+  assert.equal(tablesItem?.businessTypes, null, 'tables gated by module not businessTypes');
+  const kitchenItem = getNavItemById('kitchen');
+  assert.equal(kitchenItem?.requiresModule, 'kds', 'kitchen nav requires kds module');
+  assert.equal(kitchenItem?.businessTypes, null, 'kitchen gated by module not businessTypes');
+
+  assert.equal(getNavItemById('pos')?.requiresModule, 'pos');
+  assert.equal(getNavItemById('orders')?.requiresModule, 'order');
+  assert.equal(getNavItemById('customers')?.requiresModule, 'customer');
+  assert.equal(getNavItemById('inventory')?.requiresModule, 'product');
+  assert.equal(getNavItemById('reports')?.requiresModule, 'reporting');
+  assert.equal(getNavItemById('team')?.requiresModule, 'staff');
+  assert.equal(getNavItemById('whatsapp')?.requiresModule, 'notification');
+
+  const navigationSource = read('config/navigation.ts');
+  assert.ok(navigationSource.includes('isFeatureAvailable'), 'nav uses isFeatureAvailable');
+
   assert.equal(isNavItemActive('/kds', kitchen!), true, 'kitchen active on /kds');
   assert.equal(isNavItemActive('/settings', kitchen!), false, 'kitchen inactive on settings');
   assert.equal(isNavItemActive('/pos', getNavItemById('pos')!), true);
@@ -191,15 +209,15 @@ function main(): void {
   console.log('   ✓ design tokens');
 
   const rootLayout = read('app/layout.tsx');
-  assert.ok(rootLayout.includes('Flo POS'), 'root metadata uses Flo POS');
+  assert.ok(rootLayout.includes('Opervia'), 'root metadata uses Opervia');
   assert.ok(!rootLayout.includes('Nexora'), 'root metadata no longer Nexora');
 
   const manifest = fs.readFileSync(path.join(ROOT, 'frontend/public/manifest.json'), 'utf8');
-  assert.ok(manifest.includes('Flo POS'), 'manifest uses Flo POS');
+  assert.ok(manifest.includes('Opervia'), 'manifest uses Opervia');
   assert.ok(!manifest.includes('Nexora'), 'manifest no longer Nexora');
 
   const en = fs.readFileSync(path.join(FRONTEND, 'lib/i18n/en.json'), 'utf8');
-  assert.ok(en.includes('"common.brandName": "Flo POS"'), 'i18n brandName is Flo POS');
+  assert.ok(en.includes('"common.brandName": "Opervia"'), 'i18n brandName is Opervia');
   assert.ok(en.includes('"flo.nav.home"') || en.includes('"nav.home"'), 'home nav i18n key');
   assert.ok(en.includes('"flo.nav.reports"') || en.includes('"nav.reports"'), 'reports nav i18n key');
   assert.ok(en.includes('"flo.nav.operations"') || en.includes('"nav.operations"'), 'operations nav i18n key');

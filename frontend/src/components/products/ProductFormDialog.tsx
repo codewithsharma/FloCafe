@@ -49,7 +49,8 @@ export interface ProductFormDialogProps {
   taxCategories: { id: string; label: string; rate_percent?: number | null; rate_label?: string | null }[];
   loyaltyEnabled: boolean;
   globalCashbackPercent: number;
-  isRestaurant: boolean;
+  /** Show addon-group picker when Opervia `addons` module is enabled. */
+  addonsEnabled: boolean;
   currency: string;
 }
 
@@ -69,7 +70,7 @@ export function ProductFormDialog({
   taxCategories,
   loyaltyEnabled,
   globalCashbackPercent,
-  isRestaurant,
+  addonsEnabled,
   currency,
 }: ProductFormDialogProps) {
   const { t } = useI18n();
@@ -326,7 +327,7 @@ export function ProductFormDialog({
                 </button>
               </div>
             </div>
-            {isRestaurant && addonGroups.length > 0 && (
+            {addonsEnabled && addonGroups.length > 0 && (
               <div>
                 <label className="block text-small font-medium text-flo-text mb-2">{t('products.fieldAddonGroups')}</label>
                 <div className="space-y-2 max-h-40 overflow-y-auto border border-flo-border rounded-flo-md p-3">
