@@ -41,7 +41,7 @@ Phase 2 delivered so far: registry → consumers → composition → contract/ca
 
 ## Already shipped (do not rebuild)
 
-M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close · **M6 refunds API** · Flo UI redesign Phases 1–12 · KDS · printing · tax · payments · loyalty · WhatsApp · Drive · FloAdmin outbound bridge · **Phase 2 modular foundation (2.1–2.17 Restaurant isolation)** — Phase 2 continuation in progress.
+M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close · **M6 refunds API** · Flo UI redesign Phases 1–12 · KDS · printing · tax · payments · loyalty · WhatsApp · Drive · FloAdmin outbound bridge · **Phase 2 modular foundation (2.1–2.17)** — Phase 2 continuation in progress.
 
 ## Architecture anchors
 
@@ -49,6 +49,7 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 - Inventory: `main/services/inventory.ts`, `main/routes/inventory.ts`
 - Order: `main/services/order.ts` (ownership facade), `main/routes/orders.ts` (incl. item cancel/restore; soft-gated tables/kds)
 - Payment: `main/services/payment-tender.ts` (prepare/apply tender), `main/routes/bills.ts` (HTTP); soft-gates tables/kds on paid
+- POS: `frontend/src/lib/pos/checkout-coordinator.ts` (HTTP orchestration); `orchestration.ts` ownership markers
 - Tax: `main/services/tax.ts` facade (not direct `tax-engine` from routes)
 - Shifts: `main/services/shift.ts`, `main/routes/shifts.ts`, `frontend/src/lib/shifts.ts`
 - Cash classification: `main/services/payment-cash.ts`
@@ -67,4 +68,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 2 CONTINUATION** — CURRENT 2.17 Restaurant isolation landed (Order soft-gates tables/kds; shared must not depend on Restaurant; fail-closed remount deferred). Do **not** claim Phase 2 complete. Next: pilot P0/P1 reliability, or further facade depth only if tasked. Deferred: void×cancel restock fix, Inventory UI, legacy tax columns, package extraction, fail-closed remount.
+**Phase 2 CONTINUATION** — **2.16 POS orchestration** (checkout coordinator + addons/kds gates) and **2.17 Restaurant isolation** landed. Do **not** claim Phase 2 complete. Next: pilot P0/P1 reliability, or further facade depth only if tasked. Deferred: void×cancel restock fix, Inventory UI, legacy tax columns, package extraction, fail-closed remount; POS page still owns retry/discount UX debt.

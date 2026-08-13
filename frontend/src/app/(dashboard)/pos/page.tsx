@@ -40,7 +40,8 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useSupportTicketStatus } from '@/hooks/useSupportTicketStatus';
 import { useSupportDiagnosticsPreview } from '@/hooks/useSupportDiagnosticsPreview';
 import { getCurrencySymbol, getCountryByCode } from '@/lib/countries';
-import { isModuleEnabled } from '@/lib/modules';
+import { isFeatureAvailable, isModuleEnabled } from '@/lib/modules';
+import { placePostpaidOrder, placePrepaidOrder } from '@/lib/pos/checkout-coordinator';
 
 const PREPAID_ATTEMPT_STORAGE_KEY = 'flo.prepaid.checkout.attempt';
 const POSTPAID_ATTEMPT_STORAGE_KEY = 'flo.postpaid.order.attempt';
@@ -66,6 +67,7 @@ interface PrepaidAttempt {
 export default function POSPage() {
   const { currentTenant, user } = useAuthStore();
   const tablesModuleEnabled = isModuleEnabled('tables');
+  const addonsModuleEnabled = isModuleEnabled('addons');
   const cart = useCartStore();
   const heldOrders = useHeldOrdersStore();
   const { customerMandatory, autoPrintKot, autoPrintBill, billingType, tablesRequired, kotPrintingEnabled, setBillingType, setTablesRequired, setKotPrintingEnabled } = usePosSettingsStore();
@@ -190,8 +192,8 @@ export default function POSPage() {
   const printKotIfEnabled = async (order: Order) => {
     // kot_printing_enabled is coarser than auto_print_kot: when it's off, no
     // KOT print command should go out at all, regardless of the auto-print
-    // preference (issue #133).
-    if (!kotPrintingEnabled) return;
+    // preference (issue #133). KDS module gate: isFeatureAvailable ≡ module ∧ flag.
+    if (!isFeatureAvailable('kds', kotPrintingEnabled)) return;
     if (!autoPrintKot) return;
 
     try {
@@ -294,8 +296,13 @@ export default function POSPage() {
   }, [tablesModuleEnabled, setBillingType, setTablesRequired, setKotPrintingEnabled]);
 
   const handleProductClick = (product: Product) => {
-    // Always open modal so user can add notes and adjust quantity
-    setAddonProduct(product);
+    // Addon modal (qty/notes/modifiers) only when addons module is enabled.
+    // Restaurant keeps addons on → identical UX. Without addons, add qty 1.
+    if (addonsModuleEnabled) {
+      setAddonProduct(product);
+      return;
+    }
+    cart.addItem(product, 1, [], '');
   };
 
   const handleAddonAdd = (product: Product, quantity: number, addons: Addon[], instructions: string) => {
@@ -362,13 +369,14 @@ export default function POSPage() {
           ? priorItemsAttempt
           : { userId: activeUserId || '', fingerprint: itemFingerprint, idempotencyKey: newIdempotencyKey() };
         if (!savePostpaidAttempt(itemAttempt)) throw new Error(t('pos.placeOrderFailed'));
-        const { data } = await api.post(
-          `/orders/${pendingOrder.id}/items`,
-          { items: newItems, special_instructions: cart.orderNotes || undefined },
-          { headers: { 'Idempotency-Key': itemAttempt.idempotencyKey } },
-        );
+        const { order } = await placePostpaidOrder(api, {
+          mode: 'add-items',
+          orderId: pendingOrder.id,
+          body: { items: newItems, special_instructions: cart.orderNotes || undefined },
+          idempotencyKey: itemAttempt.idempotencyKey,
+        });
         toast.success(t('pos.itemsAddedToOrder', { number: pendingOrder.order_number }));
-        orderForKot = data.order as Order;
+        orderForKot = order as Order;
         clearPostpaidAttempt();
         setPendingOrder(null);
       } else {
@@ -393,12 +401,15 @@ export default function POSPage() {
           ? priorOrderAttempt
           : { userId: activeUserId || '', fingerprint: orderFingerprint, idempotencyKey: newIdempotencyKey() };
         if (!savePostpaidAttempt(orderAttempt)) throw new Error(t('pos.placeOrderFailed'));
-        const { data } = orderAttempt.order
-          ? { data: { order: orderAttempt.order } }
-          : await api.post('/orders', orderPayload, { headers: { 'Idempotency-Key': orderAttempt.idempotencyKey } });
-        if (!orderAttempt.order) savePostpaidAttempt({ ...orderAttempt, order: data.order as Order });
-        toast.success(t('pos.orderPlaced', { number: data.order.order_number }));
-        orderForKot = data.order as Order;
+        const { order } = await placePostpaidOrder(api, {
+          mode: 'create',
+          body: orderPayload,
+          idempotencyKey: orderAttempt.idempotencyKey,
+          existingOrder: orderAttempt.order,
+        });
+        if (!orderAttempt.order) savePostpaidAttempt({ ...orderAttempt, order: order as Order });
+        toast.success(t('pos.orderPlaced', { number: order.order_number }));
+        orderForKot = order as Order;
         clearPostpaidAttempt();
       }
 
@@ -523,25 +534,11 @@ export default function POSPage() {
           savePrepaidAttempt(attempt);
         }
       }
-      if (attempt.order) {
-        orderData = { order: attempt.order };
-      } else {
-        const { data } = await api.post('/orders', {
-          table_id: cart.tableId,
-          customer_id: cart.customerId,
-          type: cart.orderType,
-          guest_count: cart.guestCount,
-          special_instructions: cart.orderNotes || undefined,
-          items: orderItems,
-        }, { headers: { 'Idempotency-Key': attempt.orderIdempotencyKey } });
-        orderData = data;
-        savePrepaidAttempt({ ...attempt, order: data.order });
-      }
-      const orderId = orderData.order.id;
-
       // Apply discount before bill generation so the bill uses the discounted
       // totals (tax recalculated on the net payable amount). Repeating this SET
       // operation is safe if its response was lost.
+      // CURRENT DEBT: discount reconciliation (GET order) stays in the page;
+      // the coordinator only issues the mutation sequence.
       const effectiveDiscount = attempt.discount;
       const discountForRequest = effectiveDiscount && currentDiscount
         && discountFingerprint(effectiveDiscount) === discountFingerprint(currentDiscount)
@@ -550,7 +547,7 @@ export default function POSPage() {
       let discountAlreadyApplied = false;
       if (!attempt.bill && (discountChanged || (effectiveDiscount && effectiveDiscount.value > 0)) && attempt.order) {
         try {
-          const { data: currentOrderData } = await api.get(`/orders/${orderId}`);
+          const { data: currentOrderData } = await api.get(`/orders/${attempt.order.id}`);
           const serverDiscount = currentOrderData.order?.discount_type && Number(currentOrderData.order.discount_value) > 0
             ? {
               type: currentOrderData.order.discount_type,
@@ -564,33 +561,45 @@ export default function POSPage() {
           // an approval PIN may be required to reapply an uncertain discount.
         }
       }
-      if (!attempt.bill && !discountAlreadyApplied && (discountChanged || (effectiveDiscount && effectiveDiscount.value > 0))) {
-        await api.patch(`/orders/${orderId}/discount`, {
+      const shouldPatchDiscount = !attempt.bill
+        && !discountAlreadyApplied
+        && (discountChanged || !!(effectiveDiscount && effectiveDiscount.value > 0));
+      const discountBody = shouldPatchDiscount
+        ? {
           discount_type: discountForRequest?.type || 'percentage',
           discount_value: discountForRequest?.value || 0,
           discount_reason: discountForRequest?.reason,
           override_pin: discountForRequest?.override_pin,
-        });
-      }
+        }
+        : null;
 
-      if (attempt.bill) {
-        billData = { bill: attempt.bill };
-      } else {
-        const { data: generatedBill } = await api.post('/bills/generate', { order_id: orderId });
-        billData = generatedBill;
-        savePrepaidAttempt({ ...attempt, order: orderData.order, bill: generatedBill.bill });
-      }
-
-      // Record every split in one atomic request. The persisted bill/key pair
-      // makes a lost response safe to retry without creating a second order.
-      const paymentResponse = await api.post(
-        `/bills/${billData.bill.id}/payments`,
-        { payments: paymentLines, customer_id: cart.customerId },
-        { headers: { 'Idempotency-Key': attempt.paymentIdempotencyKey } },
-      );
-      const paidBill: Bill = paymentResponse.data?.bill || billData.bill;
-      const pointsEarned = paymentResponse.data?.loyaltyPointsEarned > 0
-        ? paymentResponse.data.loyaltyPointsEarned
+      const prepaidResult = await placePrepaidOrder(api, {
+        orderBody: {
+          table_id: cart.tableId,
+          customer_id: cart.customerId,
+          type: cart.orderType,
+          guest_count: cart.guestCount,
+          special_instructions: cart.orderNotes || undefined,
+          items: orderItems,
+        },
+        orderIdempotencyKey: attempt.orderIdempotencyKey,
+        existingOrder: attempt.order,
+        discountBody,
+        existingBill: attempt.bill,
+        paymentBody: { payments: paymentLines, customer_id: cart.customerId },
+        paymentIdempotencyKey: attempt.paymentIdempotencyKey,
+        onOrderCreated: (order) => {
+          savePrepaidAttempt({ ...attempt, order: order as Order });
+        },
+        onBillCreated: (order, bill) => {
+          savePrepaidAttempt({ ...attempt, order: order as Order, bill: bill as Bill });
+        },
+      });
+      orderData = { order: prepaidResult.order as Order };
+      billData = { bill: prepaidResult.bill as Bill };
+      const paidBill: Bill = (prepaidResult.paymentData?.bill as Bill) || billData.bill;
+      const pointsEarned = (prepaidResult.paymentData?.loyaltyPointsEarned ?? 0) > 0
+        ? prepaidResult.paymentData.loyaltyPointsEarned!
         : 0;
 
       if (paidBill.payment_status !== 'paid') {
@@ -757,7 +766,7 @@ export default function POSPage() {
     submitting,
     onPlaceOrder: handlePlaceOrder,
     onShowTablePicker: () => setShowTablePicker(true),
-    onEditItem: setEditingCartItem,
+    onEditItem: addonsModuleEnabled ? setEditingCartItem : undefined,
     existingOrder: pendingOrder,
   };
 
@@ -878,7 +887,7 @@ export default function POSPage() {
         />
       )}
 
-      {addonProduct && (
+      {addonsModuleEnabled && addonProduct && (
         <AddonModal
           product={addonProduct}
           currency={currency}
@@ -887,7 +896,7 @@ export default function POSPage() {
         />
       )}
 
-      {editingCartItem && (
+      {addonsModuleEnabled && editingCartItem && (
         <AddonModal
           product={editingCartItem.product}
           currency={currency}

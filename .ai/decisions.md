@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.16 POS orchestration boundary (Accepted + Implemented)
+
+POS is an orchestrator composing Order/Payment/Tax/Inventory — not a domain owner. Added `frontend/src/lib/pos/checkout-coordinator.ts` (`placePostpaidOrder` / `placePrepaidOrder`) extracting checkout HTTP sequences without payload changes; `orchestration.ts` exports `POS_OWNED` / `POS_DOES_NOT_OWN` (tax engine, inventory stock, payment tender internals). Soft-gated AddonModal behind `isModuleEnabled('addons')`; KOT print via `isFeatureAvailable('kds', kotPrintingEnabled)`; tables gate preserved. No POS backend god-service; `pos-info.ts` stays thin; no UI layout redesign; restaurant modules ON → identical UX. CURRENT DEBT: discount reconciliation / attempt storage / print triggers remain in `pos/page.tsx`. Tests: `pos-orchestration-boundary`. Doc: `phase-2.16-pos-orchestration-boundary.md`.
+
 ## 2026-08-13 — Phase 2.17 Restaurant isolation (Accepted + Implemented)
 
 Soft-gated Order restaurant side effects behind `isModuleEnabled('tables')` / `isModuleEnabled('kds')` in `main/routes/orders.ts` (occupy, free on complete/cancel/convert/last-item-cancel, all `notifyKdsUpdate`). Catalog documents that restaurant modules must not be dependencies of shared/core modules. Restaurant ACTIVE vertical keeps tables+kds → identical UX. Express routes remain mounted; no production Retail; no money/inventory/tax/schema change (v75). Fail-closed remount deferred Phase 3. Tests: `restaurant-isolation`, `order-restaurant-isolation`. Doc: `phase-2.17-restaurant-isolation.md`.
