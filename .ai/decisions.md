@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.14 / Phase 2 Exit Gate (Accepted + Implemented)
+
+Phase 2 modular foundation declared **COMPLETE** with exit decision **PASS WITH DOCUMENTED DEFERMENTS**. Code audit confirmed registry/contracts/composition, Inventory write+ledger+history read, Tax facade/HTTP/snapshot, Product ownership maps, Restaurant compatibility, synthetic `retail-test` quarantine, schema **v75**, and full exit test matrix PASS. Phase 2.14 changes: catalog `routePrefixes` aligned to real mounts; soft deps declare product→tax, order→inventory/tax, payment→tax; exit docs (`.ai/*`, `phase-2-exit-gate.md`, architecture index updates). Explicitly deferred to Phase 3: packages, fail-closed, multi-vertical runtime, production Retail+, Inventory UI, void×cancel restock fix, legacy tax columns, `db.ts` rewrite. Do not rewrite historical commits for co-author trailers. Doc: `phase-2-exit-gate.md`.
+
 ## 2026-08-13 — Phase 2.13 Product ↔ Tax ownership boundary (Accepted + Implemented)
 
 Clarified ownership without behavior change: Product owns persistence of `tax_category_id`/`tax_behavior` as Tax config references; validates via Tax facade only; does not import tax-engine or calculate tax. Legacy `tax_type`/`tax_rate` remain forced none/0. Tax owns calculation/snapshot; Order/Bill persist historical SNAPSHOT_DATA (immutable when product config later changes). Desired dep: Product → Tax facade → tax-engine; Order/Bill → Tax facade / snapshot. No schema migration (v75), no money math, no API shape, no frontend. Tests: `product-tax-boundary.test.ts`. Extraction: Product HIGH, Tax MEDIUM (clearer map, not package-ready). Docs: `phase-2.13-product-tax-ownership.md`.

@@ -10,12 +10,12 @@ Practical ownership for future extraction. Implementations remain colocated in t
 |--------|--------|--------|--------------------|----------|-------------|------|--------------------|---------------------|
 | core | Auth, settings, audit | `auth`, `settings`, `audit-logs`, `platform` | `jwt-secret`, `master-pin`, `audit-log`, `network-mode` | auth, setup, recovery, settings | `users`, `settings`, `revoked_tokens`, `audit_logs` | — | N | Cross-cutting; extract last |
 | customer | CRM | `customers`, search/CRM in `index` | `lib/phone` | customers, POS search | `customers` | core | N | Phone util + loyalty reads |
-| product | Catalog items | `products` | Tax facade validation only (no calculate) | products, POS grid | `products` (+ tax config refs) | core, category | N | Tax config columns colocated; inventory columns |
+| product | Catalog items | `products` | Tax facade validation only (no calculate) | products, POS grid | `products` (+ tax config refs) | core, category, tax | N | Tax config columns colocated; inventory columns |
 | category | Catalog groups | `categories` | — | products tabs | `categories` | core | N | Coupled to products UI |
 | inventory | Stock counts + ledger | **`inventory`** (read); writes via products/orders | **`inventory` service** + `inventory_movements` | products OOS | product stock columns + movements | product | N | Stock columns on products; write HTTP still product-nested |
 | pos | Sell surface | `pos-info` (thin) | — | `pos/*` | orders/bills/… | product, order, payment | N | Orchestrates many modules |
-| order | Order lifecycle | `orders`, `order-items`, `held-orders` | tax, inventory, shift, kds | orders, POS | `orders`, `order_items`, `held_orders`, … | product, core | N | Deep payment/KDS coupling |
-| payment | Tender / bills | `bills`, `payment-methods` | `payment-cash`, `receipt` | PaymentModal, settings | `bills`, `payment_*` | order | N | Money path + shift hooks |
+| order | Order lifecycle | `orders`, `order-items`, `held-orders` | tax, inventory, shift, kds | orders, POS | `orders`, `order_items`, `held_orders`, … | product, core, inventory, tax | N | Deep payment/KDS coupling |
+| payment | Tender / bills | `bills`, `payment-methods` | `payment-cash`, `receipt` | PaymentModal, settings | `bills`, `payment_*` | order, tax | N | Money path + shift hooks |
 | refund | Refunds | `refunds` | `refund`, `shift` | RefundDialog | `refunds`, idempotency | payment | N | Tied to bills/shifts; no inventory restock |
 | tax | Tax compute | **`tax`**, `tax-packs` | **`tax`, `tax-engine`** | TaxConfigurationPanel | tax pack tables + snapshots | core | N | Denormalized snapshots |
 | shift | Shifts / recon | `shifts` | `shift`, `day-close` | shifts, operations | `shifts`, `day_closes` | core, payment | N | Money path coupling |

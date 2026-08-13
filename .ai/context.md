@@ -3,7 +3,7 @@
 **Product brand (canonical):** Opervia — modular business platform; Phase 1 vertical = **Opervia Restaurant**.
 **Nexora POS:** retired as active product name (historical audits may still say Nexora).
 **Repo legacy:** FloCafe / Flo POS naming may linger in code/docs until branding consolidation.
-**Modular vision:** ADR-010 + Phase 2.1 registry (`main/modules/`) — Restaurant vertical declarative; no Phase 1 rewrite.
+**Modular vision:** ADR-010 + Phase 2 module registry (`main/modules/`) — Restaurant vertical declarative; no Phase 1 rewrite.
 **Canonical strategy:** `STRATEGY.md` (pilot KPI unchanged).
 
 Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v75**) + statically exported Next.js (`frontend/`).
@@ -11,6 +11,18 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 ## Stage
 
 Advanced single-location café POS. Executive scores (audit 2026-08-12): Product 68 · Eng 78 · Arch 70 · Sec 66 · Rel 74 · Test 84 · Prod 62 · **Overall 64/100**. CEO: GO WITH CHANGES. CTO: ARCHITECTURE READY WITH CHANGES.
+
+## Modular architecture status
+
+| Layer | State |
+|-------|--------|
+| **Opervia** | Canonical platform brand |
+| **Opervia Restaurant** | Active production vertical (`ACTIVE_VERTICAL_ID = restaurant`) |
+| **retail-test** | Synthetic composition fixture only (`SYNTHETIC_VERTICALS`) — not production |
+| **Phase 2** | **COMPLETE** — exit gate **PASS WITH DOCUMENTED DEFERMENTS** (`docs/03-architecture/phase-2-exit-gate.md`) |
+| **Phase 3** | **FUTURE** — package extraction, fail-closed deps, multi-vertical runtime, production Retail+, deeper `db.ts` split |
+
+Phase 2 delivered: registry → consumers → composition → contract/capabilities → Inventory/Tax boundaries → ledger → product stock ownership → tax HTTP/snapshot → product/tax ownership → **2.14 exit hardening**.
 
 ## Active work — Opervia Restaurant v1.0 / pilot hardening
 
@@ -29,10 +41,13 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 
 ## Already shipped (do not rebuild)
 
-M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close · **M6 refunds API** · Flo UI redesign Phases 1–12 · KDS · printing · tax · payments · loyalty · WhatsApp · Drive · FloAdmin outbound bridge.
+M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close · **M6 refunds API** · Flo UI redesign Phases 1–12 · KDS · printing · tax · payments · loyalty · WhatsApp · Drive · FloAdmin outbound bridge · **Phase 2 modular foundation (2.1–2.14)**.
 
 ## Architecture anchors
 
+- Modules: `main/modules/` (catalog, registry, diagnostics, composition, verticals, fixtures)
+- Inventory: `main/services/inventory.ts`, `main/routes/inventory.ts`
+- Tax: `main/services/tax.ts` facade (not direct `tax-engine` from routes)
 - Shifts: `main/services/shift.ts`, `main/routes/shifts.ts`, `frontend/src/lib/shifts.ts`
 - Cash classification: `main/services/payment-cash.ts`
 - Day close: `main/services/day-close.ts` + `main/routes/reports.ts`
@@ -50,4 +65,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 2.13 Product ↔ Tax ownership boundary shipped (2026-08-13).** Product persists `tax_category_id`/`tax_behavior` as Tax config refs only; Tax owns calc/snapshot; historical bill tax immutable when product config changes. Schema v75. Extraction: Product HIGH, Tax MEDIUM (clearer map). Next: Inventory UI, fail-closed after pilots, or legacy tax column cleanup.
+**Phase 2 COMPLETE.** Next architectural work is **Phase 3** (extraction / fail-closed / multi-vertical) — do not start unless explicitly tasked. Pilot focus remains P0/P1 reliability (money representation design, Phase C CSP, café pilots). Deferred from exit gate: Inventory UI, void×cancel restock characterization, legacy tax columns, package extraction.

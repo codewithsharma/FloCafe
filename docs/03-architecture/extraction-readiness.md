@@ -1,6 +1,6 @@
 # Extraction Readiness
 
-**Status:** DOCUMENTATION (Phase 2.13)
+**Status:** DOCUMENTATION (Phase 2 **COMPLETE** / exit gate 2.14)
 **Date:** 2026-08-13
 
 This is an architecture map — **not** a mandate to extract packages.
@@ -26,7 +26,7 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 - **Deps:** core; reads loyalty ledger
 - **DB:** `customers` (clean)
 - **Frontend:** customers page + POS search/modals
-- **Route coupling:** customers router + search/CRM in `index.ts`
+- **Route coupling:** customers router + search/CRM helpers still partly in `index.ts`
 - **Blockers:** shared `lib/phone.ts`; CRM helpers inlined in `index.ts`
 - **Action:** Extract search/CRM into customer routes; document loyalty read port
 
@@ -36,14 +36,14 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 - **DB:** `products` stock columns + append-only `inventory_movements` (schema v75+)
 - **Service:** `main/services/inventory.ts` (all app stock writes + `listInventoryMovements`)
 - **Routes:** `main/routes/inventory.ts` (`GET /api/inventory/movements`); stock adjust/create/PUT still on products
-- **Blockers:** columns colocated with product; no backfill; no Inventory UI; current-stock reads still product SQL; order txn orchestration
-- **Action:** Optional UI / column split before package cut
+- **Blockers:** columns colocated with product; no backfill; no Inventory UI; current-stock reads still product SQL; order txn orchestration; void×cancel restock call-site nuance (exit deferment)
+- **Action:** Optional UI / column split before package cut (Phase 3)
 
 Phase 2.12 added Inventory-owned history HTTP. Rating stays **MEDIUM** — not HIGH.
 
 ### Product — HIGH (Phase 2.13 ownership map clearer)
 
-- **Deps:** core, category
+- **Deps:** core, category, tax (config validation via Tax facade)
 - **DB:** `products` also holds inventory + tax **config** fields (stock **writes** via Inventory; tax calc not on Product)
 - **Frontend:** products workspace + POS grid
 - **Blockers:** tax config columns colocated; menu CSV; physical stock column colocation; legacy `tax_type`/`tax_rate`
@@ -86,12 +86,29 @@ Phase 2.11 froze `EngineTaxSnapshot`; Phase 2.13 clarified Product config vs Tax
 - **Blockers:** live order stream; kitchen station assignment in `db.ts`
 - **Action:** Explicit KDS event/port interface before extraction
 
+## Phase 2 COMPLETE vs Phase 3 FUTURE
+
+**Phase 2** established ownership, contracts, composition, and domain boundaries in-place.
+
+**Phase 3** should focus on:
+
+- Package extraction / stronger module ports
+- Deeper `db.ts` decomposition
+- Fail-closed dependency enforcement (after pilots)
+- Runtime multi-vertical support
+- Production Retail / Grocery / Salon / Pharmacy / Hospitality / Custom
+- Module lifecycle / marketplace
+- Inventory UI + advanced inventory
+- Legacy tax column cleanup
+- Void×cancel restock characterization fix
+
 ## Explicitly deferred
 
-Package extraction, npm workspaces, multi-repo modules, marketplace, lifecycle, fail-closed deps, inventory movement UI, ledger backfill.
+Package extraction, npm workspaces, multi-repo modules, marketplace, lifecycle, fail-closed deps, inventory movement UI, ledger backfill, schema CHECK for non-zero deltas.
 
 ## Related
 
+- [phase-2-exit-gate.md](phase-2-exit-gate.md)
 - [phase-2.8-inventory-ledger.md](phase-2.8-inventory-ledger.md)
 - [phase-2.9-product-inventory-boundary.md](phase-2.9-product-inventory-boundary.md)
 - [phase-2.13-product-tax-ownership.md](phase-2.13-product-tax-ownership.md)

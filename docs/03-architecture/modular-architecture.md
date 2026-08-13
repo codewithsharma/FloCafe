@@ -1,6 +1,6 @@
 # Opervia Modular Architecture
 
-**Status:** TARGET vision; Phase 2.1 registry + Phase 2.2 consumers/diagnostics **implemented**; Phase 1 runtime **preserved**
+**Status:** Phase 2 **COMPLETE** (exit: [phase-2-exit-gate.md](phase-2-exit-gate.md) — PASS WITH DOCUMENTED DEFERMENTS). Phase 1 Restaurant runtime **preserved**. Phase 3 TARGET = packages / fail-closed / multi-vertical.
 **Product:** [opervia-platform.md](../00-product/opervia-platform.md) · [principles.md](../00-product/principles.md)
 **Decision:** [ADR-010](../14-decisions/ADR-010-opervia-platform.md)
 
@@ -46,13 +46,13 @@ Composition flows **upward**: Core enables Modules; Verticals select and configu
 
 ## CURRENT vs TARGET
 
-| Aspect | CURRENT (incl. Phase 2.1) | TARGET |
+| Aspect | CURRENT (Phase 2 complete) | TARGET (Phase 3+) |
 |--------|---------------------------|--------|
-| Routing | Static `registerRoutes`; descriptive `routePrefixes` in registry | Module-contributed routes via registry |
+| Routing | Static `registerRoutes`; descriptive `routePrefixes` aligned to mounts | Optional module-contributed / gated routes |
 | Features | Settings flags + `isModuleEnabled` / `isFeatureAvailable` | Vertical + module enablement + settings |
-| Business type | Locked / restaurant-oriented; maps to Restaurant vertical | Multi-vertical definitions |
-| Packaging | Single desktop app = Restaurant | Same app binary; vertical profile selects capabilities |
-| Contracts | Phase 2.1 metadata (`id`, deps, flags); informal file boundaries | Full identity, deps enforcement, permissions, events, UI, schema |
+| Business type | Locked to Restaurant; `retail-test` synthetic only | Multi-vertical runtime definitions |
+| Packaging | Single desktop app = Restaurant | Same binary; vertical profile selects capabilities |
+| Contracts | Identity, soft deps, capabilities, composition API, Inventory/Tax boundaries | Dep enforcement, ports, packages, permissions, events, schema ownership |
 | Plugin precedent | Tax-packs (separate from module registry) | Generalize carefully; no Custom builder yet |
 
 ## How Phase 1 maps
@@ -65,11 +65,12 @@ Composition flows **upward**: Core enables Modules; Verticals select and configu
 | Frontend nav | Broader `requiresModule` + `isFeatureAvailable` (Phase 2.2) |
 | Tax-packs | Only existing **plugin-like** system (not the module registry) |
 
-**Phase 2.1 done:** lightweight module registry + Restaurant vertical — see [phase-2.1-module-registry.md](phase-2.1-module-registry.md).
-**Phase 2.2 done:** broaden consumers + soft dep diagnostics — see [phase-2.2-module-consumers.md](phase-2.2-module-consumers.md).
-**Phase 2.3 done:** read-only composition snapshot — see [phase-2.3-composition-snapshot.md](phase-2.3-composition-snapshot.md).
-**Phase 2.13 done:** Product ↔ Tax ownership boundary (config refs vs calc vs historical snapshot) — see [phase-2.13-product-tax-ownership.md](phase-2.13-product-tax-ownership.md).
-**Next (2.14+):** Inventory UI for movement history, fail-closed deps after pilots, or legacy tax column cleanup — still no package extraction.
+**Phase 2.1–2.14 COMPLETE** — exit gate [phase-2-exit-gate.md](phase-2-exit-gate.md):
+
+- 2.1 registry · 2.2 consumers · 2.3 composition · 2.4 platform API/settings gates · 2.5 retail-test · 2.6 contract/capabilities
+- 2.7 Inventory/Tax boundaries · 2.8 ledger · 2.9 product stock ownership · 2.10 tax HTTP · 2.11 snapshot · 2.12 movements API · 2.13 product/tax ownership · 2.14 exit hardening
+
+**Phase 3 (future):** package extraction, fail-closed deps, Inventory UI, legacy tax cleanup, void×cancel restock hardening, multi-vertical runtime, production Retail+ — do not start without explicit kickoff.
 
 ## Explicit non-goals (now)
 
@@ -80,7 +81,9 @@ Composition flows **upward**: Core enables Modules; Verticals select and configu
 
 ## Related
 
+- [phase-2-exit-gate.md](phase-2-exit-gate.md)
 - [module-system.md](module-system.md)
+- [extraction-readiness.md](extraction-readiness.md)
 - [vertical-architecture.md](vertical-architecture.md)
 - [dependency-model.md](dependency-model.md)
 - [architecture-gap-report.md](architecture-gap-report.md)

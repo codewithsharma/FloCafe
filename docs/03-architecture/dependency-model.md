@@ -25,7 +25,7 @@ Dependencies are declared on the module contract (`dependencies` field). Example
 | **Notification / WhatsApp** | Customer, Order/Payment (as needed) | Delivery of bills/notices |
 | **Tax** | Order / Payment path | Calculation at settle |
 
-Exact graphs will be finalized when the registry lands; the rule is: **if module A cannot function without B, A lists B**.
+Exact graphs are declared in `main/modules/catalog.ts` (soft metadata). Rule: **if module A cannot function without B, A lists B**. Soft diagnostics report missing declared deps; fail-closed enforcement is Phase 3.
 
 ## Avoid hidden dependencies
 

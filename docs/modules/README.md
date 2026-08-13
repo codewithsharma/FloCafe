@@ -1,19 +1,19 @@
 # Opervia Modules
 
-**Status:** Index of CURRENT Phase 1 capabilities vs PLANNED modular boundaries
+**Status:** Phase 2 foundation **COMPLETE** ([phase-2-exit-gate.md](../03-architecture/phase-2-exit-gate.md) — PASS WITH DOCUMENTED DEFERMENTS). Phase 3 = extraction / multi-vertical / fail-closed.
 **Contract:** [module-system.md](../03-architecture/module-system.md)
 **Platform:** [opervia-platform.md](../00-product/opervia-platform.md)
 
-Modules are reusable business capabilities. Phase 2.1 adds a **lightweight registry** (`main/modules/`) that describes capabilities and the Opervia Restaurant vertical. Implementations remain colocated; formal packages are TARGET.
+Modules are reusable business capabilities. Phase 2 ships a **lightweight registry** (`main/modules/`) that describes capabilities and the Opervia Restaurant vertical. Implementations remain colocated; formal packages are **Phase 3 TARGET**.
 
 ## How to read this index
 
 | Label | Meaning |
 |-------|---------|
 | **CURRENT** | Capability ships in Opervia Restaurant today |
-| **REGISTERED** | Listed in `main/modules/catalog.ts` (Phase 2.1) |
+| **REGISTERED** | Listed in `main/modules/catalog.ts` |
 | **PLANNED** | Boundary or depth not yet first-class |
-| **TARGET** | Full contract fields — see module-system |
+| **TARGET** | Full contract fields — see module-system / Phase 3 |
 
 ---
 
@@ -34,7 +34,7 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 | Category (`category`) | CURRENT · REGISTERED | Categories |
 | Menu (`menu`) | CURRENT · REGISTERED (Restaurant) | Menu CSV / catalog presentation |
 | Addons (`addons`) | CURRENT · REGISTERED (Restaurant) | Addon-groups / modifiers |
-| Inventory (`inventory`) | CURRENT (stock writes + ledger v75+) · REGISTERED | All app stock writes via Inventory; history API/UI PLANNED |
+| Inventory (`inventory`) | CURRENT (stock writes + ledger v75+ + history API) · REGISTERED | Writes via Inventory; history `GET /api/inventory/movements`; UI PLANNED (Phase 3) |
 
 ## Commerce
 
@@ -44,7 +44,7 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 | Order (`order`) | CURRENT · REGISTERED | Orders / held orders (F&B-hybrid) |
 | Payment (`payment`) | CURRENT · REGISTERED | Bills / tender |
 | Refund (`refund`) | CURRENT · REGISTERED | M6 refunds |
-| Tax (`tax`) | CURRENT · REGISTERED | Tax engine + **tax-packs** |
+| Tax (`tax`) | CURRENT · REGISTERED | Tax facade + engine + **tax-packs** |
 | Shift (`shift`) | CURRENT · REGISTERED | Shifts, cash recon, day-close |
 | Loyalty (`loyalty`) | CURRENT · REGISTERED | Loyalty features |
 | Reporting (`reporting`) | CURRENT · REGISTERED | Reports core |
@@ -69,43 +69,33 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 
 ## Platform work
 
-1. ~~Module registry + Restaurant vertical definition~~ — **Phase 2.1 done** ([phase-2.1-module-registry.md](../03-architecture/phase-2.1-module-registry.md))
-2. ~~Broaden consumers + soft dependency diagnostics~~ — **Phase 2.2 done** ([phase-2.2-module-consumers.md](../03-architecture/phase-2.2-module-consumers.md))
-3. ~~Read-only composition snapshot~~ — **Phase 2.3 done** ([phase-2.3-composition-snapshot.md](../03-architecture/phase-2.3-composition-snapshot.md))
-4. ~~Composition read API + settings module gates~~ — **Phase 2.4 done** ([phase-2.4-platform-composition-api.md](../03-architecture/phase-2.4-platform-composition-api.md))
-5. ~~Synthetic multi-vertical composition validation~~ — **Phase 2.5 done** ([phase-2.5-vertical-composition-validation.md](../03-architecture/phase-2.5-vertical-composition-validation.md))
-6. ~~Module contract + capabilities~~ — **Phase 2.6 done** ([module-contract.md](../03-architecture/module-contract.md))
-7. ~~Inventory + Tax domain boundaries~~ — **Phase 2.7 done** ([phase-2.7-domain-boundaries.md](../03-architecture/phase-2.7-domain-boundaries.md))
-8. ~~Inventory movement ledger~~ — **Phase 2.8 done** ([phase-2.8-inventory-ledger.md](../03-architecture/phase-2.8-inventory-ledger.md))
-9. ~~Product↔Inventory stock write ownership~~ — **Phase 2.9 done** ([phase-2.9-product-inventory-boundary.md](../03-architecture/phase-2.9-product-inventory-boundary.md))
-10. ~~Tax HTTP consolidation~~ — **Phase 2.10 done** ([phase-2.10-tax-http-boundary.md](../03-architecture/phase-2.10-tax-http-boundary.md))
-11. ~~Tax snapshot contract freeze~~ — **Phase 2.11 done** ([phase-2.11-tax-snapshot-contract.md](../03-architecture/phase-2.11-tax-snapshot-contract.md))
-12. ~~Inventory movement history read API~~ — **Phase 2.12 done** ([phase-2.12-inventory-movement-read-api.md](../03-architecture/phase-2.12-inventory-movement-read-api.md))
-13. ~~Product ↔ Tax ownership boundary~~ — **Phase 2.13 done** ([phase-2.13-product-tax-ownership.md](../03-architecture/phase-2.13-product-tax-ownership.md))
-14. Fail-closed dependency enforcement — deferred (after pilot proof)
-15. Inventory UI / legacy tax column cleanup — next
-16. Formal events bus for modules — deferred
-17. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — deferred
+1. ~~Module registry + Restaurant vertical definition~~ — **Phase 2.1 done**
+2. ~~Broaden consumers + soft dependency diagnostics~~ — **Phase 2.2 done**
+3. ~~Read-only composition snapshot~~ — **Phase 2.3 done**
+4. ~~Composition read API + settings module gates~~ — **Phase 2.4 done**
+5. ~~Synthetic multi-vertical composition validation~~ — **Phase 2.5 done**
+6. ~~Module contract + capabilities~~ — **Phase 2.6 done**
+7. ~~Inventory + Tax domain boundaries~~ — **Phase 2.7 done**
+8. ~~Inventory movement ledger~~ — **Phase 2.8 done**
+9. ~~Product↔Inventory stock write ownership~~ — **Phase 2.9 done**
+10. ~~Tax HTTP consolidation~~ — **Phase 2.10 done**
+11. ~~Tax snapshot contract freeze~~ — **Phase 2.11 done**
+12. ~~Inventory movement history read API~~ — **Phase 2.12 done**
+13. ~~Product ↔ Tax ownership boundary~~ — **Phase 2.13 done**
+14. ~~Phase 2 exit gate~~ — **Phase 2.14 done** ([phase-2-exit-gate.md](../03-architecture/phase-2-exit-gate.md))
+15. Fail-closed dependency enforcement — **Phase 3**
+16. Inventory UI / legacy tax column cleanup — **Phase 3**
+17. Formal events bus for modules — **Phase 3**
+18. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — **Phase 3**
 
 **Do not** create Opervia Custom or extract every folder into packages yet.
 
 ## Related architecture
 
+- [phase-2-exit-gate.md](../03-architecture/phase-2-exit-gate.md)
 - [modular-architecture.md](../03-architecture/modular-architecture.md)
 - [module-system.md](../03-architecture/module-system.md)
-- [phase-2.1-module-registry.md](../03-architecture/phase-2.1-module-registry.md)
-- [phase-2.2-module-consumers.md](../03-architecture/phase-2.2-module-consumers.md)
-- [phase-2.3-composition-snapshot.md](../03-architecture/phase-2.3-composition-snapshot.md)
-- [phase-2.4-platform-composition-api.md](../03-architecture/phase-2.4-platform-composition-api.md)
-- [phase-2.5-vertical-composition-validation.md](../03-architecture/phase-2.5-vertical-composition-validation.md)
 - [module-contract.md](../03-architecture/module-contract.md)
-- [phase-2.7-domain-boundaries.md](../03-architecture/phase-2.7-domain-boundaries.md)
-- [phase-2.8-inventory-ledger.md](../03-architecture/phase-2.8-inventory-ledger.md)
-- [phase-2.9-product-inventory-boundary.md](../03-architecture/phase-2.9-product-inventory-boundary.md)
-- [phase-2.10-tax-http-boundary.md](../03-architecture/phase-2.10-tax-http-boundary.md)
-- [phase-2.11-tax-snapshot-contract.md](../03-architecture/phase-2.11-tax-snapshot-contract.md)
-- [phase-2.12-inventory-movement-read-api.md](../03-architecture/phase-2.12-inventory-movement-read-api.md)
-- [phase-2.13-product-tax-ownership.md](../03-architecture/phase-2.13-product-tax-ownership.md)
 - [module-ownership.md](../03-architecture/module-ownership.md)
 - [extraction-readiness.md](../03-architecture/extraction-readiness.md)
 - [vertical-architecture.md](../03-architecture/vertical-architecture.md)

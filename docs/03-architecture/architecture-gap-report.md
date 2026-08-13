@@ -1,25 +1,27 @@
 # Opervia Architecture Gap Report
 
-**Date:** 2026-08-13
-**Scope:** Docs-only assessment of Phase 1 vs modular platform TARGET
+**Date:** 2026-08-13 (baseline) · **Superseded for Phase 2 claims by:** [phase-2-exit-gate.md](phase-2-exit-gate.md) (2026-08-13 exit)
+**Scope:** Historical docs-only assessment of Phase 1 vs modular platform TARGET; updated summary below for post–Phase 2 readers
 **Decisions:** [ADR-010](../14-decisions/ADR-010-opervia-platform.md)
 **Vision:** [opervia-platform.md](../00-product/opervia-platform.md)
 
 This report does **not** rewrite historical audits in `docs/15-project-management/`.
 
+> **Phase 2 status:** COMPLETE (PASS WITH DOCUMENTED DEFERMENTS). Schema **v75**. Module registry **exists** (`main/modules/`). Inventory ledger + history API exist. Soft composition exists; fail-closed / packages / multi-vertical runtime remain **Phase 3**. Prefer the exit gate over sections below when they conflict.
+
 ---
 
-## A. Current architecture (Phase 1 reality)
+## A. Current architecture (Phase 2 reality)
 
 | Aspect | Reality |
 |--------|---------|
 | Runtime | Electron + Express + SQLite monolith |
-| Schema | `PRAGMA user_version` → **v74** |
-| Routing | Static `registerRoutes` |
-| Features | Settings feature flags (`'true'` / `'false'` strings) |
-| Business type | Locked to **restaurant** |
+| Schema | `PRAGMA user_version` → **v75** (`inventory_movements` from Phase 2.8) |
+| Routing | Static `registerRoutes` (modules do not dynamically mount/unmount) |
+| Features | Settings feature flags + `isModuleEnabled` / `isFeatureAvailable` |
+| Business type | Locked to **restaurant**; `retail-test` synthetic only |
 | Tenancy | Single-tenant per install |
-| Module registry | **None** |
+| Module registry | **Yes** — `main/modules/` (22 modules, soft deps, capabilities) |
 | Product shipped | **Opervia Restaurant** capabilities (POS, KDS, tables, payments, shifts, refunds, loyalty, printing, backup, …). Canonical brand **Opervia** (ADR-010); historical audits may still say Nexora/FloCafe |
 
 Local-first offline billing remains mandatory. Cloud/optional services must not block core money paths ([`STRATEGY.md`](../../STRATEGY.md)).
@@ -28,7 +30,7 @@ Local-first offline billing remains mandatory. Cloud/optional services must not 
 
 ## B. Reusable capabilities (shared / platform-shaped)
 
-These behave as **reusable modules** even though they are not yet registered as such:
+These are **registered modules** with colocated implementations:
 
 | Capability | Notes |
 |------------|-------|
@@ -36,10 +38,10 @@ These behave as **reusable modules** even though they are not yet registered as 
 | Staff | Users and roles |
 | Customers | CRM |
 | Products / categories | Catalog |
-| Light inventory | Stock counts (not full ledger module) |
+| Inventory | Stock writes + append-only ledger (v75+) + history read API |
 | Bills / payments / refunds | Money path |
 | Shifts / day-close | Cash ops |
-| Tax engine | Incl. tax-packs |
+| Tax | Facade + engine + tax-packs |
 | Receipt printing | ESC/POS and related |
 | Loyalty | Points / rewards |
 | Reports core | Sales and ops summaries |
@@ -62,26 +64,27 @@ These behave as **reusable modules** even though they are not yet registered as 
 | Addon-groups | F&B modifiers |
 | Held-orders | F&B hold patterns |
 | Roles | Waiter / chef naming |
-| Flags | `tables_required`, `kds_*`, `kot_*`, … |
+| Flags | `tables_required`, `kds_*`, `kot_printing_enabled`, … |
 | Flows | Dine-in and café service paths |
 
 ---
 
-## D. Gaps vs TARGET modular platform
+## D. Remaining gaps vs TARGET (Phase 3)
 
 | Gap | Description |
 |-----|-------------|
-| No module registry / lifecycle | Cannot declaratively enable/disable capabilities as modules |
-| Routes/services coupled | Domain logic crosses informal file boundaries |
+| Soft registry only | Cannot fail-closed enable/disable or unload Express routes |
+| Routes/services coupled | Domain logic still crosses informal file boundaries |
 | Fat `db.ts` | Schema and access concentrated |
-| Inventory not a module | Light stock only; ledger is P2 |
+| Inventory columns colocated | Stock still on `products`; write HTTP product-nested |
 | Orders hybrid restaurant | Shared order core entangled with F&B patterns |
-| `business_type` not multi-vertical | Cannot express Retail/Grocery profiles |
-| No vertical composer | No declarative vertical definition |
-| Roles F&B-named | Waiter/chef bias in a platform meant for multiple industries |
-| Nav gated ad-hoc | Sidebar/routes not module-contributed |
-| No formal module contracts | Identity/deps/events/UI not declared |
-| No module events bus | Cross-module signaling is direct calls |
+| No multi-vertical runtime | Cannot activate Retail/Grocery profiles in production |
+| No package extraction | Modules are metadata + colocated code |
+| No marketplace / lifecycle | Install/uninstall not in scope |
+
+Historical “next = Phase 2.2” guidance is obsolete — see exit gate.
+
+Residual Phase 3 gaps also include: F&B-named roles, events bus, and package-level contracts beyond soft catalog metadata.
 
 ---
 
@@ -96,7 +99,7 @@ These behave as **reusable modules** even though they are not yet registered as 
 | **Product** | Sellable items |
 | **Category** | Catalog grouping |
 | **Menu / Addons** | Modifier groups and F&B menu structure |
-| **Inventory** | Stock (light now; ledger later) |
+| **Inventory** | Stock writes + ledger (v75+) + history read API |
 | **POS** | Selling surface / cart UX orchestration |
 | **Order** | Orders, lines, status |
 | **Tables** | Seating (Restaurant) |
@@ -112,7 +115,7 @@ These behave as **reusable modules** even though they are not yet registered as 
 | **Notification / WhatsApp** | Outbound messaging |
 | **Backup** | Backup/restore, Drive hooks |
 
-Boundaries are **logical**. Phase 1 code may remain colocated until a deliberate extraction.
+Boundaries are **logical**. Phase 1/2 code may remain colocated until deliberate Phase 3 extraction.
 
 ---
 
@@ -120,29 +123,16 @@ Boundaries are **logical**. Phase 1 code may remain colocated until a deliberate
 
 ### Restaurant — CURRENT
 
-Auth, Staff, Customer, Product, Category, Menu/Addons, Tables, Order, POS, Kitchen, KDS, Payment, Refund, Tax, Shift, Inventory (light), Loyalty, Reporting, Printing, Notification/WhatsApp, Backup, Settings.
+Auth, Staff, Customer, Product, Category, Menu/Addons, Tables, Order, POS, Kitchen, KDS, Payment, Refund, Tax, Shift, Inventory, Loyalty, Reporting, Printing, Notification/WhatsApp, Backup, Settings.
 
-### Retail — PLANNED
+### Retail — PLANNED (Phase 3); synthetic `retail-test` proves composition only
 
 Auth, Staff, Customer, Product, Category, Inventory, POS, Order, Payment, Refund, Tax, Shift, Loyalty, Reporting, Printing, Backup, Settings.
 *(No Tables/KDS/Kitchen by default.)*
 
-### Grocery — PLANNED
+### Grocery / Salon / Hospitality — PLANNED (Phase 3)
 
-Auth, Staff, Customer, Product, Category, Inventory, POS, Order, Payment, Refund, Tax, Shift, Loyalty, Reporting, Printing, Backup, Settings.
-*(Inventory-forward; no F&B kitchen stack by default.)*
-
-### Salon — PLANNED
-
-Auth, Staff, Customer, Product, Category, POS, Order, Payment, Refund, Tax, Shift, Loyalty, Reporting, Printing, Notification, Backup, Settings.
-*(Appointment depth future; no Tables/KDS by default.)*
-
-### Hospitality — PLANNED
-
-Auth, Staff, Customer, Product, Category, Menu/Addons, Tables, Order, POS, Kitchen, KDS, Payment, Refund, Tax, Shift, Loyalty, Reporting, Printing, Notification, Backup, Settings.
-*(Plus future property modules — still one codebase.)*
-
-Full catalog: [verticals.md](../00-product/verticals.md).
+See [verticals.md](../00-product/verticals.md). Not production-enabled in Phase 2.
 
 ---
 
@@ -151,7 +141,7 @@ Full catalog: [verticals.md](../00-product/verticals.md).
 | Name | Use |
 |------|-----|
 | **Opervia** | Canonical platform **and** product brand |
-| **Opervia Restaurant** | CURRENT Phase 1 vertical |
+| **Opervia Restaurant** | CURRENT production vertical |
 | **Nexora POS** | **Retired** as active product name |
 | **FloCafe** | Repo / fork legacy only |
 | **RestaurantOS** | Interpret as Opervia Restaurant vertical depth / platform depth **after** pilots — not a separate current product |
@@ -162,16 +152,16 @@ Full catalog: [verticals.md](../00-product/verticals.md).
 
 ## H. Highest-priority next technical step
 
-~~Introduce a lightweight **module registry + vertical definition**~~ — **Phase 2.1 COMPLETE** (`main/modules/`, [phase-2.1-module-registry.md](phase-2.1-module-registry.md)).
+**Phase 2 COMPLETE** — [phase-2-exit-gate.md](phase-2-exit-gate.md).
 
-**Recommended Phase 2.2 (smallest next seam):** broaden consumers (more nav items / settings surfaces use `isModuleEnabled` / `isFeatureAvailable`); optional soft dependency warnings in diagnostics; still **no** package extraction, dep fail-closed enforcement, or additional verticals.
+**Phase 3 (when explicitly kicked off):** fail-closed deps after pilots, package ports, Inventory UI, legacy tax cleanup, void×cancel restock characterization, multi-vertical runtime — still **no** speculative marketplace or Custom builder.
 
 | Do | Do not (yet) |
 |----|----------------|
-| Expand registry consumers | Microservices |
+| Follow exit-gate deferments | Microservices |
 | Keep Restaurant behavior identical | Separate codebase per vertical |
-| Soft dep diagnostics later | Opervia Custom builder |
-| | Mass folder moves / package extraction |
+| Pilot reliability first | Opervia Custom builder |
+| | Mass folder moves / package extraction without Phase 3 kickoff |
 
 **Recommended NOT to do yet**
 
@@ -184,6 +174,7 @@ Full catalog: [verticals.md](../00-product/verticals.md).
 
 ## Related
 
+- [phase-2-exit-gate.md](phase-2-exit-gate.md)
 - [modular-architecture.md](modular-architecture.md)
 - [module-system.md](module-system.md)
 - [vertical-architecture.md](vertical-architecture.md)
