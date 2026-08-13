@@ -58,7 +58,7 @@
     "test:shift-client": "ts-node --transpile-only -P tests/tsconfig.json tests/shift-client.test.ts",
     "test:shift-ui": "ts-node --transpile-only -P tests/tsconfig.json tests/shift-ui.test.ts",
     "test:flo-ui-shell": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-ui-shell.test.ts",
-    "test:module-registry": "ts-node --transpile-only -P tests/tsconfig.json tests/module-registry.test.ts && npm run test:module-diagnostics && npm run test:module-composition && npm run test:platform-composition-api && npm run test:flo-settings-module-gating",
+    "test:module-registry": "ts-node --transpile-only -P tests/tsconfig.json tests/module-registry.test.ts && npm run test:module-diagnostics && npm run test:module-composition && npm run test:module-vertical-composition && npm run test:platform-composition-api && npm run test:flo-settings-module-gating",
     "test:flo-theme": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-theme.test.ts",
     "test:flo-home": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-home.test.ts",
     "test:flo-pos": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-pos.test.ts",
@@ -162,6 +162,7 @@
     "test:shift-settings-api": "node tests/run-electron-node-test.cjs tests/shift-settings-api.test.ts",
     "test:module-diagnostics": "ts-node --transpile-only -P tests/tsconfig.json tests/module-diagnostics.test.ts",
     "test:module-composition": "ts-node --transpile-only -P tests/tsconfig.json tests/module-composition.test.ts",
+    "test:module-vertical-composition": "ts-node --transpile-only -P tests/tsconfig.json tests/module-vertical-composition.test.ts",
     "test:platform-composition-api": "node tests/run-electron-node-test.cjs tests/platform-composition-api.test.ts",
     "test:flo-settings-module-gating": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-settings-module-gating.test.ts"
   },

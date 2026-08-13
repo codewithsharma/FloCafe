@@ -9,6 +9,12 @@ import {
   OPERVIA_RESTAURANT_VERTICAL_ID,
   VERTICALS,
 } from './verticals';
+import {
+  OPERVIA_RETAIL_TEST_ENABLED_MODULES,
+  OPERVIA_RETAIL_TEST_VERTICAL,
+  OPERVIA_RETAIL_TEST_VERTICAL_ID,
+  SYNTHETIC_VERTICALS,
+} from './fixtures/retail-test-vertical';
 import type { ModuleId, OperviaModule, VerticalDefinition } from './types';
 
 export {
@@ -18,6 +24,10 @@ export {
   OPERVIA_RESTAURANT_VERTICAL,
   ACTIVE_VERTICAL_ID,
   VERTICALS,
+  OPERVIA_RETAIL_TEST_VERTICAL_ID,
+  OPERVIA_RETAIL_TEST_VERTICAL,
+  OPERVIA_RETAIL_TEST_ENABLED_MODULES,
+  SYNTHETIC_VERTICALS,
 };
 export type { ModuleId, OperviaModule, VerticalDefinition };
 
@@ -35,9 +45,11 @@ export function getActiveVerticalId(): string {
 
 export function getVerticalDefinition(verticalId?: string): VerticalDefinition {
   const id = verticalId || ACTIVE_VERTICAL_ID;
-  const found = VERTICALS.find((v) => v.id === id);
+  const found =
+    VERTICALS.find((v) => v.id === id) ||
+    SYNTHETIC_VERTICALS.find((v) => v.id === id);
   if (!found) {
-    // Phase 2.1: only Restaurant exists; unknown ids fall back to active vertical.
+    // Unknown ids fall back to the active production vertical (restaurant).
     return OPERVIA_RESTAURANT_VERTICAL;
   }
   return found;
@@ -82,11 +94,13 @@ export function getRouteModuleMap(): Record<string, ModuleId> {
 
 /**
  * Map Phase 1 business_type setting to a vertical id.
- * Unknown types fall back to restaurant (only supported vertical today).
+ * Synthetic fixtures (e.g. retail-test) are never selected from business_type.
+ * Unknown types fall back to the active production vertical (restaurant).
  */
 export function verticalIdForBusinessType(businessType: string | null | undefined): string {
   const normalized = String(businessType || 'restaurant').trim().toLowerCase();
   if (normalized === 'restaurant') return OPERVIA_RESTAURANT_VERTICAL_ID;
+  // Never map tenant business_type onto synthetic / future verticals.
   return ACTIVE_VERTICAL_ID;
 }
 

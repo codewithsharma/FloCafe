@@ -45,6 +45,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P2.2 Broaden module consumers (nav/UI) + soft dep diagnostics — **IMPLEMENTED**
 - [x] P2.3 Read-only composition snapshot — **IMPLEMENTED** (`phase-2.3-composition-snapshot.md`; in-process only; still no package extraction)
 - [x] P2.4 Composition read API + settings module gates — **IMPLEMENTED** (`phase-2.4-platform-composition-api.md`; GET `/api/platform/composition`; tax/shifts/kds/loyalty settings gates)
+- [x] P2.5 Synthetic multi-vertical composition validation — **IMPLEMENTED** (`phase-2.5-vertical-composition-validation.md`; `retail-test` fixture; soft deps; printing/notification/backup settings gates)
 
 ## P1 — Pilot reliability
 
@@ -68,7 +69,8 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P2.2 Broaden registry consumers + soft dependency diagnostics (2026-08-13)
 - [x] P2.3 Read-only composition snapshot (2026-08-13)
 - [x] P2.4 Composition GET + settings module gates (2026-08-13)
-- [ ] Fail-closed dependency enforcement or broader settings gates (still no packages)
+- [x] P2.5 Synthetic retail-test composition validation (2026-08-13)
+- [ ] Fail-closed dependency enforcement (still no packages; after pilot proof)
 - [ ] Inventory stock ledger (movements + adjustments) before BOM/procurement
 - [ ] Recipes/BOM, wastage (after ledger)
 - [ ] Suppliers / PO / receiving

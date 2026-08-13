@@ -249,6 +249,9 @@ export default function SettingsPage() {
   const showShiftsSettingsTab = canViewTaxConfiguration && isModuleEnabled('shift', settingsVerticalId);
   const showKdsSettingsTab = isModuleEnabled('kds', settingsVerticalId);
   const showLoyaltySettingsTab = isModuleEnabled('loyalty', settingsVerticalId);
+  const showPrintingSettingsTab = isModuleEnabled('printing', settingsVerticalId);
+  const showNotificationSettingsTab = isModuleEnabled('notification', settingsVerticalId);
+  const showBackupSettingsTab = isModuleEnabled('backup', settingsVerticalId);
   const { confirm, ConfirmDialog } = useConfirm();
 
   const [loyaltyEnabled, setLoyaltyEnabled] = useState(false);
@@ -2189,7 +2192,9 @@ export default function SettingsPage() {
               <p className="text-[11px] font-bold uppercase tracking-widest text-flo-text-muted">{t('settings.navGroupGeneral')}</p>
             </div>
             <SettingsNavItem label={t('settings.storeDetails')} value="store" active={activeTab} onClick={setActiveTab} />
-            <SettingsNavItem label={t('settings.tabPrinters')} value="receipts-printers" active={activeTab} onClick={setActiveTab} />
+            {showPrintingSettingsTab && (
+              <SettingsNavItem label={t('settings.tabPrinters')} value="receipts-printers" active={activeTab} onClick={setActiveTab} />
+            )}
             <SettingsNavItem label={t('settings.paymentMethods', { defaultValue: 'Payments' })} value="payments" active={activeTab} onClick={setActiveTab} />
             {showTaxSettingsTab && (
               <SettingsNavItem label={t('settings.taxConfiguration')} value="tax" active={activeTab} onClick={setActiveTab} />
@@ -2209,7 +2214,9 @@ export default function SettingsPage() {
             <SettingsNavItem label={t('settings.tablesideOrdering')} value="server-app" active={activeTab} onClick={setActiveTab} />
             {/* WhatsApp opt-in lives under Operations because the receive-bill
                 workflow is what the cashier touches every time a customer pays. */}
-            <SettingsNavItem label={t('settings.tabWhatsapp')} value="whatsapp" active={activeTab} onClick={setActiveTab} />
+            {showNotificationSettingsTab && (
+              <SettingsNavItem label={t('settings.tabWhatsapp')} value="whatsapp" active={activeTab} onClick={setActiveTab} />
+            )}
 
             {/* Customers group */}
             <div className="hidden md:block px-3 pt-4 pb-2 mt-3 mb-1 border-b border-flo-border">
@@ -2225,7 +2232,9 @@ export default function SettingsPage() {
               <p className="text-[11px] font-bold uppercase tracking-widest text-flo-text-muted">{t('settings.navGroupData')}</p>
             </div>
             <SettingsNavItem label={t('settings.tabMobileAccess')} value="mobile-access" active={activeTab} onClick={setActiveTab} />
-            <SettingsNavItem label={t('settings.tabBackupData')} value="data" active={activeTab} onClick={setActiveTab} />
+            {showBackupSettingsTab && (
+              <SettingsNavItem label={t('settings.tabBackupData')} value="data" active={activeTab} onClick={setActiveTab} />
+            )}
             <SettingsNavItem label={t('settings.tabOrderflow')} value="orderflow" active={activeTab} onClick={setActiveTab} />
 
             {/* Account group */}
@@ -3480,6 +3489,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         {/* Printers sub-page */}
+        {showPrintingSettingsTab && (
         <TabsContent value="receipts-printers">
           <div className="pb-6 max-w-6xl space-y-6">
             <div className="space-y-6">
@@ -3888,9 +3898,11 @@ export default function SettingsPage() {
           </div>
           </div>
         </TabsContent>
+        )}
 
 
         {/* Backup & Data tab — database tools only */}
+        {showBackupSettingsTab && (
         <TabsContent value="data">
           <div className="pb-6 max-w-3xl space-y-6">
             <div className="space-y-6">
@@ -4294,8 +4306,10 @@ export default function SettingsPage() {
           </div>
           </div>
         </TabsContent>
+        )}
 
         {/* Integrations tab — cloud + OrderFlow + More Apps */}
+        {showNotificationSettingsTab && (
         <TabsContent value="whatsapp">
           <div className="pb-6 max-w-3xl space-y-6">
             {!whatsappEnabled ? (
@@ -4313,6 +4327,7 @@ export default function SettingsPage() {
             )}
           </div>
         </TabsContent>
+        )}
 
         <TabsContent value="mobile-access">
           <div className="pb-6 max-w-3xl space-y-6">

@@ -1,7 +1,8 @@
 # Patterns
 
 - Feature modules: `main/services/<name>.ts` + `main/routes/<name>.ts` + `requireRole()`.
-- Opervia module registry (Phase 2.1–2.3): `main/modules/` describes capabilities; `getCompositionSnapshot()` read-only vertical view; soft diagnostics in `diagnostics.ts`; `isModuleEnabled` / `isFeatureAvailable(module, flag)`. Nav uses `requiresModule` + flags. Does not replace settings flags or static `registerRoutes`. Frontend re-exports via `frontend/src/lib/modules.ts`.
+- Opervia module registry (Phase 2.1–2.5): `main/modules/` describes capabilities; `getCompositionSnapshot()` read-only vertical view; soft diagnostics in `diagnostics.ts`; `isModuleEnabled` / `isFeatureAvailable(module, flag)`. Nav uses `requiresModule` + flags. Synthetic verticals live in `fixtures/` + `SYNTHETIC_VERTICALS` (never `ACTIVE_VERTICAL_ID`). HTTP composition API reports active production vertical only. Does not replace settings flags or static `registerRoutes`. Frontend re-exports via `frontend/src/lib/modules.ts`.
+- **Shared module principle:** implement a capability once in the catalog; verticals compose via `enabledModules`. Prefer `isModuleEnabled` over `business_type === 'restaurant'` for reusable capability checks; keep genuine restaurant-only UX vertical-specific.
 - Mutations that need audit: `withTxn(() => { write; logAuditEvent(); })`.
 - Typed `*ServiceError` with `statusCode`; routes map to `{ error }` without SQL/stack leakage.
 - Feature flags live in `settings` (`'true'` / `'false'` strings).

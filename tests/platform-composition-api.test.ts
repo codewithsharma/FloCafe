@@ -144,6 +144,15 @@ async function main() {
     const postRes = await request(app).post('/api/platform/composition').set(ownerAuth);
     assert(postRes.status === 404 || postRes.status === 405, 'POST not allowed');
 
+    console.log('\n9. Query verticalId ignored (single-tenant restaurant only)');
+    for (const qs of ['?verticalId=retail-test', '?verticalId=retail', '?vertical_id=retail-test']) {
+      const probed = await request(app).get(`/api/platform/composition${qs}`).set(ownerAuth);
+      assertEqual(probed.status, 200, `${qs} status`);
+      assertEqual(probed.body.verticalId, 'restaurant', `${qs} still restaurant`);
+      nodeAssert.deepEqual(probed.body, expected, `${qs} matches default projection`);
+      nodeAssert.ok(probed.body.enabledModules.includes('kds'), `${qs} still includes kds`);
+    }
+
     console.log('\n' + '='.repeat(60));
     console.log('All platform composition API tests passed.');
   } finally {

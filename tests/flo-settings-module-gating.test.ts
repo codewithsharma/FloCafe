@@ -1,5 +1,5 @@
 /**
- * Phase 2.4 — Settings tab module capability gating contracts.
+ * Phase 2.4–2.5 — Settings tab module capability gating contracts.
  *
  * Usage: npx ts-node --transpile-only -P tests/tsconfig.json tests/flo-settings-module-gating.test.ts
  */
@@ -19,7 +19,7 @@ function readSettingsPage(): string {
 }
 
 function main(): void {
-  console.log('Phase 2.4 Settings Module Gating Contracts');
+  console.log('Phase 2.4–2.5 Settings Module Gating Contracts');
   console.log('='.repeat(60));
 
   const source = readSettingsPage();
@@ -29,16 +29,18 @@ function main(): void {
   assert.ok(source.includes('verticalIdForBusinessType'), 'settings resolves vertical id');
 
   const restaurantVertical = verticalIdForBusinessType('restaurant');
-  assert.equal(isModuleEnabled('tax', restaurantVertical), true, 'tax module enabled for restaurant');
-  assert.equal(isModuleEnabled('shift', restaurantVertical), true, 'shift module enabled for restaurant');
-  assert.equal(isModuleEnabled('kds', restaurantVertical), true, 'kds module enabled for restaurant');
-  assert.equal(isModuleEnabled('loyalty', restaurantVertical), true, 'loyalty module enabled for restaurant');
+  for (const mod of ['tax', 'shift', 'kds', 'loyalty', 'printing', 'notification', 'backup'] as const) {
+    assert.equal(isModuleEnabled(mod, restaurantVertical), true, `${mod} enabled for restaurant`);
+  }
 
   const gates: Array<{ tab: string; showVar: string; module: string }> = [
     { tab: 'tax', showVar: 'showTaxSettingsTab', module: 'tax' },
     { tab: 'shifts', showVar: 'showShiftsSettingsTab', module: 'shift' },
     { tab: 'kds', showVar: 'showKdsSettingsTab', module: 'kds' },
     { tab: 'loyalty', showVar: 'showLoyaltySettingsTab', module: 'loyalty' },
+    { tab: 'receipts-printers', showVar: 'showPrintingSettingsTab', module: 'printing' },
+    { tab: 'whatsapp', showVar: 'showNotificationSettingsTab', module: 'notification' },
+    { tab: 'data', showVar: 'showBackupSettingsTab', module: 'backup' },
   ];
 
   for (const gate of gates) {
@@ -69,7 +71,7 @@ function main(): void {
   assert.ok(!source.includes('isFeatureAvailable('), 'settings tabs do not use isFeatureAvailable for visibility');
 
   console.log('   ✓ module registry imports and gate variables');
-  console.log('   ✓ tax/shifts/kds/loyalty nav + content guarded');
+  console.log('   ✓ tax/shifts/kds/loyalty/printing/notification/backup guarded');
   console.log('   ✓ restaurant vertical keeps all candidate tabs enabled');
   console.log('\n' + '='.repeat(60));
   console.log('All settings module gating contract tests passed.');

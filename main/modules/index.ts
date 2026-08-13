@@ -8,6 +8,10 @@ export {
   OPERVIA_RESTAURANT_VERTICAL,
   ACTIVE_VERTICAL_ID,
   VERTICALS,
+  OPERVIA_RETAIL_TEST_VERTICAL_ID,
+  OPERVIA_RETAIL_TEST_VERTICAL,
+  OPERVIA_RETAIL_TEST_ENABLED_MODULES,
+  SYNTHETIC_VERTICALS,
   listModules,
   getModule,
   getActiveVerticalId,
@@ -41,6 +45,7 @@ export {
 } from './composition';
 
 export { OPERVIA_RESTAURANT_ENABLED_MODULES } from './verticals';
+// Synthetic retail-test is re-exported via registry (not production VERTICALS).
 
 export type { ModuleId, OperviaModule, VerticalDefinition, ModuleKind } from './types';
 export type {

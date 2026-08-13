@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.5 Synthetic retail-test composition (Accepted + Implemented)
+
+Non-production `retail-test` / Opervia Retail Test fixture in `main/modules/fixtures/` + `SYNTHETIC_VERTICALS` lookup. Production `VERTICALS` and `ACTIVE_VERTICAL_ID` remain restaurant-only. Proves shared ModuleIds compose into two verticals without duplicating implementations; restaurant-only modules excluded from retail-test. Soft dependency validation only — fail-closed deferred. No `?verticalId=` on HTTP API. Settings: printing/notification/backup gated with `isModuleEnabled`. Tests: `module-vertical-composition.test.ts`. Docs: `phase-2.5-vertical-composition-validation.md`. Next: P2.6 fail-closed after pilot proof OR real Retail requirements.
+
 ## 2026-08-13 — Phase 2.4 Composition read API + settings gates (Accepted + Implemented)
 
 Minimal authenticated `GET /api/platform/composition` for owner/manager via existing JWT + `requireRole`. Response is `getPlatformCompositionResponse()` — projection of Phase 2.3 snapshot without dependency/integrity internals. Settings tabs tax/shifts/kds/loyalty gated with `isModuleEnabled`; feature flags unchanged inside tabs. No module UI, no schema change, no package extraction. Tests: `platform-composition-api.test.ts`, `flo-settings-module-gating.test.ts`. Docs: `phase-2.4-platform-composition-api.md`. Next: P2.5 fail-closed deps or broader gates.
