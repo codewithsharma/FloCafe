@@ -60,6 +60,11 @@ function main(): void {
     'ShiftHistoryPanel import preserved',
   );
   assert.ok(page.includes('value="shifts"') || page.includes("'shifts'"), 'shifts tab still present');
+  assert.ok(page.includes('/settings/shifts_enabled'), 'shifts_enabled toggle wired');
+  assert.ok(
+    page.includes('/settings/require_open_shift_for_cash'),
+    'require_open_shift_for_cash toggle wired',
+  );
   console.log('   ✓ key panels/imports preserved');
 
   assert.ok(page.includes('isDirty'), 'dirty-state save bar still wired');

@@ -13,7 +13,7 @@
 
 ## Platform-specific
 - [ ] macOS: notarization configured (release.yml)
-- [ ] Windows: code signing cert (or document unsigned)
+- [ ] Windows: **signed** code signing cert required for **café pilots** (WIN-01). Do not pilot unsigned NSIS “for convenience.”
 - [ ] Linux: Snap LXD build verified
 - [ ] MAS: provisioning profile valid
 

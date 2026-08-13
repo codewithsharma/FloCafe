@@ -8,11 +8,18 @@ import * as fs from 'fs';
 import jwt from 'jsonwebtoken';
 import { registerRoutes } from './routes';
 import { getJWTSecret } from './routes/auth';
-import { databaseMaintenanceMiddleware, getDbHealth, isDatabaseMaintenanceActive, isKdsEnabled } from './db';
+import { databaseMaintenanceMiddleware, getDbHealth, isDatabaseMaintenanceActive, isDatabaseOpen, isKdsEnabled } from './db';
 import { setupKdsWebSocket } from './services/kds';
 import { rateLimit, corsOptions, getUserAuthStatus, isTokenRevoked, isTokenStale } from './middleware/security';
 import { initFromDb as initWhatsAppFromDb } from './services/whatsapp';
-import { getNetworkMode, resolveListenHost, type ListenHost } from './services/network-mode';
+import {
+  DEFAULT_NETWORK_MODE,
+  getNetworkMode,
+  resolveListenHost,
+  type ListenHost,
+  type NetworkMode,
+} from './services/network-mode';
+import { isRecoveryRequired } from './services/install-state';
 
 let server: http.Server | null = null;
 let app: Express;
@@ -218,11 +225,12 @@ export function startServer(): Promise<void> {
       next();
     });
 
+    // REC-01: evaluate recovery BEFORE auth so money/setup routes return 503
+    // without touching JWT/user tables when the production DB is missing.
+    app.use(recoveryApiProtectionMiddleware);
+
     // ── Auth middleware (skips /api/health and /api/auth) ─────────────
     app.use(requireAuth);
-
-    // REC-01: block money/business APIs while recovery is required (fail closed).
-    app.use(recoveryApiProtectionMiddleware);
 
     // ── API health check ───────────────────────────────────────────────
     app.get('/api/health', (_req: Request, res: Response) => {
@@ -311,12 +319,18 @@ export function startServer(): Promise<void> {
 
     let currentPort = PORT;
     let attempts = 0;
-    const listenHost = resolveListenHost(getNetworkMode(), 'pos');
+    // REC-01: never read settings/network_mode from a missing/unusable DB.
+    // Recovery (and any closed-DB boot) binds localhost only — no LAN exposure.
+    const recoveryListen = isRecoveryRequired() || !isDatabaseOpen();
+    const listenMode: NetworkMode = recoveryListen ? DEFAULT_NETWORK_MODE : getNetworkMode();
+    const listenHost = resolveListenHost(listenMode, 'pos');
     activeListenHost = listenHost;
 
     server = app.listen(currentPort, listenHost, () => {
       activePort = currentPort;
-      console.log(`[Server] HTTP server running on http://localhost:${currentPort} (bind ${listenHost}, mode ${getNetworkMode()})`);
+      console.log(
+        `[Server] HTTP server running on http://localhost:${currentPort} (bind ${listenHost}, mode ${listenMode}${recoveryListen ? ', recovery' : ''})`,
+      );
 
       if (server) {
         // noServer + a manual 'upgrade' handler (rather than passing `server`
@@ -330,6 +344,12 @@ export function startServer(): Promise<void> {
           const pathname = (request.url || '').split('?')[0];
           if (pathname !== '/kds') {
             socket.write('HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-Length: 0\r\n\r\n');
+            socket.destroy();
+            return;
+          }
+
+          if (isRecoveryRequired() || !isDatabaseOpen()) {
+            socket.write('HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\nContent-Length: 0\r\n\r\n');
             socket.destroy();
             return;
           }
@@ -364,10 +384,13 @@ export function startServer(): Promise<void> {
 
       // main/index.ts (Electron) also calls this; dev-server and pm2 boot
       // through here instead and would otherwise start with module defaults.
-      try {
-        initWhatsAppFromDb();
-      } catch (error) {
-        console.error('[Server] WhatsApp startup initialization failed:', error);
+      // Skip when recovery / DB closed — WhatsApp settings live in SQLite.
+      if (!recoveryListen) {
+        try {
+          initWhatsAppFromDb();
+        } catch (error) {
+          console.error('[Server] WhatsApp startup initialization failed:', error);
+        }
       }
 
       resolve();

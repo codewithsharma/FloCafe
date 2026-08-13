@@ -59,7 +59,15 @@ const {
   clearRecoveryRequired,
 } = require('../main/services/install-state');
 const { now } = require('../main/db');
-const { recoveryApiProtectionMiddleware } = require('../main/server');
+const {
+  recoveryApiProtectionMiddleware,
+  startServer,
+  stopServer,
+  getServerPort,
+  isServerRunning,
+} = require('../main/server');
+const networkMode = require('../main/services/network-mode');
+const dbModule = require('../main/db');
 const express = require('express');
 const request = require('supertest');
 const { authRoutes } = require('../main/routes/auth');
@@ -189,7 +197,77 @@ async function main(): Promise<void> {
   }
   console.log('   ✓ REC01-06 money mutation blocked with HTTP 503; no financial mutation');
 
-  // ── REC01-07 KDS/Server App/mDNS not started in recovery (source contract)
+  // ── REC01-16 missing-DB recovery startup must not crash on getNetworkMode ──
+  // Drill failure: startServer → getNetworkMode → getSettingValue → db.prepare on undefined.
+  {
+    assert.equal(isDatabaseOpen(), false);
+    assert.equal(isRecoveryRequired(), true);
+    assert.equal(fs.existsSync(getDbPath()), false);
+
+    let networkModeCalls = 0;
+    let settingValueCalls = 0;
+    const originalGetNetworkMode = networkMode.getNetworkMode;
+    const originalGetSettingValue = dbModule.getSettingValue;
+    networkMode.getNetworkMode = (...args: unknown[]) => {
+      networkModeCalls += 1;
+      return originalGetNetworkMode.apply(networkMode, args);
+    };
+    dbModule.getSettingValue = (...args: unknown[]) => {
+      settingValueCalls += 1;
+      return originalGetSettingValue.apply(dbModule, args);
+    };
+
+    try {
+      await startServer();
+      assert.equal(isServerRunning(), true, 'recovery HTTP server must stay alive');
+      assert.equal(networkModeCalls, 0, 'getNetworkMode must not run while DB is missing');
+      assert.equal(settingValueCalls, 0, 'getSettingValue must not run against missing DB');
+
+      const base = `http://127.0.0.1:${getServerPort()}`;
+      const health = await request(base).get('/api/health');
+      assert.equal(health.status, 503);
+      assert.equal(health.body.recovery_required, true);
+      assert.equal(health.body.reason, 'missing_database');
+      assert.equal(health.body.install_state, 'RECOVERY_REQUIRED');
+
+      const setupStatus = await request(base).get('/api/auth/setup/status');
+      assert.ok(setupStatus.status === 200 || setupStatus.status === 503);
+      assert.equal(setupStatus.body.recovery_required, true);
+
+      const setupInit = await request(base)
+        .post('/api/auth/setup/initialize')
+        .send({
+          name: 'Hacker Owner',
+          password: 'OwnerPass1!',
+          master_pin: '1234',
+          accept_terms: true,
+          business_name: 'Stolen Cafe',
+        });
+      assert.ok(setupInit.status === 503 || setupInit.status === 403);
+      assert.equal(setupInit.body.recovery_required, true);
+      assert.equal(fs.existsSync(getDbPath()), false);
+
+      let moneyMutated = false;
+      // Money routes are registered by startServer; hit a real money path.
+      const pay = await request(base)
+        .post('/api/bills/1/payment')
+        .set('Authorization', 'Bearer not-a-real-token')
+        .send({ method: 'cash', amount: 100 });
+      assert.equal(pay.status, 503, `expected recovery 503, got ${pay.status}`);
+      assert.equal(pay.body.recovery_required, true);
+      void moneyMutated;
+
+      assert.equal(fs.existsSync(getDbPath()), false, 'recovery server must not create flo.db');
+    } finally {
+      networkMode.getNetworkMode = originalGetNetworkMode;
+      dbModule.getSettingValue = originalGetSettingValue;
+      stopServer();
+      assert.equal(isServerRunning(), false);
+    }
+  }
+  console.log('   ✓ REC01-16 recovery startServer stays alive; no getNetworkMode/getSettingValue; API reachable');
+
+  // ── REC01-07 KDS/Server App/mDNS not started in recovery (startup branch)
   {
     const indexSrc = fs.readFileSync(path.join(__dirname, '../main/index.ts'), 'utf8');
     const recoveryMatch = indexSrc.match(/if \(recoveryMode\) \{[\s\S]*?\n      return;\n    \}/);
@@ -198,14 +276,23 @@ async function main(): Promise<void> {
     assert.equal(recoveryBlock.includes('startKdsServer'), false, 'recovery must not start KDS');
     assert.equal(recoveryBlock.includes('startServerApp'), false, 'recovery must not start Server App');
     assert.equal(recoveryBlock.includes('startMdns'), false, 'recovery must not start mDNS');
+    assert.equal(recoveryBlock.includes('cloudSync.start'), false, 'recovery must not start cloud');
     assert.ok(indexSrc.includes('await startKdsServer()'), 'healthy path still starts KDS');
     assert.ok(indexSrc.includes('await startServerApp()'), 'healthy path still starts Server App');
     assert.ok(indexSrc.includes('startMdns()'), 'healthy path still starts mDNS');
     const recoveryIdx = indexSrc.indexOf('if (recoveryMode)');
     const kdsIdx = indexSrc.indexOf('await startKdsServer()');
     assert.ok(recoveryIdx > 0 && kdsIdx > recoveryIdx, 'KDS start is after recovery early-return');
+
+    // Recovery HTTP listen must not call getNetworkMode (server.ts contract).
+    const serverSrc = fs.readFileSync(path.join(__dirname, '../main/server.ts'), 'utf8');
+    assert.ok(
+      /isRecoveryRequired\(\)|!isDatabaseOpen\(\)/.test(serverSrc)
+      && serverSrc.includes('DEFAULT_NETWORK_MODE'),
+      'startServer must bind localhost via DEFAULT_NETWORK_MODE when recovery/DB missing',
+    );
   }
-  console.log('   ✓ REC01-07 recovery mode skips KDS/Server App/mDNS (startup branch contract)');
+  console.log('   ✓ REC01-07 recovery mode skips KDS/Server App/mDNS; listen host fail-closed');
 
   // ── REC01-13 recovery middleware fail-closed on evaluation error ──────
   {

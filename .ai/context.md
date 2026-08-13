@@ -48,4 +48,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**REC-01 implemented + security hardening** (`p1.2-rec-01-recovery-audit.md`) — **GREEN WITH HARDENING**. Factory-reset clears marker only after durable empty DB; recovery middleware fail-closed (`RECOVERY_STATE_UNAVAILABLE`). P1.2 continuity remains proven. Phase C deferred.
+**CTO release control re-verified (2026-08-13 session 2): YELLOW — READY WITH CONDITIONS. READY FOR PILOT: NO.** Fresh pre-RC suites all PASS; local codesigning identities = 0; GitHub Actions secrets `total_count=0` (MAC_CERTS / Apple API secrets missing); training `release/mac-arm64/Nexora.app` remains ADHOC. **PATH C — PRODUCTION SIGNING BLOCKED.** Dirty `develop` (41 files) awaits explicit commit/tag authorization for `v3.0.5-rc.1` (engineering marker only; CI `release.yml` requires strict tag `3.0.5`). Evidence: `$HOME/nexora-full-app-test/evidence/release-eng-cto-20260813T045225Z/`. **NO COMMIT/PUSH/TAG until user authorizes.**

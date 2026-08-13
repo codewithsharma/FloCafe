@@ -97,7 +97,7 @@ export function ProductsTable({
                         <p className="font-medium text-flo-text">{product.name}</p>
                         {product.sku && <p className="text-caption text-flo-text-muted mt-0.5">{t('products.skuLabel', { sku: product.sku })}</p>}
                         {product.barcode && <p className="text-caption text-flo-text-muted mt-0.5 font-mono">{t('products.barcodeLabel', { barcode: product.barcode })}</p>}
-                        {product.tags && product.tags.length > 0 && (
+                        {Array.isArray(product.tags) && product.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-1.5">
                             {product.tags.map((tag: string) => <TagBadge key={tag} tag={tag} />)}
                           </div>

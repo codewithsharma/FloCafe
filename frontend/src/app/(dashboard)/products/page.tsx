@@ -228,7 +228,7 @@ export default function ProductsPage() {
       stock_quantity: String(product.stock_quantity || '0'),
       low_stock_threshold: String(product.low_stock_threshold ?? '5'),
       is_active: product.is_active,
-      tags: product.tags || [],
+      tags: Array.isArray(product.tags) ? product.tags : [],
       customTag: '',
       addon_group_ids: product.addon_groups?.map((g) => g.id) || [],
       image_url: product.has_image ? 'EXISTING' : null,

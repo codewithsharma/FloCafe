@@ -696,6 +696,10 @@ const ALLOWED_WILDCARD_KEYS = new Set([
   'kds_enabled', 'server_app_enabled', 'kot_printing_enabled',
   'split_checks_enabled',
   'network_mode',
+  // M4 operational opt-in flags (owner/manager). Intentionally not setup-only —
+  // same wildcard pattern as kds_enabled / taxes_enabled. terminal_id stays off.
+  'shifts_enabled',
+  'require_open_shift_for_cash',
 ]);
 
 function isAllowedWildcardKey(key: string): boolean {
@@ -774,6 +778,22 @@ router.put('/:key', requireRole('owner', 'manager'), (req: Request, res: Respons
         restart_required: true,
         message: 'Network mode changes apply after restarting Nexora POS.',
       });
+    }
+
+    if (req.params.key === 'shifts_enabled' || req.params.key === 'require_open_shift_for_cash') {
+      const normalized = String(value ?? '').trim().toLowerCase();
+      if (normalized !== 'true' && normalized !== 'false') {
+        return res.status(400).json({
+          error: `${req.params.key} must be true or false`,
+          code: 'INVALID_BOOLEAN_SETTING',
+        });
+      }
+      db.prepare(`
+        INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+      `).run(req.params.key, normalized, now());
+      const setting = db.prepare('SELECT * FROM settings WHERE key = ?').get(req.params.key);
+      return res.json({ setting });
     }
 
     if (req.params.key === 'telemetry_enabled') {

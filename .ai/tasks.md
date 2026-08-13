@@ -29,10 +29,14 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P0.6 final production security audit — COMPLETE (`p0.6-final-production-security-audit.md`) → **GO WITH CONDITIONS** (score 78 after FIN-01)
 - [x] FIN-01 — prevent over-collection after partial-tender + refund (gross-tender outstanding); `integration-refunds` §19–21; CLOSED
 - [x] P1.2 discovery — Backup→destroy→restore continuity (`p1.2-backup-restore-continuity.md`) → was YELLOW (58)
-- [x] P1.2 implementation — continuity E2E (`tests/backup-restore-continuity.test.ts`; corrupt restore returns `success: false`) → **GREEN WITH CONDITIONS (76)**; REC-01 unchanged
+- [x] P1.2 implementation — continuity E2E (`tests/backup-restore-continuity.test.ts`; corrupt restore returns `success: false`) → **GREEN WITH CONDITIONS (76)**; REC-01 closed in follow-on milestone
 - [x] P1.2 REC-01 recovery discovery — COMPLETE (`p1.2-rec-01-recovery-audit.md`) → was YELLOW
 - [x] P1.2 REC-01 implementation — fail-closed missing/empty DB + install marker + recovery UI → **GREEN WITH HARDENING**
 - [x] P1.2 REC-01 security review fixes — factory-reset marker order + middleware fail-closed + behavioral tests → **GREEN WITH HARDENING**
+- [x] P1.2 REC-01 recovery-startup hotfix — missing DB no longer crashes `startServer`/`getNetworkMode`; recovery API + `/recovery` stay alive → **READY FOR DR RE-DRILL**
+- [x] P1.5 shift enablement product path — `shifts_enabled` / `require_open_shift_for_cash` Settings API + UI → **DR environment unblocked for shift fixture**
+- [x] P1.5 Pilot ops + DR readiness discovery — COMPLETE (`p1.5-pilot-ops-dr-readiness-audit.md`)
+- [x] P1.5 Pilot ops pack (docs) — runbook + DR drill worksheet + ops doc updates → **docs GREEN; re-drill after shift-enablement + REC-01 hotfixes**
 - [ ] P0.6 Phase C — CSP / session JWT / GPU sandbox (deferred)
 - [ ] P0.7 Documentation truth — roadmap/feature-list/production-readiness match code; Nexora POS vs RestaurantOS identity
 
@@ -41,9 +45,16 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [ ] P1.1 Cash drawer kick (ESC/POS) + permissions + audit
 - [x] P1.2 Backup → destroy DB → restore → verify continuity — **implemented** (GREEN WITH CONDITIONS); REC-01 hardening closed
 - [ ] P1.3 Failure/recovery testing matrix (offline, printer, crash, power, duplicate pay/order, token expiry)
-- [ ] P1.4 Critical E2E workflows for money paths
-- [ ] P1.5 Pilot pack — install, backup/restore, recovery, troubleshooting, operator guide, support process
-- [ ] P1.6 Deploy 3 real café pilots and feed production issue loop
+- [x] P1.4 Critical E2E workflows for money paths — **packaged full-app QA 2026-08-13** (`full-app-qa-report.md`; READY WITH CONDITIONS)
+- [x] Complete GUI feature matrix pass (Electron CDP) — `complete-gui-test-report.md` + `$HOME/nexora-full-app-test/evidence/gui-complete/`
+- [x] QA-INV-TAGS-01 — Array.isArray + recursive parseTags verified in rebuilt TRAINING package; regression `tests/product-tags-parse.test.ts` (commit still pending)
+- [x] QA-FIN01-OVERPAY-01 — **false positive closed**: cash remaining+1 is change-on-cash (PASS); non-cash remaining+1 rejects 400 (PASS). See `pending-complete-test-report.md`
+- [x] Pending-complete matrix — tax advanced, Drive/WA UI, restore UI, light load, JWT file, REC-01 re-drill (`pending-complete-test-report.md`)
+- [ ] QA-FIN01-STATUS-01 — align bill `payment_status`/`balance` with FIN-01 collectible outstanding (P2; do not weaken rejection)
+- [ ] QA-KDS-ROUTE-01 — packaged static `/kds/` directory index 404 (P3)
+- [x] P1.5 Pilot pack — install, backup/restore, recovery, troubleshooting, operator guide, support process (**docs shipped**; execute `dr-drill-worksheet.md` before go-live; numeric backup policy PENDING APPROVAL)
+- [x] P1.6 Pilot release readiness audit + checklists — **READY WITH CONDITIONS** (`p1.6-pilot-release-readiness.md`; signoff/incident log/checklist)
+- [ ] P1.6 Deploy 3 real café pilots and feed production issue loop (blocked on human gates + signed production artifact)
 
 ## P2 — After successful pilots (RestaurantOS foundation)
 

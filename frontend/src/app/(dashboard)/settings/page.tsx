@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { usePosSettingsStore, type PaperSize, type BillTemplate } from '@/store/pos-settings';
 import { usePrinterStore, usePrinterStatusSync } from '@/hooks/usePrinter';
-import { Settings, Building2, CreditCard, Monitor, Users, Gift, Printer, Share2, FileText, Lock, Smartphone, RefreshCw, Copy, Check, Wifi, Usb, Trash2, Plus, Star, TestTube2, ChefHat, QrCode, CheckCircle2, Database, Cloud, CloudOff, Zap, Percent, KeyRound, AlertTriangle, Wrench, HardDrive, UploadCloud, Hash, ChevronDown } from 'lucide-react';
+import { Settings, Building2, CreditCard, Monitor, Users, Gift, Printer, Share2, FileText, Lock, Smartphone, RefreshCw, Copy, Check, Wifi, Usb, Trash2, Plus, Star, TestTube2, ChefHat, QrCode, CheckCircle2, Database, Cloud, CloudOff, Zap, Percent, KeyRound, AlertTriangle, Wrench, HardDrive, UploadCloud, Hash, ChevronDown, Clock } from 'lucide-react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -1300,6 +1300,12 @@ export default function SettingsPage() {
   const [kotPrintingEnabledSetting, setKotPrintingEnabledSetting] = useState(true);
   const [savingKotPrintingEnabled, setSavingKotPrintingEnabled] = useState(false);
 
+  // M4 shift management — opt-in (defaults false). Owner/manager only (tab gate).
+  const [shiftsEnabledSetting, setShiftsEnabledSetting] = useState(false);
+  const [savingShiftsEnabled, setSavingShiftsEnabled] = useState(false);
+  const [requireOpenShiftForCashSetting, setRequireOpenShiftForCashSetting] = useState(false);
+  const [savingRequireOpenShiftForCash, setSavingRequireOpenShiftForCash] = useState(false);
+
   type OrderNumberForm = { prefix: string; includeDate: boolean; resetDaily: boolean };
   const [savedOrderNumberForm, setSavedOrderNumberForm] = useState<OrderNumberForm>({
     prefix: 'ORD', includeDate: true, resetDaily: true,
@@ -1512,6 +1518,18 @@ export default function SettingsPage() {
       setKotPrintingEnabledSetting(enabled);
       posSettings.setKotPrintingEnabled(enabled);
     }).catch(() => {});
+
+    api.get('/settings/shifts_enabled').then((res) => {
+      setShiftsEnabledSetting(res.data.setting?.value === 'true');
+    }).catch(() => {
+      setShiftsEnabledSetting(false);
+    });
+    api.get('/settings/require_open_shift_for_cash').then((res) => {
+      setRequireOpenShiftForCashSetting(res.data.setting?.value === 'true');
+    }).catch(() => {
+      setRequireOpenShiftForCashSetting(false);
+    });
+
     api.get('/settings/printer_trim_decimals').then((res) => {
       const enabled = res.data.setting?.value === 'true';
       posSettings.setPrinterTrimDecimals(enabled);
@@ -1860,6 +1878,46 @@ export default function SettingsPage() {
       toast.error(t('settings.saveFailed'));
     } finally {
       setSavingKotPrintingEnabled(false);
+    }
+  };
+
+  const saveShiftsEnabled = async (enabled: boolean) => {
+    const previous = shiftsEnabledSetting;
+    const previousCashGate = requireOpenShiftForCashSetting;
+    setShiftsEnabledSetting(enabled);
+    if (!enabled) setRequireOpenShiftForCashSetting(false);
+    setSavingShiftsEnabled(true);
+    try {
+      await api.put('/settings/shifts_enabled', { value: enabled ? 'true' : 'false' });
+      if (!enabled && previousCashGate) {
+        await api.put('/settings/require_open_shift_for_cash', { value: 'false' });
+      }
+      toast.success(enabled
+        ? t('settings.shiftsEnabledOn', { defaultValue: 'Shift management enabled' })
+        : t('settings.shiftsEnabledOff', { defaultValue: 'Shift management disabled' }));
+    } catch {
+      setShiftsEnabledSetting(previous);
+      setRequireOpenShiftForCashSetting(previousCashGate);
+      toast.error(t('settings.saveFailed'));
+    } finally {
+      setSavingShiftsEnabled(false);
+    }
+  };
+
+  const saveRequireOpenShiftForCash = async (enabled: boolean) => {
+    const previous = requireOpenShiftForCashSetting;
+    setRequireOpenShiftForCashSetting(enabled);
+    setSavingRequireOpenShiftForCash(true);
+    try {
+      await api.put('/settings/require_open_shift_for_cash', { value: enabled ? 'true' : 'false' });
+      toast.success(enabled
+        ? t('settings.requireOpenShiftForCashOn', { defaultValue: 'Open shift required for cash payments' })
+        : t('settings.requireOpenShiftForCashOff', { defaultValue: 'Cash payments allowed without an open shift' }));
+    } catch {
+      setRequireOpenShiftForCashSetting(previous);
+      toast.error(t('settings.saveFailed'));
+    } finally {
+      setSavingRequireOpenShiftForCash(false);
     }
   };
 
@@ -2473,6 +2531,63 @@ export default function SettingsPage() {
         {canViewTaxConfiguration && (
           <TabsContent value="shifts">
             <div className="pb-6 max-w-3xl space-y-4">
+              <Panel>
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock size={20} className="text-flo-text-secondary" />
+                  <h2 className="font-semibold text-flo-text">
+                    {t('settings.shiftManagement', { defaultValue: 'Shift Management' })}
+                  </h2>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-flo-text">
+                        {t('settings.shiftsEnabled', { defaultValue: 'Enable Shift Management' })}
+                      </p>
+                      <p className="text-sm text-flo-text-secondary">
+                        {t('settings.shiftsEnabledHint', {
+                          defaultValue: 'When enabled, staff can open and close terminal shifts for cash reconciliation.',
+                        })}
+                      </p>
+                    </div>
+                    <Toggle
+                      value={shiftsEnabledSetting}
+                      onChange={(v) => {
+                        if (!savingShiftsEnabled) void saveShiftsEnabled(v);
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-4 pt-2 border-t border-flo-border">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-flo-text">
+                        {t('settings.requireOpenShiftForCash', {
+                          defaultValue: 'Require Open Shift for Cash',
+                        })}
+                      </p>
+                      <p className="text-sm text-flo-text-secondary">
+                        {t('settings.requireOpenShiftForCashHint', {
+                          defaultValue: 'Block cash payments unless this terminal has an open shift.',
+                        })}
+                      </p>
+                    </div>
+                    <Toggle
+                      value={requireOpenShiftForCashSetting}
+                      onChange={(v) => {
+                        if (!savingRequireOpenShiftForCash && shiftsEnabledSetting) {
+                          void saveRequireOpenShiftForCash(v);
+                        }
+                      }}
+                    />
+                  </div>
+                  {!shiftsEnabledSetting && (
+                    <p className="text-sm text-flo-text-secondary">
+                      {t('settings.requireOpenShiftForCashDisabledHint', {
+                        defaultValue: 'Enable shift management before requiring an open shift for cash.',
+                      })}
+                    </p>
+                  )}
+                </div>
+              </Panel>
               <Panel variant="compact" className="bg-flo-surface-muted">
                 <p className="text-small text-flo-text-secondary">
                   {t('flo.settings.shiftsOpsNote')}{' '}

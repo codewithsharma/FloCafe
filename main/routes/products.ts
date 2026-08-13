@@ -254,9 +254,16 @@ function validateTaxCategoryId(categoryId: unknown): string | null {
 }
 
 function parseTags(raw: any): string[] {
-  if (Array.isArray(raw)) return raw;
+  if (Array.isArray(raw)) {
+    return raw.filter((tag): tag is string => typeof tag === 'string');
+  }
   if (typeof raw === 'string' && raw) {
-    try { return JSON.parse(raw); } catch { return []; }
+    try {
+      // Recurse so double-encoded JSON (e.g. '"[]"') cannot escape as a string.
+      return parseTags(JSON.parse(raw));
+    } catch {
+      return [];
+    }
   }
   return [];
 }

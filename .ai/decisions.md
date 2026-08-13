@@ -1,5 +1,21 @@
 # Decisions
 
+## 2026-08-13 — P1.6 Pilot release readiness (Accepted — docs + verification)
+
+Docs-first release readiness: `pilot-release-checklist.md`, `pilot-signoff.md`, `pilot-incident-log.md`, `p1.6-pilot-release-readiness.md`. No production-code changes. Verification: `npm test` PASS, `npm run build` PASS, focused REC-01/backup/refunds/financial/shift/security PASS, isolated fresh-install smoke PASS, P1.5 DR evidence accepted. Verdict **READY WITH CONDITIONS** (not READY FOR PILOT): production signing, Master PIN escrow, OPS-01, backup policy approval, human sign-off still PENDING. Phase C / REC-01/FIN-01/B2/JWT redesign out of scope.
+
+## 2026-08-13 — P1.5 shift enablement via Settings (Accepted + Implemented)
+
+DR drill STOP: `shifts_enabled` / `require_open_shift_for_cash` were seeded false and missing from `ALLOWED_WILDCARD_KEYS` with no Settings UI — accidental omission vs peers (`kds_enabled`, `taxes_enabled`). Fix: allowlist only those two keys; owner/manager `PUT /api/settings/:key` with strict `true`/`false` validation; Settings → Shifts toggles. `terminal_id` remains blocked. Tests: `tests/shift-settings-api.test.ts`. Packaged verify PASS on isolated userdata.
+
+## 2026-08-13 — P1.2 REC-01 recovery startup hotfix (Accepted + Implemented)
+
+Packaged DR drill NO-GO: missing `flo.db` + marker correctly latched `RECOVERY_REQUIRED`, then `initialize()` always called `startServer()` → `getNetworkMode()` → `getSettingValue()` on closed DB → crash before `/recovery`. Fix (orchestration only): recovery/closed-DB listen uses `DEFAULT_NETWORK_MODE` (`127.0.0.1`) without calling `getNetworkMode`; skip WhatsApp DB init; reject KDS upgrades without `isKdsEnabled`; mount `recoveryApiProtectionMiddleware` before `requireAuth`. Existing Master PIN IPC restore unchanged. Tests: REC01-16 + strengthened REC01-07. Packaged verify PASS on isolated `--user-data-dir`.
+
+## 2026-08-13 — P1.5 Pilot operations + DR pack (Accepted + Docs implemented)
+
+Docs-first milestone only (no `main/`/`frontend/` changes): café `pilot-runbook.md`, `dr-drill-worksheet.md`, backup/DR/ops/runbook/incident updates, continuity + production-readiness drift fixes. OPS-01, REC-01 STOP RULE, Master PIN escrow, WIN-01 signed Windows, Linux keyring gates documented. Backup frequency/retention remain **POLICY VALUE PENDING APPROVAL**. Go-live still requires executed DR drill. See `p1.5-pilot-ops-dr-readiness-audit.md`.
+
 ## 2026-08-13 — P1.2 REC-01 security hardening (Accepted + Implemented)
 
 Final review fixes only (no redesign): (1) factory reset clears `install-state.json` **after** durable empty DB commit; recreate uses `allowCreateDespiteMarker`; failure keeps/restores marker + safety-backup rollback; (2) `recoveryApiProtectionMiddleware` fail-closed → HTTP 503 `RECOVERY_STATE_UNAVAILABLE` (never `next()` on eval failure). Behavioral tests REC01-05/06/07/13/14/15. See `p1.2-rec-01-recovery-audit.md`.
@@ -14,11 +30,11 @@ Discovery was **YELLOW**. Implementation completed same day.
 
 ## 2026-08-13 — P1.2 Backup→destroy→restore continuity (Accepted + Implemented)
 
-Continuity E2E landed. Score **76/100 — GREEN WITH CONDITIONS**. Suite `tests/backup-restore-continuity.test.ts` (wired into `npm run test:backup`) proves fixture → backup → destroy → restore for orders/bills/payments/refunds/FIN-01/shifts/day-close/audits + Scenario A/B JWT. Minimal prod fix: corrupt/non-SQLite backup open in `restoreBackup` returns `{ success: false }` without touching live DB. **REC-01** (missing `flo.db` → silent empty DB) documented/tested and **not changed**. No JWT/FIN-01/backup-format redesign. See `docs/15-project-management/p1.2-backup-restore-continuity.md`.
+Continuity E2E landed. Score **76/100 — GREEN WITH CONDITIONS**. Suite `tests/backup-restore-continuity.test.ts` (wired into `npm run test:backup`) proves fixture → backup → destroy → restore for orders/bills/payments/refunds/FIN-01/shifts/day-close/audits + Scenario A/B JWT. Minimal prod fix: corrupt/non-SQLite backup open in `restoreBackup` returns `{ success: false }` without touching live DB. **At ship time REC-01 was unchanged**; **REC-01 later CLOSED** (`p1.2-rec-01-recovery-audit.md`). No JWT/FIN-01/backup-format redesign in P1.2. See `docs/15-project-management/p1.2-backup-restore-continuity.md`.
 
 ## 2026-08-13 — P1.2 Backup→destroy→restore continuity discovery (Superseded by implementation)
 
-Discovery was **58/100 — YELLOW**. Implementation completed same day; REC-01 remains open for separate approval.
+Discovery was **58/100 — YELLOW**. Implementation completed same day; REC-01 was deferred then and **later closed**.
 
 ## 2026-08-13 — FIN-01 collectible outstanding after partial refund (Accepted + Implemented)
 
