@@ -78,10 +78,11 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 7. ~~Inventory + Tax domain boundaries~~ — **Phase 2.7 done** ([phase-2.7-domain-boundaries.md](../03-architecture/phase-2.7-domain-boundaries.md))
 8. ~~Inventory movement ledger~~ — **Phase 2.8 done** ([phase-2.8-inventory-ledger.md](../03-architecture/phase-2.8-inventory-ledger.md))
 9. ~~Product↔Inventory stock write ownership~~ — **Phase 2.9 done** ([phase-2.9-product-inventory-boundary.md](../03-architecture/phase-2.9-product-inventory-boundary.md))
-10. Fail-closed dependency enforcement — deferred (after pilot proof)
-11. Tax HTTP consolidation / movement API — next
-12. Formal events bus for modules — deferred
-13. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — deferred
+10. ~~Tax HTTP consolidation~~ — **Phase 2.10 done** ([phase-2.10-tax-http-boundary.md](../03-architecture/phase-2.10-tax-http-boundary.md))
+11. Fail-closed dependency enforcement — deferred (after pilot proof)
+12. Inventory movement API/UI / tax snapshot freeze — next
+13. Formal events bus for modules — deferred
+14. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — deferred
 
 **Do not** create Opervia Custom or extract every folder into packages yet.
 
@@ -98,6 +99,7 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 - [phase-2.7-domain-boundaries.md](../03-architecture/phase-2.7-domain-boundaries.md)
 - [phase-2.8-inventory-ledger.md](../03-architecture/phase-2.8-inventory-ledger.md)
 - [phase-2.9-product-inventory-boundary.md](../03-architecture/phase-2.9-product-inventory-boundary.md)
+- [phase-2.10-tax-http-boundary.md](../03-architecture/phase-2.10-tax-http-boundary.md)
 - [module-ownership.md](../03-architecture/module-ownership.md)
 - [extraction-readiness.md](../03-architecture/extraction-readiness.md)
 - [vertical-architecture.md](../03-architecture/vertical-architecture.md)

@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.10 Tax HTTP boundary consolidation (Accepted + Implemented)
+
+Moved `POST /api/tax/preview` and `GET /api/tax/categories` from inline `index.ts` into `main/routes/tax.ts` mounted via `app.use('/api/tax', taxRoutes)`. Left `/api/tax-packs` and `/api/settings/tax` (plus `taxes_enabled`) separate by design. Auth/flags/contracts/money math unchanged. No schema migration. Tax extraction readiness remains MEDIUM. Tests: `tax-route-boundary.test.ts`. Next: snapshot freeze, movement API/UI, or fail-closed after pilots.
+
 ## 2026-08-13 — Phase 2.9 Product↔Inventory write ownership (Accepted + Implemented)
 
 Product create/PUT no longer mutate `stock_quantity` via route SQL. Create inserts product at stock 0 then `applyAbsoluteStockChange` (adjustment + reason `opening` when ≠ 0). Update applies metadata without stock column then Inventory absolute set (reason `product_update`). Zero-delta skips movements. Same `withTxn` for metadata+stock. Soft-delete unchanged; ledger preserved. No schema migration; no `opening` movement_type (reuse `adjustment`). API shape unchanged; no frontend. Tests: `product-inventory-boundary.test.ts`. Inventory stays MEDIUM (stronger write ownership; columns still on products).

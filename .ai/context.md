@@ -50,4 +50,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 2.9 Product↔Inventory write ownership shipped (2026-08-13).** Product create/PUT stock routes through Inventory + ledger; no schema change. Next: tax HTTP consolidation, movement API/UI, or fail-closed after pilots.
+**Phase 2.10 Tax HTTP boundary shipped (2026-08-13).** `/api/tax/*` owned by `main/routes/tax.ts`; tax-packs and settings tax intentionally separate; no schema change; no frontend. Next: tax snapshot freeze, inventory movement API/UI, or fail-closed after pilots.

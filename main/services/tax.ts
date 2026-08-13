@@ -149,7 +149,7 @@ export function scaleItemTaxAfterOrderDiscount(args: {
 }
 
 // Same country -> bundled-pack selection used by calculateItemTax below and
-// by the GET /api/tax/categories endpoint (routes/index.ts) — kept as one
+// by the GET /api/tax/categories endpoint (routes/tax.ts) — kept as one
 // function so the two never drift apart on which pack is "active".
 export function getActiveCountryPack(country: string): CountryPack {
   try {

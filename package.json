@@ -146,6 +146,7 @@
     "test:inventory-ledger": "node tests/run-electron-node-test.cjs tests/inventory-ledger.test.ts",
     "test:product-inventory-boundary": "node tests/run-electron-node-test.cjs tests/product-inventory-boundary.test.ts",
     "test:tax-boundary": "node tests/run-electron-node-test.cjs tests/tax-boundary.test.ts",
+    "test:tax-route-boundary": "node tests/run-electron-node-test.cjs tests/tax-route-boundary.test.ts",
     "test:tax-components": "ts-node --transpile-only -P tests/tsconfig.json tests/tax-components.test.ts",
     "test:tax-pack-catalog": "ts-node --transpile-only -P tests/tsconfig.json tests/tax-pack-catalog.test.ts",
     "test:tax-pack-management": "node tests/run-electron-node-test.cjs tests/tax-pack-management.test.ts",

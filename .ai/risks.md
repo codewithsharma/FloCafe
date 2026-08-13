@@ -24,9 +24,9 @@
 - ⚠️ RISK: Doc drift — roadmap/feature-list may lag Opervia modular CURRENT (registry through Phase 2.6 contracts are built; multi-vertical runtime / packages are not).
 - ⚠️ RISK: Brand consolidation to **Opervia** (ADR-010) — living docs/STRATEGY/`productName`/UI i18n updated; historical `15-*` audits still say Nexora/FloCafe; `appId`/`executableName` remain flo\* for upgrade continuity; Drive folder is `Opervia Backups` (old `Nexora Backups` not auto-migrated).
 - ⚠️ RISK: Phase 2.6 capabilities are metadata only — any future consumer must not treat `CapabilityId` as authorization (roles/`requireRole` remain authoritative).
-- 🔴 DEBT: Extraction readiness: Inventory MEDIUM (writes+ledger owned; stock columns still on products); Tax MEDIUM; Product/POS/KDS still HIGH — see `extraction-readiness.md`.
+- 🔴 DEBT: Extraction readiness: Inventory MEDIUM (writes+ledger owned; stock columns still on products); Tax MEDIUM (HTTP consolidated in `routes/tax.ts`; snapshots + money-path + product tax columns remain); Product/POS/KDS still HIGH — see `extraction-readiness.md`.
 - ⚠️ RISK: Inventory ledger starts at v75 with **no backfill**; product create opening uses `adjustment`+`reason=opening` (not a separate type); refunds intentionally do not restock; test/seed fixtures may still INSERT stock outside Inventory.
-- ⚠️ RISK: Tax discount scale (Math.round money path) differs from preview Decimal scale — intentional compatibility; do not unify without golden tests + product decision.
+- ⚠️ RISK: Tax discount scale (Math.round money path) differs from preview Decimal scale — intentional compatibility; do not unify without golden tests + product decision. Tax-packs and settings tax HTTP intentionally left outside `routes/tax.ts`.
 
 ## Debt (do not giant-rewrite)
 

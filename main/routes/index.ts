@@ -26,6 +26,7 @@ import { databaseRoutes } from './database';
 import { databaseToolsRoutes } from './database-tools';
 import { menuCsvRoutes } from './menu-csv';
 import { taxPackRoutes } from './tax-packs';
+import { taxRoutes } from './tax';
 import { heldOrderRoutes } from './held-orders';
 import { whatsappRoutes } from './whatsapp';
 import { supportTicketRoutes } from './support-ticket';
@@ -110,55 +111,13 @@ export function registerRoutes(app: Express): void {
   app.use('/api/db-tools', databaseToolsRoutes);
   app.use('/api/menu-csv', menuCsvRoutes);
   app.use('/api/tax-packs', taxPackRoutes);
+  app.use('/api/tax', taxRoutes);
   app.use('/api/held-orders', heldOrderRoutes);
   app.use('/api/whatsapp', whatsappRoutes);
   app.use('/api/support-ticket', supportTicketRoutes);
   app.use('/api/audit-logs', auditLogRoutes);
   app.use('/api/platform', platformRoutes);
   app.use('/api/shifts', shiftRoutes);
-
-  // Tax preview
-  app.post('/api/tax/preview', async (req, res) => {
-    const { calculateTaxPreview } = await import('../services/tax');
-    calculateTaxPreview(req, res);
-  });
-
-  // Categories available under the store's active country pack — powers the
-  // product-page category selector. Read-only; pack activation/management
-  // (installing/updating a pack) is a separate, later feature.
-  app.get('/api/tax/categories', requireRole('owner', 'manager'), async (req, res) => {
-    try {
-      const { getActiveCountryPack, hasConfiguredTaxCategories, previewCategoryRate } = await import('../services/tax');
-      const country = getSettingValue('country') || 'IN';
-      const businessType = getSettingValue('business_type') || 'restaurant';
-      const pack = getActiveCountryPack(country);
-      const configurationReady = hasConfiguredTaxCategories(pack, businessType);
-      res.json({
-        pack_id: pack.id,
-        country: pack.country,
-        // The bundled generic pack deliberately has no rules. Exposing its
-        // placeholder categories as assignable would migrate a product from
-        // legacy tax to a zero-tax engine path.
-        categories: configurationReady
-          ? pack.categories.map((category) => {
-            const preview = previewCategoryRate(pack, businessType, category.id);
-            return {
-              id: category.id,
-              label: category.label,
-              rate_percent: preview?.percent ?? null,
-              rate_label: preview?.label ?? null,
-            };
-          })
-          : [],
-        default_category_id: configurationReady ? pack.defaultCategories.product : null,
-        configuration_ready: configurationReady,
-        unclassified_category_id: pack.unclassifiedCategoryId,
-      });
-    } catch (error: any) {
-      console.error('[API] Internal error:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  });
 
   // Mobile pairing code — proxies FloAdmin (see cloud-sync.ts generatePairingCode).
   // Cache-first: repeat GETs (e.g. reopening Settings) must NOT generate a new
