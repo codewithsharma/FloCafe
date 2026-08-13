@@ -1,7 +1,7 @@
 # Reporting financial semantics
 
 **Status:** Canonical contract (P0.2 financial hardening)  
-**Date:** 2026-08-12  
+**Date:** 2026-08-12 (updated 2026-08-13 — FIN-01 collectible outstanding)  
 **Scope:** How report fields map to money. Do not treat `paid_amount` and `payment_details` as interchangeable.
 
 ---
@@ -25,6 +25,19 @@ Cash In − Cash Refunds = Net Cash Movement
 ```
 
 Payments Received may stay at the original tender total after a partial refund (for example Sale ₹1,000 / Refund ₹300 → Payments Received ₹1,000, Net Sales ₹700). That is intentional: tender history is not rewritten when refunds post.
+
+### Collectible outstanding (FIN-01)
+
+```
+gross_successful_tender = SUM(payment_details line amounts)
+net_paid                = gross_successful_tender − completed_refunds   (= bills.paid_amount)
+collectible outstanding = bill_total − gross_successful_tender
+```
+
+Refunds reduce net paid and cash reconciliation. They **never** recreate payment capacity.  
+Example: total ₹1,000 → pay ₹600 → refund ₹200 → gross ₹600, net ₹400, collectible ₹400 (not ₹600).
+
+Payment eligibility in `preparePaymentBatch` uses **gross** tender for remaining balance (`BILL_NO_OUTSTANDING_BALANCE` when collectible ≤ 0).
 
 ---
 
@@ -50,6 +63,7 @@ Payments Received may stay at the original tender total after a partial refund (
 
 - **`bills.paid_amount`** — net collected after refunds (Net Sales building block).
 - **`bills.payment_details`** — original payment lines (Payments Received / gross tender). Refunds do not remove these lines.
+- **Collectible outstanding** — `bill_total − gross tender`, **not** `bill_total − paid_amount` (FIN-01).
 - **Order `SUM(total)` series on `/sales`** — order volume, not bill Net Sales.
 
 ---

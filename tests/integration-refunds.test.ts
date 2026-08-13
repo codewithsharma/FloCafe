@@ -641,6 +641,168 @@ async function main() {
       ).get(String(billId)) as { c: number }).c;
       assertEqual(afterCount, beforeCount + 1, 'exactly one new payment.received audit');
     }
+
+    // ── 19. FIN-01 Partial pay + partial refund must not recreate collectible ─
+    // Canonical: outstanding = total − gross tender; refunds never reopen capacity.
+    console.log('\n─── 19. FIN-01 Partial pay → refund → repay caps at gross remaining ───');
+    {
+      seedProduct(db, 'prod-fin01', 'cat-ref', 'FIN-01 Meal', 1000);
+      const order = await api(baseUrl, '/api/orders', {
+        method: 'POST',
+        body: { type: 'takeaway', items: [{ product_id: 'prod-fin01', quantity: 1 }] },
+        headers: managerAuth,
+      });
+      assertEqual(order.status, 201, 'FIN-01 order created');
+      assertEqual(Number(order.data.order.total), 1000, 'bill total ₹1000');
+      const bill = await api(baseUrl, '/api/bills/generate', {
+        method: 'POST',
+        body: { order_id: order.data.order.id },
+        headers: managerAuth,
+      });
+      assertEqual(bill.status, 201, 'FIN-01 bill created');
+      const billId = bill.data.bill.id;
+
+      const pay1 = await api(baseUrl, `/api/bills/${billId}/payment`, {
+        method: 'POST',
+        body: { method: 'cash', amount: 600 },
+        headers: managerAuth,
+      });
+      assertEqual(pay1.status, 200, 'partial ₹600 payment accepted');
+      assertEqual(pay1.data.bill.payment_status, 'partial', 'status partial after first pay');
+
+      const refund = await api(baseUrl, `/api/bills/${billId}/refund`, {
+        method: 'POST',
+        body: { amount: 200, method: 'cash', reason: 'FIN-01 partial refund', override_pin: '1234' },
+        headers: { ...managerAuth, 'Idempotency-Key': `fin01-refund-${billId}` },
+      });
+      assertEqual(refund.status, 200, 'partial ₹200 refund accepted');
+      assertEqual(Number(refund.data.bill.paid_amount), 400, 'net paid_amount = ₹400');
+
+      const billRow = db.prepare('SELECT payment_details, paid_amount, total FROM bills WHERE id = ?').get(String(billId)) as {
+        payment_details: string;
+        paid_amount: number;
+        total: number;
+      };
+      const details = JSON.parse(billRow.payment_details);
+      const grossTender = (Array.isArray(details) ? details : [details]).reduce(
+        (sum: number, line: any) => sum + Math.round(Number(line.amount) * 100),
+        0,
+      ) / 100;
+      assertEqual(grossTender, 600, 'gross tender = ₹600');
+      const refundedCents = (db.prepare(
+        `SELECT COALESCE(SUM(amount_cents), 0) AS total FROM refunds WHERE bill_id = ? AND status = 'completed'`,
+      ).get(String(billId)) as { total: number }).total;
+      assertEqual(refundedCents, 20000, 'completed refunds = ₹200');
+      assertEqual(Number(billRow.paid_amount), 400, 'net paid = ₹400');
+
+      const over = await api(baseUrl, `/api/bills/${billId}/payment`, {
+        method: 'POST',
+        body: { method: 'card', amount: 401 },
+        headers: managerAuth,
+      });
+      assertEqual(over.status, 400, '₹401 beyond gross remaining must fail');
+
+      const idemKey = `fin01-repay-${billId}`;
+      const repay = await api(baseUrl, `/api/bills/${billId}/payment`, {
+        method: 'POST',
+        body: { method: 'cash', amount: 400 },
+        headers: { ...managerAuth, 'Idempotency-Key': idemKey },
+      });
+      assertEqual(repay.status, 200, '₹400 remaining collectible must succeed');
+
+      const after = db.prepare('SELECT payment_details, paid_amount FROM bills WHERE id = ?').get(String(billId)) as {
+        payment_details: string;
+        paid_amount: number;
+      };
+      const afterDetails = JSON.parse(after.payment_details);
+      const finalGross = (Array.isArray(afterDetails) ? afterDetails : [afterDetails]).reduce(
+        (sum: number, line: any) => sum + Math.round(Number(line.amount) * 100),
+        0,
+      ) / 100;
+      assertEqual(finalGross, 1000, 'final gross tender = ₹1000');
+      assertEqual(Number(after.paid_amount), 800, 'final net paid = ₹800');
+      assert(finalGross <= Number(billRow.total) + 0.001, 'no over-collection vs bill total');
+
+      const refundCount = (db.prepare(
+        `SELECT COUNT(*) AS c FROM refunds WHERE bill_id = ? AND status = 'completed'`,
+      ).get(String(billId)) as { c: number }).c;
+      assertEqual(refundCount, 1, 'refund records unchanged (still one completed refund)');
+      assertEqual(
+        (db.prepare(
+          `SELECT COALESCE(SUM(amount_cents), 0) AS total FROM refunds WHERE bill_id = ? AND status = 'completed'`,
+        ).get(String(billId)) as { total: number }).total,
+        20000,
+        'refund amount unchanged',
+      );
+
+      const replay = await api(baseUrl, `/api/bills/${billId}/payment`, {
+        method: 'POST',
+        body: { method: 'cash', amount: 400 },
+        headers: { ...managerAuth, 'Idempotency-Key': idemKey },
+      });
+      assertEqual(replay.status, 200, 'idempotent repay replay succeeds');
+      assertEqual(Number(replay.data.bill.paid_amount), 800, 'idempotent replay does not double-collect');
+
+      const payAudits = (db.prepare(
+        `SELECT COUNT(*) AS c FROM audit_logs WHERE action = 'payment.received' AND entity_id = ?`,
+      ).get(String(billId)) as { c: number }).c;
+      assertEqual(payAudits, 2, 'payment.received audits for first pay + repay (not replay)');
+      const refundAudit = db.prepare(
+        `SELECT action FROM audit_logs WHERE action = 'payment.refunded' AND json_extract(metadata_json, '$.bill_id') = ? LIMIT 1`,
+      ).get(billId) as { action: string } | undefined;
+      assert(!!refundAudit, 'payment.refunded audit retained');
+    }
+
+    // ── 20. FIN-01 regression: full tender + refund still blocks repay ─
+    console.log('\n─── 20. FIN-01 regression full tender refund gap blocked ───');
+    {
+      const paid = await createPaidBill(baseUrl, managerAuth, { productId: 'prod-ref-1', method: 'cash' });
+      const partialAmount = Math.round(Number(paid.total) * 30) / 100;
+      const refund = await api(baseUrl, `/api/bills/${paid.billId}/refund`, {
+        method: 'POST',
+        body: { amount: partialAmount, method: 'cash', reason: 'FIN-01 full-tender gap', override_pin: '1234' },
+        headers: { ...managerAuth, 'Idempotency-Key': `fin01-full-${paid.billId}` },
+      });
+      assertEqual(refund.status, 200, 'partial refund on full tender ok');
+      const repay = await api(baseUrl, `/api/bills/${paid.billId}/payment`, {
+        method: 'POST',
+        body: { method: 'cash', amount: partialAmount },
+        headers: managerAuth,
+      });
+      assertEqual(repay.status, 400, 'full-tender refund gap still blocked');
+      assertEqual(repay.data.code, 'BILL_NO_OUTSTANDING_BALANCE', 'stable BILL_NO_OUTSTANDING_BALANCE');
+    }
+
+    // ── 21. FIN-01 regression: partial pay without refund unchanged ────
+    console.log('\n─── 21. FIN-01 regression partial pay without refund ───');
+    {
+      const order = await api(baseUrl, '/api/orders', {
+        method: 'POST',
+        body: { type: 'takeaway', items: [{ product_id: 'prod-ref-1', quantity: 1 }] },
+        headers: managerAuth,
+      });
+      const total = Number(order.data.order.total);
+      const bill = await api(baseUrl, '/api/bills/generate', {
+        method: 'POST',
+        body: { order_id: order.data.order.id },
+        headers: managerAuth,
+      });
+      const billId = bill.data.bill.id;
+      const firstHalf = Math.round((total / 2) * 100) / 100;
+      const pay1 = await api(baseUrl, `/api/bills/${billId}/payment`, {
+        method: 'POST',
+        body: { method: 'cash', amount: firstHalf },
+        headers: managerAuth,
+      });
+      assertEqual(pay1.status, 200, 'partial without refund still accepted');
+      const pay2 = await api(baseUrl, `/api/bills/${billId}/payment`, {
+        method: 'POST',
+        body: { method: 'card', amount: Math.round((total - firstHalf) * 100) / 100 },
+        headers: managerAuth,
+      });
+      assertEqual(pay2.status, 200, 'remaining without refund still accepted');
+      assertEqual(pay2.data.bill.payment_status, 'paid', 'fully paid without refund');
+    }
   } finally {
     server.close();
     closeDatabase();

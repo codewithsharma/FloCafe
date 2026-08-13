@@ -586,21 +586,21 @@ function preparePaymentBatch(
   }
   if (bill.payment_status === 'paid') throw Object.assign(new Error('Bill is already paid'), { statusCode: 400 });
   const totalCents = Math.round(Number(bill.total || 0) * 100);
-  const remainingCents = Math.max(0, Math.round((Number(bill.total) - Number(bill.paid_amount || 0)) * 100));
-  // Gross tender (payment_details) is never reduced by refunds. If the bill was
-  // already fully tendered, any remaining net gap is refund outflow — not unpaid
-  // balance — so re-collection on this bill is forbidden.
+  // FIN-01: collectible outstanding is based on GROSS successful tender
+  // (payment_details), never net paid_amount. Refunds reduce net / recon
+  // but must not recreate payment capacity.
+  // outstanding = bill_total − gross_successful_tender
   const grossCents = Math.max(
     paymentDetailsGrossCents(bill.payment_details),
     paymentDetailsGrossCents(existingPayments),
   );
-  if (grossCents >= totalCents) {
+  const remainingCents = Math.max(0, totalCents - grossCents);
+  if (remainingCents <= 0) {
     throw Object.assign(
       new Error('Bill has no outstanding balance; create a new bill to collect payment'),
       { statusCode: 400, code: 'BILL_NO_OUTSTANDING_BALANCE' },
     );
   }
-  if (remainingCents <= 0) throw Object.assign(new Error('Bill is already fully paid'), { statusCode: 400 });
   const raw = resolvedPayments.map((payment) => {
     // Preserve omitted/null compatibility for the legacy single-line contracts.
     // Multi-line batches must state every amount explicitly so allocation is

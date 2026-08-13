@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-08-13 — FIN-01 collectible outstanding after partial refund (Accepted + Implemented)
+
+Payment eligibility uses **gross successful tender**, not net `paid_amount`. Invariant: `collectible outstanding = bill_total − gross_successful_tender`; `net paid = gross − completed_refunds`. Refunds never recreate payment capacity. Minimal change in `preparePaymentBatch` (`main/routes/bills.ts`). Tests: `tests/integration-refunds.test.ts` §19–21. M6 refund architecture unchanged. See `reporting-financial-semantics.md` and `p0.6-final-production-security-audit.md`.
+
+## 2026-08-13 — P0.6 final production security audit (Accepted discovery)
+
+Discovery-only final audit after P0.1 / P0.2 / P0.6 A+B1+B2. Score later updated to **78/100** after FIN-01 close. Verdict **GO WITH CONDITIONS**. Identified **FIN-01** (partial tender + refund over-collection) — **since CLOSED**. Dominant residual: XSS → localStorage JWT → API (Phase C). Ops P0: no guest Wi‑Fi. See `docs/15-project-management/p0.6-final-production-security-audit.md`.
+
 ## 2026-08-13 — Electron updater IPC Phase B2 (Accepted + Implemented)
 
 CEO+CTO-directed Option B. `restart-and-install` requires active owner/manager JWT via `authorizeOwnerManagerJwt` (`main/security/ipc-auth.ts`) + `handleRestartAndInstall` (`main/security/restart-and-install.ts`). Reuses `getJWTSecret` / revoke / stale / `getUserAuthStatus`. Master PIN intentionally **not** used. `get-status` / `get-update-status` / `check-for-updates` remain public. Audit action `updater.restart_and_install` (no token/secret in metadata). Preload: `restartAndInstall(token)`. Tests: `tests/electron-ipc-phase-b2.test.ts`, `npm run test:electron-ipc-b2` → `test:security`. Verdict **GREEN WITH HARDENING**. Residual: stolen owner/manager JWT; CSP/localStorage → Phase C. See `docs/15-project-management/p0.6-updater-security-audit.md`.

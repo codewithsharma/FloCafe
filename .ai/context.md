@@ -20,7 +20,8 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 3. Money-path REAL→cents migration — **documentation only** until approved
 4. LAN security / HTTP exposure — **IMPLEMENTED** (`network_mode` localhost|kds_lan|lan; audit `p0.1-lan-security-audit.md` → GREEN WITH HARDENING)
 5. JWT secret storage — **IMPLEMENTED** (safeStorage → `jwt-secret.enc`; GREEN WITH HARDENING)
-6. Electron sandbox / process security — **Phase A GREEN**; **Phase B1 GREEN WITH HARDENING**; **Phase B2 IMPLEMENTED — GREEN WITH HARDENING** (`docs/15-project-management/p0.6-updater-security-audit.md`); `restart-and-install` owner/manager JWT; status/check public; Master PIN not used
+6. Electron sandbox / process security — **Phase A/B1/B2 GREEN WITH HARDENING**; **Final P0.6 audit: GO WITH CONDITIONS** (`p0.6-final-production-security-audit.md`, score **78/100** after FIN-01). Phase C deferred.
+7. **FIN-01** — prevent over-collection after partial pay + refund — **CLOSED** (gross-tender outstanding)
 
 **Frozen until pilots prove reliability:** AI, aggregators (Swiggy/Zomato/ONDC), multi-tenant SaaS, multi-location implementation, ERP inventory, payment terminals, Bluetooth print, microservices.
 
@@ -37,12 +38,14 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 - Terminal id: `frontend/src/lib/terminal-id.ts` (identification only, not auth)
 - Cloud: outbound-only `main/services/cloud-sync.ts` — never blocks billing
 
-## Formulas (M5 + M6)
+## Formulas (M5 + M6 + FIN-01)
 
 - `expected_cash_cents = opening_float_cents + SUM(qualifying cash on bills WHERE shift_id = shift) - SUM(completed cash refunds WHERE refunds.shift_id = shift)`
 - `variance_cents = counted_cash_cents - expected_cash_cents` when counted provided; else `NULL`
 - Card/wallet refunds do not change expected cash
+- **Collectible outstanding** = `bill_total − gross_successful_tender` (refunds never recreate capacity)
+- **Net paid** = `gross_successful_tender − completed_refunds` (`bills.paid_amount`)
 
 ## Next step
 
-P0.6 Phase C (CSP / session JWT / GPU sandbox) deferred. Next P0 candidates: P0.3 money migration (docs-only until approved) or P0.7 documentation truth.
+Pilot ops pack (OPS-01 / staff LAN / Master PIN / backups) and P1.2 restore continuity. Phase C (CSP / session JWT) deferred. See `p0.6-final-production-security-audit.md` — **GO WITH CONDITIONS**.
