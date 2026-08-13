@@ -1,6 +1,6 @@
 # Opervia Modules
 
-**Status:** Phase 2 foundation **COMPLETE** ([phase-2-exit-gate.md](../03-architecture/phase-2-exit-gate.md) — PASS WITH DOCUMENTED DEFERMENTS). Phase 3 = extraction / multi-vertical / fail-closed.
+**Status:** Phase 2 **CONTINUATION in progress** — CURRENT **2.14 Order** domain boundary ([phase-2.14-order-domain-boundary.md](../03-architecture/phase-2.14-order-domain-boundary.md)). INTERIM exit gate preserved ([phase-2-exit-gate.md](../03-architecture/phase-2-exit-gate.md) — PASS WITH DOCUMENTED DEFERMENTS). Phase 3 = extraction / multi-vertical / fail-closed.
 **Contract:** [module-system.md](../03-architecture/module-system.md)
 **Platform:** [opervia-platform.md](../00-product/opervia-platform.md)
 
@@ -41,7 +41,7 @@ Modules are reusable business capabilities. Phase 2 ships a **lightweight regist
 | Module | Status | Phase 1 mapping |
 |--------|--------|-----------------|
 | POS (`pos`) | CURRENT · REGISTERED | POS UI + sell flows |
-| Order (`order`) | CURRENT · REGISTERED | Orders / held orders (F&B-hybrid) |
+| Order (`order`) | CURRENT · REGISTERED · **2.14 ownership facade** | Orders / held orders; item cancel/restore on `orderRoutes`; stock via Inventory |
 | Payment (`payment`) | CURRENT · REGISTERED | Bills / tender |
 | Refund (`refund`) | CURRENT · REGISTERED | M6 refunds |
 | Tax (`tax`) | CURRENT · REGISTERED | Tax facade + engine + **tax-packs** |
@@ -82,17 +82,19 @@ Modules are reusable business capabilities. Phase 2 ships a **lightweight regist
 11. ~~Tax snapshot contract freeze~~ — **Phase 2.11 done**
 12. ~~Inventory movement history read API~~ — **Phase 2.12 done**
 13. ~~Product ↔ Tax ownership boundary~~ — **Phase 2.13 done**
-14. ~~Phase 2 exit gate~~ — **Phase 2.14 done** ([phase-2-exit-gate.md](../03-architecture/phase-2-exit-gate.md))
-15. Fail-closed dependency enforcement — **Phase 3**
-16. Inventory UI / legacy tax column cleanup — **Phase 3**
-17. Formal events bus for modules — **Phase 3**
-18. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — **Phase 3**
+14. ~~Phase 2 exit gate~~ — **INTERIM Phase 2.14 done** ([phase-2-exit-gate.md](../03-architecture/phase-2-exit-gate.md)) — preserved; not deleted
+15. ~~Order domain boundary~~ — **CURRENT Phase 2.14 done** ([phase-2.14-order-domain-boundary.md](../03-architecture/phase-2.14-order-domain-boundary.md)) — ownership facade + cancel/restore on `orderRoutes`; void×cancel pinned
+16. Fail-closed dependency enforcement — **Phase 3**
+17. Inventory UI / legacy tax column cleanup — **Phase 3**
+18. Formal events bus for modules — **Phase 3**
+19. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — **Phase 3**
 
 **Do not** create Opervia Custom or extract every folder into packages yet.
 
 ## Related architecture
 
-- [phase-2-exit-gate.md](../03-architecture/phase-2-exit-gate.md)
+- [phase-2.14-order-domain-boundary.md](../03-architecture/phase-2.14-order-domain-boundary.md) (CURRENT 2.14)
+- [phase-2-exit-gate.md](../03-architecture/phase-2-exit-gate.md) (INTERIM 2.14)
 - [modular-architecture.md](../03-architecture/modular-architecture.md)
 - [module-system.md](../03-architecture/module-system.md)
 - [module-contract.md](../03-architecture/module-contract.md)

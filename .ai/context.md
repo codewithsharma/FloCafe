@@ -19,10 +19,10 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 | **Opervia** | Canonical platform brand |
 | **Opervia Restaurant** | Active production vertical (`ACTIVE_VERTICAL_ID = restaurant`) |
 | **retail-test** | Synthetic composition fixture only (`SYNTHETIC_VERTICALS`) — not production |
-| **Phase 2** | **COMPLETE** — exit gate **PASS WITH DOCUMENTED DEFERMENTS** (`docs/03-architecture/phase-2-exit-gate.md`) |
+| **Phase 2** | **CONTINUATION in progress** — CURRENT **2.14 Order** domain boundary; INTERIM exit gate preserved (`docs/03-architecture/phase-2-exit-gate.md`) |
 | **Phase 3** | **FUTURE** — package extraction, fail-closed deps, multi-vertical runtime, production Retail+, deeper `db.ts` split |
 
-Phase 2 delivered: registry → consumers → composition → contract/capabilities → Inventory/Tax boundaries → ledger → product stock ownership → tax HTTP/snapshot → product/tax ownership → **2.14 exit hardening**.
+Phase 2 delivered so far: registry → consumers → composition → contract/capabilities → Inventory/Tax boundaries → ledger → product stock ownership → tax HTTP/snapshot → product/tax ownership → **INTERIM 2.14 exit** → **CURRENT 2.14 Order** (ownership facade + cancel/restore on `orderRoutes`).
 
 ## Active work — Opervia Restaurant v1.0 / pilot hardening
 
@@ -41,12 +41,13 @@ Phase 2 delivered: registry → consumers → composition → contract/capabilit
 
 ## Already shipped (do not rebuild)
 
-M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close · **M6 refunds API** · Flo UI redesign Phases 1–12 · KDS · printing · tax · payments · loyalty · WhatsApp · Drive · FloAdmin outbound bridge · **Phase 2 modular foundation (2.1–2.14)**.
+M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close · **M6 refunds API** · Flo UI redesign Phases 1–12 · KDS · printing · tax · payments · loyalty · WhatsApp · Drive · FloAdmin outbound bridge · **Phase 2 modular foundation (2.1–INTERIM 2.14 + CURRENT 2.14 Order)** — Phase 2 continuation in progress.
 
 ## Architecture anchors
 
 - Modules: `main/modules/` (catalog, registry, diagnostics, composition, verticals, fixtures)
 - Inventory: `main/services/inventory.ts`, `main/routes/inventory.ts`
+- Order: `main/services/order.ts` (ownership facade), `main/routes/orders.ts` (incl. item cancel/restore)
 - Tax: `main/services/tax.ts` facade (not direct `tax-engine` from routes)
 - Shifts: `main/services/shift.ts`, `main/routes/shifts.ts`, `frontend/src/lib/shifts.ts`
 - Cash classification: `main/services/payment-cash.ts`
@@ -65,4 +66,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 2 COMPLETE.** Next architectural work is **Phase 3** (extraction / fail-closed / multi-vertical) — do not start unless explicitly tasked. Pilot focus remains P0/P1 reliability (money representation design, Phase C CSP, café pilots). Deferred from exit gate: Inventory UI, void×cancel restock characterization, legacy tax columns, package extraction.
+**Phase 2 CONTINUATION** — CURRENT 2.14 Order domain boundary landed; INTERIM exit gate docs preserved. Do **not** claim Phase 2 complete. Next: further Order facade extraction (create/addItems / money rollup) only if tasked; otherwise pilot P0/P1 reliability. Deferred: void×cancel restock fix, Inventory UI, legacy tax columns, package extraction.

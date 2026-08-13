@@ -79,11 +79,13 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P2.11 Tax snapshot contract freeze (2026-08-13) — `EngineTaxSnapshot` + facade imports; no schema/money change
 - [x] P2.12 Inventory movement history read API (2026-08-13) — `GET /api/inventory/movements`; service `listInventoryMovements`
 - [x] P2.13 Product ↔ Tax ownership boundary (2026-08-13) — config refs vs calc vs historical snapshot; no schema/money change
-- [x] **P2.14 Phase 2 exit gate** (2026-08-13) — catalog metadata truth + exit docs; **PASS WITH DOCUMENTED DEFERMENTS**; Phase 2 **COMPLETE**
+- [x] **P2.14 INTERIM Phase 2 exit gate** (2026-08-13) — catalog metadata truth + exit docs; **PASS WITH DOCUMENTED DEFERMENTS**; doc preserved (not deleted)
+- [x] **P2.14 CURRENT Order domain boundary** (2026-08-13) — characterize cancel/stock + void×cancel; `main/services/order.ts`; relocate item cancel/restore onto `orderRoutes`; no money/inventory policy change
+- [ ] Phase 2 continuation — further Order facade (create/addItems / money rollup) if tasked; do **not** claim Phase 2 complete
 - [ ] **Phase 3** Fail-closed dependency enforcement (still no packages; after pilot proof)
 - [ ] **Phase 3** Inventory stock ledger UI
 - [ ] **Phase 3** Legacy product tax_type/tax_rate cleanup (deferred; characterized in 2.13)
-- [ ] **Phase 3** Void×cancel restock semantic hardening (documented at exit; do not change casually)
+- [ ] **Phase 3** Void×cancel restock semantic hardening (pinned in `order-void-cancel-stock.test.ts`; do not change casually)
 - [ ] **Phase 3** Recipes/BOM, wastage (after ledger)
 - [ ] **Phase 3** Suppliers / PO / receiving
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet
