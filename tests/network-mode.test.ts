@@ -148,7 +148,7 @@ async function run(): Promise<void> {
 
   // ── DB + real binds ────────────────────────────────────────────────────
   initDatabase();
-  assert.ok(getCurrentSchemaVersion() >= 73, 'schema includes network_mode migration v73');
+  assert.ok(getCurrentSchemaVersion() >= 74, 'schema includes jwt_secret_storage migration v74');
   assert.equal(getNetworkMode(), 'localhost', 'fresh install defaults to localhost');
 
   await withMode('localhost', async () => {

@@ -149,19 +149,22 @@ async function main() {
   db.prepare(`
     INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('cloud_last_error', 'legacy-upstream-token-reflection', ?)
   `).run(now());
+  // Legacy plaintext row may still exist pre-migration; export must redact it.
+  db.prepare(`
+    INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ('jwt_secret', 'legacy-plaintext-jwt-secret-for-export-test', ?)
+  `).run(now());
   const exportRes = await request(app).get('/api/db/export').set(ownerAuth);
   assertEqual(exportRes.status, 200, 'owner can call /api/db/export');
 
   const exportBody = exportRes.body;
   assert(Array.isArray(exportBody.redacted_fields), 'export response includes redacted_fields list');
 
-  // jwt_secret must be redacted in the settings rows
+  // jwt_secret must be redacted in the settings rows (never plaintext in export)
   const settingsRows: { key: string; value: string }[] = exportBody.data?.settings ?? [];
   const jwtRow = settingsRows.find((r: any) => r.key === 'jwt_secret');
-  if (jwtRow) {
-    assert(jwtRow.value === '[REDACTED]', 'jwt_secret value is [REDACTED] in export (vuln-0005)');
-    assert(exportBody.redacted_fields.includes('settings.jwt_secret'), 'jwt_secret listed in redacted_fields');
-  }
+  assert(!!jwtRow, 'jwt_secret setting present in export fixture');
+  assert(jwtRow!.value === '[REDACTED]', 'jwt_secret value is [REDACTED] in export (vuln-0005)');
+  assert(exportBody.redacted_fields.includes('settings.jwt_secret'), 'jwt_secret listed in redacted_fields');
 
   const deletionTokenRow = settingsRows.find((r: any) => r.key === 'cloud_deletion_status_token');
   assert(!!deletionTokenRow, 'cloud_deletion_status_token setting is present to be redacted');

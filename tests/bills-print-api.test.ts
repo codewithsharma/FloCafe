@@ -28,6 +28,7 @@ Module._load = function (request: string, parent: unknown, isMain: boolean) {
 };
 
 // Set JWT_SECRET before importing auth modules
+process.env.NODE_ENV = process.env.NODE_ENV || 'test';
 process.env.JWT_SECRET = 'test-secret-for-bills-print-api';
 
 const express = require('express');

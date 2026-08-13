@@ -34,7 +34,7 @@ function run() {
   const maxVersion = Math.max(
     ...versionMatch.map((entry) => Number(entry.replace(/\D/g, ''))),
   );
-  assert.equal(maxVersion, 73, 'P0.1 adds migration v73 for network_mode');
+  assert.equal(maxVersion, 74, 'P0.2 adds migration v74 for jwt_secret_storage marker');
 
   console.log('✅ M1 engineering gate checks passed');
 }

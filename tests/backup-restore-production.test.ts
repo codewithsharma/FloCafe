@@ -84,7 +84,7 @@ async function run() {
       INSERT INTO settings (key, value, updated_at) VALUES ('kds_enabled', 'false', datetime('now'))
       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
     `).run();
-    for (const [key, value] of [['jwt_secret', 'current-jwt'], ['cloud_api_key', 'current-cloud-key'], ['cloud_device_secret', 'current-device-secret'], ['cloud_pos_hash', 'current-pos-hash'], ['telemetry_enabled', 'false'], ['diagnostics_consent', 'false']]) {
+    for (const [key, value] of [['jwt_secret_storage', 'safestorage'], ['cloud_api_key', 'current-cloud-key'], ['cloud_device_secret', 'current-device-secret'], ['cloud_pos_hash', 'current-pos-hash'], ['telemetry_enabled', 'false'], ['diagnostics_consent', 'false']]) {
       db.prepare(`
         INSERT INTO settings (key, value, updated_at) VALUES (?, ?, datetime('now'))
         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
@@ -113,7 +113,11 @@ async function run() {
     const enabledKdsDb = new Database(enabledKdsBackup);
     enabledKdsDb.pragma('foreign_keys = OFF');
     enabledKdsDb.prepare("UPDATE settings SET value = 'true' WHERE key = 'kds_enabled'").run();
-    enabledKdsDb.prepare("UPDATE settings SET value = 'backup-jwt' WHERE key = 'jwt_secret'").run();
+    enabledKdsDb.prepare(`
+      INSERT INTO settings (key, value, updated_at) VALUES ('jwt_secret', 'backup-jwt', datetime('now'))
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+    `).run();
+    enabledKdsDb.prepare("UPDATE settings SET value = 'backup-storage' WHERE key = 'jwt_secret_storage'").run();
     enabledKdsDb.prepare("UPDATE settings SET value = 'backup-cloud-key' WHERE key = 'cloud_api_key'").run();
     enabledKdsDb.prepare("UPDATE settings SET value = 'backup-device-secret' WHERE key = 'cloud_device_secret'").run();
     enabledKdsDb.prepare("UPDATE settings SET value = 'backup-pos-hash' WHERE key = 'cloud_pos_hash'").run();
@@ -129,7 +133,12 @@ async function run() {
       'false',
       'direct restore preserves the current disabled KDS setting',
     );
-    for (const [key, expected] of [['jwt_secret', 'current-jwt'], ['cloud_api_key', 'current-cloud-key'], ['cloud_device_secret', 'current-device-secret'], ['cloud_pos_hash', 'current-pos-hash'], ['telemetry_enabled', 'false'], ['diagnostics_consent', 'false']]) {
+    assert.equal(
+      getDatabase().prepare('SELECT value FROM settings WHERE key = ?').get('jwt_secret'),
+      undefined,
+      'restore strips plaintext jwt_secret from backup DB',
+    );
+    for (const [key, expected] of [['jwt_secret_storage', 'safestorage'], ['cloud_api_key', 'current-cloud-key'], ['cloud_device_secret', 'current-device-secret'], ['cloud_pos_hash', 'current-pos-hash'], ['telemetry_enabled', 'false'], ['diagnostics_consent', 'false']]) {
       assert.equal((getDatabase().prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string }).value, expected, `direct restore preserves current ${key}`);
     }
 
