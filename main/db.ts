@@ -1510,6 +1510,17 @@ export function restoreBackup(backupPath: string, forceDirect: boolean = false):
     metadataStampPresent = Boolean(metaRow);
     metadataVersion = metaRow ? parseCanonicalSchemaVersion(metaRow.value) ?? 0 : 0;
     pragmaVersion = Number(backupDb.pragma('user_version', { simple: true }));
+  } catch (error: any) {
+    // Corrupt / non-SQLite files must fail closed without touching the live DB.
+    const currentVersion = getCurrentSchemaVersion();
+    return {
+      success: false,
+      mode: forceDirect ? 'direct' : 'data_only',
+      backupSchemaVersion: 0,
+      currentSchemaVersion: currentVersion,
+      tablesRestored: 0,
+      error: error?.message || 'Invalid or corrupt backup file',
+    };
   } finally {
     backupDb?.close();
   }

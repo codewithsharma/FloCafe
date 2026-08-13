@@ -48,4 +48,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-Pilot ops pack (OPS-01 / staff LAN / Master PIN / backups) and P1.2 restore continuity. Phase C (CSP / session JWT) deferred. See `p0.6-final-production-security-audit.md` — **GO WITH CONDITIONS**.
+**P1.2 continuity E2E implemented** (`p1.2-backup-restore-continuity.md`) — **GREEN WITH CONDITIONS (76)**. Destroy→restore financial/JWT continuity proven (`tests/backup-restore-continuity.test.ts`). **REC-01** (silent empty DB) unchanged — needs separate approval. Phase C deferred. Pilot ops: Master PIN / Scenario B recover.

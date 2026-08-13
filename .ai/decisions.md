@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-08-13 — P1.2 Backup→destroy→restore continuity (Accepted + Implemented)
+
+Continuity E2E landed. Score **76/100 — GREEN WITH CONDITIONS**. Suite `tests/backup-restore-continuity.test.ts` (wired into `npm run test:backup`) proves fixture → backup → destroy → restore for orders/bills/payments/refunds/FIN-01/shifts/day-close/audits + Scenario A/B JWT. Minimal prod fix: corrupt/non-SQLite backup open in `restoreBackup` returns `{ success: false }` without touching live DB. **REC-01** (missing `flo.db` → silent empty DB) documented/tested and **not changed**. No JWT/FIN-01/backup-format redesign. See `docs/15-project-management/p1.2-backup-restore-continuity.md`.
+
+## 2026-08-13 — P1.2 Backup→destroy→restore continuity discovery (Superseded by implementation)
+
+Discovery was **58/100 — YELLOW**. Implementation completed same day; REC-01 remains open for separate approval.
+
 ## 2026-08-13 — FIN-01 collectible outstanding after partial refund (Accepted + Implemented)
 
 Payment eligibility uses **gross successful tender**, not net `paid_amount`. Invariant: `collectible outstanding = bill_total − gross_successful_tender`; `net paid = gross − completed_refunds`. Refunds never recreate payment capacity. Minimal change in `preparePaymentBatch` (`main/routes/bills.ts`). Tests: `tests/integration-refunds.test.ts` §19–21. M6 refund architecture unchanged. See `reporting-financial-semantics.md` and `p0.6-final-production-security-audit.md`.

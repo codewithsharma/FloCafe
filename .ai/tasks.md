@@ -28,13 +28,16 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P0.6 Phase B2 implementation — `restart-and-install` owner/manager JWT + audit; GREEN WITH HARDENING
 - [x] P0.6 final production security audit — COMPLETE (`p0.6-final-production-security-audit.md`) → **GO WITH CONDITIONS** (score 78 after FIN-01)
 - [x] FIN-01 — prevent over-collection after partial-tender + refund (gross-tender outstanding); `integration-refunds` §19–21; CLOSED
+- [x] P1.2 discovery — Backup→destroy→restore continuity (`p1.2-backup-restore-continuity.md`) → was YELLOW (58)
+- [x] P1.2 implementation — continuity E2E (`tests/backup-restore-continuity.test.ts`; corrupt restore returns `success: false`) → **GREEN WITH CONDITIONS (76)**; REC-01 unchanged
+- [ ] P1.2 follow-up — REC-01 fail-closed / recovery UX (requires explicit approval)
 - [ ] P0.6 Phase C — CSP / session JWT / GPU sandbox (deferred)
 - [ ] P0.7 Documentation truth — roadmap/feature-list/production-readiness match code; Nexora POS vs RestaurantOS identity
 
 ## P1 — Pilot reliability
 
 - [ ] P1.1 Cash drawer kick (ESC/POS) + permissions + audit
-- [ ] P1.2 Backup → destroy DB → restore → verify continuity (orders/customers/products/staff/shifts/payments/config/audit)
+- [x] P1.2 Backup → destroy DB → restore → verify continuity — **implemented** (GREEN WITH CONDITIONS); REC-01 decision still open
 - [ ] P1.3 Failure/recovery testing matrix (offline, printer, crash, power, duplicate pay/order, token expiry)
 - [ ] P1.4 Critical E2E workflows for money paths
 - [ ] P1.5 Pilot pack — install, backup/restore, recovery, troubleshooting, operator guide, support process
