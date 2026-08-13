@@ -2,7 +2,9 @@
  * Phase 2.5 / 2.18 — synthetic non-production Retail Test vertical.
  *
  * Architecture validation only. NOT Opervia Retail.
- * Must never become ACTIVE_VERTICAL_ID or appear in production VERTICALS.
+ * May be selected via ACTIVE_VERTICAL_ID=retail-test at deploy/start for composition
+ * validation (Phase 3.2). Must never be the compile-time default or appear in
+ * production VERTICALS (production Retail is Phase 3.3).
  */
 import type { ModuleId, VerticalDefinition } from '../types';
 
@@ -42,6 +44,4 @@ export const OPERVIA_RETAIL_TEST_VERTICAL: VerticalDefinition = {
 };
 
 /** Non-production vertical fixtures — looked up by id, never active by default. */
-export const SYNTHETIC_VERTICALS: readonly VerticalDefinition[] = [
-  OPERVIA_RETAIL_TEST_VERTICAL,
-];
+export const SYNTHETIC_VERTICALS: readonly VerticalDefinition[] = [OPERVIA_RETAIL_TEST_VERTICAL];

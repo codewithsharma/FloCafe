@@ -71,12 +71,27 @@ export function getModule(id: string): OperviaModule | undefined {
 }
 
 export function getActiveVerticalId(): string {
-  return ACTIVE_VERTICAL_ID;
+  // Phase 3.2: prefer committed deploy/start resolution (env), else resolve without lock.
+  // Lazy require avoids load-time cycle with vertical-config → registry.
+  const { getCommittedActiveVerticalId } =
+    require('./vertical-config') as typeof import('./vertical-config');
+  return getCommittedActiveVerticalId();
 }
 
 /** Resolve a known production or synthetic vertical; throw if unknown. */
 export function resolveKnownVertical(verticalId?: string): VerticalDefinition {
-  const id = verticalId || ACTIVE_VERTICAL_ID;
+  let id: string;
+  if (verticalId === undefined || verticalId === null) {
+    id = getActiveVerticalId();
+  } else {
+    const trimmed = String(verticalId).trim();
+    if (trimmed === '') {
+      throw new CompositionValidationError(
+        `Unknown vertical id: (empty). Fail-closed: refusing restaurant fallback.`,
+      );
+    }
+    id = trimmed;
+  }
   const found = VERTICALS.find((v) => v.id === id) || SYNTHETIC_VERTICALS.find((v) => v.id === id);
   if (!found) {
     throw new CompositionValidationError(

@@ -70,7 +70,8 @@ function mobilePairingErrorMessage(error: any): string {
 export interface RegisterRoutesOptions {
   /**
    * Vertical composition for mount decisions.
-   * Defaults to ACTIVE_VERTICAL_ID (restaurant in production).
+   * Defaults to committed deploy/start vertical (ACTIVE_VERTICAL_ID env),
+   * falling back to restaurant when unset.
    * Tests may pass retail-test to prove restaurant routes are absent.
    */
   verticalId?: string;
@@ -78,8 +79,11 @@ export interface RegisterRoutesOptions {
 
 export function registerRoutes(app: Express, options: RegisterRoutesOptions = {}): void {
   // Phase 3.1 — fail-closed composition validation before any mounts.
-  const composition = assertFailClosedComposition({ verticalId: options.verticalId });
-  const verticalId = composition.verticalId;
+  // Phase 3.2 — default vertical comes from commitActiveVerticalFromEnv / env.
+  const { getCommittedActiveVerticalId } =
+    require('../modules/vertical-config') as typeof import('../modules/vertical-config');
+  const verticalId = options.verticalId ?? getCommittedActiveVerticalId();
+  assertFailClosedComposition({ verticalId });
 
   void getPlatformCompositionSummary();
   logCompositionSnapshotIfDev({ verticalId });

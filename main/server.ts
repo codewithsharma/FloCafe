@@ -285,8 +285,16 @@ export function startServer(): Promise<void> {
       });
     });
 
-    // ── All API routes ─────────────────────────────────────────────────
-    registerRoutes(app);
+    // ── Phase 3.2: resolve deploy/start vertical BEFORE routes / listen ─
+    const {
+      commitActiveVerticalFromEnv,
+      logStartupCompositionIfAppropriate,
+    } = require('./modules/vertical-config');
+    const verticalId = commitActiveVerticalFromEnv();
+    logStartupCompositionIfAppropriate(verticalId);
+
+    // ── All API routes (Phase 3.1 fail-closed remount) ──────────────────
+    registerRoutes(app, { verticalId });
 
     // ── Serve Next.js static export ────────────────────────────────────
     // Must come AFTER API routes so /api/* is not caught by the SPA fallback.

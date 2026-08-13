@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 3.2 Deploy/start vertical configuration (Accepted + Implemented)
+
+Env `ACTIVE_VERTICAL_ID`; unset→`restaurant`; empty/unknown fail-closed; commit once in `startServer` before remount; `retail-test` allowed as synthetic selection not production Retail; no runtime switch. Doc: `docs/03-architecture/phase-3.2-capability-configuration.md`. Phase 3.3 not started.
+
 ## 2026-08-13 — Phase 3.1 Fail-closed vertical remount (Accepted + Implemented)
 
 **Outcome A.** `registerRoutes` is capability-aware: restaurant-only mounts gated by module enablement. Unknown vertical throws `CompositionValidationError` (no restaurant fallback). Tests may use retail-test mount override; production `ACTIVE_VERTICAL_ID` remains restaurant. Doc: `docs/03-architecture/phase-3.1-fail-closed-remount.md`. Phase 3.2 not started.

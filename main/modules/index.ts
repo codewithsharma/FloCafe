@@ -58,6 +58,16 @@ export {
   shouldMountModule,
 } from './route-mounting';
 
+export {
+  ACTIVE_VERTICAL_ENV_KEY,
+  resolveActiveVerticalId,
+  commitActiveVerticalFromEnv,
+  getCommittedActiveVerticalId,
+  resetActiveVerticalResolutionForTests,
+  formatStartupCompositionDiagnostics,
+  logStartupCompositionIfAppropriate,
+} from './vertical-config';
+
 export { OPERVIA_RESTAURANT_ENABLED_MODULES } from './verticals';
 // Synthetic retail-test is re-exported via registry (not production VERTICALS).
 

@@ -43,7 +43,7 @@ export const OPERVIA_RESTAURANT_VERTICAL: VerticalDefinition = {
     'Phase 1 café/restaurant POS vertical. Shared commerce modules plus tables, kitchen, KDS, menu, and addons.',
 };
 
-/** Only vertical active in Phase 2.1 — maps 1:1 with business_type=restaurant. */
+/** Compile-time default when ACTIVE_VERTICAL_ID env is unset (Phase 3.2). */
 export const ACTIVE_VERTICAL_ID = OPERVIA_RESTAURANT_VERTICAL_ID;
 
 export const VERTICALS: readonly VerticalDefinition[] = [OPERVIA_RESTAURANT_VERTICAL];
