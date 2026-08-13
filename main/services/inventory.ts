@@ -1,8 +1,9 @@
 /**
- * Inventory domain boundary (Phase 2.7–2.9).
+ * Inventory domain boundary (Phase 2.7–2.12).
  *
  * Owns: ALL application-level stock quantity writes, append-only movement ledger,
- * availability checks, low-stock filter fragment, read-only reconciliation helpers.
+ * availability checks, low-stock filter fragment, read-only reconciliation helpers,
+ * and bounded movement history reads (listInventoryMovements / HTTP GET).
  *
  * Does NOT own: product metadata (name/price/category), sales, payments, orders,
  * refunds (refunds intentionally do not restock — no refund ledger rows).
@@ -14,6 +15,9 @@
  * Write ownership (Phase 2.9): Product create/update routes stock through
  * applyAbsoluteStockChange / adjustProductStock. Zero-delta skips movements.
  * Opening stock uses movement_type `adjustment` + reason `opening` (no schema change).
+ *
+ * Read ownership (Phase 2.12): HTTP GET /api/inventory/movements → listInventoryMovements.
+ * Ledger history begins at v75 (no backfill).
  *
  * Transaction rule: stock UPDATE + movement INSERT share caller withTxn (or
  * withTxn inside adjustProductStock). Never UPDATE/DELETE movement rows.
@@ -323,19 +327,74 @@ export function calculateLedgerStock(productId: string | number): number {
   return Number(row.total ?? 0);
 }
 
+/** Domain movement row (matches DB/API snake_case — products/tax convention). */
+export type InventoryMovement = InventoryMovementRow;
+
+export interface ListInventoryMovementsOptions {
+  productId: string | number;
+  limit?: number;
+  /** Keyset cursor: return rows with id < beforeId (ORDER BY id DESC). */
+  beforeId?: number | string | null;
+}
+
+export interface ListInventoryMovementsResult {
+  movements: InventoryMovement[];
+  nextCursor: number | null;
+}
+
+/**
+ * Bounded product-scoped movement history (newest first).
+ * Ledger starts at schema v75 — pre-migration activity is not represented.
+ */
+export function listInventoryMovements(
+  options: ListInventoryMovementsOptions,
+): ListInventoryMovementsResult {
+  const productId = String(options.productId ?? '').trim();
+  if (!productId) {
+    throw new InventoryServiceError(400, 'product_id is required');
+  }
+
+  const safeLimit = Math.max(1, Math.min(Number(options.limit) || 100, 500));
+  const beforeRaw = options.beforeId;
+  const beforeId =
+    beforeRaw === undefined || beforeRaw === null || beforeRaw === ''
+      ? null
+      : Number(beforeRaw);
+  if (beforeId !== null && (!Number.isFinite(beforeId) || beforeId < 1)) {
+    throw new InventoryServiceError(400, 'before_id must be a positive integer');
+  }
+
+  const db = getDatabase();
+  const rows = beforeId === null
+    ? (db.prepare(`
+        SELECT id, product_id, quantity_delta, movement_type, reference_type, reference_id,
+               reason, stock_after, created_at
+        FROM inventory_movements
+        WHERE product_id = ?
+        ORDER BY id DESC
+        LIMIT ?
+      `).all(productId, safeLimit + 1) as InventoryMovementRow[])
+    : (db.prepare(`
+        SELECT id, product_id, quantity_delta, movement_type, reference_type, reference_id,
+               reason, stock_after, created_at
+        FROM inventory_movements
+        WHERE product_id = ?
+          AND id < ?
+        ORDER BY id DESC
+        LIMIT ?
+      `).all(productId, beforeId, safeLimit + 1) as InventoryMovementRow[]);
+
+  const hasMore = rows.length > safeLimit;
+  const movements = hasMore ? rows.slice(0, safeLimit) : rows;
+  const nextCursor = hasMore ? Number(movements[movements.length - 1].id) : null;
+  return { movements, nextCursor };
+}
+
 export function getMovements(
   productId: string | number,
   limit = 100,
 ): InventoryMovementRow[] {
-  const safeLimit = Math.max(1, Math.min(Number(limit) || 100, 500));
-  return getDatabase().prepare(`
-    SELECT id, product_id, quantity_delta, movement_type, reference_type, reference_id,
-           reason, stock_after, created_at
-    FROM inventory_movements
-    WHERE product_id = ?
-    ORDER BY id DESC
-    LIMIT ?
-  `).all(String(productId), safeLimit) as InventoryMovementRow[];
+  return listInventoryMovements({ productId, limit }).movements;
 }
 
 /**

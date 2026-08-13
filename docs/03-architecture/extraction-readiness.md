@@ -12,7 +12,7 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 | Module | Coupling | Recommended future action |
 |--------|----------|---------------------------|
 | Customer | MEDIUM | Extract after phone util boundary + loyalty read API |
-| Inventory | **MEDIUM** | Service + ledger + Product CRUD write ownership; columns still on products |
+| Inventory | **MEDIUM** | Writes + ledger + history read API; stock columns still on products |
 | Product | HIGH | Tax columns remain; stock writes now delegated to Inventory |
 | Tax | **MEDIUM** | Snapshot contract frozen + facade preferred; denormalized columns + money-path orchestration remain |
 | POS | HIGH | Orchestrator — extract last among commerce |
@@ -30,14 +30,16 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 - **Blockers:** shared `lib/phone.ts`; CRM helpers inlined in `index.ts`
 - **Action:** Extract search/CRM into customer routes; document loyalty read port
 
-### Inventory — MEDIUM (Phase 2.9 write ownership complete)
+### Inventory — MEDIUM (Phase 2.12 history read complete)
 
 - **Deps:** product
 - **DB:** `products` stock columns + append-only `inventory_movements` (schema v75+)
-- **Service:** `main/services/inventory.ts` (all app stock writes)
-- **Routes:** none dedicated (stock adjust on products; product create/PUT delegate stock)
-- **Blockers:** columns colocated with product; no backfill; no movement HTTP/UI; reads still product SQL
-- **Action:** Optional history API / column split before package cut
+- **Service:** `main/services/inventory.ts` (all app stock writes + `listInventoryMovements`)
+- **Routes:** `main/routes/inventory.ts` (`GET /api/inventory/movements`); stock adjust/create/PUT still on products
+- **Blockers:** columns colocated with product; no backfill; no Inventory UI; current-stock reads still product SQL; order txn orchestration
+- **Action:** Optional UI / column split before package cut
+
+Phase 2.12 added Inventory-owned history HTTP. Rating stays **MEDIUM** — not HIGH.
 
 ### Product — HIGH
 

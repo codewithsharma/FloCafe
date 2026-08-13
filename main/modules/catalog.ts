@@ -51,6 +51,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     kind: 'shared',
     capabilities: ['inventory.stock'],
     description: 'Product stock counts + append-only movement ledger (v75+)',
+    routePrefixes: ['/api/inventory'],
   },
   {
     id: 'pos',

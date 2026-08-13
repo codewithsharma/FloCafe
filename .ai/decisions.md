@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.12 Inventory movement history read boundary (Accepted + Implemented)
+
+Added Inventory-owned `GET /api/inventory/movements` (`main/routes/inventory.ts`) calling `listInventoryMovements` (product_id, limit 1–500, before_id cursor, id DESC). Auth owner/manager. Catalog `routePrefixes: ['/api/inventory']`. No schema, no UI, no new movement types, no backfill. Stock write HTTP remains on products. Inventory extraction readiness stays MEDIUM.
+
 ## 2026-08-13 — Phase 2.11 Tax snapshot contract freeze (Accepted + Implemented)
 
 Named `EngineTaxSnapshot` (existing engine fields only). Exported Item/Charge/Document wrapper types from `tax.ts`. Adapters call `calculateTax`. Money/pack routes import `applyPayableRounding` / `calculateTax` from Tax facade (no route-level `tax-engine`). Characterization: `tax-snapshot-contract.test.ts`. No schema, money, HTTP, or frontend changes. No `snapshotVersion` yet (document versioning strategy). Tax extraction readiness remains MEDIUM.

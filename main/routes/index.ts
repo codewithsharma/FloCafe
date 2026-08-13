@@ -27,6 +27,7 @@ import { databaseToolsRoutes } from './database-tools';
 import { menuCsvRoutes } from './menu-csv';
 import { taxPackRoutes } from './tax-packs';
 import { taxRoutes } from './tax';
+import { inventoryRoutes } from './inventory';
 import { heldOrderRoutes } from './held-orders';
 import { whatsappRoutes } from './whatsapp';
 import { supportTicketRoutes } from './support-ticket';
@@ -112,6 +113,7 @@ export function registerRoutes(app: Express): void {
   app.use('/api/menu-csv', menuCsvRoutes);
   app.use('/api/tax-packs', taxPackRoutes);
   app.use('/api/tax', taxRoutes);
+  app.use('/api/inventory', inventoryRoutes);
   app.use('/api/held-orders', heldOrderRoutes);
   app.use('/api/whatsapp', whatsappRoutes);
   app.use('/api/support-ticket', supportTicketRoutes);
