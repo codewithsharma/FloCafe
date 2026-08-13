@@ -1,3 +1,13 @@
+/**
+ * Product HTTP routes.
+ *
+ * Phase 2.13 — Product ↔ Tax ownership:
+ * Product owns persistence of `tax_category_id` / `tax_behavior` as Tax config
+ * references on the product row. Product does NOT calculate tax and must not
+ * import tax-engine. Category validation goes through the Tax facade
+ * (`getActiveCountryPack` / `hasConfiguredTaxCategories`) only.
+ * Legacy `tax_type` / `tax_rate` are forced to none / 0 (not authoritative).
+ */
 import { Router, Request, Response } from 'express';
 import { getDatabase, now, generateShortId, getSettingValue, withTxn } from '../db';
 import { requireRole, isBlockedSsrfTarget } from '../middleware/security';

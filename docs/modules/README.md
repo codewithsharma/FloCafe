@@ -81,10 +81,11 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 10. ~~Tax HTTP consolidation~~ — **Phase 2.10 done** ([phase-2.10-tax-http-boundary.md](../03-architecture/phase-2.10-tax-http-boundary.md))
 11. ~~Tax snapshot contract freeze~~ — **Phase 2.11 done** ([phase-2.11-tax-snapshot-contract.md](../03-architecture/phase-2.11-tax-snapshot-contract.md))
 12. ~~Inventory movement history read API~~ — **Phase 2.12 done** ([phase-2.12-inventory-movement-read-api.md](../03-architecture/phase-2.12-inventory-movement-read-api.md))
-13. Fail-closed dependency enforcement — deferred (after pilot proof)
-14. Inventory UI / product tax column ownership — next
-15. Formal events bus for modules — deferred
-16. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — deferred
+13. ~~Product ↔ Tax ownership boundary~~ — **Phase 2.13 done** ([phase-2.13-product-tax-ownership.md](../03-architecture/phase-2.13-product-tax-ownership.md))
+14. Fail-closed dependency enforcement — deferred (after pilot proof)
+15. Inventory UI / legacy tax column cleanup — next
+16. Formal events bus for modules — deferred
+17. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — deferred
 
 **Do not** create Opervia Custom or extract every folder into packages yet.
 
@@ -104,6 +105,7 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 - [phase-2.10-tax-http-boundary.md](../03-architecture/phase-2.10-tax-http-boundary.md)
 - [phase-2.11-tax-snapshot-contract.md](../03-architecture/phase-2.11-tax-snapshot-contract.md)
 - [phase-2.12-inventory-movement-read-api.md](../03-architecture/phase-2.12-inventory-movement-read-api.md)
+- [phase-2.13-product-tax-ownership.md](../03-architecture/phase-2.13-product-tax-ownership.md)
 - [module-ownership.md](../03-architecture/module-ownership.md)
 - [extraction-readiness.md](../03-architecture/extraction-readiness.md)
 - [vertical-architecture.md](../03-architecture/vertical-architecture.md)

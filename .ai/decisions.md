@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.13 Product ↔ Tax ownership boundary (Accepted + Implemented)
+
+Clarified ownership without behavior change: Product owns persistence of `tax_category_id`/`tax_behavior` as Tax config references; validates via Tax facade only; does not import tax-engine or calculate tax. Legacy `tax_type`/`tax_rate` remain forced none/0. Tax owns calculation/snapshot; Order/Bill persist historical SNAPSHOT_DATA (immutable when product config later changes). Desired dep: Product → Tax facade → tax-engine; Order/Bill → Tax facade / snapshot. No schema migration (v75), no money math, no API shape, no frontend. Tests: `product-tax-boundary.test.ts`. Extraction: Product HIGH, Tax MEDIUM (clearer map, not package-ready). Docs: `phase-2.13-product-tax-ownership.md`.
+
 ## 2026-08-13 — Phase 2.12 Inventory movement history read boundary (Accepted + Implemented)
 
 Added Inventory-owned `GET /api/inventory/movements` (`main/routes/inventory.ts`) calling `listInventoryMovements` (product_id, limit 1–500, before_id cursor, id DESC). Auth owner/manager. Catalog `routePrefixes: ['/api/inventory']`. No schema, no UI, no new movement types, no backfill. Stock write HTTP remains on products. Inventory extraction readiness stays MEDIUM.

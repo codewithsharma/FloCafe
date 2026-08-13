@@ -1,6 +1,6 @@
 # Extraction Readiness
 
-**Status:** DOCUMENTATION (Phase 2.8)
+**Status:** DOCUMENTATION (Phase 2.13)
 **Date:** 2026-08-13
 
 This is an architecture map — **not** a mandate to extract packages.
@@ -13,8 +13,8 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 |--------|----------|---------------------------|
 | Customer | MEDIUM | Extract after phone util boundary + loyalty read API |
 | Inventory | **MEDIUM** | Writes + ledger + history read API; stock columns still on products |
-| Product | HIGH | Tax columns remain; stock writes now delegated to Inventory |
-| Tax | **MEDIUM** | Snapshot contract frozen + facade preferred; denormalized columns + money-path orchestration remain |
+| Product | HIGH | Tax **config refs** owned as persistence only (2.13); stock writes via Inventory; columns still colocated |
+| Tax | **MEDIUM** | Snapshot + facade + clearer Product config boundary (2.13); denormalized snapshots + money-path orchestration remain |
 | POS | HIGH | Orchestrator — extract last among commerce |
 | Tables | MEDIUM | Clear order FK contract; restaurant package candidate |
 | KDS | HIGH | WS + order stream contract required |
@@ -41,24 +41,26 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 
 Phase 2.12 added Inventory-owned history HTTP. Rating stays **MEDIUM** — not HIGH.
 
-### Product — HIGH
+### Product — HIGH (Phase 2.13 ownership map clearer)
 
 - **Deps:** core, category
-- **DB:** `products` also holds inventory + tax fields (stock **writes** now via Inventory)
+- **DB:** `products` also holds inventory + tax **config** fields (stock **writes** via Inventory; tax calc not on Product)
 - **Frontend:** products workspace + POS grid
-- **Blockers:** tax category FKs; menu CSV; physical stock column colocation
-- **Action:** Tax column ownership next; consider stock column port later
+- **Blockers:** tax config columns colocated; menu CSV; physical stock column colocation; legacy `tax_type`/`tax_rate`
+- **Action:** Optional legacy column removal / stock column port later — extraction still HIGH
 
-### Tax — MEDIUM
+Phase 2.13 clarified Product owns persistence of tax config refs only (no calculate / no tax-engine). Rating stays **HIGH**.
+
+### Tax — MEDIUM (Phase 2.13 ownership map clearer)
 
 - **Deps:** core
 - **DB:** pack tables + denormalized tax on products/orders/bills
 - **Services:** `tax.ts` (facade + adapters + discount scale + frozen snapshot types), `tax-engine.ts`
 - **Routes:** `main/routes/tax.ts` (`/api/tax/*`); pack lifecycle remains `tax-packs.ts`
-- **Blockers:** denormalized snapshots still co-owned with Order/Bill rows; product tax columns; deep money-path orchestration
-- **Action:** Prefer Tax facade (done for route engine imports); product tax column ownership later; optional digest-in-snapshot later
+- **Blockers:** denormalized snapshots still co-owned with Order/Bill rows; product hosts config columns; deep money-path orchestration
+- **Action:** Prefer Tax facade (done); optional digest-in-snapshot later; historical bill immutability characterized in 2.13
 
-Phase 2.11 froze `EngineTaxSnapshot` + characterization tests and routed money/pack routes through the Tax facade. Rating stays **MEDIUM** — clearer contract, not LOW extraction.
+Phase 2.11 froze `EngineTaxSnapshot`; Phase 2.13 clarified Product config vs Tax calc vs historical snapshot. Rating stays **MEDIUM** — clearer map, not package-ready.
 
 ### POS — HIGH
 
@@ -92,5 +94,6 @@ Package extraction, npm workspaces, multi-repo modules, marketplace, lifecycle, 
 
 - [phase-2.8-inventory-ledger.md](phase-2.8-inventory-ledger.md)
 - [phase-2.9-product-inventory-boundary.md](phase-2.9-product-inventory-boundary.md)
+- [phase-2.13-product-tax-ownership.md](phase-2.13-product-tax-ownership.md)
 - [module-contract.md](module-contract.md)
 - [module-ownership.md](module-ownership.md)

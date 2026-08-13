@@ -68,7 +68,8 @@ Composition flows **upward**: Core enables Modules; Verticals select and configu
 **Phase 2.1 done:** lightweight module registry + Restaurant vertical — see [phase-2.1-module-registry.md](phase-2.1-module-registry.md).
 **Phase 2.2 done:** broaden consumers + soft dep diagnostics — see [phase-2.2-module-consumers.md](phase-2.2-module-consumers.md).
 **Phase 2.3 done:** read-only composition snapshot — see [phase-2.3-composition-snapshot.md](phase-2.3-composition-snapshot.md).
-**Next (2.13+):** Inventory UI for movement history, product tax column ownership, or fail-closed deps after pilots — still no package extraction.
+**Phase 2.13 done:** Product ↔ Tax ownership boundary (config refs vs calc vs historical snapshot) — see [phase-2.13-product-tax-ownership.md](phase-2.13-product-tax-ownership.md).
+**Next (2.14+):** Inventory UI for movement history, fail-closed deps after pilots, or legacy tax column cleanup — still no package extraction.
 
 ## Explicit non-goals (now)
 

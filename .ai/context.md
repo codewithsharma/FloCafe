@@ -50,4 +50,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 2.12 Inventory movement history read API shipped (2026-08-13).** `GET /api/inventory/movements` via Inventory service; owner/manager; cursor pagination; schema v75; no UI. Inventory remains MEDIUM. Next: Inventory UI, product tax columns, or fail-closed after pilots.
+**Phase 2.13 Product ↔ Tax ownership boundary shipped (2026-08-13).** Product persists `tax_category_id`/`tax_behavior` as Tax config refs only; Tax owns calc/snapshot; historical bill tax immutable when product config changes. Schema v75. Extraction: Product HIGH, Tax MEDIUM (clearer map). Next: Inventory UI, fail-closed after pilots, or legacy tax column cleanup.

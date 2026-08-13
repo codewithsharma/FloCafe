@@ -1,6 +1,6 @@
 # Module Ownership Map
 
-**Status:** DOCUMENTATION (Phase 2.7)
+**Status:** DOCUMENTATION (Phase 2.13)
 **Date:** 2026-08-13
 **Source:** `main/modules/catalog.ts`, `main/routes/`, `main/services/`, `main/db.ts`
 
@@ -10,7 +10,7 @@ Practical ownership for future extraction. Implementations remain colocated in t
 |--------|--------|--------|--------------------|----------|-------------|------|--------------------|---------------------|
 | core | Auth, settings, audit | `auth`, `settings`, `audit-logs`, `platform` | `jwt-secret`, `master-pin`, `audit-log`, `network-mode` | auth, setup, recovery, settings | `users`, `settings`, `revoked_tokens`, `audit_logs` | — | N | Cross-cutting; extract last |
 | customer | CRM | `customers`, search/CRM in `index` | `lib/phone` | customers, POS search | `customers` | core | N | Phone util + loyalty reads |
-| product | Catalog items | `products` | tax helpers | products, POS grid | `products` | core, category | N | Tax columns, inventory columns |
+| product | Catalog items | `products` | Tax facade validation only (no calculate) | products, POS grid | `products` (+ tax config refs) | core, category | N | Tax config columns colocated; inventory columns |
 | category | Catalog groups | `categories` | — | products tabs | `categories` | core | N | Coupled to products UI |
 | inventory | Stock counts + ledger | **`inventory`** (read); writes via products/orders | **`inventory` service** + `inventory_movements` | products OOS | product stock columns + movements | product | N | Stock columns on products; write HTTP still product-nested |
 | pos | Sell surface | `pos-info` (thin) | — | `pos/*` | orders/bills/… | product, order, payment | N | Orchestrates many modules |
@@ -38,9 +38,15 @@ Practical ownership for future extraction. Implementations remain colocated in t
 
 `products.stock_quantity` = current-state **read** cache; Inventory owns mutations. Ledger from schema v75 (no pre-migration backfill). Opening stock = `adjustment` + reason `opening` (no separate type).
 
-## Tax owns / does not own (Phase 2.7 + 2.10 + 2.11)
+## Product owns / does not own (tax — Phase 2.13)
+
+- **Owns:** persistence of `tax_category_id` / `tax_behavior` as Tax config references on the product row; create/update validation via Tax facade helpers only.
+- **Does not own:** tax calculation, `EngineTaxSnapshot`, tax packs, rewriting historical order/bill tax when product config changes. Legacy `tax_type`/`tax_rate` forced none/0 (not authoritative).
+
+## Tax owns / does not own (Phase 2.7 + 2.10 + 2.11 + 2.13)
 
 - **Owns:** tax calculation (`calculateTax` / engine), frozen `EngineTaxSnapshot` contract, tax breakdown/snapshots adapters, tax rounding helpers, money-path discount item-tax scaling, Tax HTTP under `main/routes/tax.ts` (`/api/tax/preview`, `/api/tax/categories`).
-- **Does not own:** products, orders, payments, refunds, reporting UI, tax-pack install/activate lifecycle (`tax-packs.ts`), settings registration/`taxes_enabled` HTTP.
+- **Does not own:** products (except defining valid categories Product may reference), orders, payments, refunds, reporting UI, tax-pack install/activate lifecycle (`tax-packs.ts`), settings registration/`taxes_enabled` HTTP.
+- **Co-owns with Order/Bill:** persisted SNAPSHOT_DATA (`tax_amount` / `tax_snapshot`) — historical values must not change when product tax config later changes.
 
-See also [extraction-readiness.md](extraction-readiness.md), [phase-2.7-domain-boundaries.md](phase-2.7-domain-boundaries.md), [phase-2.8-inventory-ledger.md](phase-2.8-inventory-ledger.md), [phase-2.9-product-inventory-boundary.md](phase-2.9-product-inventory-boundary.md), [phase-2.10-tax-http-boundary.md](phase-2.10-tax-http-boundary.md), [phase-2.11-tax-snapshot-contract.md](phase-2.11-tax-snapshot-contract.md), and [phase-2.12-inventory-movement-read-api.md](phase-2.12-inventory-movement-read-api.md).
+See also [extraction-readiness.md](extraction-readiness.md), [phase-2.7-domain-boundaries.md](phase-2.7-domain-boundaries.md), [phase-2.8-inventory-ledger.md](phase-2.8-inventory-ledger.md), [phase-2.9-product-inventory-boundary.md](phase-2.9-product-inventory-boundary.md), [phase-2.10-tax-http-boundary.md](phase-2.10-tax-http-boundary.md), [phase-2.11-tax-snapshot-contract.md](phase-2.11-tax-snapshot-contract.md), [phase-2.12-inventory-movement-read-api.md](phase-2.12-inventory-movement-read-api.md), and [phase-2.13-product-tax-ownership.md](phase-2.13-product-tax-ownership.md).

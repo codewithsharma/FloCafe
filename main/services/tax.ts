@@ -1,9 +1,14 @@
 /**
- * Tax domain boundary (Phase 2.7 + 2.11).
+ * Tax domain boundary (Phase 2.7 + 2.11 + 2.13).
  *
  * Owns: tax calculation adapters, discount tax scaling, snapshot scale/invert,
  * charge taxes, preview, pack resolution for compute, payable-rounding helpers
  * re-exported from tax-engine, and the frozen EngineTaxSnapshot contract.
+ *
+ * Phase 2.13 — Tax owns calculation/snapshot. Product hosts config reference
+ * columns (`tax_category_id`, `tax_behavior`) only; Order/Bill persist
+ * historical `tax_amount` / `tax_snapshot` and must not be rewritten when
+ * product tax config later changes.
  *
  * Does NOT own: products, orders, payments, refunds, reporting UI, tax-pack
  * install/activate lifecycle (those consume Tax).
