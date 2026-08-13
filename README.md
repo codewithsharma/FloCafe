@@ -1,6 +1,6 @@
 <div align="center">
-  <h1>Nexora</h1>
-  <p><strong>Free, open-source, offline-first point of sale for cafés, restaurants, and small kitchens.</strong></p>
+  <h1>Opervia</h1>
+  <p><strong>Modular business platform. Phase 1: Opervia Restaurant — free, open-source, offline-first POS for cafés, restaurants, and small kitchens.</strong></p>
   <p>
     <a href="https://flopos.com">Website</a> ·
     <a href="https://github.com/FreeOpenSourcePOS/FloCafe/releases">Download</a> ·

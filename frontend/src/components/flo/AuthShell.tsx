@@ -65,7 +65,7 @@ export function AuthShell({
             {icon ? <div className="mb-3 flex justify-center">{icon}</div> : (
               <img
                 src="/logo.png"
-                alt="Flo POS"
+                alt="Opervia"
                 width={88}
                 height={58}
                 className="mx-auto mb-4"

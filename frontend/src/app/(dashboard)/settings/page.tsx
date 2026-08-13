@@ -4596,7 +4596,7 @@ export default function SettingsPage() {
         <TabsContent value="about">
           <div className="pb-6 max-w-3xl space-y-6">
             <Panel>
-              <h2 className="font-semibold text-flo-text mb-4">{t('settings.aboutNexora')}</h2>
+              <h2 className="font-semibold text-flo-text mb-4">{t('settings.aboutOpervia')}</h2>
               <p className="text-sm text-flo-text-secondary mb-6">
                 {t('settings.aboutDescription')}
               </p>

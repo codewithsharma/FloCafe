@@ -1,9 +1,24 @@
 ---
-name: Nexora POS
-last_updated: 2026-08-12
+name: Opervia
+last_updated: 2026-08-13
 ---
 
-# Nexora POS Strategy
+# Opervia Strategy
+
+## Platform
+
+**Opervia** is the canonical platform and product brand: a modular business platform that powers industry-specific verticals from a single shared codebase.
+
+> Opervia is a modular business platform designed to power multiple industry-specific products from a single shared codebase. Business capabilities are implemented as reusable modules, while vertical products are compositions of those modules configured for specific industries.
+
+**Motto:** Build once. Reuse everywhere. Fix once. Benefit everywhere. Compose without duplication.
+
+**Phase 1 vertical (CURRENT):** **Opervia Restaurant** — local-first Electron café/restaurant POS (formerly branded Nexora POS / Flo POS). Nexora is **retired** as an active product name.
+
+**Future verticals (PLANNED):** Retail, Grocery, Salon, Health & Beauty, Pharmacy, Hospitality, Custom. See [`docs/00-product/verticals.md`](docs/00-product/verticals.md).
+
+**Architecture vision:** [`docs/00-product/opervia-platform.md`](docs/00-product/opervia-platform.md) · ADR-010 · gap report in `docs/03-architecture/architecture-gap-report.md`.
+**Do not** rewrite Phase 1 into packages/microservices before pilot reliability is proven.
 
 ## Target problem
 
@@ -11,11 +26,11 @@ Café and restaurant operators lose money and trust when their POS depends on th
 
 ## Our approach
 
-Ship a boringly reliable local-first desktop POS (Electron + SQLite) that keeps billing, kitchen, and cash ops running offline; prove it with real cafés before expanding into RestaurantOS.
+Ship a boringly reliable local-first desktop POS (Electron + SQLite) as **Opervia Restaurant** that keeps billing, kitchen, and cash ops running offline; prove it with real cafés before expanding modular depth and additional verticals.
 
 ## Who it's for
 
-**Primary:** Owner-operator of a single-location café or small restaurant — hiring Nexora POS to take orders, run the kitchen, collect payment, reconcile cash, and recover from failure without calling a developer.
+**Primary (Phase 1):** Owner-operator of a single-location café or small restaurant — hiring Opervia Restaurant to take orders, run the kitchen, collect payment, reconcile cash, and recover from failure without calling a developer.
 
 ## Key metrics
 
@@ -39,23 +54,23 @@ Cash drawer, backup/restore verification, failure testing, critical E2E, install
 
 _Why it serves the approach:_ Reliability is proven only in live service, not in feature lists.
 
-### RestaurantOS foundation (P2 — after pilots)
+### Modular platform + Restaurant depth (P2 — after pilots)
 
-Inventory ledger first, then recipes/BOM, purchasing, cloud ops (non-blocking), multi-location ADR before code.
+Lightweight module registry / vertical composition (declarative first), inventory ledger, recipes/BOM, purchasing, cloud ops (non-blocking), multi-location ADR before code. Additional verticals only after Restaurant composition model is real.
 
 _Why it serves the approach:_ Platform depth only after the POS is trusted.
 
 ### Deferred intelligence & integrations (P3)
 
-Payment terminals, aggregators, accounting export, AI — adapters on top of a reliable core.
+Payment terminals, aggregators, accounting export, AI — adapters on top of a reliable core. Opervia Custom (module composer) is long-term only.
 
 _Why it serves the approach:_ Avoids building impressive surfaces on untrusted money paths.
 
 ## Milestones
 
-- **2026-Q3** - Nexora POS v1.0 candidate: refunds + financial/security hardening + tests green
+- **2026-Q3** - Opervia Restaurant v1.0 candidate: refunds + financial/security hardening + tests green
 - **2026-Q3/Q4** - Pilot-ready release: install, backup/restore, recovery, operator docs
-- **+30 days post-pilot start** - 3 cafés × 30 days × zero critical failures → earn RestaurantOS work
+- **+30 days post-pilot start** - 3 cafés × 30 days × zero critical failures → earn modular depth + additional vertical work
 
 ## Not working on
 
@@ -64,10 +79,12 @@ _Why it serves the approach:_ Avoids building impressive surfaces on untrusted m
 - Multi-tenant SaaS or premature multi-location implementation (ADR-006 first)
 - ERP inventory / full procurement before ledger foundation
 - Bluetooth printing, payment terminals, microservices, Kubernetes, architecture rewrites
-- Describing the current product as RestaurantOS, AI-powered, or multi-location
+- Building Opervia Custom or additional verticals before Restaurant pilot success
+- Describing Phase 1 as a finished multi-vertical platform or as “RestaurantOS” product you install today
+- Keeping **Nexora** as an active product name (retired; historical audits may still say Nexora)
 
 ## Marketing
 
-**One-liner:** Local-first café POS that keeps your restaurant running when the internet does not.
+**One-liner:** Opervia Restaurant — local-first café POS that keeps your restaurant running when the internet does not.
 
-**Key message:** Nexora POS is a mature single-location desktop POS with KDS and ops management. Nexora RestaurantOS is the future platform — not the product you install today. Moat = reliability, offline billing, data ownership — not AI.
+**Key message:** Opervia is the platform. Opervia Restaurant is the Phase 1 vertical you install today. Moat = reliability, offline billing, data ownership — not AI. Additional verticals compose shared modules later.

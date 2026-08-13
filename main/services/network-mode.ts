@@ -76,5 +76,5 @@ export function mdnsPrimaryPort(
 }
 
 export function networkModeRequiresRestartMessage(): string {
-  return 'Network mode changes apply after restarting Nexora POS.';
+  return 'Network mode changes apply after restarting Opervia.';
 }

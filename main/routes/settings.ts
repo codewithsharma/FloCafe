@@ -776,7 +776,7 @@ router.put('/:key', requireRole('owner', 'manager'), (req: Request, res: Respons
       return res.json({
         setting,
         restart_required: true,
-        message: 'Network mode changes apply after restarting Nexora POS.',
+        message: 'Network mode changes apply after restarting Opervia.',
       });
     }
 
