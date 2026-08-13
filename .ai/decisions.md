@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.8 Inventory movement ledger (Accepted + Implemented)
+
+Append-only `inventory_movements` at schema **v75**. Dual model: `products.stock_quantity` = runtime current-state cache; ledger = durable history from migration onward (no backfill). Types: `sale`, `cancel_restore`, `adjustment` only. Refunds/voids still do not restock and write no rows. Stock UPDATE + INSERT share one SQLite txn. No new HTTP/UI. Diagnostics: `calculateLedgerStock`, `compareCurrentStockToLedger`. Docs: `phase-2.8-inventory-ledger.md`. Tests: `inventory-ledger.test.ts`. Extraction readiness Inventory MEDIUM→MEDIUM (stronger history, still product-column coupled). Next: product CRUD stock via ledger, movement API/UI, or tax HTTP consolidation.
+
 ## 2026-08-13 — Phase 2.7 Inventory + Tax domain boundaries (Accepted + Implemented)
 
 In-place boundary hardening only. New `main/services/inventory.ts` owns stock assert/decrement/restore/adjust/low-stock fragment; callers (orders/products/index) keep `withTxn`. No `routes/inventory.ts` (HTTP remains under products). Tax: facade `calculateTax`, re-export payable rounding, centralize Math.round discount item-tax scale without changing money values. No schema migration, no db.ts rewrite, no package extraction, no frontend redesign, no fail-closed deps. Extraction readiness Inventory/Tax HIGH→MEDIUM. Docs: `phase-2.7-domain-boundaries.md`. Tests: `inventory-boundary`, `tax-boundary`. Next: optional ledger schema or tax HTTP consolidation after pilots.

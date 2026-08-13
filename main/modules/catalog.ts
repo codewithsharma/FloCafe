@@ -50,7 +50,7 @@ export const MODULE_CATALOG: readonly OperviaModule[] = [
     dependencies: ['product'],
     kind: 'shared',
     capabilities: ['inventory.stock'],
-    description: 'Light product stock counts via Inventory service (ledger PLANNED)',
+    description: 'Product stock counts + append-only movement ledger (v75+)',
   },
   {
     id: 'pos',

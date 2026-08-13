@@ -24,8 +24,8 @@
 - ⚠️ RISK: Doc drift — roadmap/feature-list may lag Opervia modular CURRENT (registry through Phase 2.6 contracts are built; multi-vertical runtime / packages are not).
 - ⚠️ RISK: Brand consolidation to **Opervia** (ADR-010) — living docs/STRATEGY/`productName`/UI i18n updated; historical `15-*` audits still say Nexora/FloCafe; `appId`/`executableName` remain flo\* for upgrade continuity; Drive folder is `Opervia Backups` (old `Nexora Backups` not auto-migrated).
 - ⚠️ RISK: Phase 2.6 capabilities are metadata only — any future consumer must not treat `CapabilityId` as authorization (roles/`requireRole` remain authoritative).
-- 🔴 DEBT: Extraction readiness: Inventory/Tax improved HIGH→MEDIUM (Phase 2.7 service seams); Product/POS/KDS still HIGH — see `extraction-readiness.md`; ledger still PLANNED; do not package-extract prematurely.
-- ⚠️ RISK: Inventory has no movement ledger — stock history not fully reconstructable; refunds intentionally do not restock (money vs stock diverge).
+- 🔴 DEBT: Extraction readiness: Inventory MEDIUM with ledger (v75) but stock columns still on products; Tax MEDIUM; Product/POS/KDS still HIGH — see `extraction-readiness.md`; do not package-extract prematurely.
+- ⚠️ RISK: Inventory ledger starts at v75 with **no backfill** — pre-migration history unavailable; product create/PUT stock bypasses ledger until wired; refunds intentionally do not restock (money vs stock diverge).
 - ⚠️ RISK: Tax discount scale (Math.round money path) differs from preview Decimal scale — intentional compatibility; do not unify without golden tests + product decision.
 
 ## Debt (do not giant-rewrite)

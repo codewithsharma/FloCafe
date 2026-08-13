@@ -1,6 +1,6 @@
 # Extraction Readiness
 
-**Status:** DOCUMENTATION (Phase 2.7)
+**Status:** DOCUMENTATION (Phase 2.8)
 **Date:** 2026-08-13
 
 This is an architecture map — **not** a mandate to extract packages.
@@ -12,8 +12,8 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 | Module | Coupling | Recommended future action |
 |--------|----------|---------------------------|
 | Customer | MEDIUM | Extract after phone util boundary + loyalty read API |
-| Product | HIGH | Stabilize remaining tax/inventory column ownership |
-| Inventory | **MEDIUM** | Service boundary exists; ledger before package |
+| Product | HIGH | Route product CRUD stock writes through Inventory ledger |
+| Inventory | **MEDIUM** | Service + ledger exist; split stock columns / movement API before package |
 | Tax | **MEDIUM** | Facade + discount scale centralized; freeze snapshots / finish HTTP consolidation |
 | POS | HIGH | Orchestrator — extract last among commerce |
 | Tables | MEDIUM | Clear order FK contract; restaurant package candidate |
@@ -35,19 +35,19 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 - **Deps:** core, category
 - **DB:** `products` also holds inventory + tax fields
 - **Frontend:** products workspace + POS grid
-- **Blockers:** inventory columns; tax category FKs; menu CSV writes
-- **Action:** Split stock/tax concerns before package cut
+- **Blockers:** inventory columns; tax category FKs; menu CSV writes; create/PUT stock bypasses ledger
+- **Action:** Split stock/tax concerns; route stock edits through Inventory
 
-### Inventory — MEDIUM (was HIGH in Phase 2.6)
+### Inventory — MEDIUM
 
 - **Deps:** product
-- **DB:** columns on `products` only (no ledger)
-- **Service:** `main/services/inventory.ts` (Phase 2.7)
-- **Routes:** none dedicated (stock adjust still on products; orders call Inventory)
-- **Blockers:** no ledger; columns colocated with product
-- **Action:** Optional stock ledger before package extraction
+- **DB:** `products` stock columns + append-only `inventory_movements` (schema v75+)
+- **Service:** `main/services/inventory.ts`
+- **Routes:** none dedicated (stock adjust on products; orders call Inventory)
+- **Blockers:** columns colocated with product; no backfill; product PUT/create bypasses ledger; no movement HTTP/UI
+- **Action:** Wire product CRUD stock into ledger; optional history API; then consider package cut
 
-### Tax — MEDIUM (was HIGH in Phase 2.6)
+### Tax — MEDIUM
 
 - **Deps:** core
 - **DB:** pack tables + denormalized tax on products/orders/bills
@@ -81,10 +81,11 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 
 ## Explicitly deferred
 
-Package extraction, npm workspaces, multi-repo modules, marketplace, lifecycle, fail-closed deps, inventory ledger schema.
+Package extraction, npm workspaces, multi-repo modules, marketplace, lifecycle, fail-closed deps, inventory movement UI, ledger backfill.
 
 ## Related
 
+- [phase-2.8-inventory-ledger.md](phase-2.8-inventory-ledger.md)
 - [phase-2.7-domain-boundaries.md](phase-2.7-domain-boundaries.md)
 - [module-contract.md](module-contract.md)
 - [module-ownership.md](module-ownership.md)

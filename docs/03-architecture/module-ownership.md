@@ -12,7 +12,7 @@ Practical ownership for future extraction. Implementations remain colocated in t
 | customer | CRM | `customers`, search/CRM in `index` | `lib/phone` | customers, POS search | `customers` | core | N | Phone util + loyalty reads |
 | product | Catalog items | `products` | tax helpers | products, POS grid | `products` | core, category | N | Tax columns, inventory columns |
 | category | Catalog groups | `categories` | — | products tabs | `categories` | core | N | Coupled to products UI |
-| inventory | Stock counts | via `products` / orders | **`inventory` service** | products OOS | product stock columns | product | N | Ledger PLANNED; columns still on products |
+| inventory | Stock counts + ledger | via `products` / orders | **`inventory` service** + `inventory_movements` | products OOS | product stock columns + movements | product | N | Stock columns on products; no movement HTTP/UI |
 | pos | Sell surface | `pos-info` (thin) | — | `pos/*` | orders/bills/… | product, order, payment | N | Orchestrates many modules |
 | order | Order lifecycle | `orders`, `order-items`, `held-orders` | tax, inventory, shift, kds | orders, POS | `orders`, `order_items`, `held_orders`, … | product, core | N | Deep payment/KDS coupling |
 | payment | Tender / bills | `bills`, `payment-methods` | `payment-cash`, `receipt` | PaymentModal, settings | `bills`, `payment_*` | order | N | Money path + shift hooks |
@@ -31,14 +31,16 @@ Practical ownership for future extraction. Implementations remain colocated in t
 | menu | Menu CSV | `menu-csv` | tax validation | products import | writes products/categories | product, category | **Y** | Import-only surface |
 | addons | Addon groups | `addon-groups` | tax helpers | products addons | addon tables | product | **Y** | Product join tables |
 
-## Inventory owns / does not own (Phase 2.7)
+## Inventory owns / does not own (Phase 2.7–2.8)
 
-- **Owns:** stock state on product columns, sale decrement, cancel restore, manual adjust, low-stock query fragment, inventory movements *conceptually* (ledger table deferred).
-- **Does not own:** product creation/pricing/categories, sales/payments/orders, refund restock (intentionally none).
+- **Owns:** stock state on product columns, sale decrement, cancel restore, manual adjust, low-stock query fragment, append-only `inventory_movements` (sale / cancel_restore / adjustment).
+- **Does not own:** product creation/pricing/categories, sales/payments/orders, refund restock (intentionally none), movement UI/HTTP (deferred).
+
+`products.stock_quantity` = current-state cache; `inventory_movements` = durable history from schema v75 (no pre-migration backfill).
 
 ## Tax owns / does not own (Phase 2.7)
 
 - **Owns:** tax calculation (`calculateTax` / engine), tax breakdown/snapshots adapters, tax rounding helpers, money-path discount item-tax scaling.
 - **Does not own:** products, orders, payments, refunds, reporting UI, tax-pack install/activate lifecycle.
 
-See also [extraction-readiness.md](extraction-readiness.md) and [phase-2.7-domain-boundaries.md](phase-2.7-domain-boundaries.md).
+See also [extraction-readiness.md](extraction-readiness.md), [phase-2.7-domain-boundaries.md](phase-2.7-domain-boundaries.md), and [phase-2.8-inventory-ledger.md](phase-2.8-inventory-ledger.md).

@@ -6,7 +6,7 @@
 **Modular vision:** ADR-010 + Phase 2.1 registry (`main/modules/`) — Restaurant vertical declarative; no Phase 1 rewrite.
 **Canonical strategy:** `STRATEGY.md` (pilot KPI unchanged).
 
-Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v74**) + statically exported Next.js (`frontend/`).
+Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v75**) + statically exported Next.js (`frontend/`).
 
 ## Stage
 
@@ -50,4 +50,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 2.7 Inventory + Tax domain boundaries shipped (2026-08-13).** Service seams in place; no schema/package extraction. Next: inventory ledger (optional) or tax HTTP consolidation / fail-closed design after pilot proof.
+**Phase 2.8 Inventory movement ledger shipped (2026-08-13).** Append-only `inventory_movements` (v75); stock cache retained; refunds still no restock. Next: tax HTTP consolidation, product CRUD stock→ledger, or fail-closed design after pilots.

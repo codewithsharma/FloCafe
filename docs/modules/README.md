@@ -34,7 +34,7 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 | Category (`category`) | CURRENT · REGISTERED | Categories |
 | Menu (`menu`) | CURRENT · REGISTERED (Restaurant) | Menu CSV / catalog presentation |
 | Addons (`addons`) | CURRENT · REGISTERED (Restaurant) | Addon-groups / modifiers |
-| Inventory (`inventory`) | CURRENT (light) · REGISTERED / PLANNED (ledger) | Stock counts; ledger is P2 |
+| Inventory (`inventory`) | CURRENT (stock + ledger v75+) · REGISTERED | Stock counts + append-only movements; history API/UI PLANNED |
 
 ## Commerce
 
@@ -75,10 +75,12 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 4. ~~Composition read API + settings module gates~~ — **Phase 2.4 done** ([phase-2.4-platform-composition-api.md](../03-architecture/phase-2.4-platform-composition-api.md))
 5. ~~Synthetic multi-vertical composition validation~~ — **Phase 2.5 done** ([phase-2.5-vertical-composition-validation.md](../03-architecture/phase-2.5-vertical-composition-validation.md))
 6. ~~Module contract + capabilities~~ — **Phase 2.6 done** ([module-contract.md](../03-architecture/module-contract.md))
-7. Fail-closed dependency enforcement — deferred (after pilot proof)
-8. Formal events bus for modules — deferred
-9. Deeper Inventory ledger (after pilots)
-10. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — deferred
+7. ~~Inventory + Tax domain boundaries~~ — **Phase 2.7 done** ([phase-2.7-domain-boundaries.md](../03-architecture/phase-2.7-domain-boundaries.md))
+8. ~~Inventory movement ledger~~ — **Phase 2.8 done** ([phase-2.8-inventory-ledger.md](../03-architecture/phase-2.8-inventory-ledger.md))
+9. Fail-closed dependency enforcement — deferred (after pilot proof)
+10. Product CRUD stock → ledger / tax HTTP consolidation / movement API — next
+11. Formal events bus for modules — deferred
+12. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — deferred
 
 **Do not** create Opervia Custom or extract every folder into packages yet.
 
@@ -92,6 +94,8 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 - [phase-2.4-platform-composition-api.md](../03-architecture/phase-2.4-platform-composition-api.md)
 - [phase-2.5-vertical-composition-validation.md](../03-architecture/phase-2.5-vertical-composition-validation.md)
 - [module-contract.md](../03-architecture/module-contract.md)
+- [phase-2.7-domain-boundaries.md](../03-architecture/phase-2.7-domain-boundaries.md)
+- [phase-2.8-inventory-ledger.md](../03-architecture/phase-2.8-inventory-ledger.md)
 - [module-ownership.md](../03-architecture/module-ownership.md)
 - [extraction-readiness.md](../03-architecture/extraction-readiness.md)
 - [vertical-architecture.md](../03-architecture/vertical-architecture.md)

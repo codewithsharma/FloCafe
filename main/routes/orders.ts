@@ -495,7 +495,10 @@ router.post('/', requireRole('owner', 'manager', 'cashier', 'waiter'), (req: Req
         insertOrderItemAddons(db, insertItemResult.lastInsertRowid, item.addons, itemCreatedAt);
 
         // Inventory boundary: reserve stock at order create (inside withTxn).
-        decrementTrackedStock(db, product, quantity, now());
+        decrementTrackedStock(db, product, quantity, now(), {
+          referenceType: 'order',
+          referenceId: orderId,
+        });
       }
 
       const chargeTaxes = calculateConfiguredChargeTaxes(tenantInfo, chargeContext, customer);
@@ -697,7 +700,10 @@ router.post('/:id/items', requireRole('owner', 'manager', 'cashier', 'waiter'), 
         );
         insertOrderItemAddons(db, insertItemResult.lastInsertRowid, item.addons, itemCreatedAt);
 
-        decrementTrackedStock(db, product, quantity, now());
+        decrementTrackedStock(db, product, quantity, now(), {
+          referenceType: 'order',
+          referenceId: req.params.id as string,
+        });
       }
 
       // BUG #3 FIX: Filter out cancelled items from total recalculation
@@ -896,7 +902,11 @@ router.patch('/:id/status', requireRole('owner', 'manager', 'cashier', 'chef', '
           const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(req.params.id) as any[];
           for (const item of items) {
             const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.product_id) as any;
-            restoreTrackedStock(db, product, item.quantity, nowStr);
+            restoreTrackedStock(db, product, item.quantity, nowStr, {
+              referenceType: 'order',
+              referenceId: req.params.id as string,
+              reason: 'order_cancelled',
+            });
           }
           db.prepare('UPDATE orders SET status = ?, cancelled_at = ?, cancellation_reason = ?, updated_at = ? WHERE id = ?')
             .run(status, nowStr, reason, nowStr, req.params.id);

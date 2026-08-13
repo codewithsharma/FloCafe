@@ -73,8 +73,9 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P2.5 Synthetic retail-test composition validation (2026-08-13)
 - [x] P2.6 Module contract + capabilities (2026-08-13)
 - [x] P2.7 Inventory + Tax domain boundary hardening (2026-08-13) — `main/services/inventory.ts`; tax facade + discount scale; no schema / no packages
+- [x] P2.8 Inventory movement ledger (2026-08-13) — schema v75 `inventory_movements`; atomic stock+ledger; no HTTP/UI; no backfill
 - [ ] Fail-closed dependency enforcement (still no packages; after pilot proof)
-- [ ] Inventory stock ledger (movements + adjustments) before BOM/procurement
+- [ ] Inventory stock ledger UI / HTTP history API / product-CRUD stock movements
 - [ ] Recipes/BOM, wastage (after ledger)
 - [ ] Suppliers / PO / receiving
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet

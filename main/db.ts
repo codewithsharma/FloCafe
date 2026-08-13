@@ -3997,6 +3997,36 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       insertSettingIfMissing('jwt_secret_storage', 'legacy');
     },
   },
+  {
+    version: 75,
+    name: 'p2_8_inventory_movements_ledger',
+    up: () => {
+      // Append-only inventory movement history. products.stock_quantity remains
+      // the runtime current-state cache. No backfill — ledger starts empty at
+      // migration time (pre-migration history is not reconstructable).
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS inventory_movements (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          product_id TEXT NOT NULL,
+          quantity_delta REAL NOT NULL,
+          movement_type TEXT NOT NULL
+            CHECK (movement_type IN ('sale', 'cancel_restore', 'adjustment')),
+          reference_type TEXT,
+          reference_id TEXT,
+          reason TEXT,
+          stock_after REAL NOT NULL,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (product_id) REFERENCES products(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_inventory_movements_product_created
+          ON inventory_movements(product_id, created_at);
+        CREATE INDEX IF NOT EXISTS idx_inventory_movements_reference
+          ON inventory_movements(reference_type, reference_id);
+        CREATE INDEX IF NOT EXISTS idx_inventory_movements_created_at
+          ON inventory_movements(created_at);
+      `);
+    },
+  },
 ];
 
 function syncBackupBeforeMigration(fromVersion: number, toVersion: number): void {

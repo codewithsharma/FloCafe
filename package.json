@@ -143,6 +143,7 @@
     "test:currency": "ts-node --transpile-only -P tests/tsconfig.json tests/currency.test.ts",
     "test:tax-engine": "ts-node --transpile-only -P tests/tsconfig.json tests/tax-engine.test.ts",
     "test:inventory-boundary": "node tests/run-electron-node-test.cjs tests/inventory-boundary.test.ts",
+    "test:inventory-ledger": "node tests/run-electron-node-test.cjs tests/inventory-ledger.test.ts",
     "test:tax-boundary": "node tests/run-electron-node-test.cjs tests/tax-boundary.test.ts",
     "test:tax-components": "ts-node --transpile-only -P tests/tsconfig.json tests/tax-components.test.ts",
     "test:tax-pack-catalog": "ts-node --transpile-only -P tests/tsconfig.json tests/tax-pack-catalog.test.ts",

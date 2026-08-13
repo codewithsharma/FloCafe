@@ -463,7 +463,11 @@ export function registerRoutes(app: Express): void {
           const allItems = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(orderId) as any[];
           for (const i of allItems) {
             const product = db.prepare('SELECT * FROM products WHERE id = ?').get(i.product_id) as any;
-            restoreTrackedStock(db, product, i.quantity, now());
+            restoreTrackedStock(db, product, i.quantity, now(), {
+              referenceType: 'order',
+              referenceId: orderId,
+              reason: 'all_items_cancelled',
+            });
           }
           db.prepare(`
             UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?,
