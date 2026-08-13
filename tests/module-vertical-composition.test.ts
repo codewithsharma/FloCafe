@@ -3,7 +3,8 @@
  *
  * Proves shared modules can be composed into Restaurant and a non-production
  * Retail Test vertical without duplicating implementations.
- * Soft diagnostics only — no fail-closed startup.
+ * Soft diagnostics remain non-throwing for valid verticals.
+ * Fail-closed remount / unknown-vertical throw: Phase 3.1 (`fail-closed-remount.test.ts`).
  *
  * Usage: npx ts-node --transpile-only -P tests/tsconfig.json tests/module-vertical-composition.test.ts
  */
@@ -30,13 +31,7 @@ import {
 } from '../main/modules';
 import type { ModuleId } from '../main/modules';
 
-const RESTAURANT_ONLY: readonly ModuleId[] = [
-  'tables',
-  'kitchen',
-  'kds',
-  'menu',
-  'addons',
-];
+const RESTAURANT_ONLY: readonly ModuleId[] = ['tables', 'kitchen', 'kds', 'menu', 'addons'];
 
 function intersection(a: readonly ModuleId[], b: readonly ModuleId[]): ModuleId[] {
   const bSet = new Set(b);
@@ -62,10 +57,7 @@ function main(): void {
   const restaurant = getCompositionSnapshot({ verticalId: 'restaurant' });
   assert.equal(restaurant.vertical.id, 'restaurant');
   assert.equal(restaurant.vertical.name, 'Opervia Restaurant');
-  assert.deepEqual(
-    [...restaurant.modules.enabled],
-    [...OPERVIA_RESTAURANT_ENABLED_MODULES].sort(),
-  );
+  assert.deepEqual([...restaurant.modules.enabled], [...OPERVIA_RESTAURANT_ENABLED_MODULES].sort());
   for (const id of RESTAURANT_ONLY) {
     assert.ok(restaurant.modules.enabled.includes(id), `restaurant has ${id}`);
   }
@@ -79,10 +71,7 @@ function main(): void {
   const retail = getCompositionSnapshot({ verticalId: OPERVIA_RETAIL_TEST_VERTICAL_ID });
   assert.equal(retail.vertical.id, 'retail-test');
   assert.equal(retail.vertical.name, 'Opervia Retail Test');
-  assert.deepEqual(
-    [...retail.modules.enabled],
-    [...OPERVIA_RETAIL_TEST_ENABLED_MODULES].sort(),
-  );
+  assert.deepEqual([...retail.modules.enabled], [...OPERVIA_RETAIL_TEST_ENABLED_MODULES].sort());
   for (const id of RESTAURANT_ONLY) {
     assert.ok(!retail.modules.enabled.includes(id), `retail-test excludes ${id}`);
   }
@@ -91,10 +80,7 @@ function main(): void {
   console.log('   ✓ retail-test composition (no restaurant-only modules)');
 
   // ── Shared module intersection (architectural reuse) ────────────────────
-  const shared = intersection(
-    restaurant.modules.enabled,
-    retail.modules.enabled,
-  );
+  const shared = intersection(restaurant.modules.enabled, retail.modules.enabled);
   const expectedShared = [...OPERVIA_RETAIL_TEST_ENABLED_MODULES].sort();
   assert.deepEqual(shared, expectedShared);
   for (const id of shared) {
@@ -137,9 +123,7 @@ function main(): void {
   const invalid = validateEnabledSetDependencies(['kds', 'order', 'product'] as ModuleId[]);
   assert.equal(invalid.valid, false);
   assert.ok(invalid.missing.some((m) => m.module === 'kds' && m.dependency === 'kitchen'));
-  assert.doesNotThrow(() =>
-    getCompositionSnapshot({ enabledModules: ['kds'] as ModuleId[] }),
-  );
+  assert.doesNotThrow(() => getCompositionSnapshot({ enabledModules: ['kds'] as ModuleId[] }));
   const invalidSnap = getCompositionSnapshot({
     enabledModules: ['kds', 'order', 'product'] as ModuleId[],
   });

@@ -1,5 +1,5 @@
 /**
- * Opervia module registry public surface (Phase 2.1 + 2.2 diagnostics).
+ * Opervia module registry public surface (Phase 2.1–2.2 + Phase 3.1 remount).
  */
 export {
   MODULE_CATALOG,
@@ -16,6 +16,7 @@ export {
   getModule,
   getActiveVerticalId,
   getVerticalDefinition,
+  resolveKnownVertical,
   getEnabledModules,
   isModuleEnabled,
   isFeatureAvailable,
@@ -49,10 +50,25 @@ export {
   logCompositionSnapshotIfDev,
 } from './composition';
 
+export {
+  CompositionValidationError,
+  resolveVerticalDefinition,
+  assertFailClosedComposition,
+  getRouteMountPlan,
+  shouldMountModule,
+} from './route-mounting';
+
 export { OPERVIA_RESTAURANT_ENABLED_MODULES } from './verticals';
 // Synthetic retail-test is re-exported via registry (not production VERTICALS).
 
-export type { ModuleId, OperviaModule, VerticalDefinition, ModuleKind, CapabilityId, ModuleDefinition } from './types';
+export type {
+  ModuleId,
+  OperviaModule,
+  VerticalDefinition,
+  ModuleKind,
+  CapabilityId,
+  ModuleDefinition,
+} from './types';
 export type {
   MissingDependency,
   VerticalDependencyReport,
@@ -67,3 +83,4 @@ export type {
   CompositionDiagnosticWarning,
   PlatformCompositionResponse,
 } from './composition';
+export type { FailClosedCompositionOptions, RouteMountPlan } from './route-mounting';

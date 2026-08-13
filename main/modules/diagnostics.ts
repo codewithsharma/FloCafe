@@ -1,14 +1,11 @@
 /**
  * Phase 2.2 — soft dependency diagnostics + registry integrity.
- * Read-only, deterministic, non-blocking. Never fail-closed at startup.
+ * Read-only formatting helpers remain non-blocking for logs.
+ * Phase 3.1 startup remount uses assertFailClosedComposition (throws).
  */
 import { MODULE_CATALOG, MODULE_IDS } from './catalog';
 import { VERTICALS } from './verticals';
-import {
-  getModule,
-  getModuleDependencies,
-  getVerticalDefinition,
-} from './registry';
+import { getModule, getModuleDependencies, getVerticalDefinition } from './registry';
 import type { CapabilityId, ModuleId, OperviaModule } from './types';
 import { CAPABILITY_IDS } from './types';
 
@@ -87,10 +84,8 @@ export function validateEnabledSetDependencies(
   };
 }
 
-/** Soft check for a vertical's enabled module set. Never throws. */
-export function validateVerticalDependencies(
-  verticalId?: string,
-): VerticalDependencyReport {
+/** Soft check for a vertical's enabled module set. Non-throwing when the vertical is known; unknown ids throw via getVerticalDefinition (Phase 3.1). */
+export function validateVerticalDependencies(verticalId?: string): VerticalDependencyReport {
   const vertical = getVerticalDefinition(verticalId);
   const result = validateEnabledSetDependencies(vertical.enabledModules);
   return {
@@ -103,9 +98,7 @@ export function validateVerticalDependencies(
  * DFS cycle detection over an adjacency map.
  * Exported for unit tests with synthetic graphs.
  */
-export function detectDependencyCycles(
-  adjacency: Map<string, readonly string[]>,
-): string[][] {
+export function detectDependencyCycles(adjacency: Map<string, readonly string[]>): string[][] {
   const WHITE = 0;
   const GRAY = 1;
   const BLACK = 2;
@@ -350,7 +343,10 @@ export function validateRegistryIntegrity(options?: {
  */
 export function formatModuleDiagnosticsLog(
   verticalId?: string,
-  override?: Pick<VerticalDependencyReport, 'valid' | 'missing' | 'enabledModuleCount' | 'verticalId'>,
+  override?: Pick<
+    VerticalDependencyReport,
+    'valid' | 'missing' | 'enabledModuleCount' | 'verticalId'
+  >,
 ): string {
   const vertical = override
     ? {

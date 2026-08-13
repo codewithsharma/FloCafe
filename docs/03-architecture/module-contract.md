@@ -15,12 +15,12 @@ An Opervia module is a **named business capability** with a metadata contract in
 
 Every module has:
 
-| Field | Rule |
-|-------|------|
-| `id` | Unique `ModuleId` |
-| `name` | Non-empty display name |
-| `version` | Semver-like `X.Y.Z…` |
-| `kind` | `core` \| `shared` \| `restaurant` |
+| Field     | Rule                               |
+| --------- | ---------------------------------- |
+| `id`      | Unique `ModuleId`                  |
+| `name`    | Non-empty display name             |
+| `version` | Semver-like `X.Y.Z…`               |
+| `kind`    | `core` \| `shared` \| `restaurant` |
 
 Formal type alias: `ModuleDefinition` (= `OperviaModule`).
 
@@ -58,7 +58,7 @@ Flags such as `kds_enabled`, `tables_required`, `taxes_enabled`, `shifts_enabled
 
 ## 6. Routes
 
-`routePrefixes` are **descriptive**. Express mounts remain static in `registerRoutes()`.
+`routePrefixes` remain catalog metadata. Phase 3.1 mounts Express routes from vertical composition — see [phase-3.1-fail-closed-remount.md](phase-3.1-fail-closed-remount.md).
 
 ## 7. Navigation
 

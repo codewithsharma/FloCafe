@@ -84,15 +84,17 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **P2.15 Payment domain boundary** (2026-08-13) — `main/services/payment-tender.ts`; soft-gate tables/kds on bill-paid; no FIN-01/money/schema/API change; retail-test not production
 - [x] **P2.16 POS orchestration boundary** (2026-08-13) — `checkout-coordinator` + `POS_DOES_NOT_OWN`; gate addons/kds kot; no backend god-service; page retry/discount debt deferred
 - [x] **P2.17 Restaurant isolation** (2026-08-13) — Order soft-gate table occupy/free + KDS notify; shared catalog must not depend on restaurant modules; UX unchanged when modules ON; fail-closed remount deferred Phase 3
-- [x] **P2.18 Synthetic Retail validation** (2026-08-13) — stronger retail-test fixture tests; shared-module neutrality; not production Retail
+- [x] **P2.18 Synthetic Retail validation** (2026-08-13) — stronger retail-test fixture tests; shared-module neutrality; **takeaway sale E2E** (stock/tax/pay/snapshot/idempotency); not production Retail
 - [x] **P2.19 / Phase 2 final exit gate** (2026-08-13) — `phase-2-final-exit-gate.md`; **PASS WITH DOCUMENTED DEFERMENTS**; Phase 2 **COMPLETE**
 - [x] **Dependency addition & integration** (2026-08-13) — zod/pino-http/helmet/compression/otel/react-query/i18next/vitest/prettier/husky; skipped zustand + express-rate-limit; plan `dependency-integration-plan.md`
-- [ ] **Phase 3** Fail-closed dependency enforcement / route remount (still no packages; after pilot proof)
-- [ ] **Phase 3** Inventory stock ledger UI
-- [ ] **Phase 3** Legacy product tax_type/tax_rate cleanup (deferred; characterized in 2.13)
-- [ ] **Phase 3** Void×cancel restock semantic hardening (pinned in `order-void-cancel-stock.test.ts`; do not change casually)
-- [ ] **Phase 3** Recipes/BOM, wastage (after ledger)
-- [ ] **Phase 3** Suppliers / PO / receiving
+- [x] **i18next Phase 2 incremental call-site migration** (2026-08-13) — settings.saveFailed + common.save/cancel/loading (settings + listed dialogs) + pos.checkout + orders.completed + products.title; dual-catalog retained; no new keys/frameworks
+- [x] **Phase 2 architecture hardening** (2026-08-13) — Zod order/payment/refund/stock; OTel domain spans + withSpanSync; dual-catalog documented; plan updated
+- [x] **Phase 2 closeout & Phase 3 architecture gate** (2026-08-13) — `phase-2-closeout-and-phase-3-gate.md`; Phase 2 **CLOSED**; Phase 3 plan ordered
+- [x] **Phase 3.1** Fail-closed remount + startup composition validation (2026-08-13) — `registerRoutes` capability-aware; Outcome A; `phase-3.1-fail-closed-remount.md`
+- [ ] **Phase 3.2** Vertical / capability configuration (depends on 3.1)
+- [ ] **Phase 3.3** Production Retail vertical (depends on 3.1+3.2; not retail-test)
+- [ ] **Phase 3.4** Correctness residuals — `notifyOrderUpdated` gate, held-orders `tables` gate, void×cancel restock, stock-reject HTTP status
+- [ ] **Phase 3.5** Optional — Inventory ledger UI, legacy tax columns, packages/extraction, recipes/BOM, suppliers/PO (after 3.1–3.4 + pilots)
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet
 - [ ] ADR-006 Multi-Location Architecture (design only; no code until approved)
 - [ ] Analytics/accounting export

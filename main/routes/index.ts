@@ -1,4 +1,4 @@
-import { Express } from 'express';
+import { Express, Router } from 'express';
 import { authRoutes } from './auth';
 import { requireRole } from '../middleware/security';
 import { categoryRoutes } from './categories';
@@ -35,7 +35,13 @@ import { platformRoutes } from './platform';
 import { shiftRoutes } from './shifts';
 import { refundRoutes } from './refunds';
 import { getDatabase, getSettingValue, getCachedPairingCode, setCachedPairingCode } from '../db';
-import { getPlatformCompositionSummary, logCompositionSnapshotIfDev } from '../modules';
+import {
+  assertFailClosedComposition,
+  getPlatformCompositionSummary,
+  logCompositionSnapshotIfDev,
+  shouldMountModule,
+  type ModuleId,
+} from '../modules';
 import { cloudSync } from '../services/cloud-sync';
 import { parsePhoneE164, stripPhoneDigits } from '../lib/phone';
 import QRCode from 'qrcode';
@@ -61,51 +67,74 @@ function mobilePairingErrorMessage(error: any): string {
   return error?.message || 'Could not reach FloAdmin';
 }
 
-export function registerRoutes(app: Express): void {
-  // Phase 2.1/2.2 — Opervia modules are declared in main/modules; Express mounts remain static.
-  // Composition summary + soft dep diagnostics are metadata only (no dynamic route loading).
+export interface RegisterRoutesOptions {
+  /**
+   * Vertical composition for mount decisions.
+   * Defaults to ACTIVE_VERTICAL_ID (restaurant in production).
+   * Tests may pass retail-test to prove restaurant routes are absent.
+   */
+  verticalId?: string;
+}
+
+export function registerRoutes(app: Express, options: RegisterRoutesOptions = {}): void {
+  // Phase 3.1 — fail-closed composition validation before any mounts.
+  const composition = assertFailClosedComposition({ verticalId: options.verticalId });
+  const verticalId = composition.verticalId;
+
   void getPlatformCompositionSummary();
-  logCompositionSnapshotIfDev();
+  logCompositionSnapshotIfDev({ verticalId });
 
-  // Auth routes
-  app.use('/api/auth', authRoutes);
+  const mount = (prefix: string, router: Router, moduleId: ModuleId | null): void => {
+    // null = always-on platform/ops surface (not vertical-gated).
+    if (moduleId !== null && !shouldMountModule(moduleId, verticalId)) {
+      return;
+    }
+    app.use(prefix, router);
+  };
 
-  // Resource routes
-  app.use('/api/categories', categoryRoutes);
-  app.use('/api/products', productRoutes);
-  app.use('/api/addon-groups', addonGroupRoutes);
-  app.use('/api/orders', orderRoutes);
-  app.use('/api/order-items', orderItemRoutes);
-  app.use('/api/kitchen', kitchenRoutes);
-  app.use('/api/bills', billRoutes);
-  app.use('/api/bills', refundRoutes);
-  app.use('/api/refunds', refundRoutes);
-  app.use('/api/tables', tableRoutes);
-  app.use('/api/kitchen-stations', kitchenStationRoutes);
-  app.use('/api/customers', customerRoutes);
-  app.use('/api/staff', staffRoutes);   // users with POS roles
-  app.use('/api/users', staffRoutes);   // same router, dual-mounted
-  app.use('/api/settings', settingsRoutes);
-  app.use('/api/payment-methods', paymentMethodRoutes);
-  app.use('/api/reports', reportRoutes);
-  app.use('/api/kds', kdsRoutes);
-  app.use('/api/kds-info', kdsInfoRoutes);
-  app.use('/api/pos-info', posInfoRoutes);
-  app.use('/api/server-app-info', serverAppInfoRoutes);
-  app.use('/api/more-apps', moreAppsRoutes);
-  app.use('/api/printers', printerRoutes);
-  app.use('/api/db', databaseRoutes);
-  app.use('/api/db-tools', databaseToolsRoutes);
-  app.use('/api/menu-csv', menuCsvRoutes);
-  app.use('/api/tax-packs', taxPackRoutes);
-  app.use('/api/tax', taxRoutes);
-  app.use('/api/inventory', inventoryRoutes);
-  app.use('/api/held-orders', heldOrderRoutes);
-  app.use('/api/whatsapp', whatsappRoutes);
-  app.use('/api/support-ticket', supportTicketRoutes);
-  app.use('/api/audit-logs', auditLogRoutes);
-  app.use('/api/platform', platformRoutes);
-  app.use('/api/shifts', shiftRoutes);
+  // Auth / core
+  mount('/api/auth', authRoutes, 'core');
+  mount('/api/settings', settingsRoutes, 'core');
+  mount('/api/audit-logs', auditLogRoutes, 'core');
+
+  // Shared commerce
+  mount('/api/categories', categoryRoutes, 'category');
+  mount('/api/products', productRoutes, 'product');
+  mount('/api/orders', orderRoutes, 'order');
+  mount('/api/order-items', orderItemRoutes, 'order');
+  mount('/api/held-orders', heldOrderRoutes, 'order');
+  mount('/api/bills', billRoutes, 'payment');
+  mount('/api/bills', refundRoutes, 'refund');
+  mount('/api/refunds', refundRoutes, 'refund');
+  mount('/api/payment-methods', paymentMethodRoutes, 'payment');
+  mount('/api/customers', customerRoutes, 'customer');
+  mount('/api/staff', staffRoutes, 'staff');
+  mount('/api/users', staffRoutes, 'staff');
+  mount('/api/reports', reportRoutes, 'reporting');
+  mount('/api/pos-info', posInfoRoutes, 'pos');
+  mount('/api/printers', printerRoutes, 'printing');
+  mount('/api/db', databaseRoutes, 'backup');
+  mount('/api/db-tools', databaseToolsRoutes, 'backup');
+  mount('/api/tax-packs', taxPackRoutes, 'tax');
+  mount('/api/tax', taxRoutes, 'tax');
+  mount('/api/inventory', inventoryRoutes, 'inventory');
+  mount('/api/whatsapp', whatsappRoutes, 'notification');
+  mount('/api/shifts', shiftRoutes, 'shift');
+
+  // Restaurant-only — omitted when module disabled (e.g. retail-test)
+  mount('/api/addon-groups', addonGroupRoutes, 'addons');
+  mount('/api/kitchen', kitchenRoutes, 'kitchen');
+  mount('/api/kitchen-stations', kitchenStationRoutes, 'kitchen');
+  mount('/api/tables', tableRoutes, 'tables');
+  mount('/api/kds', kdsRoutes, 'kds');
+  mount('/api/kds-info', kdsInfoRoutes, 'kds');
+  mount('/api/menu-csv', menuCsvRoutes, 'menu');
+
+  // Always-on platform / ops (uncatalogued or cross-cutting)
+  mount('/api/server-app-info', serverAppInfoRoutes, null);
+  mount('/api/more-apps', moreAppsRoutes, null);
+  mount('/api/support-ticket', supportTicketRoutes, null);
+  mount('/api/platform', platformRoutes, null);
 
   // Mobile pairing code — proxies FloAdmin (see cloud-sync.ts generatePairingCode).
   // Cache-first: repeat GETs (e.g. reopening Settings) must NOT generate a new
@@ -117,7 +146,10 @@ export function registerRoutes(app: Express): void {
         return res.json({
           pairing_code: cached.code,
           expires_at: cached.expiresAt,
-          qr_data_url: await QRCode.toDataURL(cached.code, { errorCorrectionLevel: 'M', width: 256 }),
+          qr_data_url: await QRCode.toDataURL(cached.code, {
+            errorCorrectionLevel: 'M',
+            width: 256,
+          }),
         });
       }
       const { code, expires_at } = await cloudSync.generatePairingCode(false);
@@ -159,33 +191,41 @@ export function registerRoutes(app: Express): void {
   });
 
   // Legacy/flat customer search endpoint (frontend uses this)
-  app.get('/api/customers-search', requireRole('owner', 'manager', 'cashier', 'waiter'), (req, res) => {
-    try {
-      const { q } = req.query;
-      if (!q || String(q).length < 2) {
-        return res.json([]);
-      }
+  app.get(
+    '/api/customers-search',
+    requireRole('owner', 'manager', 'cashier', 'waiter'),
+    (req, res) => {
+      try {
+        const { q } = req.query;
+        if (!q || String(q).length < 2) {
+          return res.json([]);
+        }
 
-      const db = getDatabase();
-      const searchTerm = `%${q}%`;
+        const db = getDatabase();
+        const searchTerm = `%${q}%`;
 
-      const customers = db.prepare(`
+        const customers = db
+          .prepare(
+            `
         SELECT * FROM customers
         WHERE is_active = 1 AND (phone_digits LIKE ? OR name LIKE ? OR email LIKE ?)
         ORDER BY name LIMIT 20
-      `).all(searchTerm, searchTerm, searchTerm) as any[];
+      `,
+          )
+          .all(searchTerm, searchTerm, searchTerm) as any[];
 
-      const results = customers.map((c) => ({
-        ...parseCustomer(c),
-        wallet_balance: getWalletBalance(c.id),
-      }));
+        const results = customers.map((c) => ({
+          ...parseCustomer(c),
+          wallet_balance: getWalletBalance(c.id),
+        }));
 
-      res.json(results);
-    } catch (error: any) {
-      console.error("[API] Internal error:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
+        res.json(results);
+      } catch (error: any) {
+        console.error('[API] Internal error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    },
+  );
 
   // CRM lookup endpoint (frontend uses this)
   app.get('/api/crm/lookup', requireRole('owner', 'manager', 'cashier', 'waiter'), (req, res) => {
@@ -201,7 +241,9 @@ export function registerRoutes(app: Express): void {
       const lookupPhone = parsed ? parsed.e164 : String(phone).trim();
       const phoneDigits = stripPhoneDigits(lookupPhone);
 
-      const customer = db.prepare('SELECT * FROM customers WHERE phone_digits = ?').get(phoneDigits);
+      const customer = db
+        .prepare('SELECT * FROM customers WHERE phone_digits = ?')
+        .get(phoneDigits);
 
       if (customer) {
         res.json({ found: true, customer });
@@ -209,8 +251,8 @@ export function registerRoutes(app: Express): void {
         res.json({ found: false, customer: null });
       }
     } catch (error: any) {
-      console.error("[API] Internal error:", error);
-      res.status(500).json({ error: "Internal server error" });
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 }

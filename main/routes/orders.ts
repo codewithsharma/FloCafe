@@ -1,6 +1,19 @@
 import { createHash } from 'crypto';
 import { Router, Request, Response } from 'express';
-import { getDatabase, generateOrderNumber, now, parseItemJson, parseRowJson, withTxn, verifyPin, getSettingValue, insertOrderItemAddons, attachEffectiveAddons, utcDayBounds, utcTodayDate } from '../db';
+import {
+  getDatabase,
+  generateOrderNumber,
+  now,
+  parseItemJson,
+  parseRowJson,
+  withTxn,
+  verifyPin,
+  getSettingValue,
+  insertOrderItemAddons,
+  attachEffectiveAddons,
+  utcDayBounds,
+  utcTodayDate,
+} from '../db';
 import {
   applyPayableRounding,
   calculateConfiguredChargeTaxes,
@@ -12,7 +25,11 @@ import {
   invertTaxSnapshot,
   scaleItemTaxAfterOrderDiscount,
 } from '../services/tax';
-import { assertStockAvailable, decrementTrackedStock, restoreTrackedStock } from '../services/inventory';
+import {
+  assertStockAvailable,
+  decrementTrackedStock,
+  restoreTrackedStock,
+} from '../services/inventory';
 import { notifyKdsUpdate, notifyOrderUpdated } from '../services/kds';
 import { isModuleEnabled } from '../modules';
 import { cloudSync } from '../services/cloud-sync';
@@ -20,6 +37,9 @@ import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
 import { validateOrderNotes, validateItemNotes } from './orders-validation';
 import { requireRole } from '../middleware/security';
+import { validateBody } from '../middleware/validate';
+import { DOMAIN_SPAN, withSpan } from '../lib/tracing';
+import { addOrderItemsBodySchema, createOrderBodySchema } from '../validation/orders';
 import { readTerminalIdHeaderFromRequest, resolveActiveShiftForOrder } from '../services/shift';
 // Phase 2.14 — Order ownership facade (markers; routes remain the HTTP surface).
 import { ORDER_OWNED_CONCERNS } from '../services/order';
@@ -54,32 +74,58 @@ export function checkPinRateLimit(key: string): boolean {
   return true;
 }
 
-function syncCustomerTagCounts(db: any, customerId: string, items: { product_id: string; quantity: number }[]) {
+function syncCustomerTagCounts(
+  db: any,
+  customerId: string,
+  items: { product_id: string; quantity: number }[],
+) {
   const row = db.prepare('SELECT tag_counts FROM customers WHERE id = ?').get(customerId) as any;
   if (!row) return;
   let counts: Record<string, number> = {};
-  try { counts = row.tag_counts ? JSON.parse(row.tag_counts) : {}; } catch { counts = {}; }
+  try {
+    counts = row.tag_counts ? JSON.parse(row.tag_counts) : {};
+  } catch {
+    counts = {};
+  }
   for (const item of items) {
-    const product = db.prepare('SELECT tags FROM products WHERE id = ?').get(item.product_id) as any;
+    const product = db
+      .prepare('SELECT tags FROM products WHERE id = ?')
+      .get(item.product_id) as any;
     if (!product?.tags) continue;
     let tags: string[] = [];
-    try { tags = JSON.parse(product.tags); } catch { continue; }
+    try {
+      tags = JSON.parse(product.tags);
+    } catch {
+      continue;
+    }
     for (const tag of tags) {
       if (tag && typeof tag === 'string') counts[tag] = (counts[tag] || 0) + (item.quantity || 1);
     }
   }
-  db.prepare('UPDATE customers SET tag_counts = ?, updated_at = ? WHERE id = ?')
-    .run(JSON.stringify(counts), now(), customerId);
+  db.prepare('UPDATE customers SET tag_counts = ?, updated_at = ? WHERE id = ?').run(
+    JSON.stringify(counts),
+    now(),
+    customerId,
+  );
 }
 
-function validateItemAddonGroupLimits(db: ReturnType<typeof getDatabase>, addons: any[] | null | undefined): void {
+function validateItemAddonGroupLimits(
+  db: ReturnType<typeof getDatabase>,
+  addons: any[] | null | undefined,
+): void {
   if (!addons || !Array.isArray(addons) || addons.length === 0) return;
 
   for (const addon of addons) {
     if (!addon) continue;
     if (addon.quantity !== undefined) {
-      if (typeof addon.quantity !== 'number' || !Number.isInteger(addon.quantity) || addon.quantity <= 0) {
-        throw new Error(`Invalid add-on quantity for ${addon.name || 'addon'}: must be a positive integer`);
+      if (
+        typeof addon.quantity !== 'number' ||
+        !Number.isInteger(addon.quantity) ||
+        addon.quantity <= 0
+      ) {
+        throw new Error(
+          `Invalid add-on quantity for ${addon.name || 'addon'}: must be a positive integer`,
+        );
       }
     }
   }
@@ -90,7 +136,8 @@ function validateItemAddonGroupLimits(db: ReturnType<typeof getDatabase>, addons
     if (!addon) continue;
     let groupId: string | null = addon.addon_group_id || null;
     if (!groupId && addon.id) {
-      const dbAddon = db.prepare('SELECT addon_group_id FROM addons WHERE id = ?').get(addon.id) as { addon_group_id: string } | undefined;
+      const dbAddon = db.prepare('SELECT addon_group_id FROM addons WHERE id = ?').get(addon.id) as
+        { addon_group_id: string } | undefined;
       if (dbAddon) groupId = dbAddon.addon_group_id;
     }
 
@@ -105,118 +152,147 @@ function validateItemAddonGroupLimits(db: ReturnType<typeof getDatabase>, addons
   }
 
   for (const [groupId, selection] of groupSelections.entries()) {
-    const group = db.prepare('SELECT * FROM addon_groups WHERE id = ? AND is_active = 1').get(groupId) as any;
+    const group = db
+      .prepare('SELECT * FROM addon_groups WHERE id = ? AND is_active = 1')
+      .get(groupId) as any;
     if (!group) continue;
 
     if (!group.allow_multiple_quantities && selection.hasMultiQty) {
       throw new Error(`Add-on group "${group.name}" does not allow multiple quantities`);
     }
 
-    if (group.max_selection !== null && group.max_selection !== undefined && selection.totalQty > group.max_selection) {
-      throw new Error(`Total add-on quantity for group "${group.name}" exceeds maximum allowed (${group.max_selection})`);
+    if (
+      group.max_selection !== null &&
+      group.max_selection !== undefined &&
+      selection.totalQty > group.max_selection
+    ) {
+      throw new Error(
+        `Total add-on quantity for group "${group.name}" exceeds maximum allowed (${group.max_selection})`,
+      );
     }
 
     if (group.min_selection && selection.totalQty < group.min_selection) {
-      throw new Error(`Selection for group "${group.name}" requires at least ${group.min_selection} item(s)`);
+      throw new Error(
+        `Selection for group "${group.name}" requires at least ${group.min_selection} item(s)`,
+      );
     }
   }
 }
 
-router.get('/', requireRole('owner', 'manager', 'cashier', 'waiter'), (req: Request, res: Response) => {
-  try {
-    const user = (req as any).user;
-    const db = getDatabase();
-    const wheres: string[] = [];
-    const params: any[] = [];
+router.get(
+  '/',
+  requireRole('owner', 'manager', 'cashier', 'waiter'),
+  (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const db = getDatabase();
+      const wheres: string[] = [];
+      const params: any[] = [];
 
-    if (req.query.status) {
-      const statuses = (req.query.status as string).split(',');
-      if (statuses.length === 1) {
-        wheres.push('status = ?');
-        params.push(statuses[0]);
+      if (req.query.status) {
+        const statuses = (req.query.status as string).split(',');
+        if (statuses.length === 1) {
+          wheres.push('status = ?');
+          params.push(statuses[0]);
+        } else {
+          wheres.push(`status IN (${statuses.map(() => '?').join(',')})`);
+          params.push(...statuses);
+        }
+      }
+      if (req.query.type) {
+        wheres.push('type = ?');
+        params.push(req.query.type);
+      }
+      // #208: `today` is the UTC day, as a range filter (was UTC date() that
+      // wrapped the column and blocked `idx_orders_created_at`). `start_date` /
+      // `end_date` add a range filter so the UI can actually load older pages
+      // — combined with the cursor, this is what gives us real pagination
+      // instead of "latest 50 forever".
+      if (req.query.today && req.query.today !== '0' && req.query.today !== 'false') {
+        const [s, e] = utcDayBounds(utcTodayDate());
+        wheres.push('created_at >= ? AND created_at < ?');
+        params.push(s, e);
       } else {
-        wheres.push(`status IN (${statuses.map(() => '?').join(',')})`);
-        params.push(...statuses);
+        const startDate =
+          typeof req.query.start_date === 'string' &&
+          /^\d{4}-\d{2}-\d{2}$/.test(req.query.start_date)
+            ? req.query.start_date
+            : null;
+        const endDate =
+          typeof req.query.end_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(req.query.end_date)
+            ? req.query.end_date
+            : null;
+        if (startDate) {
+          wheres.push('created_at >= ?');
+          params.push(utcDayBounds(startDate)[0]);
+        }
+        if (endDate) {
+          wheres.push('created_at < ?');
+          params.push(utcDayBounds(endDate)[1]);
+        }
       }
-    }
-    if (req.query.type) {
-      wheres.push('type = ?');
-      params.push(req.query.type);
-    }
-    // #208: `today` is the UTC day, as a range filter (was UTC date() that
-    // wrapped the column and blocked `idx_orders_created_at`). `start_date` /
-    // `end_date` add a range filter so the UI can actually load older pages
-    // — combined with the cursor, this is what gives us real pagination
-    // instead of "latest 50 forever".
-    if (req.query.today && req.query.today !== '0' && req.query.today !== 'false') {
-      const [s, e] = utcDayBounds(utcTodayDate());
-      wheres.push('created_at >= ? AND created_at < ?');
-      params.push(s, e);
-    } else {
-      const startDate = typeof req.query.start_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(req.query.start_date) ? req.query.start_date : null;
-      const endDate = typeof req.query.end_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(req.query.end_date) ? req.query.end_date : null;
-      if (startDate) {
-        wheres.push('created_at >= ?');
-        params.push(utcDayBounds(startDate)[0]);
+      if (req.query.table_id) {
+        wheres.push('table_id = ?');
+        params.push(req.query.table_id);
       }
-      if (endDate) {
-        wheres.push('created_at < ?');
-        params.push(utcDayBounds(endDate)[1]);
+      if (user.role === 'waiter') {
+        wheres.push('user_id = ?');
+        params.push(user.userId);
       }
-    }
-    if (req.query.table_id) {
-      wheres.push('table_id = ?');
-      params.push(req.query.table_id);
-    }
-    if (user.role === 'waiter') {
-      wheres.push('user_id = ?');
-      params.push(user.userId);
-    }
-    // Cursor pagination: `before` / `after` are ORDER BY keys (created_at),
-    // composed with `id` to break ties when many orders share a second.
-    if (typeof req.query.before_id === 'string' && /^\d+$/.test(req.query.before_id)) {
-      const oid = parseInt(req.query.before_id, 10);
-      const ref = db.prepare('SELECT created_at FROM orders WHERE id = ?').get(oid) as { created_at: string } | undefined;
-      if (ref) {
-        wheres.push('(created_at, id) < (?, ?)');
-        params.push(ref.created_at, oid);
+      // Cursor pagination: `before` / `after` are ORDER BY keys (created_at),
+      // composed with `id` to break ties when many orders share a second.
+      if (typeof req.query.before_id === 'string' && /^\d+$/.test(req.query.before_id)) {
+        const oid = parseInt(req.query.before_id, 10);
+        const ref = db.prepare('SELECT created_at FROM orders WHERE id = ?').get(oid) as
+          { created_at: string } | undefined;
+        if (ref) {
+          wheres.push('(created_at, id) < (?, ?)');
+          params.push(ref.created_at, oid);
+        }
       }
-    }
 
-    const whereSql = wheres.length > 0 ? `WHERE ${wheres.join(' AND ')}` : '';
-    // #208: cap page size even when clients omit per_page (the original
-    // "unbounded" default made GET /orders on the tables page load the entire
-    // active-order history with the N+1 below).
-    const requestedPerPage = req.query.per_page ? parseInt(req.query.per_page as string, 10) : NaN;
-    const perPage = Number.isInteger(requestedPerPage) && requestedPerPage > 0
-      ? Math.min(requestedPerPage, 500)
-      : 50;
-    const perPagePlusOne = perPage + 1;
+      const whereSql = wheres.length > 0 ? `WHERE ${wheres.join(' AND ')}` : '';
+      // #208: cap page size even when clients omit per_page (the original
+      // "unbounded" default made GET /orders on the tables page load the entire
+      // active-order history with the N+1 below).
+      const requestedPerPage = req.query.per_page
+        ? parseInt(req.query.per_page as string, 10)
+        : NaN;
+      const perPage =
+        Number.isInteger(requestedPerPage) && requestedPerPage > 0
+          ? Math.min(requestedPerPage, 500)
+          : 50;
+      const perPagePlusOne = perPage + 1;
 
-    const orders = db.prepare(`
+      const orders = db
+        .prepare(
+          `
       SELECT * FROM orders
       ${whereSql}
       ORDER BY created_at DESC, id DESC
       LIMIT ?
-    `).all(...params, perPagePlusOne) as any[];
+    `,
+        )
+        .all(...params, perPagePlusOne) as any[];
 
-    const hasMore = orders.length > perPage;
-    const pageOrders = hasMore ? orders.slice(0, perPage) : orders;
-    const nextCursor = hasMore ? pageOrders[pageOrders.length - 1].id : null;
+      const hasMore = orders.length > perPage;
+      const pageOrders = hasMore ? orders.slice(0, perPage) : orders;
+      const nextCursor = hasMore ? pageOrders[pageOrders.length - 1].id : null;
 
-    // #208: replace the per-order N+1 (5 queries × N) with one IN() per
-    // relation, then assemble. Measured ~300+ queries per poll → ~6.
-    const ordersWithRelations = batchHydrateOrders(db, pageOrders);
+      // #208: replace the per-order N+1 (5 queries × N) with one IN() per
+      // relation, then assemble. Measured ~300+ queries per poll → ~6.
+      const ordersWithRelations = batchHydrateOrders(db, pageOrders);
 
-    res.json({
-      orders: ordersWithRelations,
-      ...(nextCursor !== null && { nextCursor }),
-    });
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+      res.json({
+        orders: ordersWithRelations,
+        ...(nextCursor !== null && { nextCursor }),
+      });
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 /**
  * Batch the relations (items+addons, table, customer, bill+loyalty) for a
@@ -232,10 +308,15 @@ function batchHydrateOrders(db: ReturnType<typeof getDatabase>, orders: any[]) {
   const parsedOrders = orders.map(parseRowJson);
   const ids = parsedOrders.map((o) => o.id);
   const tableIds = Array.from(new Set(parsedOrders.map((o: any) => o.table_id).filter(Boolean)));
-  const customerIds = Array.from(new Set(parsedOrders.map((o: any) => o.customer_id).filter(Boolean)));
+  const customerIds = Array.from(
+    new Set(parsedOrders.map((o: any) => o.customer_id).filter(Boolean)),
+  );
 
   const orderIdsCsv = `(${ids.map(() => '?').join(',')})`;
-  const itemsRows = db.prepare(`SELECT * FROM order_items WHERE order_id IN ${orderIdsCsv} ORDER BY order_id, id`).all(...ids).map(parseItemJson);
+  const itemsRows = db
+    .prepare(`SELECT * FROM order_items WHERE order_id IN ${orderIdsCsv} ORDER BY order_id, id`)
+    .all(...ids)
+    .map(parseItemJson);
   // #208: a single call to attachEffectiveAddons batches all addons across
   // all items into one IN() query against order_item_addons. Re-group the
   // result back by order_id for the per-order payload below.
@@ -261,7 +342,9 @@ function batchHydrateOrders(db: ReturnType<typeof getDatabase>, orders: any[]) {
   }
   const billsByOrderId = new Map<number, any[]>();
   const billsById = new Map<number, any>();
-  const billRows = db.prepare(`SELECT * FROM bills WHERE order_id IN ${orderIdsCsv}`).all(...ids) as any[];
+  const billRows = db
+    .prepare(`SELECT * FROM bills WHERE order_id IN ${orderIdsCsv}`)
+    .all(...ids) as any[];
   for (const b of billRows) {
     const parsed = parseRowJson(b);
     const siblings = billsByOrderId.get(parsed.order_id) || [];
@@ -273,7 +356,11 @@ function batchHydrateOrders(db: ReturnType<typeof getDatabase>, orders: any[]) {
   if (billsById.size > 0) {
     const billIds = Array.from(billsById.keys());
     const ph = billIds.map(() => '?').join(',');
-    const rows = db.prepare(`SELECT bill_id, COALESCE(SUM(amount),0) as total FROM loyalty_ledger WHERE bill_id IN (${ph}) AND type = 'credit' GROUP BY bill_id`).all(...billIds) as { bill_id: number; total: number }[];
+    const rows = db
+      .prepare(
+        `SELECT bill_id, COALESCE(SUM(amount),0) as total FROM loyalty_ledger WHERE bill_id IN (${ph}) AND type = 'credit' GROUP BY bill_id`,
+      )
+      .all(...billIds) as { bill_id: number; total: number }[];
     for (const r of rows) ledgerByBillId.set(r.bill_id, r.total);
   }
 
@@ -291,110 +378,425 @@ function batchHydrateOrders(db: ReturnType<typeof getDatabase>, orders: any[]) {
   });
 }
 
-router.get('/:id', requireRole('owner', 'manager', 'cashier', 'waiter'), (req: Request, res: Response) => {
-  try {
-    const user = (req as any).user;
-    const db = getDatabase();
-    const order = parseRowJson(db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id));
-    if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-    if (user.role === 'waiter' && (order as any).user_id !== user.userId) {
-      return res.status(403).json({ error: 'Waiters can only view their own orders' });
-    }
-
-    // #208: collapse the per-order N+1 (5 queries: items/addons/table/customer/bill/loyalty)
-    // into the same batchHydrateOrders used by the list endpoint. Previously
-    // 6 prepared calls per single detail click.
-    const [hydrated] = batchHydrateOrders(db, [order]);
-    res.json({ order: hydrated });
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-router.post('/', requireRole('owner', 'manager', 'cashier', 'waiter'), (req: Request, res: Response) => {
-  try {
-    const body = req.body || {};
-    const { table_id, customer_id, type, guest_count, special_instructions, packaging_charge, delivery_charge, items } = body;
-    const idempotencyKey = orderIdempotencyKey(req);
-    const idempotencyUserId = String((req as any).user.userId);
-    const requestHash = idempotencyKey
-      ? createHash('sha256').update(JSON.stringify(body)).digest('hex')
-      : null;
-    // Always the authenticated caller, never client-supplied — trusting a
-    // client-sent user_id would let staff spoof order attribution, and the
-    // frontend has in fact never sent one, so every order got user_id=NULL.
-    // That silently broke waiters' own order visibility (GET /orders scopes
-    // waiters to `user_id = <their id>`, which NULL can never match) and any
-    // per-staff sales attribution.
-    const authenticatedUserId = (req as any).user.userId;
-    const terminalIdHeader = readTerminalIdHeaderFromRequest(req);
-
-    if (!items || items.length === 0) {
-      return res.status(400).json({ error: 'At least one item is required' });
-    }
-
-    if (!type || !['dine_in', 'takeaway', 'delivery', 'online'].includes(type)) {
-      return res.status(400).json({ error: 'Valid type is required (dine_in, takeaway, delivery, online)' });
-    }
-    if (guest_count !== undefined && guest_count !== null && (!Number.isSafeInteger(guest_count) || guest_count < 1 || guest_count > 99)) {
-      return res.status(400).json({ error: 'guest_count must be a whole number between 1 and 99' });
-    }
-
-    const pkgCharge = Number(packaging_charge || 0);
-    const delCharge = Number(delivery_charge || 0);
-    if (!Number.isFinite(pkgCharge) || pkgCharge < 0 || !Number.isFinite(delCharge) || delCharge < 0) {
-      return res.status(400).json({ error: 'Packaging and delivery charges must be non-negative numbers' });
-    }
-
-    const db = getDatabase();
-
+router.get(
+  '/:id',
+  requireRole('owner', 'manager', 'cashier', 'waiter'),
+  (req: Request, res: Response) => {
     try {
-      validateOrderNotes(db, special_instructions);
-      for (const item of items) {
-        validateItemNotes(db, item.special_instructions);
-        validateItemAddonGroupLimits(db, item.addons);
+      const user = (req as any).user;
+      const db = getDatabase();
+      const order = parseRowJson(
+        db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id),
+      );
+      if (!order) {
+        return res.status(404).json({ error: 'Order not found' });
       }
-    } catch (err: any) {
-      return res.status(400).json({ error: err.message });
+      if (user.role === 'waiter' && (order as any).user_id !== user.userId) {
+        return res.status(403).json({ error: 'Waiters can only view their own orders' });
+      }
+
+      // #208: collapse the per-order N+1 (5 queries: items/addons/table/customer/bill/loyalty)
+      // into the same batchHydrateOrders used by the list endpoint. Previously
+      // 6 prepared calls per single detail click.
+      const [hydrated] = batchHydrateOrders(db, [order]);
+      res.json({ order: hydrated });
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-    const result = withTxn(() => {
-      if (idempotencyKey) {
-        // Preserve exact replay for pre-user-scoped records whose creator is
-        // unavailable. New records never use the `legacy` compatibility owner.
-        const prior = db.prepare(`
+  },
+);
+
+router.post(
+  '/',
+  requireRole('owner', 'manager', 'cashier', 'waiter'),
+  validateBody(createOrderBodySchema),
+  async (req: Request, res: Response) => {
+    try {
+      await withSpan('order', DOMAIN_SPAN.order.create, async () => {
+        const body = req.body || {};
+        const {
+          table_id,
+          customer_id,
+          type,
+          guest_count,
+          special_instructions,
+          packaging_charge,
+          delivery_charge,
+          items,
+        } = body;
+        const idempotencyKey = orderIdempotencyKey(req);
+        const idempotencyUserId = String((req as any).user.userId);
+        const requestHash = idempotencyKey
+          ? createHash('sha256').update(JSON.stringify(body)).digest('hex')
+          : null;
+        // Always the authenticated caller, never client-supplied — trusting a
+        // client-sent user_id would let staff spoof order attribution, and the
+        // frontend has in fact never sent one, so every order got user_id=NULL.
+        // That silently broke waiters' own order visibility (GET /orders scopes
+        // waiters to `user_id = <their id>`, which NULL can never match) and any
+        // per-staff sales attribution.
+        const authenticatedUserId = (req as any).user.userId;
+        const terminalIdHeader = readTerminalIdHeaderFromRequest(req);
+
+        const db = getDatabase();
+
+        try {
+          validateOrderNotes(db, special_instructions);
+          for (const item of items) {
+            validateItemNotes(db, item.special_instructions);
+            validateItemAddonGroupLimits(db, item.addons);
+          }
+        } catch (err: any) {
+          return res.status(400).json({ error: err.message });
+        }
+        const result = withTxn(() => {
+          if (idempotencyKey) {
+            // Preserve exact replay for pre-user-scoped records whose creator is
+            // unavailable. New records never use the `legacy` compatibility owner.
+            const prior = db
+              .prepare(
+                `
           SELECT request_hash, response_json
           FROM order_idempotency
           WHERE (user_id = ? OR user_id = 'legacy') AND idempotency_key = ?
           ORDER BY CASE WHEN user_id = ? THEN 0 ELSE 1 END
           LIMIT 1
-        `).get(idempotencyUserId, idempotencyKey, idempotencyUserId) as { request_hash: string; response_json: string } | undefined;
-        if (prior) {
-          if (prior.request_hash !== requestHash) {
-            throw Object.assign(new Error('Idempotency-Key was already used for a different order request'), { statusCode: 409 });
+        `,
+              )
+              .get(idempotencyUserId, idempotencyKey, idempotencyUserId) as
+              { request_hash: string; response_json: string } | undefined;
+            if (prior) {
+              if (prior.request_hash !== requestHash) {
+                throw Object.assign(
+                  new Error('Idempotency-Key was already used for a different order request'),
+                  { statusCode: 409 },
+                );
+              }
+              try {
+                const response = JSON.parse(prior.response_json);
+                return {
+                  order: response.order,
+                  orderItems: response.order?.items || [],
+                  idempotentReplay: true,
+                };
+              } catch {
+                throw Object.assign(new Error('Stored order response is invalid'), {
+                  statusCode: 500,
+                });
+              }
+            }
           }
-          try {
-            const response = JSON.parse(prior.response_json);
-            return { order: response.order, orderItems: response.order?.items || [], idempotentReplay: true };
-          } catch {
-            throw Object.assign(new Error('Stored order response is invalid'), { statusCode: 500 });
+
+          // Resolve operational shift association for the request terminal
+          const shiftId = resolveActiveShiftForOrder(terminalIdHeader);
+
+          // Generate order number inside transaction to prevent race conditions
+          const orderNumber = generateOrderNumber();
+
+          // Get settings for tax calculation
+          const settings: Record<string, string> = {};
+          db.prepare('SELECT key, value FROM settings')
+            .all()
+            .forEach((row: any) => {
+              settings[row.key] = row.value;
+            });
+
+          const tenantInfo = {
+            country: settings.country || 'IN',
+            business_type: settings.business_type || 'restaurant',
+            state_code: settings.state_code || '',
+            taxes_enabled: settings.taxes_enabled === 'true',
+          };
+          const chargeCategories = getConfiguredChargeTaxCategories(tenantInfo.country);
+          const chargeContext = {
+            packaging_charge: packaging_charge || 0,
+            delivery_charge: delivery_charge || 0,
+            service_charge: 0,
+            packaging_tax_category_id: chargeCategories.packaging?.categoryId || null,
+            delivery_tax_category_id: chargeCategories.delivery?.categoryId || null,
+            service_charge_tax_category_id: chargeCategories.service_charge?.categoryId || null,
+          };
+
+          const orderResult = db
+            .prepare(
+              `
+        INSERT INTO orders (order_number, table_id, customer_id, user_id, type, guest_count, special_instructions,
+          packaging_charge, delivery_charge, packaging_tax_category_id, delivery_tax_category_id,
+          service_charge_tax_category_id, status, shift_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+      `,
+            )
+            .run(
+              orderNumber,
+              table_id || null,
+              customer_id || null,
+              authenticatedUserId,
+              type,
+              guest_count || null,
+              special_instructions || null,
+              packaging_charge || 0,
+              delivery_charge || 0,
+              chargeContext.packaging_tax_category_id,
+              chargeContext.delivery_tax_category_id,
+              chargeContext.service_charge_tax_category_id,
+              shiftId,
+              now(),
+              now(),
+            );
+
+          const orderId = orderResult.lastInsertRowid;
+
+          let subtotal = 0;
+          let totalTax = 0;
+          let exclusiveTax = 0;
+          const allTaxBreakdowns: any[] = [];
+          const allTaxSnapshots: (string | null)[] = [];
+          const customer = customer_id
+            ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(customer_id) as any)
+            : null;
+
+          const insertItem = db.prepare(`
+        INSERT INTO order_items (order_id, product_id, product_name, product_sku, unit_price, quantity,
+          subtotal, tax_amount, tax_breakdown, tax_snapshot, tax_type, discount_amount, total, variant_selection,
+          modifier_selection, special_instructions, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+      `);
+
+          for (const item of items) {
+            const product = db
+              .prepare('SELECT * FROM products WHERE id = ?')
+              .get(item.product_id) as any;
+            if (!product) {
+              throw new Error(`Product ${item.product_id} not found`);
+            }
+            assertStockAvailable(product, item.quantity);
+
+            const unitPrice = parseFloat(product.price);
+            const quantity = item.quantity;
+            // item.discount_amount is intentionally ignored here — discounts are only
+            // applied through the dedicated PATCH discount endpoints, which enforce
+            // discount_mode/max_percentage/max_amount/approval (vuln-0002).
+            const itemDiscount = 0;
+
+            // Validate quantity and price
+            if (!quantity || quantity <= 0 || !Number.isFinite(quantity)) {
+              throw new Error(`Invalid quantity for ${product.name}: must be a positive number`);
+            }
+            if (unitPrice < 0 || !Number.isFinite(unitPrice)) {
+              throw new Error(`Invalid price for ${product.name}: must be a non-negative number`);
+            }
+
+            let itemSubtotal = unitPrice * quantity;
+            if (item.addons && Array.isArray(item.addons)) {
+              for (const addon of item.addons) {
+                if (!addon) continue;
+                if (addon.quantity !== undefined) {
+                  if (
+                    typeof addon.quantity !== 'number' ||
+                    !Number.isInteger(addon.quantity) ||
+                    addon.quantity <= 0
+                  ) {
+                    throw new Error(
+                      `Invalid add-on quantity for ${addon.name || 'addon'}: must be a positive integer`,
+                    );
+                  }
+                }
+                const addonQty = addon.quantity || 1;
+                itemSubtotal += (addon.price || 0) * addonQty * quantity;
+              }
+            }
+            itemSubtotal = Math.max(0, itemSubtotal - itemDiscount);
+
+            const taxResult = calculateItemTax(tenantInfo, product, itemSubtotal, customer);
+
+            totalTax += taxResult.tax_amount;
+            if (taxResult.tax_type !== 'inclusive') {
+              exclusiveTax += taxResult.tax_amount;
+            }
+            if (taxResult.tax_breakdown) {
+              allTaxBreakdowns.push(taxResult.tax_breakdown);
+            }
+            const itemTaxSnapshotJson = taxResult.tax_snapshot
+              ? JSON.stringify(taxResult.tax_snapshot)
+              : null;
+            allTaxSnapshots.push(itemTaxSnapshotJson);
+
+            const itemTotal =
+              itemSubtotal + (taxResult.tax_type === 'inclusive' ? 0 : taxResult.tax_amount);
+            subtotal += itemSubtotal;
+
+            const itemCreatedAt = now();
+            const insertItemResult = insertItem.run(
+              orderId,
+              product.id,
+              product.name,
+              product.sku,
+              unitPrice,
+              quantity,
+              itemSubtotal,
+              taxResult.tax_amount,
+              JSON.stringify(taxResult.tax_breakdown),
+              itemTaxSnapshotJson,
+              taxResult.tax_type,
+              itemDiscount,
+              itemTotal,
+              JSON.stringify(item.variant_selection || null),
+              JSON.stringify(item.modifier_selection || null),
+              item.special_instructions || null,
+              itemCreatedAt,
+              itemCreatedAt,
+            );
+            insertOrderItemAddons(db, insertItemResult.lastInsertRowid, item.addons, itemCreatedAt);
+
+            // Inventory boundary: reserve stock at order create (inside withTxn).
+            decrementTrackedStock(db, product, quantity, now(), {
+              referenceType: 'order',
+              referenceId: orderId,
+            });
+          }
+
+          const chargeTaxes = calculateConfiguredChargeTaxes(tenantInfo, chargeContext, customer);
+          const taxRollup = combineItemAndChargeTaxes({
+            itemTaxAmount: totalTax,
+            itemExclusiveTaxAmount: exclusiveTax,
+            itemBreakdowns: allTaxBreakdowns,
+            itemSnapshots: allTaxSnapshots,
+            itemTaxRatio: 1,
+            chargeTaxes,
+          });
+          const preRoundTotal =
+            subtotal +
+            taxRollup.exclusiveTaxAmount +
+            (delivery_charge || 0) +
+            (packaging_charge || 0);
+          const total = Number(preRoundTotal.toFixed(2));
+          const roundOff = 0;
+
+          db.prepare(
+            `
+        UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, total = ?,
+          round_off = ?, updated_at = ? WHERE id = ?
+      `,
+          ).run(
+            subtotal,
+            taxRollup.taxAmount,
+            JSON.stringify(taxRollup.breakdowns),
+            taxRollup.snapshotJson,
+            total,
+            roundOff,
+            now(),
+            orderId,
+          );
+
+          // Phase 2.17 — soft-gate restaurant table occupy (Restaurant vertical keeps tables enabled).
+          if (isModuleEnabled('tables') && table_id && type === 'dine_in') {
+            db.prepare("UPDATE tables SET status = 'occupied', updated_at = ? WHERE id = ?").run(
+              now(),
+              table_id,
+            );
+          }
+
+          const order = parseRowJson(
+            db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId),
+          ) as any;
+          const orderItems = attachEffectiveAddons(
+            db,
+            db
+              .prepare('SELECT * FROM order_items WHERE order_id = ?')
+              .all(orderId)
+              .map(parseItemJson) as any[],
+          );
+          const response = { order: Object.assign({}, order, { items: orderItems }) };
+          if (idempotencyKey && requestHash) {
+            db.prepare(
+              'INSERT INTO order_idempotency (user_id, idempotency_key, request_hash, response_json, created_at) VALUES (?, ?, ?, ?, ?)',
+            ).run(idempotencyUserId, idempotencyKey, requestHash, JSON.stringify(response), now());
+          }
+          return { order, orderItems, idempotentReplay: false };
+        });
+
+        if (!result.idempotentReplay) {
+          if (isModuleEnabled('kds')) notifyKdsUpdate();
+          cloudSync.recordOrderChanged(result.order.id, 'order.created');
+
+          if (customer_id) {
+            try {
+              syncCustomerTagCounts(db, customer_id, items);
+            } catch (err) {
+              console.error('[Orders] Tag sync failed:', err);
+            }
           }
         }
+
+        res
+          .status(result.idempotentReplay ? 200 : 201)
+          .json({ order: Object.assign({}, result.order, { items: result.orderItems }) });
+      });
+    } catch (error: any) {
+      console.error('[Orders] Create error:', error);
+      console.error('[API] Internal error:', error);
+      res
+        .status(error.statusCode || 500)
+        .json({ error: error.statusCode ? error.message : 'Internal server error' });
+    }
+  },
+);
+
+router.post(
+  '/:id/items',
+  requireRole('owner', 'manager', 'cashier', 'waiter'),
+  validateBody(addOrderItemsBodySchema),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      if (
+        db
+          .prepare('SELECT 1 FROM bills WHERE order_id = ? AND split_group_id IS NOT NULL LIMIT 1')
+          .get(req.params.id)
+      ) {
+        return res
+          .status(409)
+          .json({ error: 'Items cannot be changed after a check has been split' });
+      }
+      const body = req.body || {};
+      const { items, special_instructions } = body;
+      const idempotencyKey = orderIdempotencyKey(req);
+      const idempotencyUserId = String((req as any).user.userId);
+      const requestHash = idempotencyKey
+        ? createHash('sha256')
+            .update(JSON.stringify({ order_id: req.params.id, items, special_instructions }))
+            .digest('hex')
+        : null;
+      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as any;
+      if (!order) {
+        return res.status(404).json({ error: 'Order not found' });
       }
 
-      // Resolve operational shift association for the request terminal
-      const shiftId = resolveActiveShiftForOrder(terminalIdHeader);
+      const authUser = (req as any).user;
+      if (authUser?.role === 'waiter' && order.user_id !== authUser.userId) {
+        return res.status(403).json({ error: 'Waiters can only modify their own orders' });
+      }
 
-      // Generate order number inside transaction to prevent race conditions
-      const orderNumber = generateOrderNumber();
+      try {
+        for (const item of items) {
+          validateItemNotes(db, item.special_instructions);
+          validateItemAddonGroupLimits(db, item.addons);
+        }
+        if (special_instructions !== undefined) {
+          validateOrderNotes(db, special_instructions);
+        }
+      } catch (err: any) {
+        return res.status(400).json({ error: err.message });
+      }
 
-      // Get settings for tax calculation
+      // Get settings
       const settings: Record<string, string> = {};
-      db.prepare('SELECT key, value FROM settings').all().forEach((row: any) => {
-        settings[row.key] = row.value;
-      });
+      db.prepare('SELECT key, value FROM settings')
+        .all()
+        .forEach((row: any) => {
+          settings[row.key] = row.value;
+        });
 
       const tenantInfo = {
         country: settings.country || 'IN',
@@ -402,548 +804,478 @@ router.post('/', requireRole('owner', 'manager', 'cashier', 'waiter'), (req: Req
         state_code: settings.state_code || '',
         taxes_enabled: settings.taxes_enabled === 'true',
       };
-      const chargeCategories = getConfiguredChargeTaxCategories(tenantInfo.country);
-      const chargeContext = {
-        packaging_charge: packaging_charge || 0,
-        delivery_charge: delivery_charge || 0,
-        service_charge: 0,
-        packaging_tax_category_id: chargeCategories.packaging?.categoryId || null,
-        delivery_tax_category_id: chargeCategories.delivery?.categoryId || null,
-        service_charge_tax_category_id: chargeCategories.service_charge?.categoryId || null,
-      };
 
-      const orderResult = db.prepare(`
-        INSERT INTO orders (order_number, table_id, customer_id, user_id, type, guest_count, special_instructions,
-          packaging_charge, delivery_charge, packaging_tax_category_id, delivery_tax_category_id,
-          service_charge_tax_category_id, status, shift_id, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
-      `).run(orderNumber, table_id || null, customer_id || null, authenticatedUserId, type, guest_count || null,
-        special_instructions || null, packaging_charge || 0, delivery_charge || 0,
-        chargeContext.packaging_tax_category_id, chargeContext.delivery_tax_category_id,
-        chargeContext.service_charge_tax_category_id, shiftId, now(), now());
-
-
-      const orderId = orderResult.lastInsertRowid;
-
-      let subtotal = 0;
-      let totalTax = 0;
-      let exclusiveTax = 0;
-      const allTaxBreakdowns: any[] = [];
-      const allTaxSnapshots: (string | null)[] = [];
-      const customer = customer_id ? db.prepare('SELECT * FROM customers WHERE id = ?').get(customer_id) as any : null;
-
-      const insertItem = db.prepare(`
-        INSERT INTO order_items (order_id, product_id, product_name, product_sku, unit_price, quantity,
-          subtotal, tax_amount, tax_breakdown, tax_snapshot, tax_type, discount_amount, total, variant_selection,
-          modifier_selection, special_instructions, status, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
-      `);
-
-      for (const item of items) {
-        const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.product_id) as any;
-        if (!product) {
-          throw new Error(`Product ${item.product_id} not found`);
+      const result = withTxn(() => {
+        // Re-fetch and re-validate under the transaction lock: another request (e.g. a
+        // cashier completing/cancelling the order) can race the checks above, which run
+        // before this lock is acquired (#175).
+        const currentOrder = db
+          .prepare('SELECT * FROM orders WHERE id = ?')
+          .get(req.params.id) as any;
+        if (!currentOrder) {
+          throw Object.assign(new Error('Order not found'), { statusCode: 404 });
         }
-        assertStockAvailable(product, item.quantity);
-
-        const unitPrice = parseFloat(product.price);
-        const quantity = item.quantity;
-        // item.discount_amount is intentionally ignored here — discounts are only
-        // applied through the dedicated PATCH discount endpoints, which enforce
-        // discount_mode/max_percentage/max_amount/approval (vuln-0002).
-        const itemDiscount = 0;
-
-        // Validate quantity and price
-        if (!quantity || quantity <= 0 || !Number.isFinite(quantity)) {
-          throw new Error(`Invalid quantity for ${product.name}: must be a positive number`);
-        }
-        if (unitPrice < 0 || !Number.isFinite(unitPrice)) {
-          throw new Error(`Invalid price for ${product.name}: must be a non-negative number`);
-        }
-
-        let itemSubtotal = unitPrice * quantity;
-        if (item.addons && Array.isArray(item.addons)) {
-          for (const addon of item.addons) {
-            if (!addon) continue;
-            if (addon.quantity !== undefined) {
-              if (typeof addon.quantity !== 'number' || !Number.isInteger(addon.quantity) || addon.quantity <= 0) {
-                throw new Error(`Invalid add-on quantity for ${addon.name || 'addon'}: must be a positive integer`);
-              }
-            }
-            const addonQty = addon.quantity || 1;
-            itemSubtotal += (addon.price || 0) * addonQty * quantity;
-          }
-        }
-        itemSubtotal = Math.max(0, itemSubtotal - itemDiscount);
-
-        const taxResult = calculateItemTax(tenantInfo, product, itemSubtotal, customer);
-
-        totalTax += taxResult.tax_amount;
-        if (taxResult.tax_type !== 'inclusive') {
-          exclusiveTax += taxResult.tax_amount;
-        }
-        if (taxResult.tax_breakdown) {
-          allTaxBreakdowns.push(taxResult.tax_breakdown);
-        }
-        const itemTaxSnapshotJson = taxResult.tax_snapshot ? JSON.stringify(taxResult.tax_snapshot) : null;
-        allTaxSnapshots.push(itemTaxSnapshotJson);
-
-        const itemTotal = itemSubtotal + (taxResult.tax_type === 'inclusive' ? 0 : taxResult.tax_amount);
-        subtotal += itemSubtotal;
-
-        const itemCreatedAt = now();
-        const insertItemResult = insertItem.run(
-          orderId, product.id, product.name, product.sku, unitPrice, quantity,
-          itemSubtotal, taxResult.tax_amount, JSON.stringify(taxResult.tax_breakdown), itemTaxSnapshotJson,
-          taxResult.tax_type, itemDiscount, itemTotal,
-          JSON.stringify(item.variant_selection || null),
-          JSON.stringify(item.modifier_selection || null),
-          item.special_instructions || null, itemCreatedAt, itemCreatedAt
-        );
-        insertOrderItemAddons(db, insertItemResult.lastInsertRowid, item.addons, itemCreatedAt);
-
-        // Inventory boundary: reserve stock at order create (inside withTxn).
-        decrementTrackedStock(db, product, quantity, now(), {
-          referenceType: 'order',
-          referenceId: orderId,
-        });
-      }
-
-      const chargeTaxes = calculateConfiguredChargeTaxes(tenantInfo, chargeContext, customer);
-      const taxRollup = combineItemAndChargeTaxes({
-        itemTaxAmount: totalTax,
-        itemExclusiveTaxAmount: exclusiveTax,
-        itemBreakdowns: allTaxBreakdowns,
-        itemSnapshots: allTaxSnapshots,
-        itemTaxRatio: 1,
-        chargeTaxes,
-      });
-      const preRoundTotal = subtotal + taxRollup.exclusiveTaxAmount
-        + (delivery_charge || 0) + (packaging_charge || 0);
-      const total = Number(preRoundTotal.toFixed(2));
-      const roundOff = 0;
-
-      db.prepare(`
-        UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, total = ?,
-          round_off = ?, updated_at = ? WHERE id = ?
-      `).run(
-        subtotal, taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns),
-        taxRollup.snapshotJson, total, roundOff, now(), orderId,
-      );
-
-      // Phase 2.17 — soft-gate restaurant table occupy (Restaurant vertical keeps tables enabled).
-      if (isModuleEnabled('tables') && table_id && type === 'dine_in') {
-        db.prepare("UPDATE tables SET status = 'occupied', updated_at = ? WHERE id = ?").run(now(), table_id);
-      }
-
-      const order = parseRowJson(db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId)) as any;
-      const orderItems = attachEffectiveAddons(db, db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(orderId).map(parseItemJson) as any[]);
-      const response = { order: Object.assign({}, order, { items: orderItems }) };
-      if (idempotencyKey && requestHash) {
-        db.prepare('INSERT INTO order_idempotency (user_id, idempotency_key, request_hash, response_json, created_at) VALUES (?, ?, ?, ?, ?)')
-          .run(idempotencyUserId, idempotencyKey, requestHash, JSON.stringify(response), now());
-      }
-      return { order, orderItems, idempotentReplay: false };
-    });
-
-    if (!result.idempotentReplay) {
-      if (isModuleEnabled('kds')) notifyKdsUpdate();
-      cloudSync.recordOrderChanged(result.order.id, 'order.created');
-
-      if (customer_id) {
-        try {
-          syncCustomerTagCounts(db, customer_id, items);
-        } catch (err) {
-          console.error('[Orders] Tag sync failed:', err);
-        }
-      }
-    }
-
-    res.status(result.idempotentReplay ? 200 : 201).json({ order: Object.assign({}, result.order, { items: result.orderItems }) });
-  } catch (error: any) {
-    console.error('[Orders] Create error:', error);
-    console.error("[API] Internal error:", error);
-    res.status(error.statusCode || 500).json({ error: error.statusCode ? error.message : "Internal server error" });
-  }
-});
-
-router.post('/:id/items', requireRole('owner', 'manager', 'cashier', 'waiter'), (req: Request, res: Response) => {
-  try {
-    const db = getDatabase();
-    if (db.prepare('SELECT 1 FROM bills WHERE order_id = ? AND split_group_id IS NOT NULL LIMIT 1').get(req.params.id)) {
-      return res.status(409).json({ error: 'Items cannot be changed after a check has been split' });
-    }
-    const body = req.body || {};
-    const { items, special_instructions } = body;
-    const idempotencyKey = orderIdempotencyKey(req);
-    const idempotencyUserId = String((req as any).user.userId);
-    const requestHash = idempotencyKey
-      ? createHash('sha256').update(JSON.stringify({ order_id: req.params.id, items, special_instructions })).digest('hex')
-      : null;
-    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as any;
-    if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-
-    const authUser = (req as any).user;
-    if (authUser?.role === 'waiter' && order.user_id !== authUser.userId) {
-      return res.status(403).json({ error: 'Waiters can only modify their own orders' });
-    }
-
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ error: 'At least one item is required' });
-    }
-
-    try {
-      for (const item of items) {
-        validateItemNotes(db, item.special_instructions);
-        validateItemAddonGroupLimits(db, item.addons);
-      }
-      if (special_instructions !== undefined) {
-        validateOrderNotes(db, special_instructions);
-      }
-    } catch (err: any) {
-      return res.status(400).json({ error: err.message });
-    }
-
-    // Get settings
-    const settings: Record<string, string> = {};
-    db.prepare('SELECT key, value FROM settings').all().forEach((row: any) => {
-      settings[row.key] = row.value;
-    });
-
-    const tenantInfo = {
-      country: settings.country || 'IN',
-      business_type: settings.business_type || 'restaurant',
-      state_code: settings.state_code || '',
-      taxes_enabled: settings.taxes_enabled === 'true',
-    };
-
-    const result = withTxn(() => {
-      // Re-fetch and re-validate under the transaction lock: another request (e.g. a
-      // cashier completing/cancelling the order) can race the checks above, which run
-      // before this lock is acquired (#175).
-      const currentOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as any;
-      if (!currentOrder) {
-        throw Object.assign(new Error('Order not found'), { statusCode: 404 });
-      }
-      if (idempotencyKey) {
-        const prior = db.prepare(`
+        if (idempotencyKey) {
+          const prior = db
+            .prepare(
+              `
           SELECT request_hash, response_json
           FROM order_idempotency
           WHERE (user_id = ? OR user_id = 'legacy') AND idempotency_key = ?
           ORDER BY CASE WHEN user_id = ? THEN 0 ELSE 1 END
           LIMIT 1
-        `).get(idempotencyUserId, idempotencyKey, idempotencyUserId) as { request_hash: string; response_json: string } | undefined;
-        if (prior) {
-          if (prior.request_hash !== requestHash) throw Object.assign(new Error('Idempotency-Key was already used for a different order request'), { statusCode: 409 });
-          try {
-            return { replayResponse: JSON.parse(prior.response_json) };
-          } catch {
-            throw Object.assign(new Error('Stored order response is invalid'), { statusCode: 500 });
+        `,
+            )
+            .get(idempotencyUserId, idempotencyKey, idempotencyUserId) as
+            { request_hash: string; response_json: string } | undefined;
+          if (prior) {
+            if (prior.request_hash !== requestHash)
+              throw Object.assign(
+                new Error('Idempotency-Key was already used for a different order request'),
+                { statusCode: 409 },
+              );
+            try {
+              return { replayResponse: JSON.parse(prior.response_json) };
+            } catch {
+              throw Object.assign(new Error('Stored order response is invalid'), {
+                statusCode: 500,
+              });
+            }
           }
         }
-      }
-      if (['completed', 'cancelled'].includes(currentOrder.status)) {
-        throw Object.assign(new Error('Cannot add items to a completed or cancelled order'), { statusCode: 400 });
-      }
+        if (['completed', 'cancelled'].includes(currentOrder.status)) {
+          throw Object.assign(new Error('Cannot add items to a completed or cancelled order'), {
+            statusCode: 400,
+          });
+        }
 
-      const customer = currentOrder.customer_id ? db.prepare('SELECT * FROM customers WHERE id = ?').get(currentOrder.customer_id) as any : null;
+        const customer = currentOrder.customer_id
+          ? (db
+              .prepare('SELECT * FROM customers WHERE id = ?')
+              .get(currentOrder.customer_id) as any)
+          : null;
 
-      const insertItem = db.prepare(`
+        const insertItem = db.prepare(`
         INSERT INTO order_items (order_id, product_id, product_name, product_sku, unit_price, quantity,
           subtotal, tax_amount, tax_breakdown, tax_snapshot, tax_type, discount_amount, total, variant_selection,
           modifier_selection, special_instructions, status, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
       `);
 
-      for (const item of items) {
-        const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.product_id) as any;
-        if (!product) {
-          throw new Error(`Product ${item.product_id} not found`);
-        }
-        assertStockAvailable(product, item.quantity);
-
-        const unitPrice = parseFloat(product.price);
-        const quantity = item.quantity;
-        // item.discount_amount is intentionally ignored here — discounts are only
-        // applied through the dedicated PATCH discount endpoints, which enforce
-        // discount_mode/max_percentage/max_amount/approval (vuln-0002).
-        const itemDiscount = 0;
-
-        // Validate quantity and price
-        if (!quantity || quantity <= 0 || !Number.isFinite(quantity)) {
-          throw new Error(`Invalid quantity for ${product.name}: must be a positive number`);
-        }
-        if (unitPrice < 0 || !Number.isFinite(unitPrice)) {
-          throw new Error(`Invalid price for ${product.name}: must be a non-negative number`);
-        }
-
-        let itemSubtotal = unitPrice * quantity;
-        if (item.addons && Array.isArray(item.addons)) {
-          for (const addon of item.addons) {
-            if (!addon) continue;
-            if (addon.quantity !== undefined) {
-              if (typeof addon.quantity !== 'number' || !Number.isInteger(addon.quantity) || addon.quantity <= 0) {
-                throw new Error(`Invalid add-on quantity for ${addon.name || 'addon'}: must be a positive integer`);
-              }
-            }
-            const addonQty = addon.quantity || 1;
-            itemSubtotal += (addon.price || 0) * addonQty * quantity;
+        for (const item of items) {
+          const product = db
+            .prepare('SELECT * FROM products WHERE id = ?')
+            .get(item.product_id) as any;
+          if (!product) {
+            throw new Error(`Product ${item.product_id} not found`);
           }
+          assertStockAvailable(product, item.quantity);
+
+          const unitPrice = parseFloat(product.price);
+          const quantity = item.quantity;
+          // item.discount_amount is intentionally ignored here — discounts are only
+          // applied through the dedicated PATCH discount endpoints, which enforce
+          // discount_mode/max_percentage/max_amount/approval (vuln-0002).
+          const itemDiscount = 0;
+
+          // Validate quantity and price
+          if (!quantity || quantity <= 0 || !Number.isFinite(quantity)) {
+            throw new Error(`Invalid quantity for ${product.name}: must be a positive number`);
+          }
+          if (unitPrice < 0 || !Number.isFinite(unitPrice)) {
+            throw new Error(`Invalid price for ${product.name}: must be a non-negative number`);
+          }
+
+          let itemSubtotal = unitPrice * quantity;
+          if (item.addons && Array.isArray(item.addons)) {
+            for (const addon of item.addons) {
+              if (!addon) continue;
+              if (addon.quantity !== undefined) {
+                if (
+                  typeof addon.quantity !== 'number' ||
+                  !Number.isInteger(addon.quantity) ||
+                  addon.quantity <= 0
+                ) {
+                  throw new Error(
+                    `Invalid add-on quantity for ${addon.name || 'addon'}: must be a positive integer`,
+                  );
+                }
+              }
+              const addonQty = addon.quantity || 1;
+              itemSubtotal += (addon.price || 0) * addonQty * quantity;
+            }
+          }
+          itemSubtotal = Math.max(0, itemSubtotal - itemDiscount);
+
+          const taxResult = calculateItemTax(tenantInfo, product, itemSubtotal, customer);
+          const itemTotal =
+            itemSubtotal + (taxResult.tax_type === 'inclusive' ? 0 : taxResult.tax_amount);
+          const itemTaxSnapshotJson = taxResult.tax_snapshot
+            ? JSON.stringify(taxResult.tax_snapshot)
+            : null;
+
+          const itemCreatedAt = now();
+          const insertItemResult = insertItem.run(
+            req.params.id,
+            product.id,
+            product.name,
+            product.sku,
+            unitPrice,
+            quantity,
+            itemSubtotal,
+            taxResult.tax_amount,
+            JSON.stringify(taxResult.tax_breakdown),
+            itemTaxSnapshotJson,
+            taxResult.tax_type,
+            itemDiscount,
+            itemTotal,
+            JSON.stringify(item.variant_selection || null),
+            JSON.stringify(item.modifier_selection || null),
+            item.special_instructions || null,
+            itemCreatedAt,
+            itemCreatedAt,
+          );
+          insertOrderItemAddons(db, insertItemResult.lastInsertRowid, item.addons, itemCreatedAt);
+
+          decrementTrackedStock(db, product, quantity, now(), {
+            referenceType: 'order',
+            referenceId: req.params.id as string,
+          });
         }
-        itemSubtotal = Math.max(0, itemSubtotal - itemDiscount);
 
-        const taxResult = calculateItemTax(tenantInfo, product, itemSubtotal, customer);
-        const itemTotal = itemSubtotal + (taxResult.tax_type === 'inclusive' ? 0 : taxResult.tax_amount);
-        const itemTaxSnapshotJson = taxResult.tax_snapshot ? JSON.stringify(taxResult.tax_snapshot) : null;
+        // BUG #3 FIX: Filter out cancelled items from total recalculation
+        const activeItems = db
+          .prepare("SELECT * FROM order_items WHERE order_id = ? AND status != 'cancelled'")
+          .all(req.params.id) as any[];
+        let subtotal = 0;
+        let totalTax = 0;
+        let exclusiveTax = 0;
+        const allTaxBreakdowns: any[] = [];
+        const allTaxSnapshots: (string | null)[] = [];
+        for (const item of activeItems) {
+          subtotal += item.subtotal;
+          totalTax += item.tax_amount;
+          if (item.tax_type !== 'inclusive') {
+            exclusiveTax += item.tax_amount;
+          }
+          if (item.tax_breakdown) {
+            try {
+              const breakdown = JSON.parse(item.tax_breakdown);
+              if (Array.isArray(breakdown)) allTaxBreakdowns.push(breakdown);
+            } catch {}
+          }
+          allTaxSnapshots.push(item.tax_snapshot || null);
+        }
 
-        const itemCreatedAt = now();
-        const insertItemResult = insertItem.run(
-          req.params.id, product.id, product.name, product.sku, unitPrice, quantity,
-          itemSubtotal, taxResult.tax_amount, JSON.stringify(taxResult.tax_breakdown), itemTaxSnapshotJson,
-          taxResult.tax_type, itemDiscount, itemTotal,
-          JSON.stringify(item.variant_selection || null),
-          JSON.stringify(item.modifier_selection || null),
-          item.special_instructions || null, itemCreatedAt, itemCreatedAt
-        );
-        insertOrderItemAddons(db, insertItemResult.lastInsertRowid, item.addons, itemCreatedAt);
+        // BUG #12 FIX: Preserve order-level discount (scale percentage proportionally)
+        const existingDiscountAmount = currentOrder.discount_amount || 0;
+        let newDiscountAmount = existingDiscountAmount;
+        if (existingDiscountAmount > 0 && currentOrder.subtotal > 0) {
+          if (currentOrder.discount_type === 'percentage') {
+            const pct = currentOrder.discount_value || 0;
+            newDiscountAmount = Math.round(((subtotal * pct) / 100) * 100) / 100;
+          }
+          // amount type: keep same value
+        }
 
-        decrementTrackedStock(db, product, quantity, now(), {
-          referenceType: 'order',
-          referenceId: req.params.id as string,
+        const discountedSubtotal = Math.max(0, subtotal - newDiscountAmount);
+        const scaledTax = scaleItemTaxAfterOrderDiscount({
+          itemTaxAmount: totalTax,
+          itemExclusiveTaxAmount: exclusiveTax,
+          discountAmount: newDiscountAmount,
+          subtotal,
         });
-      }
+        const newTaxAmount = scaledTax.taxAmount;
+        const newExclusiveTax = scaledTax.exclusiveTaxAmount;
+        const taxRatio = scaledTax.taxRatio;
 
-      // BUG #3 FIX: Filter out cancelled items from total recalculation
-      const activeItems = db.prepare("SELECT * FROM order_items WHERE order_id = ? AND status != 'cancelled'").all(req.params.id) as any[];
-      let subtotal = 0;
-      let totalTax = 0;
-      let exclusiveTax = 0;
-      const allTaxBreakdowns: any[] = [];
-      const allTaxSnapshots: (string | null)[] = [];
-      for (const item of activeItems) {
-        subtotal += item.subtotal;
-        totalTax += item.tax_amount;
-        if (item.tax_type !== 'inclusive') {
-          exclusiveTax += item.tax_amount;
-        }
-        if (item.tax_breakdown) {
-          try {
-            const breakdown = JSON.parse(item.tax_breakdown);
-            if (Array.isArray(breakdown)) allTaxBreakdowns.push(breakdown);
-          } catch { }
-        }
-        allTaxSnapshots.push(item.tax_snapshot || null);
-      }
+        const chargeTaxes = calculateConfiguredChargeTaxes(
+          tenantInfo,
+          {
+            ...currentOrder,
+            service_charge: 0,
+          },
+          customer,
+        );
+        const taxRollup = combineItemAndChargeTaxes({
+          itemTaxAmount: newTaxAmount,
+          itemExclusiveTaxAmount: newExclusiveTax,
+          itemBreakdowns: allTaxBreakdowns,
+          itemSnapshots: allTaxSnapshots,
+          itemTaxRatio: taxRatio,
+          chargeTaxes,
+        });
+        const preRoundTotal =
+          discountedSubtotal +
+          taxRollup.exclusiveTaxAmount +
+          (currentOrder.delivery_charge || 0) +
+          (currentOrder.packaging_charge || 0);
+        const total = Number(preRoundTotal.toFixed(2));
+        const roundOff = 0;
 
-      // BUG #12 FIX: Preserve order-level discount (scale percentage proportionally)
-      const existingDiscountAmount = currentOrder.discount_amount || 0;
-      let newDiscountAmount = existingDiscountAmount;
-      if (existingDiscountAmount > 0 && currentOrder.subtotal > 0) {
-        if (currentOrder.discount_type === 'percentage') {
-          const pct = currentOrder.discount_value || 0;
-          newDiscountAmount = Math.round(subtotal * pct / 100 * 100) / 100;
-        }
-        // amount type: keep same value
-      }
-
-      const discountedSubtotal = Math.max(0, subtotal - newDiscountAmount);
-      const scaledTax = scaleItemTaxAfterOrderDiscount({
-        itemTaxAmount: totalTax,
-        itemExclusiveTaxAmount: exclusiveTax,
-        discountAmount: newDiscountAmount,
-        subtotal,
-      });
-      const newTaxAmount = scaledTax.taxAmount;
-      const newExclusiveTax = scaledTax.exclusiveTaxAmount;
-      const taxRatio = scaledTax.taxRatio;
-
-      const chargeTaxes = calculateConfiguredChargeTaxes(tenantInfo, {
-        ...currentOrder,
-        service_charge: 0,
-      }, customer);
-      const taxRollup = combineItemAndChargeTaxes({
-        itemTaxAmount: newTaxAmount,
-        itemExclusiveTaxAmount: newExclusiveTax,
-        itemBreakdowns: allTaxBreakdowns,
-        itemSnapshots: allTaxSnapshots,
-        itemTaxRatio: taxRatio,
-        chargeTaxes,
-      });
-      const preRoundTotal = discountedSubtotal + taxRollup.exclusiveTaxAmount
-        + (currentOrder.delivery_charge || 0) + (currentOrder.packaging_charge || 0);
-      const total = Number(preRoundTotal.toFixed(2));
-      const roundOff = 0;
-
-      // Update order totals and optionally update order-level notes
-      if (special_instructions !== undefined) {
-        db.prepare(`
+        // Update order totals and optionally update order-level notes
+        if (special_instructions !== undefined) {
+          db.prepare(
+            `
           UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?, special_instructions = ?, updated_at = ? WHERE id = ?
-        `).run(subtotal, taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, newDiscountAmount, total, roundOff, special_instructions || null, now(), req.params.id);
-      } else {
-        db.prepare(`
+        `,
+          ).run(
+            subtotal,
+            taxRollup.taxAmount,
+            JSON.stringify(taxRollup.breakdowns),
+            taxRollup.snapshotJson,
+            newDiscountAmount,
+            total,
+            roundOff,
+            special_instructions || null,
+            now(),
+            req.params.id,
+          );
+        } else {
+          db.prepare(
+            `
           UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?, updated_at = ? WHERE id = ?
-        `).run(subtotal, taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, newDiscountAmount, total, roundOff, now(), req.params.id);
+        `,
+          ).run(
+            subtotal,
+            taxRollup.taxAmount,
+            JSON.stringify(taxRollup.breakdowns),
+            taxRollup.snapshotJson,
+            newDiscountAmount,
+            total,
+            roundOff,
+            now(),
+            req.params.id,
+          );
+        }
+
+        // BUG #4 FIX: Sync bill if it exists (add-items didn't update the bill)
+        const existingBill = db
+          .prepare(
+            "SELECT * FROM bills WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')",
+          )
+          .get(req.params.id) as any;
+        if (existingBill) {
+          const pack = getActiveCountryPack(tenantInfo.country);
+          const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(total, pack);
+          const newBillBalance = Math.max(0, billTotal - (existingBill.paid_amount || 0));
+          db.prepare(
+            `UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?, updated_at = ? WHERE id = ?`,
+          ).run(
+            billTotal,
+            newBillBalance,
+            taxRollup.taxAmount,
+            JSON.stringify(taxRollup.breakdowns),
+            taxRollup.snapshotJson,
+            newDiscountAmount,
+            billRoundOff,
+            now(),
+            existingBill.id,
+          );
+        }
+
+        const updatedOrder = parseRowJson(
+          db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id),
+        ) as any;
+        const updatedItems = attachEffectiveAddons(
+          db,
+          db
+            .prepare('SELECT * FROM order_items WHERE order_id = ?')
+            .all(req.params.id)
+            .map(parseItemJson) as any[],
+        );
+        const response = { order: Object.assign({}, updatedOrder, { items: updatedItems }) };
+        if (idempotencyKey && requestHash) {
+          db.prepare(
+            'INSERT INTO order_idempotency (user_id, idempotency_key, request_hash, response_json, created_at) VALUES (?, ?, ?, ?, ?)',
+          ).run(idempotencyUserId, idempotencyKey, requestHash, JSON.stringify(response), now());
+        }
+        return { updatedOrder, updatedItems, replayResponse: null };
+      });
+
+      if (result.replayResponse) return res.json(result.replayResponse);
+      cloudSync.recordOrderChanged(req.params.id as string, 'order.updated');
+      if (isModuleEnabled('kds')) notifyKdsUpdate();
+
+      res.json({ order: Object.assign({}, result.updatedOrder, { items: result.updatedItems }) });
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res
+        .status(error.statusCode || 500)
+        .json({ error: error.statusCode ? error.message : 'Internal server error' });
+    }
+  },
+);
+
+router.patch(
+  '/:id/status',
+  requireRole('owner', 'manager', 'cashier', 'chef', 'waiter'),
+  (req: Request, res: Response) => {
+    try {
+      const { status, reason, override_pin, free_table } = req.body;
+
+      if (!status) {
+        return res.status(400).json({ error: 'Status is required' });
       }
 
-      // BUG #4 FIX: Sync bill if it exists (add-items didn't update the bill)
-      const existingBill = db.prepare("SELECT * FROM bills WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')").get(req.params.id) as any;
-      if (existingBill) {
-        const pack = getActiveCountryPack(tenantInfo.country);
-        const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(total, pack);
-        const newBillBalance = Math.max(0, billTotal - (existingBill.paid_amount || 0));
-        db.prepare(`UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?, updated_at = ? WHERE id = ?`)
-          .run(billTotal, newBillBalance, taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, newDiscountAmount, billRoundOff, now(), existingBill.id);
+      const validStatuses = ['preparing', 'ready', 'served', 'completed', 'cancelled'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: `Invalid status. Use: ${validStatuses.join(', ')}` });
       }
 
-      const updatedOrder = parseRowJson(db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)) as any;
-      const updatedItems = attachEffectiveAddons(db, db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(req.params.id).map(parseItemJson) as any[]);
-      const response = { order: Object.assign({}, updatedOrder, { items: updatedItems }) };
-      if (idempotencyKey && requestHash) {
-        db.prepare('INSERT INTO order_idempotency (user_id, idempotency_key, request_hash, response_json, created_at) VALUES (?, ?, ?, ?, ?)')
-          .run(idempotencyUserId, idempotencyKey, requestHash, JSON.stringify(response), now());
+      // reason is optional for cancellation
+
+      const db = getDatabase();
+      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
+      if (!order) {
+        return res.status(404).json({ error: 'Order not found' });
       }
-      return { updatedOrder, updatedItems, replayResponse: null };
-    });
+      const authUser = (req as any).user;
+      if (
+        authUser?.role === 'waiter' &&
+        String((order as any).user_id) !== String(authUser.userId)
+      ) {
+        return res.status(403).json({ error: 'Waiters can only modify their own orders' });
+      }
 
-    if (result.replayResponse) return res.json(result.replayResponse);
-    cloudSync.recordOrderChanged(req.params.id as string, 'order.updated');
-    if (isModuleEnabled('kds')) notifyKdsUpdate();
-
-    res.json({ order: Object.assign({}, result.updatedOrder, { items: result.updatedItems }) });
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(error.statusCode || 500).json({ error: error.statusCode ? error.message : "Internal server error" });
-  }
-});
-
-router.patch('/:id/status', requireRole('owner', 'manager', 'cashier', 'chef', 'waiter'), (req: Request, res: Response) => {
-  try {
-    const { status, reason, override_pin, free_table } = req.body;
-
-    if (!status) {
-      return res.status(400).json({ error: 'Status is required' });
-    }
-
-    const validStatuses = ['preparing', 'ready', 'served', 'completed', 'cancelled'];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: `Invalid status. Use: ${validStatuses.join(', ')}` });
-    }
-
-    // reason is optional for cancellation
-
-    const db = getDatabase();
-    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
-    if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-    const authUser = (req as any).user;
-    if (authUser?.role === 'waiter' && String((order as any).user_id) !== String(authUser.userId)) {
-      return res.status(403).json({ error: 'Waiters can only modify their own orders' });
-    }
-
-    // Override validation: cancelling an order in preparing+ status (or with items in preparing+) requires manager PIN
-    const statusOrder = ['pending', 'preparing', 'ready', 'served', 'completed'];
-    const currentStatusIndex = statusOrder.indexOf((order as any).status);
-    const hasItemsInProgress = db.prepare(`
+      // Override validation: cancelling an order in preparing+ status (or with items in preparing+) requires manager PIN
+      const statusOrder = ['pending', 'preparing', 'ready', 'served', 'completed'];
+      const currentStatusIndex = statusOrder.indexOf((order as any).status);
+      const hasItemsInProgress =
+        db
+          .prepare(
+            `
       SELECT 1 FROM order_items 
       WHERE order_id = ? AND status IN ('preparing', 'ready', 'served', 'completed') 
       LIMIT 1
-    `).get(req.params.id) !== undefined;
-    const requiresOverride = (currentStatusIndex > 0 || hasItemsInProgress) && status === 'cancelled';
+    `,
+          )
+          .get(req.params.id) !== undefined;
+      const requiresOverride =
+        (currentStatusIndex > 0 || hasItemsInProgress) && status === 'cancelled';
 
-    if (requiresOverride) {
-      if (!override_pin) {
-        return res.status(400).json({ error: 'Manager PIN required to cancel order in progress' });
-      }
+      if (requiresOverride) {
+        if (!override_pin) {
+          return res
+            .status(400)
+            .json({ error: 'Manager PIN required to cancel order in progress' });
+        }
 
-      // Rate limit PIN attempts per IP
-      const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
-      const rateLimitKey = `pin:${clientIp}:${req.params.id}`;
-      if (!checkPinRateLimit(rateLimitKey)) {
-        return res.status(429).json({ error: 'Too many PIN attempts. Try again in 15 minutes.' });
-      }
+        // Rate limit PIN attempts per IP
+        const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+        const rateLimitKey = `pin:${clientIp}:${req.params.id}`;
+        if (!checkPinRateLimit(rateLimitKey)) {
+          return res.status(429).json({ error: 'Too many PIN attempts. Try again in 15 minutes.' });
+        }
 
-      // Validate PIN against active owner/manager accounts only
-      const user = db.prepare("SELECT * FROM users WHERE is_active = 1 AND pin_hash IS NOT NULL AND role IN ('owner', 'manager')")
-        .all()
-        .find((u: any) => verifyPin(u.pin_hash, override_pin));
+        // Validate PIN against active owner/manager accounts only
+        const user = db
+          .prepare(
+            "SELECT * FROM users WHERE is_active = 1 AND pin_hash IS NOT NULL AND role IN ('owner', 'manager')",
+          )
+          .all()
+          .find((u: any) => verifyPin(u.pin_hash, override_pin));
 
-      if (!user) {
-        return res.status(403).json({ error: 'Invalid manager PIN' });
-      }
-    }
-
-    const nowStr = now();
-
-    const { updatedOrder, orderItems, table } = withTxn(() => {
-      switch (status) {
-        case 'preparing':
-          db.prepare('UPDATE orders SET status = ?, cooking_started_at = ?, updated_at = ? WHERE id = ?')
-            .run(status, nowStr, nowStr, req.params.id);
-          break;
-
-        case 'ready':
-          db.prepare('UPDATE orders SET status = ?, ready_at = ?, updated_at = ? WHERE id = ?')
-            .run(status, nowStr, nowStr, req.params.id);
-          break;
-
-        case 'served':
-          db.prepare('UPDATE orders SET status = ?, served_at = ?, updated_at = ? WHERE id = ?')
-            .run(status, nowStr, nowStr, req.params.id);
-          break;
-
-        case 'completed':
-          db.prepare('UPDATE orders SET status = ?, completed_at = ?, updated_at = ? WHERE id = ?')
-            .run(status, nowStr, nowStr, req.params.id);
-          db.prepare(`
-            UPDATE order_items SET status = 'served', updated_at = ?
-            WHERE order_id = ? AND status IN ('pending', 'preparing', 'ready')
-          `).run(nowStr, req.params.id);
-          if (isModuleEnabled('tables') && (order as any).table_id) {
-            db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?")
-              .run(nowStr, (order as any).table_id);
-          }
-          break;
-
-        case 'cancelled': {
-          const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(req.params.id) as any[];
-          for (const item of items) {
-            const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.product_id) as any;
-            restoreTrackedStock(db, product, item.quantity, nowStr, {
-              referenceType: 'order',
-              referenceId: req.params.id as string,
-              reason: 'order_cancelled',
-            });
-          }
-          db.prepare('UPDATE orders SET status = ?, cancelled_at = ?, cancellation_reason = ?, updated_at = ? WHERE id = ?')
-            .run(status, nowStr, reason, nowStr, req.params.id);
-          // Only free table if explicitly requested (default: true for backward compatibility)
-          if (isModuleEnabled('tables') && (order as any).table_id && free_table !== false) {
-            db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?")
-              .run(nowStr, (order as any).table_id);
-          }
-          break;
+        if (!user) {
+          return res.status(403).json({ error: 'Invalid manager PIN' });
         }
       }
 
-      const updatedOrder = parseRowJson(db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)) as any;
-      const orderItems = attachEffectiveAddons(db, db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(req.params.id).map(parseItemJson) as any[]);
-      const tableRow2 = updatedOrder.table_id ? db.prepare('SELECT * FROM tables WHERE id = ?').get(updatedOrder.table_id) as any : null;
-      const table = tableRow2 ? { ...tableRow2, name: tableRow2.number } : null;
-      return { updatedOrder, orderItems, table };
-    });
+      const nowStr = now();
 
-    cloudSync.recordOrderChanged(req.params.id as string, `order.${status}`);
-    if (isModuleEnabled('kds')) notifyKdsUpdate();
+      const { updatedOrder, orderItems, table } = withTxn(() => {
+        switch (status) {
+          case 'preparing':
+            db.prepare(
+              'UPDATE orders SET status = ?, cooking_started_at = ?, updated_at = ? WHERE id = ?',
+            ).run(status, nowStr, nowStr, req.params.id);
+            break;
 
-    res.json({ order: Object.assign({}, updatedOrder, { items: orderItems, table }) });
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+          case 'ready':
+            db.prepare(
+              'UPDATE orders SET status = ?, ready_at = ?, updated_at = ? WHERE id = ?',
+            ).run(status, nowStr, nowStr, req.params.id);
+            break;
+
+          case 'served':
+            db.prepare(
+              'UPDATE orders SET status = ?, served_at = ?, updated_at = ? WHERE id = ?',
+            ).run(status, nowStr, nowStr, req.params.id);
+            break;
+
+          case 'completed':
+            db.prepare(
+              'UPDATE orders SET status = ?, completed_at = ?, updated_at = ? WHERE id = ?',
+            ).run(status, nowStr, nowStr, req.params.id);
+            db.prepare(
+              `
+            UPDATE order_items SET status = 'served', updated_at = ?
+            WHERE order_id = ? AND status IN ('pending', 'preparing', 'ready')
+          `,
+            ).run(nowStr, req.params.id);
+            if (isModuleEnabled('tables') && (order as any).table_id) {
+              db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?").run(
+                nowStr,
+                (order as any).table_id,
+              );
+            }
+            break;
+
+          case 'cancelled': {
+            const items = db
+              .prepare('SELECT * FROM order_items WHERE order_id = ?')
+              .all(req.params.id) as any[];
+            for (const item of items) {
+              const product = db
+                .prepare('SELECT * FROM products WHERE id = ?')
+                .get(item.product_id) as any;
+              restoreTrackedStock(db, product, item.quantity, nowStr, {
+                referenceType: 'order',
+                referenceId: req.params.id as string,
+                reason: 'order_cancelled',
+              });
+            }
+            db.prepare(
+              'UPDATE orders SET status = ?, cancelled_at = ?, cancellation_reason = ?, updated_at = ? WHERE id = ?',
+            ).run(status, nowStr, reason, nowStr, req.params.id);
+            // Only free table if explicitly requested (default: true for backward compatibility)
+            if (isModuleEnabled('tables') && (order as any).table_id && free_table !== false) {
+              db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?").run(
+                nowStr,
+                (order as any).table_id,
+              );
+            }
+            break;
+          }
+        }
+
+        const updatedOrder = parseRowJson(
+          db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id),
+        ) as any;
+        const orderItems = attachEffectiveAddons(
+          db,
+          db
+            .prepare('SELECT * FROM order_items WHERE order_id = ?')
+            .all(req.params.id)
+            .map(parseItemJson) as any[],
+        );
+        const tableRow2 = updatedOrder.table_id
+          ? (db.prepare('SELECT * FROM tables WHERE id = ?').get(updatedOrder.table_id) as any)
+          : null;
+        const table = tableRow2 ? { ...tableRow2, name: tableRow2.number } : null;
+        return { updatedOrder, orderItems, table };
+      });
+
+      cloudSync.recordOrderChanged(req.params.id as string, `order.${status}`);
+      if (isModuleEnabled('kds')) notifyKdsUpdate();
+
+      res.json({ order: Object.assign({}, updatedOrder, { items: orderItems, table }) });
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 router.patch('/:id/customer', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
@@ -965,14 +1297,20 @@ router.patch('/:id/customer', requireRole('owner', 'manager'), (req: Request, re
 
     const nowStr = now();
     const updatedOrder = withTxn(() => {
-      db.prepare('UPDATE orders SET customer_id = ?, updated_at = ? WHERE id = ?')
-        .run(customer_id || null, nowStr, req.params.id);
+      db.prepare('UPDATE orders SET customer_id = ?, updated_at = ? WHERE id = ?').run(
+        customer_id || null,
+        nowStr,
+        req.params.id,
+      );
 
       // Keep every open (unpaid/partial) guest check attached to the same customer.
-      db.prepare("UPDATE bills SET customer_id = ?, updated_at = ? WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')")
-        .run(customer_id || null, nowStr, req.params.id);
+      db.prepare(
+        "UPDATE bills SET customer_id = ?, updated_at = ? WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')",
+      ).run(customer_id || null, nowStr, req.params.id);
 
-      return parseRowJson(db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)) as any;
+      return parseRowJson(
+        db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id),
+      ) as any;
     });
 
     const customer = updatedOrder.customer_id
@@ -984,53 +1322,82 @@ router.patch('/:id/customer', requireRole('owner', 'manager'), (req: Request, re
 
     res.json({ order: { ...updatedOrder, customer } });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.patch('/:id/convert-to-takeaway', requireRole('owner', 'manager', 'cashier', 'waiter'), (req: Request, res: Response) => {
-  try {
-    const db = getDatabase();
-    const nowStr = now();
+router.patch(
+  '/:id/convert-to-takeaway',
+  requireRole('owner', 'manager', 'cashier', 'waiter'),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const nowStr = now();
 
-    withTxn(() => {
-      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as any;
-      if (!order) {
-        throw Object.assign(new Error('Order not found'), { statusCode: 404 });
-      }
-      if (order.type !== 'dine_in') {
-        throw Object.assign(new Error('Only dine-in orders can be converted to takeaway'), { statusCode: 400 });
-      }
-      if (['completed', 'cancelled'].includes(order.status)) {
-        throw Object.assign(new Error('Cannot convert a completed or cancelled order'), { statusCode: 400 });
-      }
-      if (db.prepare('SELECT 1 FROM bills WHERE order_id = ? AND split_group_id IS NOT NULL LIMIT 1').get(req.params.id)) {
-        throw Object.assign(new Error('A split dine-in check cannot be converted to takeaway'), { statusCode: 409 });
-      }
+      withTxn(() => {
+        const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as any;
+        if (!order) {
+          throw Object.assign(new Error('Order not found'), { statusCode: 404 });
+        }
+        if (order.type !== 'dine_in') {
+          throw Object.assign(new Error('Only dine-in orders can be converted to takeaway'), {
+            statusCode: 400,
+          });
+        }
+        if (['completed', 'cancelled'].includes(order.status)) {
+          throw Object.assign(new Error('Cannot convert a completed or cancelled order'), {
+            statusCode: 400,
+          });
+        }
+        if (
+          db
+            .prepare(
+              'SELECT 1 FROM bills WHERE order_id = ? AND split_group_id IS NOT NULL LIMIT 1',
+            )
+            .get(req.params.id)
+        ) {
+          throw Object.assign(new Error('A split dine-in check cannot be converted to takeaway'), {
+            statusCode: 409,
+          });
+        }
 
-      db.prepare("UPDATE orders SET type = 'takeaway', table_id = NULL, updated_at = ? WHERE id = ?")
-        .run(nowStr, req.params.id);
+        db.prepare(
+          "UPDATE orders SET type = 'takeaway', table_id = NULL, updated_at = ? WHERE id = ?",
+        ).run(nowStr, req.params.id);
 
-      if (isModuleEnabled('tables') && order.table_id) {
-        db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?")
-          .run(nowStr, order.table_id);
-      }
-      return order.table_id;
-    });
+        if (isModuleEnabled('tables') && order.table_id) {
+          db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?").run(
+            nowStr,
+            order.table_id,
+          );
+        }
+        return order.table_id;
+      });
 
-    const updatedOrder = parseRowJson(db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)) as any;
-    const orderItems = attachEffectiveAddons(db, db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(req.params.id).map(parseItemJson) as any[]);
+      const updatedOrder = parseRowJson(
+        db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id),
+      ) as any;
+      const orderItems = attachEffectiveAddons(
+        db,
+        db
+          .prepare('SELECT * FROM order_items WHERE order_id = ?')
+          .all(req.params.id)
+          .map(parseItemJson) as any[],
+      );
 
-    cloudSync.recordOrderChanged(req.params.id as string, 'order.type_changed');
-    if (isModuleEnabled('kds')) notifyKdsUpdate();
+      cloudSync.recordOrderChanged(req.params.id as string, 'order.type_changed');
+      if (isModuleEnabled('kds')) notifyKdsUpdate();
 
-    res.json({ order: Object.assign({}, updatedOrder, { items: orderItems, table: null }) });
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(error.statusCode || 500).json({ error: error.statusCode ? error.message : "Internal server error" });
-  }
-});
+      res.json({ order: Object.assign({}, updatedOrder, { items: orderItems, table: null }) });
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res
+        .status(error.statusCode || 500)
+        .json({ error: error.statusCode ? error.message : 'Internal server error' });
+    }
+  },
+);
 
 router.patch('/:id/discount', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
@@ -1039,24 +1406,41 @@ router.patch('/:id/discount', requireRole('owner', 'manager'), (req: Request, re
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
-    if (db.prepare('SELECT 1 FROM bills WHERE order_id = ? AND split_group_id IS NOT NULL LIMIT 1').get(req.params.id)) {
-      return res.status(409).json({ error: 'Discounts cannot be changed after a check has been split' });
+    if (
+      db
+        .prepare('SELECT 1 FROM bills WHERE order_id = ? AND split_group_id IS NOT NULL LIMIT 1')
+        .get(req.params.id)
+    ) {
+      return res
+        .status(409)
+        .json({ error: 'Discounts cannot be changed after a check has been split' });
     }
 
     // Cannot apply discount to completed or cancelled orders
     if (['completed', 'cancelled'].includes(order.status)) {
-      return res.status(400).json({ error: 'Cannot apply discount to a completed or cancelled order' });
+      return res
+        .status(400)
+        .json({ error: 'Cannot apply discount to a completed or cancelled order' });
     }
 
     const { discount_type, discount_value, discount_reason } = req.body || {};
 
     // Validate discount_type
-    if (discount_value !== 0 && (!discount_type || !['percentage', 'amount'].includes(discount_type))) {
+    if (
+      discount_value !== 0 &&
+      (!discount_type || !['percentage', 'amount'].includes(discount_type))
+    ) {
       return res.status(400).json({ error: 'discount_type must be "percentage" or "amount"' });
     }
 
     // Validate discount_value is a non-negative finite number
-    if (discount_value === undefined || discount_value === null || typeof discount_value !== 'number' || discount_value < 0 || !Number.isFinite(discount_value)) {
+    if (
+      discount_value === undefined ||
+      discount_value === null ||
+      typeof discount_value !== 'number' ||
+      discount_value < 0 ||
+      !Number.isFinite(discount_value)
+    ) {
       return res.status(400).json({ error: 'discount_value must be a non-negative number' });
     }
 
@@ -1066,14 +1450,19 @@ router.patch('/:id/discount', requireRole('owner', 'manager'), (req: Request, re
       if (requiresApproval) {
         const { override_pin } = req.body || {};
         if (!override_pin) {
-          return res.status(403).json({ error: 'Manager PIN required for discounts', requiresApproval: true });
+          return res
+            .status(403)
+            .json({ error: 'Manager PIN required for discounts', requiresApproval: true });
         }
         const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
         const rateLimitKey = `pin:${clientIp}:discount`;
         if (!checkPinRateLimit(rateLimitKey)) {
           return res.status(429).json({ error: 'Too many PIN attempts. Try again in 15 minutes.' });
         }
-        const user = db.prepare("SELECT * FROM users WHERE is_active = 1 AND pin_hash IS NOT NULL AND role IN ('owner', 'manager')")
+        const user = db
+          .prepare(
+            "SELECT * FROM users WHERE is_active = 1 AND pin_hash IS NOT NULL AND role IN ('owner', 'manager')",
+          )
           .all()
           .find((u: any) => verifyPin(u.pin_hash, override_pin));
         if (!user) {
@@ -1098,12 +1487,16 @@ router.patch('/:id/discount', requireRole('owner', 'manager'), (req: Request, re
       if (discount_type === 'percentage') {
         const maxPercentage = parseFloat(getSettingValue('discount_max_percentage') || '25');
         if (maxPercentage > 0 && discount_value > maxPercentage) {
-          return res.status(400).json({ error: `discount_value exceeds maximum percentage of ${maxPercentage}` });
+          return res
+            .status(400)
+            .json({ error: `discount_value exceeds maximum percentage of ${maxPercentage}` });
         }
       } else if (discount_type === 'amount') {
         const maxAmount = parseFloat(getSettingValue('discount_max_amount') || '0');
         if (maxAmount > 0 && discount_value > maxAmount) {
-          return res.status(400).json({ error: `discount_value exceeds maximum amount of ${maxAmount}` });
+          return res
+            .status(400)
+            .json({ error: `discount_value exceeds maximum amount of ${maxAmount}` });
         }
       }
     }
@@ -1118,16 +1511,20 @@ router.patch('/:id/discount', requireRole('owner', 'manager'), (req: Request, re
       // Re-fetch and re-validate under the transaction lock: another request (e.g. a
       // concurrent item add/void, or the order being completed/cancelled) can race the
       // checks above and change status/subtotal before this lock is acquired (#175).
-      const currentOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as any;
+      const currentOrder = db
+        .prepare('SELECT * FROM orders WHERE id = ?')
+        .get(req.params.id) as any;
       if (!currentOrder) {
         throw Object.assign(new Error('Order not found'), { statusCode: 404 });
       }
       if (['completed', 'cancelled'].includes(currentOrder.status)) {
-        throw Object.assign(new Error('Cannot apply discount to a completed or cancelled order'), { statusCode: 400 });
+        throw Object.assign(new Error('Cannot apply discount to a completed or cancelled order'), {
+          statusCode: 400,
+        });
       }
 
       const customer = currentOrder.customer_id
-        ? db.prepare('SELECT * FROM customers WHERE id = ?').get(currentOrder.customer_id) as any
+        ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(currentOrder.customer_id) as any)
         : null;
 
       // Calculate discount amount
@@ -1144,7 +1541,9 @@ router.patch('/:id/discount', requireRole('owner', 'manager'), (req: Request, re
       // Always recalculate tax from item-level data (not by scaling the already-discounted
       // order.tax_amount from the DB), otherwise repeated discount updates compound the
       // reduction each time this endpoint is called.
-      const activeItems = db.prepare("SELECT * FROM order_items WHERE order_id = ? AND status != 'cancelled'").all(req.params.id) as any[];
+      const activeItems = db
+        .prepare("SELECT * FROM order_items WHERE order_id = ? AND status != 'cancelled'")
+        .all(req.params.id) as any[];
       let freshTax = 0;
       let exclusiveTax = 0;
       const allTaxBreakdowns: any[] = [];
@@ -1158,7 +1557,7 @@ router.patch('/:id/discount', requireRole('owner', 'manager'), (req: Request, re
           try {
             const breakdown = JSON.parse(item.tax_breakdown);
             if (Array.isArray(breakdown)) allTaxBreakdowns.push(breakdown);
-          } catch { }
+          } catch {}
         }
         allTaxSnapshots.push(item.tax_snapshot || null);
       }
@@ -1178,10 +1577,14 @@ router.patch('/:id/discount', requireRole('owner', 'manager'), (req: Request, re
       }
 
       const discountedSubtotal = Math.max(0, currentOrder.subtotal - discountAmount);
-      const chargeTaxes = calculateConfiguredChargeTaxes(tenantInfo, {
-        ...currentOrder,
-        service_charge: 0,
-      }, customer);
+      const chargeTaxes = calculateConfiguredChargeTaxes(
+        tenantInfo,
+        {
+          ...currentOrder,
+          service_charge: 0,
+        },
+        customer,
+      );
       const taxRollup = combineItemAndChargeTaxes({
         itemTaxAmount: newTaxAmount,
         itemExclusiveTaxAmount: newExclusiveTax,
@@ -1190,521 +1593,737 @@ router.patch('/:id/discount', requireRole('owner', 'manager'), (req: Request, re
         itemTaxRatio: taxRatio,
         chargeTaxes,
       });
-      const preRoundTotal = discountedSubtotal + taxRollup.exclusiveTaxAmount
-        + (currentOrder.packaging_charge || 0) + (currentOrder.delivery_charge || 0);
+      const preRoundTotal =
+        discountedSubtotal +
+        taxRollup.exclusiveTaxAmount +
+        (currentOrder.packaging_charge || 0) +
+        (currentOrder.delivery_charge || 0);
       const newTotal = Number(preRoundTotal.toFixed(2));
       const roundOff = 0;
 
-      db.prepare(`
+      db.prepare(
+        `
         UPDATE orders SET discount_amount = ?, discount_type = ?, discount_value = ?,
           discount_reason = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, total = ?, round_off = ?, updated_at = ? WHERE id = ?
-      `).run(
+      `,
+      ).run(
         discountAmount,
         discount_value > 0 ? discount_type : null,
         discount_value > 0 ? discount_value : null,
-        discount_value > 0 ? (discount_reason || null) : null,
-        taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, newTotal, roundOff, now(), req.params.id
+        discount_value > 0 ? discount_reason || null : null,
+        taxRollup.taxAmount,
+        JSON.stringify(taxRollup.breakdowns),
+        taxRollup.snapshotJson,
+        newTotal,
+        roundOff,
+        now(),
+        req.params.id,
       );
 
       // Sync discount to bill if it exists and is unpaid
-      const existingBill = db.prepare('SELECT * FROM bills WHERE order_id = ? AND payment_status != ?')
+      const existingBill = db
+        .prepare('SELECT * FROM bills WHERE order_id = ? AND payment_status != ?')
         .get(req.params.id, 'paid') as any;
       if (existingBill) {
         const pack = getActiveCountryPack(tenantInfo.country);
         const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(newTotal, pack);
         const newBillBalance = Math.max(0, billTotal - (existingBill.paid_amount || 0));
-        db.prepare(`
+        db.prepare(
+          `
           UPDATE bills SET discount_amount = ?, discount_type = ?, discount_value = ?,
             discount_reason = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, total = ?, balance = ?, round_off = ?, updated_at = ?
           WHERE id = ?
-        `).run(
+        `,
+        ).run(
           discountAmount,
           discount_value > 0 ? discount_type : null,
           discount_value > 0 ? discount_value : null,
-          discount_value > 0 ? (discount_reason || null) : null,
-          taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, billTotal, newBillBalance, billRoundOff, now(), existingBill.id
+          discount_value > 0 ? discount_reason || null : null,
+          taxRollup.taxAmount,
+          JSON.stringify(taxRollup.breakdowns),
+          taxRollup.snapshotJson,
+          billTotal,
+          newBillBalance,
+          billRoundOff,
+          now(),
+          existingBill.id,
         );
       }
 
-      const updatedOrder = parseRowJson(db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)) as any;
+      const updatedOrder = parseRowJson(
+        db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id),
+      ) as any;
       return updatedOrder;
     });
 
     notifyOrderUpdated();
     res.json({ order: result });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(error.statusCode || 500).json({ error: error.statusCode ? error.message : "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res
+      .status(error.statusCode || 500)
+      .json({ error: error.statusCode ? error.message : 'Internal server error' });
   }
 });
 
-router.patch('/:id/items/:itemId/discount', requireRole('owner', 'manager'), (req: Request, res: Response) => {
-  try {
-    const db = getDatabase();
-    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as any;
-    if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-    if (db.prepare('SELECT 1 FROM bills WHERE order_id = ? AND split_group_id IS NOT NULL LIMIT 1').get(req.params.id)) {
-      return res.status(409).json({ error: 'Discounts cannot be changed after a check has been split' });
-    }
-
-    // Cannot apply discount to completed or cancelled orders
-    if (['completed', 'cancelled'].includes(order.status)) {
-      return res.status(400).json({ error: 'Cannot apply discount to a completed or cancelled order' });
-    }
-
-    const item = db.prepare('SELECT * FROM order_items WHERE id = ? AND order_id = ?').get(req.params.itemId, req.params.id) as any;
-    if (!item) {
-      return res.status(404).json({ error: 'Item not found' });
-    }
-
-    const { discount_type, discount_value } = req.body;
-
-    // Validate discount_type
-    if (!discount_type || !['percentage', 'amount'].includes(discount_type)) {
-      return res.status(400).json({ error: 'discount_type must be "percentage" or "amount"' });
-    }
-
-    // Validate discount_value is a positive number
-    if (discount_value === undefined || discount_value === null || typeof discount_value !== 'number' || discount_value <= 0) {
-      return res.status(400).json({ error: 'discount_value must be a positive number' });
-    }
-
-    // Check if approval is required
-    const requiresApproval = getSettingValue('discount_requires_approval') === 'true';
-    if (requiresApproval) {
-      const { override_pin } = req.body;
-      if (!override_pin) {
-        return res.status(403).json({ error: 'Manager PIN required for discounts', requiresApproval: true });
+router.patch(
+  '/:id/items/:itemId/discount',
+  requireRole('owner', 'manager'),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as any;
+      if (!order) {
+        return res.status(404).json({ error: 'Order not found' });
       }
-      const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
-      const rateLimitKey = `pin:${clientIp}:item-discount`;
-      if (!checkPinRateLimit(rateLimitKey)) {
-        return res.status(429).json({ error: 'Too many PIN attempts. Try again in 15 minutes.' });
+      if (
+        db
+          .prepare('SELECT 1 FROM bills WHERE order_id = ? AND split_group_id IS NOT NULL LIMIT 1')
+          .get(req.params.id)
+      ) {
+        return res
+          .status(409)
+          .json({ error: 'Discounts cannot be changed after a check has been split' });
       }
-      const user = db.prepare("SELECT * FROM users WHERE is_active = 1 AND pin_hash IS NOT NULL AND role IN ('owner', 'manager')")
-        .all()
-        .find((u: any) => verifyPin(u.pin_hash, override_pin));
-      if (!user) {
-        return res.status(403).json({ error: 'Invalid manager PIN' });
+
+      // Cannot apply discount to completed or cancelled orders
+      if (['completed', 'cancelled'].includes(order.status)) {
+        return res
+          .status(400)
+          .json({ error: 'Cannot apply discount to a completed or cancelled order' });
       }
-    }
 
-    // Check discount mode
-    const discountMode = getSettingValue('discount_mode') || 'percentage';
-    if (discountMode === 'flat' && discount_type === 'percentage') {
-      return res.status(400).json({ error: 'Percentage discounts are disabled' });
-    }
-    if (discountMode === 'percentage' && discount_type === 'amount') {
-      return res.status(400).json({ error: 'Flat amount discounts are disabled' });
-    }
-
-    // BUG #14 FIX: Check item-level discount against max settings (0 = no limit)
-    if (discount_type === 'percentage') {
-      const maxPercentage = parseFloat(getSettingValue('discount_max_percentage') || '25');
-      if (maxPercentage > 0 && discount_value > maxPercentage) {
-        return res.status(400).json({ error: `discount_value exceeds maximum percentage of ${maxPercentage}` });
+      const item = db
+        .prepare('SELECT * FROM order_items WHERE id = ? AND order_id = ?')
+        .get(req.params.itemId, req.params.id) as any;
+      if (!item) {
+        return res.status(404).json({ error: 'Item not found' });
       }
-    } else if (discount_type === 'amount') {
-      const maxAmount = parseFloat(getSettingValue('discount_max_amount') || '0');
-      if (maxAmount > 0 && discount_value > maxAmount) {
-        return res.status(400).json({ error: `discount_value exceeds maximum amount of ${maxAmount}` });
+
+      const { discount_type, discount_value } = req.body;
+
+      // Validate discount_type
+      if (!discount_type || !['percentage', 'amount'].includes(discount_type)) {
+        return res.status(400).json({ error: 'discount_type must be "percentage" or "amount"' });
       }
-    }
 
-    // Calculate item discount amount (include addon prices)
-    const addonRows = db.prepare('SELECT price, quantity FROM order_item_addons WHERE order_item_id = ?').all(item.id) as { price: number; quantity?: number }[];
-    const addonTotal = addonRows.reduce((sum, addon) => sum + (addon.price || 0) * (addon.quantity || 1) * item.quantity, 0);
-    const itemBaseTotal = item.unit_price * item.quantity + addonTotal;
+      // Validate discount_value is a positive number
+      if (
+        discount_value === undefined ||
+        discount_value === null ||
+        typeof discount_value !== 'number' ||
+        discount_value <= 0
+      ) {
+        return res.status(400).json({ error: 'discount_value must be a positive number' });
+      }
 
-    let discountAmount: number;
-    if (discount_type === 'percentage') {
-      discountAmount = (itemBaseTotal * discount_value) / 100;
-    } else {
-      discountAmount = Math.min(discount_value, itemBaseTotal);
-    }
-    discountAmount = Math.round(discountAmount * 100) / 100;
+      // Check if approval is required
+      const requiresApproval = getSettingValue('discount_requires_approval') === 'true';
+      if (requiresApproval) {
+        const { override_pin } = req.body;
+        if (!override_pin) {
+          return res
+            .status(403)
+            .json({ error: 'Manager PIN required for discounts', requiresApproval: true });
+        }
+        const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+        const rateLimitKey = `pin:${clientIp}:item-discount`;
+        if (!checkPinRateLimit(rateLimitKey)) {
+          return res.status(429).json({ error: 'Too many PIN attempts. Try again in 15 minutes.' });
+        }
+        const user = db
+          .prepare(
+            "SELECT * FROM users WHERE is_active = 1 AND pin_hash IS NOT NULL AND role IN ('owner', 'manager')",
+          )
+          .all()
+          .find((u: any) => verifyPin(u.pin_hash, override_pin));
+        if (!user) {
+          return res.status(403).json({ error: 'Invalid manager PIN' });
+        }
+      }
 
-    // Recalculate item subtotal after discount
-    const newSubtotal = Math.max(0, itemBaseTotal - discountAmount);
+      // Check discount mode
+      const discountMode = getSettingValue('discount_mode') || 'percentage';
+      if (discountMode === 'flat' && discount_type === 'percentage') {
+        return res.status(400).json({ error: 'Percentage discounts are disabled' });
+      }
+      if (discountMode === 'percentage' && discount_type === 'amount') {
+        return res.status(400).json({ error: 'Flat amount discounts are disabled' });
+      }
 
-    // Recalculate tax on discounted subtotal
-    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.product_id) as any;
-    const customer = order.customer_id ? db.prepare('SELECT * FROM customers WHERE id = ?').get(order.customer_id) as any : null;
-    const settings = db.prepare("SELECT * FROM settings WHERE key IN ('country', 'business_type', 'state_code', 'taxes_enabled')").all() as any[];
-    const settingsMap = Object.fromEntries(settings.map((s: any) => [s.key, s.value]));
-    const tenantInfo = {
-      country: settingsMap.country || 'IN',
-      business_type: settingsMap.business_type || 'restaurant',
-      state_code: settingsMap.state_code || '',
-      taxes_enabled: settingsMap.taxes_enabled === 'true',
-    };
-    const taxResult = calculateItemTax(tenantInfo, product, newSubtotal, customer);
-    const newTaxAmount = taxResult.tax_amount;
-    const newTaxBreakdown = taxResult.tax_breakdown;
-    const newTaxSnapshotJson = taxResult.tax_snapshot ? JSON.stringify(taxResult.tax_snapshot) : null;
+      // BUG #14 FIX: Check item-level discount against max settings (0 = no limit)
+      if (discount_type === 'percentage') {
+        const maxPercentage = parseFloat(getSettingValue('discount_max_percentage') || '25');
+        if (maxPercentage > 0 && discount_value > maxPercentage) {
+          return res
+            .status(400)
+            .json({ error: `discount_value exceeds maximum percentage of ${maxPercentage}` });
+        }
+      } else if (discount_type === 'amount') {
+        const maxAmount = parseFloat(getSettingValue('discount_max_amount') || '0');
+        if (maxAmount > 0 && discount_value > maxAmount) {
+          return res
+            .status(400)
+            .json({ error: `discount_value exceeds maximum amount of ${maxAmount}` });
+        }
+      }
 
-    const newTotal = newSubtotal + (taxResult.tax_type === 'inclusive' ? 0 : newTaxAmount);
+      // Calculate item discount amount (include addon prices)
+      const addonRows = db
+        .prepare('SELECT price, quantity FROM order_item_addons WHERE order_item_id = ?')
+        .all(item.id) as { price: number; quantity?: number }[];
+      const addonTotal = addonRows.reduce(
+        (sum, addon) => sum + (addon.price || 0) * (addon.quantity || 1) * item.quantity,
+        0,
+      );
+      const itemBaseTotal = item.unit_price * item.quantity + addonTotal;
 
-    const updatedItem = withTxn(() => {
-      // Update item with recalculated tax
-      db.prepare(`
+      let discountAmount: number;
+      if (discount_type === 'percentage') {
+        discountAmount = (itemBaseTotal * discount_value) / 100;
+      } else {
+        discountAmount = Math.min(discount_value, itemBaseTotal);
+      }
+      discountAmount = Math.round(discountAmount * 100) / 100;
+
+      // Recalculate item subtotal after discount
+      const newSubtotal = Math.max(0, itemBaseTotal - discountAmount);
+
+      // Recalculate tax on discounted subtotal
+      const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.product_id) as any;
+      const customer = order.customer_id
+        ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(order.customer_id) as any)
+        : null;
+      const settings = db
+        .prepare(
+          "SELECT * FROM settings WHERE key IN ('country', 'business_type', 'state_code', 'taxes_enabled')",
+        )
+        .all() as any[];
+      const settingsMap = Object.fromEntries(settings.map((s: any) => [s.key, s.value]));
+      const tenantInfo = {
+        country: settingsMap.country || 'IN',
+        business_type: settingsMap.business_type || 'restaurant',
+        state_code: settingsMap.state_code || '',
+        taxes_enabled: settingsMap.taxes_enabled === 'true',
+      };
+      const taxResult = calculateItemTax(tenantInfo, product, newSubtotal, customer);
+      const newTaxAmount = taxResult.tax_amount;
+      const newTaxBreakdown = taxResult.tax_breakdown;
+      const newTaxSnapshotJson = taxResult.tax_snapshot
+        ? JSON.stringify(taxResult.tax_snapshot)
+        : null;
+
+      const newTotal = newSubtotal + (taxResult.tax_type === 'inclusive' ? 0 : newTaxAmount);
+
+      const updatedItem = withTxn(() => {
+        // Update item with recalculated tax
+        db.prepare(
+          `
         UPDATE order_items SET discount_amount = ?,
           subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, tax_type = ?,
           total = ?, updated_at = ? WHERE id = ?
-      `).run(
-        discountAmount, newSubtotal, newTaxAmount, JSON.stringify(newTaxBreakdown),
-        newTaxSnapshotJson, taxResult.tax_type, newTotal, now(), req.params.itemId,
-      );
+      `,
+        ).run(
+          discountAmount,
+          newSubtotal,
+          newTaxAmount,
+          JSON.stringify(newTaxBreakdown),
+          newTaxSnapshotJson,
+          taxResult.tax_type,
+          newTotal,
+          now(),
+          req.params.itemId,
+        );
 
-      // Update order totals (preserve existing order-level discount)
-      // Note: status != 'cancelled' — a cancelled item's tax must not re-enter
-      // the order total here, same filter every other recompute site in this
-      // file already uses (BUG #3 FIX above, index.ts cancel/restore below).
-      const allItems = db.prepare("SELECT * FROM order_items WHERE order_id = ? AND status != 'cancelled'").all(req.params.id) as any[];
-      let orderSubtotal = 0;
-      let orderTax = 0;
-      let exclusiveOrderTax = 0;
-      const allTaxBreakdowns: any[] = [];
-      const allTaxSnapshots: (string | null)[] = [];
-      for (const i of allItems) {
-        orderSubtotal += i.subtotal;
-        orderTax += i.tax_amount;
-        if (i.tax_type !== 'inclusive') {
-          exclusiveOrderTax += i.tax_amount;
+        // Update order totals (preserve existing order-level discount)
+        // Note: status != 'cancelled' — a cancelled item's tax must not re-enter
+        // the order total here, same filter every other recompute site in this
+        // file already uses (BUG #3 FIX above, index.ts cancel/restore below).
+        const allItems = db
+          .prepare("SELECT * FROM order_items WHERE order_id = ? AND status != 'cancelled'")
+          .all(req.params.id) as any[];
+        let orderSubtotal = 0;
+        let orderTax = 0;
+        let exclusiveOrderTax = 0;
+        const allTaxBreakdowns: any[] = [];
+        const allTaxSnapshots: (string | null)[] = [];
+        for (const i of allItems) {
+          orderSubtotal += i.subtotal;
+          orderTax += i.tax_amount;
+          if (i.tax_type !== 'inclusive') {
+            exclusiveOrderTax += i.tax_amount;
+          }
+          if (i.tax_breakdown) {
+            try {
+              const breakdown = JSON.parse(i.tax_breakdown);
+              if (Array.isArray(breakdown)) allTaxBreakdowns.push(breakdown);
+            } catch {}
+          }
+          allTaxSnapshots.push(i.tax_snapshot || null);
         }
-        if (i.tax_breakdown) {
-          try {
-            const breakdown = JSON.parse(i.tax_breakdown);
-            if (Array.isArray(breakdown)) allTaxBreakdowns.push(breakdown);
-          } catch { }
+
+        // Recalculate order-level discount proportionally on new subtotal
+        const existingDiscountAmount = order.discount_amount || 0;
+        let newOrderDiscount = existingDiscountAmount;
+        if (existingDiscountAmount > 0 && order.subtotal > 0) {
+          // Scale discount proportionally to new subtotal
+          newOrderDiscount =
+            Math.round(existingDiscountAmount * (orderSubtotal / order.subtotal) * 100) / 100;
         }
-        allTaxSnapshots.push(i.tax_snapshot || null);
-      }
 
-      // Recalculate order-level discount proportionally on new subtotal
-      const existingDiscountAmount = order.discount_amount || 0;
-      let newOrderDiscount = existingDiscountAmount;
-      if (existingDiscountAmount > 0 && order.subtotal > 0) {
-        // Scale discount proportionally to new subtotal
-        newOrderDiscount = Math.round(existingDiscountAmount * (orderSubtotal / order.subtotal) * 100) / 100;
-      }
+        // Recalculate tax on discounted subtotal
+        const discountedSubtotal = Math.max(0, orderSubtotal - newOrderDiscount);
+        const scaledOrderTax = scaleItemTaxAfterOrderDiscount({
+          itemTaxAmount: orderTax,
+          itemExclusiveTaxAmount: exclusiveOrderTax,
+          discountAmount: newOrderDiscount,
+          subtotal: orderSubtotal,
+        });
+        const newOrderTax = scaledOrderTax.taxAmount;
+        const newExclusiveOrderTax = scaledOrderTax.exclusiveTaxAmount;
+        const taxRatio = scaledOrderTax.taxRatio;
 
-      // Recalculate tax on discounted subtotal
-      const discountedSubtotal = Math.max(0, orderSubtotal - newOrderDiscount);
-      const scaledOrderTax = scaleItemTaxAfterOrderDiscount({
-        itemTaxAmount: orderTax,
-        itemExclusiveTaxAmount: exclusiveOrderTax,
-        discountAmount: newOrderDiscount,
-        subtotal: orderSubtotal,
-      });
-      const newOrderTax = scaledOrderTax.taxAmount;
-      const newExclusiveOrderTax = scaledOrderTax.exclusiveTaxAmount;
-      const taxRatio = scaledOrderTax.taxRatio;
+        const chargeTaxes = calculateConfiguredChargeTaxes(
+          tenantInfo,
+          {
+            ...order,
+            service_charge: 0,
+          },
+          customer,
+        );
+        const taxRollup = combineItemAndChargeTaxes({
+          itemTaxAmount: newOrderTax,
+          itemExclusiveTaxAmount: newExclusiveOrderTax,
+          itemBreakdowns: allTaxBreakdowns,
+          itemSnapshots: allTaxSnapshots,
+          itemTaxRatio: taxRatio,
+          chargeTaxes,
+        });
+        const preRoundTotal =
+          discountedSubtotal +
+          taxRollup.exclusiveTaxAmount +
+          (order.packaging_charge || 0) +
+          (order.delivery_charge || 0);
+        const orderTotal = Number(preRoundTotal.toFixed(2));
+        const roundOff = 0;
 
-      const chargeTaxes = calculateConfiguredChargeTaxes(tenantInfo, {
-        ...order,
-        service_charge: 0,
-      }, customer);
-      const taxRollup = combineItemAndChargeTaxes({
-        itemTaxAmount: newOrderTax,
-        itemExclusiveTaxAmount: newExclusiveOrderTax,
-        itemBreakdowns: allTaxBreakdowns,
-        itemSnapshots: allTaxSnapshots,
-        itemTaxRatio: taxRatio,
-        chargeTaxes,
-      });
-      const preRoundTotal = discountedSubtotal + taxRollup.exclusiveTaxAmount
-        + (order.packaging_charge || 0) + (order.delivery_charge || 0);
-      const orderTotal = Number(preRoundTotal.toFixed(2));
-      const roundOff = 0;
-
-      db.prepare(`
+        db.prepare(
+          `
         UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?, updated_at = ? WHERE id = ?
-      `).run(orderSubtotal, taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, newOrderDiscount, orderTotal, roundOff, now(), req.params.id);
+      `,
+        ).run(
+          orderSubtotal,
+          taxRollup.taxAmount,
+          JSON.stringify(taxRollup.breakdowns),
+          taxRollup.snapshotJson,
+          newOrderDiscount,
+          orderTotal,
+          roundOff,
+          now(),
+          req.params.id,
+        );
 
-      // BUG #15 FIX: Sync item-level discount to bill
-      const existingBill = db.prepare("SELECT * FROM bills WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')").get(req.params.id) as any;
-      if (existingBill) {
-        const pack = getActiveCountryPack(tenantInfo.country);
-        const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(orderTotal, pack);
-        const newBillBalance = Math.max(0, billTotal - (existingBill.paid_amount || 0));
-        db.prepare(`UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?, updated_at = ? WHERE id = ?`)
-          .run(billTotal, newBillBalance, taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, newOrderDiscount, billRoundOff, now(), existingBill.id);
-      }
+        // BUG #15 FIX: Sync item-level discount to bill
+        const existingBill = db
+          .prepare(
+            "SELECT * FROM bills WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')",
+          )
+          .get(req.params.id) as any;
+        if (existingBill) {
+          const pack = getActiveCountryPack(tenantInfo.country);
+          const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(
+            orderTotal,
+            pack,
+          );
+          const newBillBalance = Math.max(0, billTotal - (existingBill.paid_amount || 0));
+          db.prepare(
+            `UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?, updated_at = ? WHERE id = ?`,
+          ).run(
+            billTotal,
+            newBillBalance,
+            taxRollup.taxAmount,
+            JSON.stringify(taxRollup.breakdowns),
+            taxRollup.snapshotJson,
+            newOrderDiscount,
+            billRoundOff,
+            now(),
+            existingBill.id,
+          );
+        }
 
-      return db.prepare('SELECT * FROM order_items WHERE id = ?').get(req.params.itemId) as any;
-    });
+        return db.prepare('SELECT * FROM order_items WHERE id = ?').get(req.params.itemId) as any;
+      });
 
-    res.json({ item: updatedItem });
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(error.statusCode || 500).json({ error: error.statusCode ? error.message : "Internal server error" });
-  }
-});
+      res.json({ item: updatedItem });
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res
+        .status(error.statusCode || 500)
+        .json({ error: error.statusCode ? error.message : 'Internal server error' });
+    }
+  },
+);
 
 // Soft-delete / void order item (relocated from index.ts — Phase 2.14; paths identical under /api/orders)
-router.patch('/:orderId/items/:itemId/cancel', (req, res) => {
+router.patch('/:orderId/items/:itemId/cancel', async (req, res) => {
   try {
-    const { orderId, itemId } = req.params;
-    const { override_pin } = req.body;
+    await withSpan('order', DOMAIN_SPAN.order.cancelItem, async () => {
+      const { orderId, itemId } = req.params;
+      const { override_pin } = req.body;
 
-    // requireAuth (main/server.ts) already verified the token and attached
-    // the user's current DB role to req.user — use that, not the JWT claim.
-    const userRole = (req as any).user?.role;
-    if (!userRole) return res.status(403).json({ error: 'Authentication required' });
+      // requireAuth (main/server.ts) already verified the token and attached
+      // the user's current DB role to req.user — use that, not the JWT claim.
+      const userRole = (req as any).user?.role;
+      if (!userRole) return res.status(403).json({ error: 'Authentication required' });
 
-    const db = getDatabase();
-    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any;
-    if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-    if (userRole === 'waiter' && String(order.user_id) !== String((req as any).user.userId)) {
-      return res.status(403).json({ error: 'Waiters can only modify their own orders' });
-    }
-
-    const item = db.prepare('SELECT * FROM order_items WHERE id = ? AND order_id = ?').get(itemId, orderId) as any;
-    if (!item) {
-      return res.status(404).json({ error: 'Item not found in this order' });
-    }
-
-    // #150: an item the kitchen has already started on (preparing/ready)
-    // can't be silently deleted like a pending one — the ingredients are
-    // already consumed. Voiding it instead requires a manager PIN, mirrors
-    // the whole-order-cancel override pattern below (routes/orders.ts
-    // ~L580-609), and leaves a negative bill line so the removal stays
-    // visible on the bill rather than the item just vanishing.
-    const isInProgressVoid = ['preparing', 'ready'].includes(item.status);
-    const isPrivilegedRole = ['owner', 'manager'].includes(userRole);
-    const canUseOverride = ['cashier', 'waiter'].includes(userRole) && isInProgressVoid;
-    let pinApproverId: string | null = null;
-    if (!isPrivilegedRole && !canUseOverride) {
-      return res.status(403).json({ error: 'Only owner or manager can cancel this item' });
-    }
-    if (isInProgressVoid) {
-      if (!override_pin) {
-        return res.status(400).json({ error: 'Manager PIN required to void an item already in progress' });
+      const db = getDatabase();
+      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any;
+      if (!order) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+      if (userRole === 'waiter' && String(order.user_id) !== String((req as any).user.userId)) {
+        return res.status(403).json({ error: 'Waiters can only modify their own orders' });
       }
 
-      const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
-      const rateLimitKey = `pin:${clientIp}:item-void:${itemId}`;
-      if (!checkPinRateLimit(rateLimitKey)) {
-        return res.status(429).json({ error: 'Too many PIN attempts. Try again in 15 minutes.' });
+      const item = db
+        .prepare('SELECT * FROM order_items WHERE id = ? AND order_id = ?')
+        .get(itemId, orderId) as any;
+      if (!item) {
+        return res.status(404).json({ error: 'Item not found in this order' });
       }
 
-      const managerId = req.body.manager_id || req.body.user_id;
-      let pinUser: any = null;
-      if (managerId) {
-        const candidate = db.prepare("SELECT * FROM users WHERE id = ? AND pin_hash IS NOT NULL AND role IN ('owner', 'manager') AND is_active = 1").get(managerId) as any;
-        if (candidate && verifyPin(candidate.pin_hash, override_pin)) {
-          pinUser = candidate;
+      // #150: an item the kitchen has already started on (preparing/ready)
+      // can't be silently deleted like a pending one — the ingredients are
+      // already consumed. Voiding it instead requires a manager PIN, mirrors
+      // the whole-order-cancel override pattern below (routes/orders.ts
+      // ~L580-609), and leaves a negative bill line so the removal stays
+      // visible on the bill rather than the item just vanishing.
+      const isInProgressVoid = ['preparing', 'ready'].includes(item.status);
+      const isPrivilegedRole = ['owner', 'manager'].includes(userRole);
+      const canUseOverride = ['cashier', 'waiter'].includes(userRole) && isInProgressVoid;
+      let pinApproverId: string | null = null;
+      if (!isPrivilegedRole && !canUseOverride) {
+        return res.status(403).json({ error: 'Only owner or manager can cancel this item' });
+      }
+      if (isInProgressVoid) {
+        if (!override_pin) {
+          return res
+            .status(400)
+            .json({ error: 'Manager PIN required to void an item already in progress' });
         }
-      }
-      if (!pinUser) {
-        const managers = db.prepare("SELECT * FROM users WHERE pin_hash IS NOT NULL AND role IN ('owner', 'manager') AND is_active = 1").all() as any[];
-        for (const u of managers) {
-          if (verifyPin(u.pin_hash, override_pin)) {
-            pinUser = u;
-            break;
+
+        const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+        const rateLimitKey = `pin:${clientIp}:item-void:${itemId}`;
+        if (!checkPinRateLimit(rateLimitKey)) {
+          return res.status(429).json({ error: 'Too many PIN attempts. Try again in 15 minutes.' });
+        }
+
+        const managerId = req.body.manager_id || req.body.user_id;
+        let pinUser: any = null;
+        if (managerId) {
+          const candidate = db
+            .prepare(
+              "SELECT * FROM users WHERE id = ? AND pin_hash IS NOT NULL AND role IN ('owner', 'manager') AND is_active = 1",
+            )
+            .get(managerId) as any;
+          if (candidate && verifyPin(candidate.pin_hash, override_pin)) {
+            pinUser = candidate;
           }
         }
+        if (!pinUser) {
+          const managers = db
+            .prepare(
+              "SELECT * FROM users WHERE pin_hash IS NOT NULL AND role IN ('owner', 'manager') AND is_active = 1",
+            )
+            .all() as any[];
+          for (const u of managers) {
+            if (verifyPin(u.pin_hash, override_pin)) {
+              pinUser = u;
+              break;
+            }
+          }
+        }
+        if (!pinUser) {
+          return res.status(403).json({ error: 'Invalid manager PIN' });
+        }
+        pinApproverId = pinUser.id;
       }
-      if (!pinUser) {
-        return res.status(403).json({ error: 'Invalid manager PIN' });
-      }
-      pinApproverId = pinUser.id;
-    }
 
-    const auditContext = {
-      requestId: correlationId(),
-      clientIp: req.ip || req.socket.remoteAddress || null,
-    };
-    const actorUserId = (req as any).user?.userId ?? null;
+      const auditContext = {
+        requestId: correlationId(),
+        clientIp: req.ip || req.socket.remoteAddress || null,
+      };
+      const actorUserId = (req as any).user?.userId ?? null;
 
-    // BUG #17 FIX: Wrap cancel + total recalc in transaction
-    const result = withTxn(() => {
-      if (isInProgressVoid) {
-        // Leave the original line alone (it's a true record of what was
-        // ordered and prepared) and add a mirrored negative line instead of
-        // deleting anything — the bill total nets to the refund/comp
-        // automatically via the recalc below, same as a plain cancel would,
-        // but both lines stay on the bill permanently.
-        db.prepare(`
+      // BUG #17 FIX: Wrap cancel + total recalc in transaction
+      const result = withTxn(() => {
+        if (isInProgressVoid) {
+          // Leave the original line alone (it's a true record of what was
+          // ordered and prepared) and add a mirrored negative line instead of
+          // deleting anything — the bill total nets to the refund/comp
+          // automatically via the recalc below, same as a plain cancel would,
+          // but both lines stay on the bill permanently.
+          db.prepare(
+            `
           INSERT INTO order_items (
             order_id, product_id, product_name, product_sku, unit_price, quantity,
             subtotal, tax_amount, tax_breakdown, tax_snapshot, tax_type, discount_amount, total,
             variant_selection, modifier_selection, status, created_at, updated_at
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'void_adjustment', ?, ?)
-        `).run(
-          orderId, item.product_id, `Void: ${item.product_name}`, item.product_sku,
-          -item.unit_price, item.quantity, -item.subtotal, -(item.tax_amount || 0),
-          invertTaxBreakdown(item.tax_breakdown), invertTaxSnapshot(item.tax_snapshot), item.tax_type,
-          -(item.discount_amount || 0), -item.total,
-          item.variant_selection, item.modifier_selection, now(), now(),
+        `,
+          ).run(
+            orderId,
+            item.product_id,
+            `Void: ${item.product_name}`,
+            item.product_sku,
+            -item.unit_price,
+            item.quantity,
+            -item.subtotal,
+            -(item.tax_amount || 0),
+            invertTaxBreakdown(item.tax_breakdown),
+            invertTaxSnapshot(item.tax_snapshot),
+            item.tax_type,
+            -(item.discount_amount || 0),
+            -item.total,
+            item.variant_selection,
+            item.modifier_selection,
+            now(),
+            now(),
+          );
+          // #150 Q1-Q4 decision: mark 'voided', not 'cancelled' — a distinct,
+          // terminal status. Item stage-change endpoints (routes/kds.ts,
+          // routes/order-items.ts, kds-server.ts) reject any further
+          // transition once status is 'voided', and inventory is
+          // deliberately left alone: it was already deducted when the item
+          // was added, and voiding an already-prepared item must not restock it.
+          db.prepare(
+            "UPDATE order_items SET status = 'voided', voided_at = ?, updated_at = ? WHERE id = ?",
+          ).run(now(), now(), itemId);
+        } else {
+          // Soft delete - mark as cancelled
+          db.prepare(
+            "UPDATE order_items SET status = 'cancelled', updated_at = ? WHERE id = ?",
+          ).run(now(), itemId);
+        }
+
+        // Recalculate order totals excluding cancelled items
+        const activeItems = db
+          .prepare("SELECT * FROM order_items WHERE order_id = ? AND status != 'cancelled'")
+          .all(orderId) as any[];
+        let subtotal = 0;
+        let totalTax = 0;
+        let exclusiveTax = 0;
+        const allTaxBreakdowns: any[] = [];
+        const allTaxSnapshots: (string | null)[] = [];
+        for (const i of activeItems) {
+          subtotal += i.subtotal || 0;
+          totalTax += i.tax_amount || 0;
+          if (i.tax_type !== 'inclusive') {
+            exclusiveTax += i.tax_amount || 0;
+          }
+          if (i.tax_breakdown) {
+            try {
+              const breakdown = JSON.parse(i.tax_breakdown);
+              if (Array.isArray(breakdown)) allTaxBreakdowns.push(breakdown);
+            } catch {}
+          }
+          allTaxSnapshots.push(i.tax_snapshot || null);
+        }
+        // BUG #13 FIX: Preserve order-level discount (scale percentage proportionally)
+        const existingDiscountAmount = order.discount_amount || 0;
+        let newDiscountAmount = existingDiscountAmount;
+        if (existingDiscountAmount > 0 && order.subtotal > 0) {
+          if (order.discount_type === 'percentage') {
+            const pct = order.discount_value || 0;
+            newDiscountAmount = Math.round(((subtotal * pct) / 100) * 100) / 100;
+          }
+          // amount type: keep same value
+        }
+
+        const discountedSubtotal = Math.max(0, subtotal - newDiscountAmount);
+        const scaledTax = scaleItemTaxAfterOrderDiscount({
+          itemTaxAmount: totalTax,
+          itemExclusiveTaxAmount: exclusiveTax,
+          discountAmount: newDiscountAmount,
+          subtotal,
+        });
+        const newTaxAmount = scaledTax.taxAmount;
+        const newExclusiveTax = scaledTax.exclusiveTaxAmount;
+        const taxRatio = scaledTax.taxRatio;
+        const tenantInfo = {
+          country: getSettingValue('country') || 'IN',
+          business_type: getSettingValue('business_type') || 'restaurant',
+          state_code: getSettingValue('state_code') || '',
+          taxes_enabled: getSettingValue('taxes_enabled') === 'true',
+        };
+        const customer = order.customer_id
+          ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(order.customer_id) as any)
+          : null;
+        const chargeTaxes = calculateConfiguredChargeTaxes(
+          tenantInfo,
+          {
+            ...order,
+            service_charge: 0,
+          },
+          customer,
         );
-        // #150 Q1-Q4 decision: mark 'voided', not 'cancelled' — a distinct,
-        // terminal status. Item stage-change endpoints (routes/kds.ts,
-        // routes/order-items.ts, kds-server.ts) reject any further
-        // transition once status is 'voided', and inventory is
-        // deliberately left alone: it was already deducted when the item
-        // was added, and voiding an already-prepared item must not restock it.
-        db.prepare("UPDATE order_items SET status = 'voided', voided_at = ?, updated_at = ? WHERE id = ?")
-          .run(now(), now(), itemId);
-      } else {
-        // Soft delete - mark as cancelled
-        db.prepare("UPDATE order_items SET status = 'cancelled', updated_at = ? WHERE id = ?")
-          .run(now(), itemId);
-      }
+        const taxRollup = combineItemAndChargeTaxes({
+          itemTaxAmount: newTaxAmount,
+          itemExclusiveTaxAmount: newExclusiveTax,
+          itemBreakdowns: allTaxBreakdowns,
+          itemSnapshots: allTaxSnapshots,
+          itemTaxRatio: taxRatio,
+          chargeTaxes,
+        });
 
-      // Recalculate order totals excluding cancelled items
-      const activeItems = db.prepare("SELECT * FROM order_items WHERE order_id = ? AND status != 'cancelled'")
-        .all(orderId) as any[];
-      let subtotal = 0;
-      let totalTax = 0;
-      let exclusiveTax = 0;
-      const allTaxBreakdowns: any[] = [];
-      const allTaxSnapshots: (string | null)[] = [];
-      for (const i of activeItems) {
-        subtotal += i.subtotal || 0;
-        totalTax += i.tax_amount || 0;
-        if (i.tax_type !== 'inclusive') {
-          exclusiveTax += i.tax_amount || 0;
-        }
-        if (i.tax_breakdown) {
-          try {
-            const breakdown = JSON.parse(i.tax_breakdown);
-            if (Array.isArray(breakdown)) allTaxBreakdowns.push(breakdown);
-          } catch { }
-        }
-        allTaxSnapshots.push(i.tax_snapshot || null);
-      }
-      // BUG #13 FIX: Preserve order-level discount (scale percentage proportionally)
-      const existingDiscountAmount = order.discount_amount || 0;
-      let newDiscountAmount = existingDiscountAmount;
-      if (existingDiscountAmount > 0 && order.subtotal > 0) {
-        if (order.discount_type === 'percentage') {
-          const pct = order.discount_value || 0;
-          newDiscountAmount = Math.round(subtotal * pct / 100 * 100) / 100;
-        }
-        // amount type: keep same value
-      }
+        // BUG #5 FIX: Correct round-off formula; BUG #24 FIX: include delivery_charge (was missing, causing total mismatch with bill generation)
+        const preRoundTotal =
+          discountedSubtotal +
+          taxRollup.exclusiveTaxAmount +
+          (order.delivery_charge || 0) +
+          (order.packaging_charge || 0);
+        const roundOff = 0;
+        const total = Number(preRoundTotal.toFixed(2));
 
-      const discountedSubtotal = Math.max(0, subtotal - newDiscountAmount);
-      const scaledTax = scaleItemTaxAfterOrderDiscount({
-        itemTaxAmount: totalTax,
-        itemExclusiveTaxAmount: exclusiveTax,
-        discountAmount: newDiscountAmount,
-        subtotal,
-      });
-      const newTaxAmount = scaledTax.taxAmount;
-      const newExclusiveTax = scaledTax.exclusiveTaxAmount;
-      const taxRatio = scaledTax.taxRatio;
-      const tenantInfo = {
-        country: getSettingValue('country') || 'IN',
-        business_type: getSettingValue('business_type') || 'restaurant',
-        state_code: getSettingValue('state_code') || '',
-        taxes_enabled: getSettingValue('taxes_enabled') === 'true',
-      };
-      const customer = order.customer_id
-        ? db.prepare('SELECT * FROM customers WHERE id = ?').get(order.customer_id) as any
-        : null;
-      const chargeTaxes = calculateConfiguredChargeTaxes(tenantInfo, {
-        ...order,
-        service_charge: 0,
-      }, customer);
-      const taxRollup = combineItemAndChargeTaxes({
-        itemTaxAmount: newTaxAmount,
-        itemExclusiveTaxAmount: newExclusiveTax,
-        itemBreakdowns: allTaxBreakdowns,
-        itemSnapshots: allTaxSnapshots,
-        itemTaxRatio: taxRatio,
-        chargeTaxes,
-      });
+        // #132 FIX: cancelling the last active item leaves nothing to serve or
+        // bill — treat it as the whole order being cancelled, the same way the
+        // explicit order-level cancel (routes/orders.ts) does: free the table,
+        // restore tracked inventory, and stamp cancelled_at/cancellation_reason.
+        // Without this the order silently stayed "active" with zero items,
+        // cluttering the Active list and permanently holding its table.
+        const orderCancelled = activeItems.length === 0 && order.status !== 'cancelled';
 
-      // BUG #5 FIX: Correct round-off formula; BUG #24 FIX: include delivery_charge (was missing, causing total mismatch with bill generation)
-      const preRoundTotal = discountedSubtotal + taxRollup.exclusiveTaxAmount
-        + (order.delivery_charge || 0) + (order.packaging_charge || 0);
-      const roundOff = 0;
-      const total = Number(preRoundTotal.toFixed(2));
-
-      // #132 FIX: cancelling the last active item leaves nothing to serve or
-      // bill — treat it as the whole order being cancelled, the same way the
-      // explicit order-level cancel (routes/orders.ts) does: free the table,
-      // restore tracked inventory, and stamp cancelled_at/cancellation_reason.
-      // Without this the order silently stayed "active" with zero items,
-      // cluttering the Active list and permanently holding its table.
-      const orderCancelled = activeItems.length === 0 && order.status !== 'cancelled';
-
-      if (orderCancelled) {
-        const allItems = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(orderId) as any[];
-        for (const i of allItems) {
-          const product = db.prepare('SELECT * FROM products WHERE id = ?').get(i.product_id) as any;
-          restoreTrackedStock(db, product, i.quantity, now(), {
-            referenceType: 'order',
-            referenceId: orderId,
-            reason: 'all_items_cancelled',
-          });
-        }
-        db.prepare(`
+        if (orderCancelled) {
+          const allItems = db
+            .prepare('SELECT * FROM order_items WHERE order_id = ?')
+            .all(orderId) as any[];
+          for (const i of allItems) {
+            const product = db
+              .prepare('SELECT * FROM products WHERE id = ?')
+              .get(i.product_id) as any;
+            restoreTrackedStock(db, product, i.quantity, now(), {
+              referenceType: 'order',
+              referenceId: orderId,
+              reason: 'all_items_cancelled',
+            });
+          }
+          db.prepare(
+            `
           UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?,
             status = 'cancelled', cancelled_at = ?, cancellation_reason = ?, updated_at = ? WHERE id = ?
-        `).run(subtotal, taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, newDiscountAmount, total, roundOff, now(), 'All items cancelled', now(), orderId);
-        if (isModuleEnabled('tables') && order.table_id) {
-          db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?")
-            .run(now(), order.table_id);
-        }
-      } else {
-        db.prepare(`
+        `,
+          ).run(
+            subtotal,
+            taxRollup.taxAmount,
+            JSON.stringify(taxRollup.breakdowns),
+            taxRollup.snapshotJson,
+            newDiscountAmount,
+            total,
+            roundOff,
+            now(),
+            'All items cancelled',
+            now(),
+            orderId,
+          );
+          if (isModuleEnabled('tables') && order.table_id) {
+            db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?").run(
+              now(),
+              order.table_id,
+            );
+          }
+        } else {
+          db.prepare(
+            `
           UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?, updated_at = ? WHERE id = ?
-        `).run(subtotal, taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, newDiscountAmount, total, roundOff, now(), orderId);
-      }
+        `,
+          ).run(
+            subtotal,
+            taxRollup.taxAmount,
+            JSON.stringify(taxRollup.breakdowns),
+            taxRollup.snapshotJson,
+            newDiscountAmount,
+            total,
+            roundOff,
+            now(),
+            orderId,
+          );
+        }
 
-      // Sync bill if it exists (open unpaid/partial only — never rewrite refunded bills)
-      const existingBill = db.prepare("SELECT * FROM bills WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')").get(orderId) as any;
-      if (existingBill) {
-        const pack = getActiveCountryPack(tenantInfo.country);
-        const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(total, pack);
-        const newBillBalance = Math.max(0, billTotal - (existingBill.paid_amount || 0));
-        db.prepare(`UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?, updated_at = ? WHERE id = ?`)
-          .run(billTotal, newBillBalance, taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, newDiscountAmount, billRoundOff, now(), existingBill.id);
-      }
+        // Sync bill if it exists (open unpaid/partial only — never rewrite refunded bills)
+        const existingBill = db
+          .prepare(
+            "SELECT * FROM bills WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')",
+          )
+          .get(orderId) as any;
+        if (existingBill) {
+          const pack = getActiveCountryPack(tenantInfo.country);
+          const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(total, pack);
+          const newBillBalance = Math.max(0, billTotal - (existingBill.paid_amount || 0));
+          db.prepare(
+            `UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?, updated_at = ? WHERE id = ?`,
+          ).run(
+            billTotal,
+            newBillBalance,
+            taxRollup.taxAmount,
+            JSON.stringify(taxRollup.breakdowns),
+            taxRollup.snapshotJson,
+            newDiscountAmount,
+            billRoundOff,
+            now(),
+            existingBill.id,
+          );
+        }
 
-      const updatedOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any;
-      const items = attachEffectiveAddons(db, db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(orderId).map(parseItemJson) as any[]);
+        const updatedOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any;
+        const items = attachEffectiveAddons(
+          db,
+          db
+            .prepare('SELECT * FROM order_items WHERE order_id = ?')
+            .all(orderId)
+            .map(parseItemJson) as any[],
+        );
 
-      logAuditEvent({
-        actorUserId,
-        action: orderCancelled
-          ? 'order.cancelled'
-          : (isInProgressVoid ? 'order.item_voided' : 'order.item_cancelled'),
-        entityType: 'order_item',
-        entityId: itemId,
-        result: 'success',
-        metadata: {
-          order_id: orderId,
-          product_id: item.product_id,
-          product_name: item.product_name,
-          previous_status: item.status,
-          order_cancelled: orderCancelled,
-          ...(pinApproverId ? { pin_approved_by: pinApproverId } : {}),
-        },
-        context: auditContext,
+        logAuditEvent({
+          actorUserId,
+          action: orderCancelled
+            ? 'order.cancelled'
+            : isInProgressVoid
+              ? 'order.item_voided'
+              : 'order.item_cancelled',
+          entityType: 'order_item',
+          entityId: itemId,
+          result: 'success',
+          metadata: {
+            order_id: orderId,
+            product_id: item.product_id,
+            product_name: item.product_name,
+            previous_status: item.status,
+            order_cancelled: orderCancelled,
+            ...(pinApproverId ? { pin_approved_by: pinApproverId } : {}),
+          },
+          context: auditContext,
+        });
+
+        return { updatedOrder, items, orderCancelled };
       });
 
-      return { updatedOrder, items, orderCancelled };
+      cloudSync.recordOrderChanged(
+        orderId,
+        result.orderCancelled
+          ? 'order.cancelled'
+          : isInProgressVoid
+            ? 'order.item_voided'
+            : 'order.item_cancelled',
+      );
+      if (isModuleEnabled('kds')) notifyKdsUpdate();
+      res.json({ order: { ...result.updatedOrder, items: result.items } });
     });
-
-    cloudSync.recordOrderChanged(
-      orderId,
-      result.orderCancelled ? 'order.cancelled' : (isInProgressVoid ? 'order.item_voided' : 'order.item_cancelled'),
-    );
-    if (isModuleEnabled('kds')) notifyKdsUpdate();
-    res.json({ order: { ...result.updatedOrder, items: result.items } });
   } catch (error: any) {
     console.error('[Orders] Cancel item error:', error);
-    console.error("[API] Internal error:", error);
-    res.status(error.statusCode || 500).json({ error: error.statusCode ? error.message : "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res
+      .status(error.statusCode || 500)
+      .json({ error: error.statusCode ? error.message : 'Internal server error' });
   }
 });
 
@@ -1726,15 +2345,21 @@ router.patch('/:orderId/items/:itemId/restore', (req, res) => {
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    const item = db.prepare('SELECT * FROM order_items WHERE id = ? AND order_id = ?').get(itemId, orderId) as any;
+    const item = db
+      .prepare('SELECT * FROM order_items WHERE id = ? AND order_id = ?')
+      .get(itemId, orderId) as any;
     if (!item) {
       return res.status(404).json({ error: 'Item not found in this order' });
     }
 
     if (['completed', 'cancelled'].includes(order.status)) {
-      return res.status(400).json({ error: 'Cannot restore items on completed or cancelled orders' });
+      return res
+        .status(400)
+        .json({ error: 'Cannot restore items on completed or cancelled orders' });
     }
-    const paidBill = db.prepare("SELECT id FROM bills WHERE order_id = ? AND payment_status = 'paid'").get(orderId);
+    const paidBill = db
+      .prepare("SELECT id FROM bills WHERE order_id = ? AND payment_status = 'paid'")
+      .get(orderId);
     if (paidBill) {
       return res.status(400).json({ error: 'Cannot restore items on a paid order' });
     }
@@ -1742,11 +2367,14 @@ router.patch('/:orderId/items/:itemId/restore', (req, res) => {
     // BUG #17 FIX: Wrap restore + total recalc in transaction
     const result = withTxn(() => {
       // Restore - mark as pending
-      db.prepare("UPDATE order_items SET status = 'pending', updated_at = ? WHERE id = ?")
-        .run(now(), itemId);
+      db.prepare("UPDATE order_items SET status = 'pending', updated_at = ? WHERE id = ?").run(
+        now(),
+        itemId,
+      );
 
       // Recalculate order totals
-      const activeItems = db.prepare("SELECT * FROM order_items WHERE order_id = ? AND status != 'cancelled'")
+      const activeItems = db
+        .prepare("SELECT * FROM order_items WHERE order_id = ? AND status != 'cancelled'")
         .all(orderId) as any[];
       let subtotal = 0;
       let totalTax = 0;
@@ -1763,7 +2391,7 @@ router.patch('/:orderId/items/:itemId/restore', (req, res) => {
           try {
             const breakdown = JSON.parse(i.tax_breakdown);
             if (Array.isArray(breakdown)) allTaxBreakdowns.push(breakdown);
-          } catch { }
+          } catch {}
         }
         allTaxSnapshots.push(i.tax_snapshot || null);
       }
@@ -1773,7 +2401,7 @@ router.patch('/:orderId/items/:itemId/restore', (req, res) => {
       if (existingDiscountAmount > 0 && order.subtotal > 0) {
         if (order.discount_type === 'percentage') {
           const pct = order.discount_value || 0;
-          newDiscountAmount = Math.round(subtotal * pct / 100 * 100) / 100;
+          newDiscountAmount = Math.round(((subtotal * pct) / 100) * 100) / 100;
         }
         // amount type: keep same value
       }
@@ -1795,12 +2423,16 @@ router.patch('/:orderId/items/:itemId/restore', (req, res) => {
         taxes_enabled: getSettingValue('taxes_enabled') === 'true',
       };
       const customer = order.customer_id
-        ? db.prepare('SELECT * FROM customers WHERE id = ?').get(order.customer_id) as any
+        ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(order.customer_id) as any)
         : null;
-      const chargeTaxes = calculateConfiguredChargeTaxes(tenantInfo, {
-        ...order,
-        service_charge: 0,
-      }, customer);
+      const chargeTaxes = calculateConfiguredChargeTaxes(
+        tenantInfo,
+        {
+          ...order,
+          service_charge: 0,
+        },
+        customer,
+      );
       const taxRollup = combineItemAndChargeTaxes({
         itemTaxAmount: newTaxAmount,
         itemExclusiveTaxAmount: newExclusiveTax,
@@ -1811,27 +2443,63 @@ router.patch('/:orderId/items/:itemId/restore', (req, res) => {
       });
 
       // BUG #5 FIX: Correct round-off formula; BUG #24 FIX: include delivery_charge (was missing, causing total mismatch with bill generation)
-      const preRoundTotal = discountedSubtotal + taxRollup.exclusiveTaxAmount
-        + (order.delivery_charge || 0) + (order.packaging_charge || 0);
+      const preRoundTotal =
+        discountedSubtotal +
+        taxRollup.exclusiveTaxAmount +
+        (order.delivery_charge || 0) +
+        (order.packaging_charge || 0);
       const roundOff = 0;
       const total = Number(preRoundTotal.toFixed(2));
 
-      db.prepare(`
+      db.prepare(
+        `
         UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?, updated_at = ? WHERE id = ?
-      `).run(subtotal, taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, newDiscountAmount, total, roundOff, now(), orderId);
+      `,
+      ).run(
+        subtotal,
+        taxRollup.taxAmount,
+        JSON.stringify(taxRollup.breakdowns),
+        taxRollup.snapshotJson,
+        newDiscountAmount,
+        total,
+        roundOff,
+        now(),
+        orderId,
+      );
 
       // Sync bill if it exists (open unpaid/partial only — never rewrite refunded bills)
-      const existingBill = db.prepare("SELECT * FROM bills WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')").get(orderId) as any;
+      const existingBill = db
+        .prepare(
+          "SELECT * FROM bills WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')",
+        )
+        .get(orderId) as any;
       if (existingBill) {
         const pack = getActiveCountryPack(tenantInfo.country);
         const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(total, pack);
         const newBillBalance = Math.max(0, billTotal - (existingBill.paid_amount || 0));
-        db.prepare(`UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?, updated_at = ? WHERE id = ?`)
-          .run(billTotal, newBillBalance, taxRollup.taxAmount, JSON.stringify(taxRollup.breakdowns), taxRollup.snapshotJson, newDiscountAmount, billRoundOff, now(), existingBill.id);
+        db.prepare(
+          `UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?, updated_at = ? WHERE id = ?`,
+        ).run(
+          billTotal,
+          newBillBalance,
+          taxRollup.taxAmount,
+          JSON.stringify(taxRollup.breakdowns),
+          taxRollup.snapshotJson,
+          newDiscountAmount,
+          billRoundOff,
+          now(),
+          existingBill.id,
+        );
       }
 
       const updatedOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as any;
-      const items = attachEffectiveAddons(db, db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(orderId).map(parseItemJson) as any[]);
+      const items = attachEffectiveAddons(
+        db,
+        db
+          .prepare('SELECT * FROM order_items WHERE order_id = ?')
+          .all(orderId)
+          .map(parseItemJson) as any[],
+      );
       return { updatedOrder, items };
     });
 
@@ -1840,8 +2508,10 @@ router.patch('/:orderId/items/:itemId/restore', (req, res) => {
     res.json({ order: { ...result.updatedOrder, items: result.items } });
   } catch (error: any) {
     console.error('[Orders] Restore item error:', error);
-    console.error("[API] Internal error:", error);
-    res.status(error.statusCode || 500).json({ error: error.statusCode ? error.message : "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res
+      .status(error.statusCode || 500)
+      .json({ error: error.statusCode ? error.message : 'Internal server error' });
   }
 });
 

@@ -21,10 +21,10 @@
 - ⚠️ RISK: Upgrades seed `network_mode=localhost`. Existing LAN KDS/POS/waiter setups need Settings → `kds_lan` or `lan` + restart before tablets reconnect.
 - ⚠️ RISK: Electron renderer `flo_terminal_id` and host `settings.terminal_id` may differ. POS requests send the client id; header-less `openShift` still uses the host id.
 - ⚠️ RISK: Lost `terminal_id` (cleared localStorage) orphans an open shift; managers must force-close.
-- ⚠️ RISK: Doc drift — some older architecture pages may still cite pre-v75 schema; Phase 2 truth is **final exit gate + `.ai/`** (Phase 2 COMPLETE through 2.18; packages / production Retail are Phase 3).
+- ⚠️ RISK: Doc drift — some older architecture pages may still cite pre-v75 schema; Phase 2 truth is **closeout gate + final exit + `.ai/`** (Phase 2 CLOSED; Phase 3.1 COMPLETE; 3.2+ not started).
 - ⚠️ RISK: Brand consolidation to **Opervia** (ADR-010) — living docs/STRATEGY/`productName`/UI i18n updated; historical `15-*` audits still say Nexora/FloCafe; `appId`/`executableName` remain flo\* for upgrade continuity; Drive folder is `Opervia Backups` (old `Nexora Backups` not auto-migrated).
 - ⚠️ RISK: Phase 2.6 capabilities are metadata only — any future consumer must not treat `CapabilityId` as authorization (roles/`requireRole` remain authoritative).
-- ⚠️ RISK: Soft module registry — Express routes remain statically mounted; composition does not unload APIs (fail-closed remount deferred Phase 3; Phase 2.17 soft-gates Order/Payment restaurant side effects only).
+- ⚠️ RISK: Soft module registry — **Phase 3.1 CLOSED** for POS `registerRoutes` (disabled modules do not mount). Production Retail / runtime vertical switch still **Phase 3.2/3.3**. Soft-gates remain for side effects; residuals: ungated `notifyOrderUpdated` alias, held-orders without `tables` gate.
 - ⚠️ RISK: Dual i18n catalogs during migration — i18next namespaces + legacy flat `lib/i18n/*.json`; migrate gradually; avoid key drift.
 - ⚠️ RISK: Helmet CSP still allows `'unsafe-inline'` for Next static export (Phase C CSP hardening deferred).
 - ⚠️ RISK: Void + full-order cancel may restore stock for voided lines (Inventory API used correctly; call-site filter gap). Documented at Phase 2 exit; fix requires careful characterization — Phase 3.

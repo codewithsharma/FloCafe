@@ -3,6 +3,7 @@
 import { Search } from 'lucide-react';
 import type { Table } from '@/lib/types';
 import { useI18n } from '@/hooks/useI18n';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 
 export interface OrdersFilters {
@@ -22,13 +23,9 @@ export interface OrdersFilterBarProps {
 const selectClass =
   'min-h-11 px-3 py-2 border border-flo-border rounded-flo-md text-small bg-flo-surface text-flo-text focus:outline-none focus:ring-2 focus:ring-flo-brand-500/30 focus:border-flo-brand-500';
 
-export function OrdersFilterBar({
-  filters,
-  onChange,
-  tables,
-  className,
-}: OrdersFilterBarProps) {
+export function OrdersFilterBar({ filters, onChange, tables, className }: OrdersFilterBarProps) {
   const { t } = useI18n();
+  const { t: tOrders } = useTranslation('orders');
 
   const patch = (partial: Partial<OrdersFilters>) => {
     onChange({ ...filters, ...partial });
@@ -84,7 +81,7 @@ export function OrdersFilterBar({
       >
         <option value="">{t('orders.allStatuses')}</option>
         <option value="active">{t('orders.active')}</option>
-        <option value="completed">{t('orders.completed')}</option>
+        <option value="completed">{tOrders('completed')}</option>
         <option value="cancelled">{t('orders.cancelled')}</option>
       </select>
     </div>

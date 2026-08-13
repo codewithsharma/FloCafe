@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Panel } from '@/components/flo';
 import { useI18n } from '@/hooks/useI18n';
+import { useTranslation } from 'react-i18next';
 import type { CustomPaymentMethod } from '@/lib/payment-methods';
 
 interface MergeRecord {
@@ -19,6 +20,7 @@ interface MergeRecord {
 
 export function PaymentMethodsSettings({ isAdmin }: { isAdmin: boolean }) {
   const { t } = useI18n();
+  const { t: tSettings } = useTranslation('settings');
   const [methods, setMethods] = useState<CustomPaymentMethod[]>([]);
   const [names, setNames] = useState<Record<number, string>>({});
   const [newName, setNewName] = useState('');
@@ -30,7 +32,9 @@ export function PaymentMethodsSettings({ isAdmin }: { isAdmin: boolean }) {
     const [methodsRes, historyRes, splitRes] = await Promise.all([
       api.get('/payment-methods?include_inactive=true'),
       api.get('/payment-methods/merge-history'),
-      api.get('/settings/split_checks_enabled').catch(() => ({ data: { setting: { value: 'false' } } })),
+      api
+        .get('/settings/split_checks_enabled')
+        .catch(() => ({ data: { setting: { value: 'false' } } })),
     ]);
     const rows = methodsRes.data.payment_methods || [];
     setMethods(rows);
@@ -51,7 +55,10 @@ export function PaymentMethodsSettings({ isAdmin }: { isAdmin: boolean }) {
       setNewName('');
       await load();
     } catch (error: unknown) {
-      toast.error((error as { response?: { data?: { error?: string } } }).response?.data?.error || t('settings.saveFailed'));
+      toast.error(
+        (error as { response?: { data?: { error?: string } } }).response?.data?.error ||
+          tSettings('saveFailed'),
+      );
     }
   };
 
@@ -60,71 +67,221 @@ export function PaymentMethodsSettings({ isAdmin }: { isAdmin: boolean }) {
       await api.put(`/payment-methods/${method.id}`, changes);
       await load();
     } catch (error: unknown) {
-      toast.error((error as { response?: { data?: { error?: string } } }).response?.data?.error || t('settings.saveFailed'));
+      toast.error(
+        (error as { response?: { data?: { error?: string } } }).response?.data?.error ||
+          tSettings('saveFailed'),
+      );
     }
   };
 
   const remove = async (method: CustomPaymentMethod) => {
-    if (!window.confirm(t('settings.deletePaymentMethodConfirm', { defaultValue: `Delete ${method.name}?` }))) return;
+    if (
+      !window.confirm(
+        t('settings.deletePaymentMethodConfirm', { defaultValue: `Delete ${method.name}?` }),
+      )
+    )
+      return;
     try {
       await api.delete(`/payment-methods/${method.id}`);
       await load();
     } catch (error: unknown) {
-      toast.error((error as { response?: { data?: { error?: string } } }).response?.data?.error || t('settings.saveFailed'));
+      toast.error(
+        (error as { response?: { data?: { error?: string } } }).response?.data?.error ||
+          tSettings('saveFailed'),
+      );
     }
   };
 
   const merge = async (method: CustomPaymentMethod) => {
     const target = mergeTargets[method.id];
     if (!target) return;
-    if (!window.confirm(t('settings.mergePaymentMethodConfirm', { defaultValue: `Replace all ${method.name} payments with the selected method?` }))) return;
+    if (
+      !window.confirm(
+        t('settings.mergePaymentMethodConfirm', {
+          defaultValue: `Replace all ${method.name} payments with the selected method?`,
+        }),
+      )
+    )
+      return;
     try {
-      await api.post(`/payment-methods/${method.id}/merge`, target === 'card'
-        ? { target_type: 'card' }
-        : { target_type: 'custom', target_id: Number(target) });
+      await api.post(
+        `/payment-methods/${method.id}/merge`,
+        target === 'card'
+          ? { target_type: 'card' }
+          : { target_type: 'custom', target_id: Number(target) },
+      );
       await load();
       toast.success(t('settings.paymentMethodMerged', { defaultValue: 'Payment methods merged' }));
     } catch (error: unknown) {
-      toast.error((error as { response?: { data?: { error?: string } } }).response?.data?.error || t('settings.saveFailed'));
+      toast.error(
+        (error as { response?: { data?: { error?: string } } }).response?.data?.error ||
+          tSettings('saveFailed'),
+      );
     }
   };
 
   return (
     <div className="pb-6 max-w-3xl space-y-6">
       <Panel>
-        <div className="flex items-center gap-2 mb-2"><CreditCard size={20} className="text-flo-text-secondary" /><h2 className="font-semibold text-flo-text">{t('settings.paymentMethods', { defaultValue: 'Payment methods' })}</h2></div>
-        <p className="text-sm text-flo-text-secondary mb-5">{t('settings.paymentMethodsHint', { defaultValue: 'Cash, Card, and Loyalty Wallet are built in. Add any other manual methods used by your store.' })}</p>
+        <div className="flex items-center gap-2 mb-2">
+          <CreditCard size={20} className="text-flo-text-secondary" />
+          <h2 className="font-semibold text-flo-text">
+            {t('settings.paymentMethods', { defaultValue: 'Payment methods' })}
+          </h2>
+        </div>
+        <p className="text-sm text-flo-text-secondary mb-5">
+          {t('settings.paymentMethodsHint', {
+            defaultValue:
+              'Cash, Card, and Loyalty Wallet are built in. Add any other manual methods used by your store.',
+          })}
+        </p>
         <div className="rounded-lg border border-flo-border divide-y">
-          {['Cash', 'Card', 'Loyalty Wallet'].map((name) => <div key={name} className="px-3 py-2 flex justify-between text-sm"><span>{name}</span><span className="text-xs text-flo-text-muted">{t('settings.builtIn', { defaultValue: 'Built in' })}</span></div>)}
+          {['Cash', 'Card', 'Loyalty Wallet'].map((name) => (
+            <div key={name} className="px-3 py-2 flex justify-between text-sm">
+              <span>{name}</span>
+              <span className="text-xs text-flo-text-muted">
+                {t('settings.builtIn', { defaultValue: 'Built in' })}
+              </span>
+            </div>
+          ))}
         </div>
         <div className="mt-5 space-y-3">
           {methods.map((method) => (
             <div key={method.id} className="rounded-lg border border-flo-border p-3 space-y-2">
               <div className="flex gap-2 items-center">
-                <input disabled={!isAdmin} value={names[method.id] ?? method.name} onChange={(e) => setNames((old) => ({ ...old, [method.id]: e.target.value }))} className="flex-1 px-3 py-2 text-sm border rounded-lg" />
-                <Button variant="outline" size="sm" disabled={!isAdmin || names[method.id] === method.name} onClick={() => update(method, { name: names[method.id] })}><Save size={14} /></Button>
-                <label className="flex items-center gap-1.5 text-xs text-flo-text-secondary"><input type="checkbox" disabled={!isAdmin} checked={method.is_active} onChange={(e) => update(method, { is_active: e.target.checked })} /> {t('settings.active', { defaultValue: 'Active' })}</label>
-                <Button variant="outline" size="sm" disabled={!isAdmin || Boolean(method.usage_count)} onClick={() => remove(method)}><Trash2 size={14} /></Button>
+                <input
+                  disabled={!isAdmin}
+                  value={names[method.id] ?? method.name}
+                  onChange={(e) => setNames((old) => ({ ...old, [method.id]: e.target.value }))}
+                  className="flex-1 px-3 py-2 text-sm border rounded-lg"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!isAdmin || names[method.id] === method.name}
+                  onClick={() => update(method, { name: names[method.id] })}
+                >
+                  <Save size={14} />
+                </Button>
+                <label className="flex items-center gap-1.5 text-xs text-flo-text-secondary">
+                  <input
+                    type="checkbox"
+                    disabled={!isAdmin}
+                    checked={method.is_active}
+                    onChange={(e) => update(method, { is_active: e.target.checked })}
+                  />{' '}
+                  {t('settings.active', { defaultValue: 'Active' })}
+                </label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={!isAdmin || Boolean(method.usage_count)}
+                  onClick={() => remove(method)}
+                >
+                  <Trash2 size={14} />
+                </Button>
               </div>
-              {Boolean(method.usage_count) && isAdmin && <div className="flex gap-2 items-center">
-                <select value={mergeTargets[method.id] || ''} onChange={(e) => setMergeTargets((old) => ({ ...old, [method.id]: e.target.value }))} className="flex-1 px-2 py-1.5 text-xs border rounded-md bg-flo-surface">
-                  <option value="">{t('settings.mergeInto', { defaultValue: 'Merge into…' })}</option><option value="card">Card</option>
-                  {methods.filter((target) => target.id !== method.id).map((target) => <option key={target.id} value={target.id}>{target.name}</option>)}
-                </select>
-                <Button variant="outline" size="sm" disabled={!mergeTargets[method.id]} onClick={() => merge(method)}><Merge size={14} className="mr-1" />{t('settings.merge', { defaultValue: 'Merge' })}</Button>
-              </div>}
+              {Boolean(method.usage_count) && isAdmin && (
+                <div className="flex gap-2 items-center">
+                  <select
+                    value={mergeTargets[method.id] || ''}
+                    onChange={(e) =>
+                      setMergeTargets((old) => ({ ...old, [method.id]: e.target.value }))
+                    }
+                    className="flex-1 px-2 py-1.5 text-xs border rounded-md bg-flo-surface"
+                  >
+                    <option value="">
+                      {t('settings.mergeInto', { defaultValue: 'Merge into…' })}
+                    </option>
+                    <option value="card">Card</option>
+                    {methods
+                      .filter((target) => target.id !== method.id)
+                      .map((target) => (
+                        <option key={target.id} value={target.id}>
+                          {target.name}
+                        </option>
+                      ))}
+                  </select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!mergeTargets[method.id]}
+                    onClick={() => merge(method)}
+                  >
+                    <Merge size={14} className="mr-1" />
+                    {t('settings.merge', { defaultValue: 'Merge' })}
+                  </Button>
+                </div>
+              )}
             </div>
           ))}
-          {isAdmin && <div className="flex gap-2"><input value={newName} onChange={(e) => setNewName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void add(); }} placeholder={t('settings.paymentMethodName', { defaultValue: 'e.g. Paytm, cheque, bank transfer' })} className="flex-1 px-3 py-2 text-sm border rounded-lg" /><Button onClick={add} disabled={!newName.trim()}><Plus size={14} className="mr-1" />{t('common.add')}</Button></div>}
+          {isAdmin && (
+            <div className="flex gap-2">
+              <input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void add();
+                }}
+                placeholder={t('settings.paymentMethodName', {
+                  defaultValue: 'e.g. Paytm, cheque, bank transfer',
+                })}
+                className="flex-1 px-3 py-2 text-sm border rounded-lg"
+              />
+              <Button onClick={add} disabled={!newName.trim()}>
+                <Plus size={14} className="mr-1" />
+                {t('common.add')}
+              </Button>
+            </div>
+          )}
         </div>
       </Panel>
 
       <Panel className="flex items-center justify-between gap-4">
-        <div><h2 className="font-semibold text-flo-text">{t('settings.splitChecks', { defaultValue: 'Split checks' })}</h2><p className="text-sm text-flo-text-secondary mt-1">{t('settings.splitChecksHint', { defaultValue: 'Allow dine-in orders to be divided into separate guest checks by item quantity. Disabled by default.' })}</p></div>
-        <input type="checkbox" className="size-5" disabled={!isAdmin} checked={splitChecksEnabled} onChange={async (e) => { const value = e.target.checked; setSplitChecksEnabled(value); try { await api.put('/settings/split_checks_enabled', { value: String(value) }); } catch { setSplitChecksEnabled(!value); toast.error(t('settings.saveFailed')); } }} />
+        <div>
+          <h2 className="font-semibold text-flo-text">
+            {t('settings.splitChecks', { defaultValue: 'Split checks' })}
+          </h2>
+          <p className="text-sm text-flo-text-secondary mt-1">
+            {t('settings.splitChecksHint', {
+              defaultValue:
+                'Allow dine-in orders to be divided into separate guest checks by item quantity. Disabled by default.',
+            })}
+          </p>
+        </div>
+        <input
+          type="checkbox"
+          className="size-5"
+          disabled={!isAdmin}
+          checked={splitChecksEnabled}
+          onChange={async (e) => {
+            const value = e.target.checked;
+            setSplitChecksEnabled(value);
+            try {
+              await api.put('/settings/split_checks_enabled', { value: String(value) });
+            } catch {
+              setSplitChecksEnabled(!value);
+              toast.error(tSettings('saveFailed'));
+            }
+          }}
+        />
       </Panel>
 
-      {merges.length > 0 && <Panel><h2 className="font-semibold text-flo-text mb-3">{t('settings.mergeHistory', { defaultValue: 'Recent merges' })}</h2><div className="space-y-2 text-sm text-flo-text-secondary">{merges.map((entry) => <p key={entry.id}>{entry.source_name} → {entry.target_name} · {entry.affected_payments} · {new Date(`${entry.merged_at.replace(' ', 'T')}Z`).toLocaleDateString()}</p>)}</div></Panel>}
+      {merges.length > 0 && (
+        <Panel>
+          <h2 className="font-semibold text-flo-text mb-3">
+            {t('settings.mergeHistory', { defaultValue: 'Recent merges' })}
+          </h2>
+          <div className="space-y-2 text-sm text-flo-text-secondary">
+            {merges.map((entry) => (
+              <p key={entry.id}>
+                {entry.source_name} → {entry.target_name} · {entry.affected_payments} ·{' '}
+                {new Date(`${entry.merged_at.replace(' ', 'T')}Z`).toLocaleDateString()}
+              </p>
+            ))}
+          </div>
+        </Panel>
+      )}
     </div>
   );
 }

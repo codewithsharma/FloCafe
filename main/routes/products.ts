@@ -11,6 +11,7 @@
 import { Router, Request, Response } from 'express';
 import { getDatabase, now, generateShortId, getSettingValue, withTxn } from '../db';
 import { requireRole, isBlockedSsrfTarget } from '../middleware/security';
+import { validateBody } from '../middleware/validate';
 import { getActiveCountryPack, hasConfiguredTaxCategories } from '../services/tax';
 import {
   adjustProductStock,
@@ -18,6 +19,7 @@ import {
   InventoryServiceError,
   LOW_STOCK_SQL_FRAGMENT,
 } from '../services/inventory';
+import { stockAdjustBodySchema } from '../validation/inventory';
 import * as crypto from 'crypto';
 import * as dns from 'dns';
 import * as https from 'https';
@@ -66,46 +68,51 @@ function fetchPinnedHttps(
       else resolve(result!);
     };
 
-    const request = https.request({
-      hostname: parsedUrl.hostname,
-      port: parsedUrl.port || 443,
-      path: `${parsedUrl.pathname}${parsedUrl.search}`,
-      method: 'GET',
-      headers: { 'User-Agent': 'Nexora-ImageProxy/1.0' },
-      servername: parsedUrl.hostname,
-      signal,
-      lookup: ((_hostname, options, callback) => {
-        const family = net.isIP(resolvedAddress);
-        // Node 20+ may ask custom lookups for all candidate addresses while it
-        // chooses an address family. We intentionally permit only the single
-        // IP that passed the SSRF check, so return it in the requested shape.
-        if (options.all) {
-          callback(null, [{ address: resolvedAddress, family }]);
-          return;
-        }
-        callback(null, resolvedAddress, family);
-      }) as net.LookupFunction,
-    }, (response) => {
-      const chunks: Buffer[] = [];
-      let totalBytes = 0;
+    const request = https.request(
+      {
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port || 443,
+        path: `${parsedUrl.pathname}${parsedUrl.search}`,
+        method: 'GET',
+        headers: { 'User-Agent': 'Nexora-ImageProxy/1.0' },
+        servername: parsedUrl.hostname,
+        signal,
+        lookup: ((_hostname, options, callback) => {
+          const family = net.isIP(resolvedAddress);
+          // Node 20+ may ask custom lookups for all candidate addresses while it
+          // chooses an address family. We intentionally permit only the single
+          // IP that passed the SSRF check, so return it in the requested shape.
+          if (options.all) {
+            callback(null, [{ address: resolvedAddress, family }]);
+            return;
+          }
+          callback(null, resolvedAddress, family);
+        }) as net.LookupFunction,
+      },
+      (response) => {
+        const chunks: Buffer[] = [];
+        let totalBytes = 0;
 
-      response.on('data', (chunk: Buffer) => {
-        totalBytes += chunk.length;
-        if (totalBytes > MAX_FETCH_BYTES) {
-          response.destroy();
-          request.destroy();
-          finish(new Error('Image too large'));
-          return;
-        }
-        chunks.push(chunk);
-      });
-      response.on('end', () => finish(undefined, {
-        status: response.statusCode || 502,
-        headers: new Headers(response.headers as Record<string, string>),
-        body: Buffer.concat(chunks),
-      }));
-      response.on('error', (error) => finish(error));
-    });
+        response.on('data', (chunk: Buffer) => {
+          totalBytes += chunk.length;
+          if (totalBytes > MAX_FETCH_BYTES) {
+            response.destroy();
+            request.destroy();
+            finish(new Error('Image too large'));
+            return;
+          }
+          chunks.push(chunk);
+        });
+        response.on('end', () =>
+          finish(undefined, {
+            status: response.statusCode || 502,
+            headers: new Headers(response.headers as Record<string, string>),
+            body: Buffer.concat(chunks),
+          }),
+        );
+        response.on('error', (error) => finish(error));
+      },
+    );
 
     request.on('error', (error) => finish(error));
     request.end();
@@ -158,9 +165,9 @@ function loadProductRelationsBatch(db: any, products: any[]) {
   const categoryMap = new Map<string, any>();
   if (categoryIds.length > 0) {
     const catPlaceholders = categoryIds.map(() => '?').join(',');
-    const categoryRows = db.prepare(
-      `SELECT * FROM categories WHERE id IN (${catPlaceholders})`
-    ).all(...categoryIds) as any[];
+    const categoryRows = db
+      .prepare(`SELECT * FROM categories WHERE id IN (${catPlaceholders})`)
+      .all(...categoryIds) as any[];
     for (const c of categoryRows) {
       categoryMap.set(c.id, c);
     }
@@ -168,9 +175,11 @@ function loadProductRelationsBatch(db: any, products: any[]) {
 
   // 2. Load all addon_group ↔ product mappings for these products
   const placeholders = productIds.map(() => '?').join(',');
-  const agpRows = db.prepare(
-    `SELECT product_id, addon_group_id FROM addon_group_product WHERE product_id IN (${placeholders})`
-  ).all(...productIds) as any[];
+  const agpRows = db
+    .prepare(
+      `SELECT product_id, addon_group_id FROM addon_group_product WHERE product_id IN (${placeholders})`,
+    )
+    .all(...productIds) as any[];
 
   // Group addon_group_ids by product_id
   const addonGroupIdsByProduct = new Map<string, string[]>();
@@ -185,9 +194,9 @@ function loadProductRelationsBatch(db: any, products: any[]) {
   const addonGroupMap = new Map<string, any>();
   if (allAddonGroupIds.length > 0) {
     const agPlaceholders = allAddonGroupIds.map(() => '?').join(',');
-    const addonGroups = db.prepare(
-      `SELECT * FROM addon_groups WHERE is_active = 1 AND id IN (${agPlaceholders})`
-    ).all(...allAddonGroupIds) as any[];
+    const addonGroups = db
+      .prepare(`SELECT * FROM addon_groups WHERE is_active = 1 AND id IN (${agPlaceholders})`)
+      .all(...allAddonGroupIds) as any[];
     for (const ag of addonGroups) {
       addonGroupMap.set(ag.id, ag);
     }
@@ -197,9 +206,9 @@ function loadProductRelationsBatch(db: any, products: any[]) {
   const addonMap = new Map<string, any[]>();
   if (allAddonGroupIds.length > 0) {
     const agPlaceholders = allAddonGroupIds.map(() => '?').join(',');
-    const addons = db.prepare(
-      `SELECT * FROM addons WHERE is_active = 1 AND addon_group_id IN (${agPlaceholders})`
-    ).all(...allAddonGroupIds) as any[];
+    const addons = db
+      .prepare(`SELECT * FROM addons WHERE is_active = 1 AND addon_group_id IN (${agPlaceholders})`)
+      .all(...allAddonGroupIds) as any[];
     for (const addon of addons) {
       const list = addonMap.get(addon.addon_group_id) || [];
       list.push(addon);
@@ -239,14 +248,22 @@ const PRODUCT_NUMERIC_FIELDS = [
   ['low_stock_threshold', 0, Number.POSITIVE_INFINITY],
 ] as const;
 
-function validateProductNumericFields(values: Record<string, unknown>, requirePrice: boolean): string | null {
+function validateProductNumericFields(
+  values: Record<string, unknown>,
+  requirePrice: boolean,
+): string | null {
   if (requirePrice && (typeof values.price !== 'number' || !Number.isFinite(values.price))) {
     return 'price must be a finite non-negative number';
   }
   for (const [field, minimum, maximum] of PRODUCT_NUMERIC_FIELDS) {
     const value = values[field];
     if (value === undefined || value === null) continue;
-    if (typeof value !== 'number' || !Number.isFinite(value) || value < minimum || value > maximum) {
+    if (
+      typeof value !== 'number' ||
+      !Number.isFinite(value) ||
+      value < minimum ||
+      value > maximum
+    ) {
       return `${field} must be a finite number between ${minimum} and ${maximum === Number.POSITIVE_INFINITY ? 'the maximum supported value' : maximum}`;
     }
   }
@@ -339,8 +356,8 @@ router.get('/', (req: Request, res: Response) => {
 
     res.json({ products: productsWithRelations });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -349,9 +366,9 @@ router.get('/:id/image', async (req: Request, res: Response) => {
   // Image endpoint — must be defined BEFORE /:id to avoid route conflict
   try {
     const db = getDatabase();
-    const row = db.prepare(
-      'SELECT image_url FROM products WHERE id = ? AND deleted_at IS NULL'
-    ).get(req.params.id) as any;
+    const row = db
+      .prepare('SELECT image_url FROM products WHERE id = ? AND deleted_at IS NULL')
+      .get(req.params.id) as any;
 
     if (!row || !row.image_url) {
       return res.status(404).json({ error: 'No image' });
@@ -377,7 +394,7 @@ router.get('/:id/image', async (req: Request, res: Response) => {
     }
 
     const contentType = match[1]; // e.g., "image/webp"
-    const base64Data = match[3];  // group 2 is the extension, group 3 is the base64 data
+    const base64Data = match[3]; // group 2 is the extension, group 3 is the base64 data
 
     const buffer = Buffer.from(base64Data, 'base64');
     if (buffer.length === 0) {
@@ -396,20 +413,22 @@ router.get('/:id/image', async (req: Request, res: Response) => {
     res.set({
       'Content-Type': contentType,
       'Content-Length': buffer.length,
-      'ETag': `"${etag}"`,
+      ETag: `"${etag}"`,
       'Cache-Control': 'no-cache', // Always revalidate — instant cross-terminal updates
     });
     res.send(buffer);
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 router.get('/:id', (req: Request, res: Response) => {
   try {
     const db = getDatabase();
-    const product = db.prepare('SELECT * FROM products WHERE id = ? AND deleted_at IS NULL').get(req.params.id);
+    const product = db
+      .prepare('SELECT * FROM products WHERE id = ? AND deleted_at IS NULL')
+      .get(req.params.id);
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
@@ -418,10 +437,17 @@ router.get('/:id', (req: Request, res: Response) => {
     const relations = loadProductRelationsBatch(db, [product as any]);
     const rel = relations.get((product as any).id) || { category: null, addon_groups: [] };
 
-    res.json({ product: { ...(product as any), tags: parseTags((product as any).tags), category: rel.category, addonGroups: rel.addon_groups } });
+    res.json({
+      product: {
+        ...(product as any),
+        tags: parseTags((product as any).tags),
+        category: rel.category,
+        addonGroups: rel.addon_groups,
+      },
+    });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -544,17 +570,32 @@ router.post('/fetch-url', requireRole('owner', 'manager'), async (req: Request, 
       return res.status(502).json({ error: 'Could not fetch the image' });
     }
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
     const {
-      category_id, name, sku, barcode, description, price, cost_price,
-      tax_category_id, tax_behavior, track_inventory, stock_quantity,
-      low_stock_threshold, is_active, image_url, sort_order, cb_percent, tags, addon_group_ids
+      category_id,
+      name,
+      sku,
+      barcode,
+      description,
+      price,
+      cost_price,
+      tax_category_id,
+      tax_behavior,
+      track_inventory,
+      stock_quantity,
+      low_stock_threshold,
+      is_active,
+      image_url,
+      sort_order,
+      cb_percent,
+      tags,
+      addon_group_ids,
     } = req.body;
 
     if (!name || price === undefined) {
@@ -564,13 +605,24 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
     if (numericError) return res.status(400).json({ error: numericError });
 
     if (cb_percent !== undefined && cb_percent !== null) {
-      if (typeof cb_percent !== 'number' || !Number.isFinite(cb_percent) || cb_percent < 0 || cb_percent > 100) {
+      if (
+        typeof cb_percent !== 'number' ||
+        !Number.isFinite(cb_percent) ||
+        cb_percent < 0 ||
+        cb_percent > 100
+      ) {
         return res.status(400).json({ error: 'cb_percent must be a number between 0 and 100' });
       }
     }
 
-    if (tax_behavior !== undefined && tax_behavior !== null && !VALID_TAX_BEHAVIORS.includes(tax_behavior)) {
-      return res.status(400).json({ error: `tax_behavior must be one of: ${VALID_TAX_BEHAVIORS.join(', ')}` });
+    if (
+      tax_behavior !== undefined &&
+      tax_behavior !== null &&
+      !VALID_TAX_BEHAVIORS.includes(tax_behavior)
+    ) {
+      return res
+        .status(400)
+        .json({ error: `tax_behavior must be one of: ${VALID_TAX_BEHAVIORS.join(', ')}` });
     }
     const taxCategoryError = validateTaxCategoryId(tax_category_id);
     if (taxCategoryError) {
@@ -588,39 +640,58 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
     // A barcode scan must resolve to exactly one product — unlike sku, which
     // is informational only, a duplicate barcode would make scanning ambiguous.
     if (barcode) {
-      const clash = db.prepare(
-        'SELECT id FROM products WHERE barcode = ? AND deleted_at IS NULL'
-      ).get(barcode);
+      const clash = db
+        .prepare('SELECT id FROM products WHERE barcode = ? AND deleted_at IS NULL')
+        .get(barcode);
       if (clash) {
         return res.status(400).json({ error: 'Another product already uses this barcode' });
       }
     }
 
     const id = generateShortId('products');
-    const initialStock = typeof stock_quantity === 'number' && Number.isFinite(stock_quantity)
-      ? stock_quantity
-      : 0;
+    const initialStock =
+      typeof stock_quantity === 'number' && Number.isFinite(stock_quantity) ? stock_quantity : 0;
 
     // Product identity INSERT starts at stock 0; Inventory owns the stock write
     // (+ opening adjustment movement when initialStock ≠ 0) in the same txn.
     try {
       withTxn(() => {
-        db.prepare(`
+        db.prepare(
+          `
           INSERT INTO products (id, category_id, name, sku, barcode, description, price, cost,
             tax_type, tax_rate, tax_category_id, tax_behavior, track_inventory, stock_quantity, low_stock_threshold,
             is_active, image_url, sort_order, cb_percent, tags, created_at, updated_at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `).run(
-          id, category_id || null, name, sku || null, barcode || null, description || null, price, cost_price || 0,
-          'none', 0, tax_category_id || null, tax_behavior || 'country_default',
-          track_inventory ? 1 : 0, 0, low_stock_threshold || 0,
-          is_active !== false ? 1 : 0, image_url || null,
-          sort_order || 0, cb_percent !== undefined ? cb_percent : null, JSON.stringify(tags || []),
-          now(), now()
+        `,
+        ).run(
+          id,
+          category_id || null,
+          name,
+          sku || null,
+          barcode || null,
+          description || null,
+          price,
+          cost_price || 0,
+          'none',
+          0,
+          tax_category_id || null,
+          tax_behavior || 'country_default',
+          track_inventory ? 1 : 0,
+          0,
+          low_stock_threshold || 0,
+          is_active !== false ? 1 : 0,
+          image_url || null,
+          sort_order || 0,
+          cb_percent !== undefined ? cb_percent : null,
+          JSON.stringify(tags || []),
+          now(),
+          now(),
         );
 
         if (addon_group_ids && addon_group_ids.length > 0) {
-          const insertAgp = db.prepare('INSERT INTO addon_group_product (addon_group_id, product_id) VALUES (?, ?)');
+          const insertAgp = db.prepare(
+            'INSERT INTO addon_group_product (addon_group_id, product_id) VALUES (?, ?)',
+          );
           for (const agId of addon_group_ids) {
             insertAgp.run(agId, id);
           }
@@ -642,34 +713,62 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
     const product = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
     res.status(201).json({ product });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
     const db = getDatabase();
-    const product = db.prepare('SELECT * FROM products WHERE id = ? AND deleted_at IS NULL').get(req.params.id);
+    const product = db
+      .prepare('SELECT * FROM products WHERE id = ? AND deleted_at IS NULL')
+      .get(req.params.id);
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
 
     const {
-      category_id, name, sku, barcode, description, price, cost_price,
-      tax_category_id, tax_behavior, track_inventory, stock_quantity,
-      low_stock_threshold, is_active, image_url, sort_order, cb_percent, tags, addon_group_ids
+      category_id,
+      name,
+      sku,
+      barcode,
+      description,
+      price,
+      cost_price,
+      tax_category_id,
+      tax_behavior,
+      track_inventory,
+      stock_quantity,
+      low_stock_threshold,
+      is_active,
+      image_url,
+      sort_order,
+      cb_percent,
+      tags,
+      addon_group_ids,
     } = req.body;
 
     const numericError = validateProductNumericFields(req.body, false);
     if (numericError) return res.status(400).json({ error: numericError });
 
-    if (tax_behavior !== undefined && tax_behavior !== null && !VALID_TAX_BEHAVIORS.includes(tax_behavior)) {
-      return res.status(400).json({ error: `tax_behavior must be one of: ${VALID_TAX_BEHAVIORS.join(', ')}` });
+    if (
+      tax_behavior !== undefined &&
+      tax_behavior !== null &&
+      !VALID_TAX_BEHAVIORS.includes(tax_behavior)
+    ) {
+      return res
+        .status(400)
+        .json({ error: `tax_behavior must be one of: ${VALID_TAX_BEHAVIORS.join(', ')}` });
     }
 
     if (cb_percent !== undefined && cb_percent !== null) {
-      if (typeof cb_percent !== 'number' || !Number.isFinite(cb_percent) || cb_percent < 0 || cb_percent > 100) {
+      if (
+        typeof cb_percent !== 'number' ||
+        !Number.isFinite(cb_percent) ||
+        cb_percent < 0 ||
+        cb_percent > 100
+      ) {
         return res.status(400).json({ error: 'cb_percent must be a number between 0 and 100' });
       }
     }
@@ -687,9 +786,9 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
     }
 
     if (barcode) {
-      const clash = db.prepare(
-        'SELECT id FROM products WHERE barcode = ? AND deleted_at IS NULL AND id != ?'
-      ).get(barcode, req.params.id);
+      const clash = db
+        .prepare('SELECT id FROM products WHERE barcode = ? AND deleted_at IS NULL AND id != ?')
+        .get(barcode, req.params.id);
       if (clash) {
         return res.status(400).json({ error: 'Another product already uses this barcode' });
       }
@@ -700,15 +799,17 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
     const hasImageUrl = 'image_url' in req.body;
     const hasTaxCategoryId = 'tax_category_id' in req.body;
     const hasCbPercent = 'cb_percent' in req.body;
-    const hasStockQuantity = 'stock_quantity' in req.body
-      && typeof stock_quantity === 'number'
-      && Number.isFinite(stock_quantity);
+    const hasStockQuantity =
+      'stock_quantity' in req.body &&
+      typeof stock_quantity === 'number' &&
+      Number.isFinite(stock_quantity);
     const productId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     try {
       withTxn(() => {
         // Metadata only — stock_quantity is owned by Inventory (below).
-        db.prepare(`
+        db.prepare(
+          `
           UPDATE products SET
             category_id = COALESCE(@category_id, category_id),
             name = COALESCE(@name, name),
@@ -730,9 +831,17 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
             tags = COALESCE(@tags, tags),
             updated_at = @updated_at
           WHERE id = @id
-        `).run({
-          category_id, name, sku, barcode, description, price, cost: cost_price,
-          tax_category_id, tax_behavior,
+        `,
+        ).run({
+          category_id,
+          name,
+          sku,
+          barcode,
+          description,
+          price,
+          cost: cost_price,
+          tax_category_id,
+          tax_behavior,
           has_tax_category_id: hasTaxCategoryId ? 1 : 0,
           track_inventory: track_inventory ? 1 : track_inventory === 0 ? 0 : null,
           low_stock_threshold,
@@ -758,7 +867,9 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
         if (addon_group_ids !== undefined) {
           db.prepare('DELETE FROM addon_group_product WHERE product_id = ?').run(productId);
           if (addon_group_ids && addon_group_ids.length > 0) {
-            const insertAgp = db.prepare('INSERT INTO addon_group_product (addon_group_id, product_id) VALUES (?, ?)');
+            const insertAgp = db.prepare(
+              'INSERT INTO addon_group_product (addon_group_id, product_id) VALUES (?, ?)',
+            );
             for (const agId of addon_group_ids) {
               insertAgp.run(agId, productId);
             }
@@ -775,15 +886,17 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
     const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(productId);
     res.json({ product: updated });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 router.delete('/:id', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
     const db = getDatabase();
-    const product = db.prepare('SELECT * FROM products WHERE id = ? AND deleted_at IS NULL').get(req.params.id);
+    const product = db
+      .prepare('SELECT * FROM products WHERE id = ? AND deleted_at IS NULL')
+      .get(req.params.id);
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
     }
@@ -791,25 +904,30 @@ router.delete('/:id', requireRole('owner', 'manager'), (req: Request, res: Respo
     db.prepare('UPDATE products SET deleted_at = ? WHERE id = ?').run(now(), req.params.id);
     res.json({ message: 'Product deleted' });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.post('/:id/stock', requireRole('owner', 'manager'), (req: Request, res: Response) => {
-  try {
-    const { action, quantity } = req.body;
-    const productId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const updated = adjustProductStock(productId, action, quantity);
-    res.json({ product: updated });
-  } catch (error: any) {
-    if (error instanceof InventoryServiceError) {
-      return res.status(error.statusCode).json({ error: error.message });
+router.post(
+  '/:id/stock',
+  requireRole('owner', 'manager'),
+  validateBody(stockAdjustBodySchema),
+  (req: Request, res: Response) => {
+    try {
+      const { action, quantity } = req.body;
+      const productId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const updated = adjustProductStock(productId, action, quantity);
+      res.json({ product: updated });
+    } catch (error: any) {
+      if (error instanceof InventoryServiceError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+  },
+);
 
 // Every product created before the tri-state loyalty rates carries
 // cb_percent = 0, which now reads as "earns nothing" — so an owner who sets a
@@ -819,28 +937,40 @@ router.post('/:id/stock', requireRole('owner', 'manager'), (req: Request, res: R
 // would silently start paying out on products a merchant had excluded. These
 // two routes are the explicit, counted alternative — the owner sees how many
 // products are affected, then chooses.
-router.get('/loyalty/global-rate-candidates', requireRole('owner', 'manager'), (_req: Request, res: Response) => {
-  try {
-    const row = getDatabase().prepare(
-      'SELECT COUNT(*) AS count FROM products WHERE cb_percent = 0 AND deleted_at IS NULL'
-    ).get() as { count: number };
-    res.json({ count: row.count });
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+router.get(
+  '/loyalty/global-rate-candidates',
+  requireRole('owner', 'manager'),
+  (_req: Request, res: Response) => {
+    try {
+      const row = getDatabase()
+        .prepare(
+          'SELECT COUNT(*) AS count FROM products WHERE cb_percent = 0 AND deleted_at IS NULL',
+        )
+        .get() as { count: number };
+      res.json({ count: row.count });
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
-router.post('/loyalty/apply-global-rate', requireRole('owner', 'manager'), (_req: Request, res: Response) => {
-  try {
-    const result = getDatabase().prepare(
-      'UPDATE products SET cb_percent = NULL, updated_at = ? WHERE cb_percent = 0 AND deleted_at IS NULL'
-    ).run(now());
-    res.json({ updated: result.changes });
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+router.post(
+  '/loyalty/apply-global-rate',
+  requireRole('owner', 'manager'),
+  (_req: Request, res: Response) => {
+    try {
+      const result = getDatabase()
+        .prepare(
+          'UPDATE products SET cb_percent = NULL, updated_at = ? WHERE cb_percent = 0 AND deleted_at IS NULL',
+        )
+        .run(now());
+      res.json({ updated: result.changes });
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 export const productRoutes = router;

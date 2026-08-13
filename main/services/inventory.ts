@@ -24,6 +24,7 @@
  */
 
 import { getDatabase, now, withTxn } from '../db';
+import { DOMAIN_SPAN, withSpanSync } from '../lib/tracing';
 
 export class InventoryServiceError extends Error {
   readonly statusCode: number;
@@ -84,10 +85,7 @@ function isTracking(product: StockTrackedProduct | null | undefined): boolean {
  * Throws Error (not InventoryServiceError) with the historical message so
  * order-route catch blocks that map Error → 400 keep working unchanged.
  */
-export function assertStockAvailable(
-  product: StockTrackedProduct,
-  quantity: number,
-): void {
+export function assertStockAvailable(product: StockTrackedProduct, quantity: number): void {
   if (isTracking(product) && Number(product.stock_quantity ?? 0) < quantity) {
     throw new Error(`Insufficient stock for ${product.name}`);
   }
@@ -107,12 +105,14 @@ export function recordMovement(
     createdAt?: string;
   },
 ): void {
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO inventory_movements (
       product_id, quantity_delta, movement_type, reference_type, reference_id,
       reason, stock_after, created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
+  `,
+  ).run(
     String(args.productId),
     args.quantityDelta,
     args.movementType,
@@ -125,9 +125,8 @@ export function recordMovement(
 }
 
 function readStockAfter(db: any, productId: string | number): number {
-  const row = db.prepare(
-    'SELECT stock_quantity FROM products WHERE id = ?',
-  ).get(productId) as { stock_quantity: number } | undefined;
+  const row = db.prepare('SELECT stock_quantity FROM products WHERE id = ?').get(productId) as
+    { stock_quantity: number } | undefined;
   return Number(row?.stock_quantity ?? 0);
 }
 
@@ -153,9 +152,11 @@ export function applyAbsoluteStockChange(
   }
 
   const updatedAt = now();
-  const result = db.prepare(
-    'UPDATE products SET stock_quantity = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
-  ).run(newQuantity, updatedAt, productId) as { changes: number };
+  const result = db
+    .prepare(
+      'UPDATE products SET stock_quantity = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
+    )
+    .run(newQuantity, updatedAt, productId) as { changes: number };
 
   if (result.changes === 0) {
     throw new InventoryServiceError(404, 'Product not found');
@@ -188,22 +189,29 @@ export function decrementTrackedStock(
   updatedAt: string,
   ref?: InventoryMovementRef,
 ): void {
-  assertStockAvailable(product, quantity);
-  if (!isTracking(product)) return;
-  db.prepare(
-    'UPDATE products SET stock_quantity = stock_quantity - ?, updated_at = ? WHERE id = ?',
-  ).run(quantity, updatedAt, product.id);
-  const stockAfter = readStockAfter(db, product.id);
-  recordMovement(db, {
-    productId: product.id,
-    quantityDelta: -quantity,
-    movementType: 'sale',
-    stockAfter,
-    referenceType: ref?.referenceType ?? 'order',
-    referenceId: ref?.referenceId ?? null,
-    reason: ref?.reason ?? null,
-    createdAt: updatedAt,
-  });
+  withSpanSync(
+    'inventory',
+    DOMAIN_SPAN.inventory.decrement,
+    () => {
+      assertStockAvailable(product, quantity);
+      if (!isTracking(product)) return;
+      db.prepare(
+        'UPDATE products SET stock_quantity = stock_quantity - ?, updated_at = ? WHERE id = ?',
+      ).run(quantity, updatedAt, product.id);
+      const stockAfter = readStockAfter(db, product.id);
+      recordMovement(db, {
+        productId: product.id,
+        quantityDelta: -quantity,
+        movementType: 'sale',
+        stockAfter,
+        referenceType: ref?.referenceType ?? 'order',
+        referenceId: ref?.referenceId ?? null,
+        reason: ref?.reason ?? null,
+        createdAt: updatedAt,
+      });
+    },
+    { 'product.id': String(product.id), quantity },
+  );
 }
 
 /** Order cancel / last-item cancel collapse: restore when tracking. */
@@ -241,76 +249,92 @@ export function adjustProductStock(
   action: StockAdjustAction | string,
   quantity: unknown,
 ): Record<string, unknown> {
-  if (!action || quantity === undefined) {
-    throw new InventoryServiceError(400, 'Action and quantity are required');
-  }
-  if (!['set', 'increase', 'decrease'].includes(action)) {
-    throw new InventoryServiceError(400, 'Invalid action. Use: set, increase, decrease');
-  }
-  if (typeof quantity !== 'number' || !Number.isFinite(quantity) || quantity < 0) {
-    throw new InventoryServiceError(400, 'quantity must be a non-negative number');
-  }
+  return withSpanSync(
+    'inventory',
+    DOMAIN_SPAN.inventory.adjust,
+    () => {
+      if (!action || quantity === undefined) {
+        throw new InventoryServiceError(400, 'Action and quantity are required');
+      }
+      if (!['set', 'increase', 'decrease'].includes(action)) {
+        throw new InventoryServiceError(400, 'Invalid action. Use: set, increase, decrease');
+      }
+      if (typeof quantity !== 'number' || !Number.isFinite(quantity) || quantity < 0) {
+        throw new InventoryServiceError(400, 'quantity must be a non-negative number');
+      }
 
-  return withTxn(() => {
-    const db = getDatabase();
-    const product = db.prepare(
-      'SELECT * FROM products WHERE id = ? AND deleted_at IS NULL',
-    ).get(productId) as Record<string, unknown> | undefined;
-    if (!product) {
-      throw new InventoryServiceError(404, 'Product not found');
-    }
+      return withTxn(() => {
+        const db = getDatabase();
+        const product = db
+          .prepare('SELECT * FROM products WHERE id = ? AND deleted_at IS NULL')
+          .get(productId) as Record<string, unknown> | undefined;
+        if (!product) {
+          throw new InventoryServiceError(404, 'Product not found');
+        }
 
-    const current = Number(product.stock_quantity ?? 0);
-    let delta: number;
-    if (action === 'set') {
-      delta = quantity - current;
-    } else if (action === 'increase') {
-      delta = quantity;
-    } else {
-      delta = -quantity;
-    }
+        const current = Number(product.stock_quantity ?? 0);
+        let delta: number;
+        if (action === 'set') {
+          delta = quantity - current;
+        } else if (action === 'increase') {
+          delta = quantity;
+        } else {
+          delta = -quantity;
+        }
 
-    if (delta === 0) {
-      return product;
-    }
+        if (delta === 0) {
+          return product;
+        }
 
-    const updatedAt = now();
-    let result: { changes: number };
-    if (action === 'set') {
-      result = db.prepare(
-        'UPDATE products SET stock_quantity = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
-      ).run(quantity, updatedAt, productId) as { changes: number };
-    } else if (action === 'increase') {
-      result = db.prepare(
-        'UPDATE products SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
-      ).run(quantity, updatedAt, productId) as { changes: number };
-    } else {
-      result = db.prepare(
-        'UPDATE products SET stock_quantity = stock_quantity - ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL AND stock_quantity >= ?',
-      ).run(quantity, updatedAt, productId, quantity) as { changes: number };
-    }
+        const updatedAt = now();
+        let result: { changes: number };
+        if (action === 'set') {
+          result = db
+            .prepare(
+              'UPDATE products SET stock_quantity = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
+            )
+            .run(quantity, updatedAt, productId) as { changes: number };
+        } else if (action === 'increase') {
+          result = db
+            .prepare(
+              'UPDATE products SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
+            )
+            .run(quantity, updatedAt, productId) as { changes: number };
+        } else {
+          result = db
+            .prepare(
+              'UPDATE products SET stock_quantity = stock_quantity - ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL AND stock_quantity >= ?',
+            )
+            .run(quantity, updatedAt, productId, quantity) as { changes: number };
+        }
 
-    if (result.changes === 0) {
-      throw new InventoryServiceError(
-        400,
-        action === 'decrease' ? 'Insufficient stock' : 'Product not found',
-      );
-    }
+        if (result.changes === 0) {
+          throw new InventoryServiceError(
+            400,
+            action === 'decrease' ? 'Insufficient stock' : 'Product not found',
+          );
+        }
 
-    const stockAfter = readStockAfter(db, productId);
-    recordMovement(db, {
-      productId,
-      quantityDelta: delta,
-      movementType: 'adjustment',
-      stockAfter,
-      referenceType: 'manual',
-      referenceId: null,
-      reason: action,
-      createdAt: updatedAt,
-    });
+        const stockAfter = readStockAfter(db, productId);
+        recordMovement(db, {
+          productId,
+          quantityDelta: delta,
+          movementType: 'adjustment',
+          stockAfter,
+          referenceType: 'manual',
+          referenceId: null,
+          reason: action,
+          createdAt: updatedAt,
+        });
 
-    return db.prepare('SELECT * FROM products WHERE id = ?').get(productId) as Record<string, unknown>;
-  });
+        return db.prepare('SELECT * FROM products WHERE id = ?').get(productId) as Record<
+          string,
+          unknown
+        >;
+      });
+    },
+    { 'product.id': String(productId), action: String(action) },
+  );
 }
 
 export function getCurrentStock(productId: string | number): number {
@@ -319,11 +343,15 @@ export function getCurrentStock(productId: string | number): number {
 
 /** Post-migration SUM(quantity_delta). Pre-migration history is unavailable. */
 export function calculateLedgerStock(productId: string | number): number {
-  const row = getDatabase().prepare(`
+  const row = getDatabase()
+    .prepare(
+      `
     SELECT COALESCE(SUM(quantity_delta), 0) AS total
     FROM inventory_movements
     WHERE product_id = ?
-  `).get(String(productId)) as { total: number };
+  `,
+    )
+    .get(String(productId)) as { total: number };
   return Number(row.total ?? 0);
 }
 
@@ -357,24 +385,29 @@ export function listInventoryMovements(
   const safeLimit = Math.max(1, Math.min(Number(options.limit) || 100, 500));
   const beforeRaw = options.beforeId;
   const beforeId =
-    beforeRaw === undefined || beforeRaw === null || beforeRaw === ''
-      ? null
-      : Number(beforeRaw);
+    beforeRaw === undefined || beforeRaw === null || beforeRaw === '' ? null : Number(beforeRaw);
   if (beforeId !== null && (!Number.isFinite(beforeId) || beforeId < 1)) {
     throw new InventoryServiceError(400, 'before_id must be a positive integer');
   }
 
   const db = getDatabase();
-  const rows = beforeId === null
-    ? (db.prepare(`
+  const rows =
+    beforeId === null
+      ? (db
+          .prepare(
+            `
         SELECT id, product_id, quantity_delta, movement_type, reference_type, reference_id,
                reason, stock_after, created_at
         FROM inventory_movements
         WHERE product_id = ?
         ORDER BY id DESC
         LIMIT ?
-      `).all(productId, safeLimit + 1) as InventoryMovementRow[])
-    : (db.prepare(`
+      `,
+          )
+          .all(productId, safeLimit + 1) as InventoryMovementRow[])
+      : (db
+          .prepare(
+            `
         SELECT id, product_id, quantity_delta, movement_type, reference_type, reference_id,
                reason, stock_after, created_at
         FROM inventory_movements
@@ -382,7 +415,9 @@ export function listInventoryMovements(
           AND id < ?
         ORDER BY id DESC
         LIMIT ?
-      `).all(productId, beforeId, safeLimit + 1) as InventoryMovementRow[]);
+      `,
+          )
+          .all(productId, beforeId, safeLimit + 1) as InventoryMovementRow[]);
 
   const hasMore = rows.length > safeLimit;
   const movements = hasMore ? rows.slice(0, safeLimit) : rows;
@@ -390,10 +425,7 @@ export function listInventoryMovements(
   return { movements, nextCursor };
 }
 
-export function getMovements(
-  productId: string | number,
-  limit = 100,
-): InventoryMovementRow[] {
+export function getMovements(productId: string | number, limit = 100): InventoryMovementRow[] {
   return listInventoryMovements({ productId, limit }).movements;
 }
 
@@ -409,17 +441,19 @@ export function compareCurrentStockToLedger(productId: string | number): StockLe
   const id = String(productId);
   const currentStock = getCurrentStock(id);
   const ledgerDeltaSum = calculateLedgerStock(id);
-  const latest = getDatabase().prepare(`
+  const latest = getDatabase()
+    .prepare(
+      `
     SELECT stock_after FROM inventory_movements
     WHERE product_id = ?
     ORDER BY id DESC
     LIMIT 1
-  `).get(id) as { stock_after: number } | undefined;
+  `,
+    )
+    .get(id) as { stock_after: number } | undefined;
 
   const valid = !latest || Number(latest.stock_after) === currentStock;
-  const difference = latest
-    ? currentStock - Number(latest.stock_after)
-    : 0;
+  const difference = latest ? currentStock - Number(latest.stock_after) : 0;
 
   return {
     productId: id,

@@ -1,5 +1,21 @@
 # Decisions
 
+## 2026-08-13 — Phase 3.1 Fail-closed vertical remount (Accepted + Implemented)
+
+**Outcome A.** `registerRoutes` is capability-aware: restaurant-only mounts gated by module enablement. Unknown vertical throws `CompositionValidationError` (no restaurant fallback). Tests may use retail-test mount override; production `ACTIVE_VERTICAL_ID` remains restaurant. Doc: `docs/03-architecture/phase-3.1-fail-closed-remount.md`. Phase 3.2 not started.
+
+## 2026-08-13 — Phase 2 closeout & Phase 3 architecture gate (Accepted)
+
+Phase 2 declared **CLOSED**. Live ownership audit PASS (soft-gate residuals documented). Lego property proven (Core→Retail E2E; Core+Restaurant→Restaurant). Phase 3 objective = practical platformization, not another boundary exercise. Ordered sub-phases: **3.1** fail-closed remount (blocker) → **3.2** vertical/capability config → **3.3** production Retail → **3.4** correctness residuals → **3.5** optional depth. Reject microservices/K8s/Kafka/framework rewrites. Do **not** implement Phase 3 until explicitly tasked; pilot KPI still outranks platform work. Doc: `docs/03-architecture/phase-2-closeout-and-phase-3-gate.md`.
+
+## 2026-08-13 — i18next Phase 2 incremental call-site migration (Accepted + Implemented)
+
+Continue dual-catalog: i18next namespaces under `frontend/src/locales/{lang}/` for migrated keys; legacy flat `lib/i18n/{en,es,pt}.json` remains source of truth for unmigrated UI. Swap only overlapping keys already present in both catalogs. Do not delete legacy keys. English `common.loading` aligned to legacy `"Loading..."` (ASCII ellipsis); es/pt i18next values left as-is. Header in `frontend/src/lib/i18n/i18next.ts` documents remaining dual-catalog usage.
+
+## 2026-08-13 — Phase 2 architecture hardening after dependency integration (Accepted + Implemented)
+
+Expanded justified package adoption without Phase 3: Zod on Order create/add-items, Payment single/batch, Refund body, Inventory stock adjust (`main/validation/*` + `validateBody`); incremental i18next migration of overlapping namespace keys (settings/common/pos/orders/products); OTel spans on order/payment/inventory/tax/auth recover + `withSpanSync`; removed redundant post-Zod login emptiness check. Deferred: tax-preview HTTP extract, full i18n unification, discount/held-order Zod, OTel exporter. Plan: `docs/03-architecture/dependency-integration-plan.md`.
+
 ## 2026-08-13 — Dependency addition & integration (Accepted + Implemented)
 
 Justified packages integrated without replacing working equivalents. **Added (root):** zod, pino-pretty (dev), pino-http, helmet, compression, @opentelemetry/api, date-fns, vitest, prettier, eslint-config-prettier, husky, lint-staged. **Added (frontend):** @tanstack/react-query, date-fns, i18next, react-i18next, vitest. **Skipped:** zustand (already present), express-rate-limit (custom LAN-aware `rateLimit`/`authRateLimit` retained). State rule: server→Query, client→Zustand, domain→SQLite. i18next foundation + Settings language migration; legacy flat `t()` retained. Plan: `docs/03-architecture/dependency-integration-plan.md`.
@@ -10,7 +26,7 @@ Phase 2 declared **COMPLETE** after CURRENT 2.14–2.18 seams. Decision **PASS W
 
 ## 2026-08-13 — Phase 2.18 Synthetic Retail validation (Accepted + Implemented)
 
-Strengthened `retail-test` as architecture-only composition: shared commerce modules without tables/kitchen/kds/menu/addons; production `VERTICALS` / `ACTIVE_VERTICAL_ID` remain restaurant; `business_type` still maps retail → restaurant. Tests: `synthetic-retail-composition`, `shared-module-vertical-neutrality` (no core/shared catalog deps on restaurant-kind; Order/Payment side effects module-gated). Not production Opervia Retail. Doc: `phase-2.18-synthetic-retail-validation.md`.
+Strengthened `retail-test` as architecture-only composition: shared commerce modules without tables/kitchen/kds/menu/addons; production `VERTICALS` / `ACTIVE_VERTICAL_ID` remain restaurant; `business_type` still maps retail → restaurant. Tests: `synthetic-retail-composition`, `shared-module-vertical-neutrality`, **`synthetic-retail-sale`** (takeaway Product→Inventory→Order→Tax→Bill→Pay + historical snapshot + payment idempotency). Not production Opervia Retail. Doc: `phase-2.18-synthetic-retail-validation.md`.
 
 ## 2026-08-13 — Phase 2.16 POS orchestration boundary (Accepted + Implemented)
 

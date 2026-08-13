@@ -76,6 +76,38 @@ export async function withSpan<T>(
   });
 }
 
+/**
+ * Sync variant for SQLite txn / service paths that cannot become async.
+ * Same no-op behavior without a collector.
+ */
+export function withSpanSync<T>(
+  domain: TraceDomain,
+  name: string,
+  fn: (span: Span) => T,
+  attributes?: Record<string, string | number | boolean>,
+): T {
+  const tracer = getTracer(domain);
+  return tracer.startActiveSpan(name, (span) => {
+    if (attributes) {
+      for (const [key, value] of Object.entries(attributes)) {
+        span.setAttribute(key, value);
+      }
+    }
+    try {
+      const result = fn(span);
+      span.setStatus({ code: SpanStatusCode.OK });
+      return result;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      span.recordException(err instanceof Error ? err : new Error(message));
+      span.setStatus({ code: SpanStatusCode.ERROR, message });
+      throw err;
+    } finally {
+      span.end();
+    }
+  });
+}
+
 /** Current trace id when a span is active; otherwise null. */
 export function currentTraceId(): string | null {
   const span = trace.getSpan(context.active());

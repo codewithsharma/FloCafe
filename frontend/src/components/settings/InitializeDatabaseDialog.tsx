@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { MasterPinPrompt } from './MasterPinPrompt';
 import { AlertTriangle } from 'lucide-react';
 import { useI18n } from '@/hooks/useI18n';
+import { useTranslation } from 'react-i18next';
 
 const CONFIRM_PHRASE = 'INITIALIZE';
 
@@ -25,8 +26,14 @@ interface InitializeDatabaseDialogProps {
   onSuccess: (backupPath?: string) => void;
 }
 
-export function InitializeDatabaseDialog({ open, onOpenChange, onConfirm, onSuccess }: InitializeDatabaseDialogProps) {
+export function InitializeDatabaseDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+  onSuccess,
+}: InitializeDatabaseDialogProps) {
   const { t } = useI18n();
+  const { t: tCommon } = useTranslation('common');
   const [phrase, setPhrase] = useState('');
   const [showPinPrompt, setShowPinPrompt] = useState(false);
 
@@ -65,9 +72,7 @@ export function InitializeDatabaseDialog({ open, onOpenChange, onConfirm, onSucc
               {t('settings.initializeDatabase')}
             </DialogTitle>
             <DialogDescription className="space-y-2 pt-2 text-left">
-              <span className="block">
-                {t('settings.initializeDialogBody')}
-              </span>
+              <span className="block">{t('settings.initializeDialogBody')}</span>
               <span className="block font-medium text-flo-text">
                 {t('settings.initializeDialogBackup')}
               </span>
@@ -88,7 +93,9 @@ export function InitializeDatabaseDialog({ open, onOpenChange, onConfirm, onSucc
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={close}>{t('common.cancel')}</Button>
+            <Button variant="outline" onClick={close}>
+              {tCommon('cancel')}
+            </Button>
             <Button
               variant="destructive"
               disabled={phrase !== CONFIRM_PHRASE}

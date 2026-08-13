@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  batchPaymentBodySchema,
-  singlePaymentBodySchema,
-  stockAdjustBodySchema,
-} from '../../main/validation/payments';
+import { batchPaymentBodySchema, singlePaymentBodySchema } from '../../main/validation/payments';
+import { stockAdjustBodySchema } from '../../main/validation/inventory';
 
 describe('payment zod schemas', () => {
   it('accepts a single payment with omitted amount', () => {
@@ -29,6 +26,11 @@ describe('payment zod schemas', () => {
   it('rejects missing payment method', () => {
     const result = singlePaymentBodySchema.safeParse({ amount: 10 });
     expect(result.success).toBe(false);
+  });
+
+  it('passes non-positive amounts through for service-owned messages', () => {
+    const parsed = singlePaymentBodySchema.parse({ method: 'cash', amount: 0 });
+    expect(parsed.amount).toBe(0);
   });
 
   it('accepts a batch payment body', () => {

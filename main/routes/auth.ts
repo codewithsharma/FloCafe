@@ -37,7 +37,7 @@ import {
 import { applySetupDiagnosticsOptIn, applySetupTelemetryOptIn } from '../services/privacy-consent';
 import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
-import { withSpan } from '../lib/tracing';
+import { DOMAIN_SPAN, withSpan } from '../lib/tracing';
 
 export {
   clearJWTSecretCache,
@@ -446,11 +446,6 @@ router.post(
         const email = normalizeEmail(req.body.email);
         const { password, rememberMe } = req.body;
 
-        if (!email || !password) {
-          res.status(400).json({ error: 'Email and password required' });
-          return;
-        }
-
         const db = getDatabase();
         const user = db
           .prepare('SELECT * FROM users WHERE email = ? AND is_active = 1')
@@ -751,115 +746,121 @@ router.post(
   '/recover-password',
   authRateLimit(),
   validateBody(recoverPasswordBodySchema),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
-      if (!requireLocalSetup(req, res)) return;
-      const db = getDatabase();
+      await withSpan('authentication', DOMAIN_SPAN.authentication.recoverPassword, async () => {
+        if (!requireLocalSetup(req, res)) return;
+        const db = getDatabase();
 
-      // First-run setup is the only recovery path when there is no owner yet —
-      // never let this endpoint substitute for /setup/initialize.
-      if (getUserCount(db) === 0) {
-        return res.status(409).json({
-          error:
-            'Setup has not been completed yet. Use first-run setup to create the owner account.',
-        });
-      }
+        // First-run setup is the only recovery path when there is no owner yet —
+        // never let this endpoint substitute for /setup/initialize.
+        if (getUserCount(db) === 0) {
+          return res.status(409).json({
+            error:
+              'Setup has not been completed yet. Use first-run setup to create the owner account.',
+          });
+        }
 
-      const email = normalizeEmail(req.body?.email);
-      const { master_pin, new_password } = req.body || {};
+        const email = normalizeEmail(req.body?.email);
+        const { master_pin, new_password } = req.body || {};
 
-      if (!email || !isValidEmail(email)) {
-        return res.status(400).json({ error: 'A valid email is required' });
-      }
-      if (!new_password || !validatePassword(new_password)) {
-        return res.status(400).json({
-          error:
-            'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.',
-        });
-      }
+        if (!email || !isValidEmail(email)) {
+          return res.status(400).json({ error: 'A valid email is required' });
+        }
+        if (!new_password || !validatePassword(new_password)) {
+          return res.status(400).json({
+            error:
+              'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.',
+          });
+        }
 
-      // Rate-limit key is IP-scoped only (not email-scoped) so an attacker can't
-      // reset the Master PIN attempt counter simply by guessing a different
-      // email address on each request.
-      const ip = req.ip || req.socket.remoteAddress || 'unknown';
-      const pinResult = authorizeMasterPin(master_pin, `auth:recover-password:${ip}`);
-      if (!pinResult.ok) {
-        return res.status(pinResult.status).json({ error: pinResult.error });
-      }
+        // Rate-limit key is IP-scoped only (not email-scoped) so an attacker can't
+        // reset the Master PIN attempt counter simply by guessing a different
+        // email address on each request.
+        const ip = req.ip || req.socket.remoteAddress || 'unknown';
+        const pinResult = authorizeMasterPin(master_pin, `auth:recover-password:${ip}`);
+        if (!pinResult.ok) {
+          return res.status(pinResult.status).json({ error: pinResult.error });
+        }
 
-      const activeOwnerCount = (
-        db
-          .prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'owner' AND is_active = 1")
-          .get() as { count: number }
-      ).count;
-      const user =
-        activeOwnerCount === 0
-          ? (db.prepare('SELECT * FROM users WHERE email = ? AND is_active = 1').get(email) as any)
-          : (db
-              .prepare('SELECT * FROM users WHERE email = ? AND role = ? AND is_active = 1')
-              .get(email, INITIAL_ADMIN_ROLE) as any);
-      if (!user) {
-        return res
-          .status(404)
-          .json({ error: 'No active owner account found with that email on this install' });
-      }
-
-      const hashedPassword = bcrypt.hashSync(new_password, 10);
-      const changedAt = now();
-      let restoredOwnerAccess = false;
-      const updated = db.transaction(() => {
-        const currentOwnerCount = (
+        const activeOwnerCount = (
           db
             .prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'owner' AND is_active = 1")
             .get() as { count: number }
         ).count;
-        if (currentOwnerCount > 0) {
-          return db
-            .prepare(
-              'UPDATE users SET password = ?, tokens_valid_after = ?, updated_at = ? WHERE id = ? AND role = ? AND is_active = 1',
-            )
-            .run(hashedPassword, changedAt, changedAt, user.id, INITIAL_ADMIN_ROLE);
+        const user =
+          activeOwnerCount === 0
+            ? (db
+                .prepare('SELECT * FROM users WHERE email = ? AND is_active = 1')
+                .get(email) as any)
+            : (db
+                .prepare('SELECT * FROM users WHERE email = ? AND role = ? AND is_active = 1')
+                .get(email, INITIAL_ADMIN_ROLE) as any);
+        if (!user) {
+          return res
+            .status(404)
+            .json({ error: 'No active owner account found with that email on this install' });
         }
 
-        restoredOwnerAccess = true;
-        return db
-          .prepare(
-            `
+        const hashedPassword = bcrypt.hashSync(new_password, 10);
+        const changedAt = now();
+        let restoredOwnerAccess = false;
+        const updated = db.transaction(() => {
+          const currentOwnerCount = (
+            db
+              .prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'owner' AND is_active = 1")
+              .get() as { count: number }
+          ).count;
+          if (currentOwnerCount > 0) {
+            return db
+              .prepare(
+                'UPDATE users SET password = ?, tokens_valid_after = ?, updated_at = ? WHERE id = ? AND role = ? AND is_active = 1',
+              )
+              .run(hashedPassword, changedAt, changedAt, user.id, INITIAL_ADMIN_ROLE);
+          }
+
+          restoredOwnerAccess = true;
+          return db
+            .prepare(
+              `
         UPDATE users SET password = ?, role = ?, tokens_valid_after = ?, updated_at = ?
         WHERE id = ? AND is_active = 1
           AND NOT EXISTS (SELECT 1 FROM users WHERE role = 'owner' AND is_active = 1)
       `,
-          )
-          .run(hashedPassword, INITIAL_ADMIN_ROLE, changedAt, changedAt, user.id);
-      })();
-      if (updated.changes === 0) {
-        return res.status(409).json({ error: 'Owner access changed during recovery. Try again.' });
-      }
-      invalidateUserAuthCache(user.id);
+            )
+            .run(hashedPassword, INITIAL_ADMIN_ROLE, changedAt, changedAt, user.id);
+        })();
+        if (updated.changes === 0) {
+          return res
+            .status(409)
+            .json({ error: 'Owner access changed during recovery. Try again.' });
+        }
+        invalidateUserAuthCache(user.id);
 
-      // Local audit trail — this codebase has no dedicated audit-events table,
-      // so we follow its existing convention: a tagged console log (grep-able
-      // in the app's log file) plus a timestamp/identity pair in `settings`,
-      // the same generic key/value mechanism already used for e.g.
-      // `telemetry_last_ping_at`.
-      upsertSettings(db, {
-        last_password_recovery_at: now(),
-        last_password_recovery_user_id: String(user.id),
-        ...(restoredOwnerAccess
-          ? {
-              last_owner_recovery_at: now(),
-              last_owner_recovery_user_id: String(user.id),
-            }
-          : {}),
-      });
-      console.warn(
-        `[Auth] Password recovery: ${restoredOwnerAccess ? 'owner access' : 'owner password'} was reset locally via Master PIN for user ${user.id}`,
-      );
+        // Local audit trail — this codebase has no dedicated audit-events table,
+        // so we follow its existing convention: a tagged console log (grep-able
+        // in the app's log file) plus a timestamp/identity pair in `settings`,
+        // the same generic key/value mechanism already used for e.g.
+        // `telemetry_last_ping_at`.
+        upsertSettings(db, {
+          last_password_recovery_at: now(),
+          last_password_recovery_user_id: String(user.id),
+          ...(restoredOwnerAccess
+            ? {
+                last_owner_recovery_at: now(),
+                last_owner_recovery_user_id: String(user.id),
+              }
+            : {}),
+        });
+        console.warn(
+          `[Auth] Password recovery: ${restoredOwnerAccess ? 'owner access' : 'owner password'} was reset locally via Master PIN for user ${user.id}`,
+        );
 
-      res.json({
-        message: restoredOwnerAccess
-          ? 'Owner access restored. You can now log in with your new password.'
-          : 'Password reset successfully. You can now log in with your new password.',
+        res.json({
+          message: restoredOwnerAccess
+            ? 'Owner access restored. You can now log in with your new password.'
+            : 'Password reset successfully. You can now log in with your new password.',
+        });
       });
     } catch (error: any) {
       console.error('[Auth] Password recovery error:', error);

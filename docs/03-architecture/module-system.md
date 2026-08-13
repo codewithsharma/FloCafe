@@ -12,32 +12,32 @@ Define what a **module** is on the Opervia platform so enablement and future ext
 
 ## CURRENT (Phase 2 complete)
 
-| Fact | Note |
-|------|------|
-| Module registry | `main/modules/catalog.ts` + `registry.ts` |
-| Vertical definition | Opervia Restaurant in `main/modules/verticals.ts` |
-| Synthetic vertical | `retail-test` in `fixtures/` + `SYNTHETIC_VERTICALS` only |
-| Enablement API | `isModuleEnabled`, `getEnabledModules`, `isFeatureAvailable` |
-| Composition | Snapshot + `GET /api/platform/composition` (owner/manager) |
-| Capabilities | Domain `CapabilityId` — discovery only, not authz |
-| Soft diagnostics | Integrity + vertical deps — never fail-closed at boot |
-| Route mounting | Still **static** `registerRoutes` — registry is descriptive |
-| Feature flags | Still in `settings`; combine with module enablement |
-| Only plugin-like system | **Tax-packs** remain separate from the module registry |
-| Capabilities live in | Existing `main/routes/*`, `main/services/*`, `frontend/` |
+| Fact                    | Note                                                                                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------------------- |
+| Module registry         | `main/modules/catalog.ts` + `registry.ts`                                                            |
+| Vertical definition     | Opervia Restaurant in `main/modules/verticals.ts`                                                    |
+| Synthetic vertical      | `retail-test` in `fixtures/` + `SYNTHETIC_VERTICALS` only                                            |
+| Enablement API          | `isModuleEnabled`, `getEnabledModules`, `isFeatureAvailable`                                         |
+| Composition             | Snapshot + `GET /api/platform/composition` (owner/manager)                                           |
+| Capabilities            | Domain `CapabilityId` — discovery only, not authz                                                    |
+| Soft diagnostics        | Integrity + vertical deps report (non-throwing for valid verticals)                                  |
+| Route mounting          | Phase 3.1 fail-closed remount — [phase-3.1-fail-closed-remount.md](phase-3.1-fail-closed-remount.md) |
+| Feature flags           | Still in `settings`; combine with module enablement                                                  |
+| Only plugin-like system | **Tax-packs** remain separate from the module registry                                               |
+| Capabilities live in    | Existing `main/routes/*`, `main/services/*`, `frontend/`                                             |
 
 ## Module metadata implemented now
 
-| Field | Phase 2 |
-|-------|---------|
-| **identity** (`id`, `name`) | Yes |
-| **version** | Yes |
-| **dependencies** | Yes (soft metadata; **not fail-closed**) |
-| **capabilities** | Yes (Phase 2.6) |
-| **featureFlags** | Optional list on module |
-| **routePrefixes** | Descriptive only (aligned to mounts in 2.14) |
-| **kind** | `core` \| `shared` \| `restaurant` |
-| permissions / events / schema ownership / lifecycle | Phase 3 TARGET |
+| Field                                               | Phase 2                                                  |
+| --------------------------------------------------- | -------------------------------------------------------- |
+| **identity** (`id`, `name`)                         | Yes                                                      |
+| **version**                                         | Yes                                                      |
+| **dependencies**                                    | Yes (soft metadata; fail-closed at remount in Phase 3.1) |
+| **capabilities**                                    | Yes (Phase 2.6)                                          |
+| **featureFlags**                                    | Optional list on module                                  |
+| **routePrefixes**                                   | Descriptive only (aligned to mounts in 2.14)             |
+| **kind**                                            | `core` \| `shared` \| `restaurant`                       |
+| permissions / events / schema ownership / lifecycle | Phase 3 TARGET                                           |
 
 ## Feature availability rule
 

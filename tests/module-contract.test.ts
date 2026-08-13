@@ -1,7 +1,8 @@
 /**
  * Phase 2.6 — Module contract & capability integrity.
  *
- * Soft diagnostics only — never fail-closed at startup.
+ * Soft diagnostics remain non-throwing for valid verticals.
+ * Fail-closed remount / unknown-vertical throw: Phase 3.1 (`fail-closed-remount.test.ts`).
  * Capabilities describe what a module provides; they are NOT authorization.
  *
  * Usage: npx ts-node --transpile-only -P tests/tsconfig.json tests/module-contract.test.ts
@@ -90,10 +91,7 @@ function main(): void {
     capabilities: ['customer.manage'],
   };
 
-  const dupId = validateModuleDefinitions([
-    base,
-    { ...base, name: 'Clone' },
-  ]);
+  const dupId = validateModuleDefinitions([base, { ...base, name: 'Clone' }]);
   assert.equal(dupId.valid, false);
   assert.ok(dupId.issues.some((i) => i.kind === 'duplicate_module_id'));
 
@@ -111,9 +109,7 @@ function main(): void {
   assert.equal(unknownDep.valid, false);
   assert.ok(unknownDep.issues.some((i) => i.kind === 'unknown_dependency'));
 
-  const emptyCaps = validateModuleDefinitions([
-    { ...base, capabilities: [] },
-  ]);
+  const emptyCaps = validateModuleDefinitions([{ ...base, capabilities: [] }]);
   assert.equal(emptyCaps.valid, false);
   assert.ok(emptyCaps.issues.some((i) => i.kind === 'empty_capabilities'));
 
@@ -151,15 +147,11 @@ function main(): void {
   assert.equal(dupCapGlobal.valid, false);
   assert.ok(dupCapGlobal.issues.some((i) => i.kind === 'duplicate_capability_across_modules'));
 
-  const missingName = validateModuleDefinitions([
-    { ...base, name: '   ' },
-  ]);
+  const missingName = validateModuleDefinitions([{ ...base, name: '   ' }]);
   assert.equal(missingName.valid, false);
   assert.ok(missingName.issues.some((i) => i.kind === 'invalid_module_name'));
 
-  const badVersion = validateModuleDefinitions([
-    { ...base, version: 'v1' },
-  ]);
+  const badVersion = validateModuleDefinitions([{ ...base, version: 'v1' }]);
   assert.equal(badVersion.valid, false);
   assert.ok(badVersion.issues.some((i) => i.kind === 'invalid_module_version'));
 

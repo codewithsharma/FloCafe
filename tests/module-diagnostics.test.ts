@@ -31,11 +31,7 @@ function main(): void {
   console.log('   ✓ restaurant vertical dependencies valid');
 
   // ── Soft missing-deps (synthetic enabled set) ─────────────────────
-  const kdsPartial = validateEnabledSetDependencies([
-    'kds',
-    'order',
-    'product',
-  ] as ModuleId[]);
+  const kdsPartial = validateEnabledSetDependencies(['kds', 'order', 'product'] as ModuleId[]);
   assert.equal(kdsPartial.valid, false);
   assert.ok(
     kdsPartial.missing.some((m) => m.module === 'kds' && m.dependency === 'kitchen'),
@@ -53,11 +49,7 @@ function main(): void {
   assert.equal(coreOnly.valid, true);
   assert.deepEqual(coreOnly.missing, []);
 
-  const again = validateEnabledSetDependencies([
-    'kds',
-    'order',
-    'product',
-  ] as ModuleId[]);
+  const again = validateEnabledSetDependencies(['kds', 'order', 'product'] as ModuleId[]);
   assert.deepEqual(again.missing, kdsPartial.missing, 'missing list is deterministic');
   console.log('   ✓ soft missing-dependency diagnostics');
 
@@ -90,7 +82,7 @@ function main(): void {
   assert.ok(/warning|missing|kds/i.test(warnLog));
   console.log('   ✓ diagnostics log formatting');
 
-  // ── Snapshot never throws; soft (valid=false is a report, not Error)
+  // ── Snapshot non-throwing for known vertical; soft (valid=false is a report, not Error)
   const snapshot = getModuleDiagnosticsSnapshot();
   assert.equal(typeof snapshot.vertical.valid, 'boolean');
   assert.equal(typeof snapshot.integrity.valid, 'boolean');

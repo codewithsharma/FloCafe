@@ -19,10 +19,10 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 | **Opervia** | Canonical platform brand |
 | **Opervia Restaurant** | Active production vertical (`ACTIVE_VERTICAL_ID = restaurant`) |
 | **retail-test** | Synthetic composition fixture only (`SYNTHETIC_VERTICALS`) — not production |
-| **Phase 2** | **COMPLETE** — final gate `docs/03-architecture/phase-2-final-exit-gate.md` (**PASS WITH DOCUMENTED DEFERMENTS**). Interim catalog exit preserved. |
-| **Phase 3** | **FUTURE** — package extraction, fail-closed remount, production Retail+, `db.ts` split |
+| **Phase 2** | **CLOSED** — final exit + closeout gate `docs/03-architecture/phase-2-closeout-and-phase-3-gate.md` (also `phase-2-final-exit-gate.md`). **PASS WITH DOCUMENTED DEFERMENTS**. |
+| **Phase 3** | **3.1 COMPLETE** (fail-closed vertical remount); **3.2–3.5 not started**. `registerRoutes` gates restaurant mounts; `ACTIVE_VERTICAL_ID` still restaurant. Ordered plan: 3.2 capability config → 3.3 production Retail → 3.4 residuals → 3.5 optional depth. |
 
-Phase 2 delivered: registry → … → CURRENT 2.14 Order → 2.15 Payment → 2.16 POS → 2.17 Restaurant isolation → 2.18 synthetic Retail → **final exit gate**.
+Phase 2 delivered: registry → … → 2.14 Order → 2.15 Payment → 2.16 POS → 2.17 Restaurant isolation → 2.18 synthetic Retail → final exit → **closeout / Phase 3 gate**.
 
 ## Active work — Opervia Restaurant v1.0 / pilot hardening
 
@@ -41,7 +41,7 @@ Phase 2 delivered: registry → … → CURRENT 2.14 Order → 2.15 Payment → 
 
 ## Already shipped (do not rebuild)
 
-M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close · **M6 refunds API** · Flo UI redesign Phases 1–12 · KDS · printing · tax · payments · loyalty · WhatsApp · Drive · FloAdmin outbound bridge · **Phase 2 modular foundation (2.1–2.17)** — Phase 2 continuation in progress.
+M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close · **M6 refunds API** · Flo UI redesign Phases 1–12 · KDS · printing · tax · payments · loyalty · WhatsApp · Drive · FloAdmin outbound bridge · **Phase 2 modular foundation (2.1–2.18) CLOSED** · Phase 2 hardening (Zod/OTel/i18n) · **Phase 3.1 fail-closed remount COMPLETE**.
 
 ## Architecture anchors
 
@@ -68,4 +68,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Dependency integration (2026-08-13) COMPLETE** for justified packages (zod, react-query, i18next foundation, helmet/pino-http/compression, OTel API, vitest, prettier/husky). Phase 2 COMPLETE. Do not start Phase 3 unless explicitly tasked. Pilot focus remains P0/P1 reliability. Deferred: packages extraction, fail-closed remount, production Retail+, Inventory UI, void×cancel product fix.
+**Phase 3.1 COMPLETE** (fail-closed remount). Prefer pilot P0/P1 reliability over platform work. **Phase 3.2** (capability config) only when explicitly tasked — or continue pilot P0.

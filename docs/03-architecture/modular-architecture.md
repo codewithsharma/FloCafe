@@ -1,6 +1,6 @@
 # Opervia Modular Architecture
 
-**Status:** Phase 2 **COMPLETE** — final gate [phase-2-final-exit-gate.md](phase-2-final-exit-gate.md) (**PASS WITH DOCUMENTED DEFERMENTS**). Interim catalog exit: [phase-2-exit-gate.md](phase-2-exit-gate.md). Phase 1 Restaurant runtime **preserved**. Phase 3 TARGET = packages / fail-closed / production multi-vertical.
+**Status:** Phase 2 **CLOSED** — closeout + Phase 3 gate [phase-2-closeout-and-phase-3-gate.md](phase-2-closeout-and-phase-3-gate.md); final exit [phase-2-final-exit-gate.md](phase-2-final-exit-gate.md) (**PASS WITH DOCUMENTED DEFERMENTS**). Interim catalog exit: [phase-2-exit-gate.md](phase-2-exit-gate.md). Phase 1 Restaurant runtime **preserved**. Phase 3 ordered: fail-closed remount → capability config → production Retail → residuals (do not start until kickoff).
 **Product:** [opervia-platform.md](../00-product/opervia-platform.md) · [principles.md](../00-product/principles.md)
 **Decision:** [ADR-010](../14-decisions/ADR-010-opervia-platform.md)
 
@@ -16,11 +16,11 @@ Opervia is built like Lego:
 
 ## Three layers
 
-| Layer | CURRENT (Phase 1) | TARGET |
-|-------|-------------------|--------|
-| **Core** | Electron main, Express app, SQLite/`db.ts`, JWT/Master PIN, security middleware | Same runtime; clearer core vs capability boundaries |
-| **Modules** | Route/service files + settings flags; tax-packs as plugin-like packs | Declared modules with contract + registry |
-| **Verticals** | Implicit: `business_type` locked to restaurant + F&B flags | Declarative vertical definition (module set + config + nav) |
+| Layer         | CURRENT (Phase 1)                                                               | TARGET                                                      |
+| ------------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| **Core**      | Electron main, Express app, SQLite/`db.ts`, JWT/Master PIN, security middleware | Same runtime; clearer core vs capability boundaries         |
+| **Modules**   | Route/service files + settings flags; tax-packs as plugin-like packs            | Declared modules with contract + registry                   |
+| **Verticals** | Implicit: `business_type` locked to restaurant + F&B flags                      | Declarative vertical definition (module set + config + nav) |
 
 ## Mental model
 
@@ -46,24 +46,24 @@ Composition flows **upward**: Core enables Modules; Verticals select and configu
 
 ## CURRENT vs TARGET
 
-| Aspect | CURRENT (Phase 2 complete) | TARGET (Phase 3+) |
-|--------|---------------------------|--------|
-| Routing | Static `registerRoutes`; descriptive `routePrefixes` aligned to mounts | Optional module-contributed / gated routes |
-| Features | Settings flags + `isModuleEnabled` / `isFeatureAvailable` | Vertical + module enablement + settings |
-| Business type | Locked to Restaurant; `retail-test` synthetic only | Multi-vertical runtime definitions |
-| Packaging | Single desktop app = Restaurant | Same binary; vertical profile selects capabilities |
-| Contracts | Identity, soft deps, capabilities, composition API, Inventory/Tax boundaries | Dep enforcement, ports, packages, permissions, events, schema ownership |
-| Plugin precedent | Tax-packs (separate from module registry) | Generalize carefully; no Custom builder yet |
+| Aspect           | CURRENT (Phase 2 complete)                                                   | TARGET (Phase 3+)                                                       |
+| ---------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Routing          | Static `registerRoutes`; descriptive `routePrefixes` aligned to mounts       | Optional module-contributed / gated routes                              |
+| Features         | Settings flags + `isModuleEnabled` / `isFeatureAvailable`                    | Vertical + module enablement + settings                                 |
+| Business type    | Locked to Restaurant; `retail-test` synthetic only                           | Multi-vertical runtime definitions                                      |
+| Packaging        | Single desktop app = Restaurant                                              | Same binary; vertical profile selects capabilities                      |
+| Contracts        | Identity, soft deps, capabilities, composition API, Inventory/Tax boundaries | Dep enforcement, ports, packages, permissions, events, schema ownership |
+| Plugin precedent | Tax-packs (separate from module registry)                                    | Generalize carefully; no Custom builder yet                             |
 
 ## How Phase 1 maps
 
-| Phase 1 reality | Modular interpretation |
-|-----------------|------------------------|
-| Monolithic Express routes + services | Pre-extracted **module implementations** colocated in `main/` |
-| Settings feature flags | **Configuration** on top of vertical module enablement |
-| `business_type` ≈ restaurant | **CURRENT** vertical: Opervia Restaurant (`main/modules/verticals.ts`) |
-| Frontend nav | Broader `requiresModule` + `isFeatureAvailable` (Phase 2.2) |
-| Tax-packs | Only existing **plugin-like** system (not the module registry) |
+| Phase 1 reality                      | Modular interpretation                                                 |
+| ------------------------------------ | ---------------------------------------------------------------------- |
+| Monolithic Express routes + services | Pre-extracted **module implementations** colocated in `main/`          |
+| Settings feature flags               | **Configuration** on top of vertical module enablement                 |
+| `business_type` ≈ restaurant         | **CURRENT** vertical: Opervia Restaurant (`main/modules/verticals.ts`) |
+| Frontend nav                         | Broader `requiresModule` + `isFeatureAvailable` (Phase 2.2)            |
+| Tax-packs                            | Only existing **plugin-like** system (not the module registry)         |
 
 **Phase 2.1–2.18 COMPLETE** — final gate [phase-2-final-exit-gate.md](phase-2-final-exit-gate.md):
 
@@ -71,7 +71,7 @@ Composition flows **upward**: Core enables Modules; Verticals select and configu
 - INTERIM 2.14 catalog exit (preserved)
 - CURRENT 2.14 Order · 2.15 Payment · 2.16 POS · 2.17 Restaurant isolation · 2.18 synthetic Retail
 
-**Phase 3 (future):** package extraction, fail-closed remount, Inventory UI, void×cancel product fix, production Retail+ — do not start without explicit kickoff.
+**Phase 3 (gate ready, not started):** see [phase-2-closeout-and-phase-3-gate.md](phase-2-closeout-and-phase-3-gate.md) — 3.1 fail-closed remount → 3.2 config → 3.3 production Retail → 3.4 residuals → 3.5 optional. Do not start without explicit kickoff.
 
 ## Explicit non-goals (now)
 
@@ -82,6 +82,7 @@ Composition flows **upward**: Core enables Modules; Verticals select and configu
 
 ## Related
 
+- [phase-2-closeout-and-phase-3-gate.md](phase-2-closeout-and-phase-3-gate.md)
 - [phase-2-final-exit-gate.md](phase-2-final-exit-gate.md)
 - [phase-2-exit-gate.md](phase-2-exit-gate.md)
 - [module-system.md](module-system.md)

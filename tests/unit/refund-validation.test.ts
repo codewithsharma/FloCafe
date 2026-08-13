@@ -20,13 +20,18 @@ describe('refund zod schema', () => {
     expect((parsed as { client_trace?: string }).client_trace).toBe('x');
   });
 
-  it('rejects empty reason', () => {
-    const result = refundBodySchema.safeParse({ reason: '   ' });
-    expect(result.success).toBe(false);
+  it('passes empty reason through for service-owned REFUND_REASON_REQUIRED', () => {
+    const parsed = refundBodySchema.parse({ reason: '   ' });
+    expect(parsed.reason).toBe('   ');
   });
 
-  it('rejects missing reason', () => {
-    const result = refundBodySchema.safeParse({ amount: 5 });
+  it('passes invalid amount strings through for service-owned REFUND_AMOUNT_INVALID', () => {
+    const parsed = refundBodySchema.parse({ reason: 'x', amount: 'abc' });
+    expect(parsed.amount).toBe('abc');
+  });
+
+  it('rejects non-object bodies', () => {
+    const result = refundBodySchema.safeParse('nope');
     expect(result.success).toBe(false);
   });
 });

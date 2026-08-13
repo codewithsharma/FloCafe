@@ -1,6 +1,6 @@
 # Opervia Modules
 
-**Status:** Phase 2 foundation **COMPLETE** ([phase-2-final-exit-gate.md](../03-architecture/phase-2-final-exit-gate.md)). INTERIM exit preserved. Phase 3 = extraction / production multi-vertical / fail-closed.
+**Status:** Phase 2 foundation **COMPLETE** ([phase-2-final-exit-gate.md](../03-architecture/phase-2-final-exit-gate.md)). INTERIM exit preserved. Phase 3.1 fail-closed remount **done**; remaining Phase 3 = capability config / production Retail / extraction.
 **Contract:** [module-system.md](../03-architecture/module-system.md)
 **Platform:** [opervia-platform.md](../00-product/opervia-platform.md)
 
@@ -8,62 +8,62 @@ Modules are reusable business capabilities. Phase 2 ships a **lightweight regist
 
 ## How to read this index
 
-| Label | Meaning |
-|-------|---------|
-| **CURRENT** | Capability ships in Opervia Restaurant today |
-| **REGISTERED** | Listed in `main/modules/catalog.ts` |
-| **PLANNED** | Boundary or depth not yet first-class |
-| **TARGET** | Full contract fields — see module-system / Phase 3 |
+| Label          | Meaning                                            |
+| -------------- | -------------------------------------------------- |
+| **CURRENT**    | Capability ships in Opervia Restaurant today       |
+| **REGISTERED** | Listed in `main/modules/catalog.ts`                |
+| **PLANNED**    | Boundary or depth not yet first-class              |
+| **TARGET**     | Full contract fields — see module-system / Phase 3 |
 
 ---
 
 ## Core & cross-cutting
 
-| Module | Status | Phase 1 mapping |
-|--------|--------|-----------------|
-| Auth / Core (`core`) | CURRENT · REGISTERED | JWT, Master PIN, security middleware, settings |
-| Settings | CURRENT (part of `core`) | Settings API + hub; feature flags |
+| Module               | Status                   | Phase 1 mapping                                |
+| -------------------- | ------------------------ | ---------------------------------------------- |
+| Auth / Core (`core`) | CURRENT · REGISTERED     | JWT, Master PIN, security middleware, settings |
+| Settings             | CURRENT (part of `core`) | Settings API + hub; feature flags              |
 
 ## Catalog & people
 
-| Module | Status | Phase 1 mapping |
-|--------|--------|-----------------|
-| Staff (`staff`) | CURRENT · REGISTERED | Users, roles, PIN |
-| Customer (`customer`) | CURRENT · REGISTERED | Customer CRM |
-| Product (`product`) | CURRENT · REGISTERED | Products API/UI |
-| Category (`category`) | CURRENT · REGISTERED | Categories |
-| Menu (`menu`) | CURRENT · REGISTERED (Restaurant) | Menu CSV / catalog presentation |
-| Addons (`addons`) | CURRENT · REGISTERED (Restaurant) | Addon-groups / modifiers |
+| Module                  | Status                                                          | Phase 1 mapping                                                                    |
+| ----------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Staff (`staff`)         | CURRENT · REGISTERED                                            | Users, roles, PIN                                                                  |
+| Customer (`customer`)   | CURRENT · REGISTERED                                            | Customer CRM                                                                       |
+| Product (`product`)     | CURRENT · REGISTERED                                            | Products API/UI                                                                    |
+| Category (`category`)   | CURRENT · REGISTERED                                            | Categories                                                                         |
+| Menu (`menu`)           | CURRENT · REGISTERED (Restaurant)                               | Menu CSV / catalog presentation                                                    |
+| Addons (`addons`)       | CURRENT · REGISTERED (Restaurant)                               | Addon-groups / modifiers                                                           |
 | Inventory (`inventory`) | CURRENT (stock writes + ledger v75+ + history API) · REGISTERED | Writes via Inventory; history `GET /api/inventory/movements`; UI PLANNED (Phase 3) |
 
 ## Commerce
 
-| Module | Status | Phase 1 mapping |
-|--------|--------|-----------------|
-| POS (`pos`) | CURRENT · REGISTERED · **2.16 orchestration** | POS UI + checkout coordinator; composes Order/Payment; does not own tax/stock/tender |
-| Order (`order`) | CURRENT · REGISTERED · **2.14 ownership + 2.17 soft-gates** | Orders / held orders; item cancel/restore on `orderRoutes`; stock via Inventory; table/KDS soft-gated |
-| Payment (`payment`) | CURRENT · REGISTERED · **2.15 tender service** | Bills / tender via `payment-tender`; soft-gated tables/kds side effects |
-| Refund (`refund`) | CURRENT · REGISTERED | M6 refunds |
-| Tax (`tax`) | CURRENT · REGISTERED | Tax facade + engine + **tax-packs** |
-| Shift (`shift`) | CURRENT · REGISTERED | Shifts, cash recon, day-close |
-| Loyalty (`loyalty`) | CURRENT · REGISTERED | Loyalty features |
-| Reporting (`reporting`) | CURRENT · REGISTERED | Reports core |
+| Module                  | Status                                                      | Phase 1 mapping                                                                                       |
+| ----------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| POS (`pos`)             | CURRENT · REGISTERED · **2.16 orchestration**               | POS UI + checkout coordinator; composes Order/Payment; does not own tax/stock/tender                  |
+| Order (`order`)         | CURRENT · REGISTERED · **2.14 ownership + 2.17 soft-gates** | Orders / held orders; item cancel/restore on `orderRoutes`; stock via Inventory; table/KDS soft-gated |
+| Payment (`payment`)     | CURRENT · REGISTERED · **2.15 tender service**              | Bills / tender via `payment-tender`; soft-gated tables/kds side effects                               |
+| Refund (`refund`)       | CURRENT · REGISTERED                                        | M6 refunds                                                                                            |
+| Tax (`tax`)             | CURRENT · REGISTERED                                        | Tax facade + engine + **tax-packs**                                                                   |
+| Shift (`shift`)         | CURRENT · REGISTERED                                        | Shifts, cash recon, day-close                                                                         |
+| Loyalty (`loyalty`)     | CURRENT · REGISTERED                                        | Loyalty features                                                                                      |
+| Reporting (`reporting`) | CURRENT · REGISTERED                                        | Reports core                                                                                          |
 
 ## Restaurant depth
 
-| Module | Status | Phase 1 mapping |
-|--------|--------|-----------------|
-| Tables (`tables`) | CURRENT · REGISTERED | Table service |
+| Module              | Status               | Phase 1 mapping  |
+| ------------------- | -------------------- | ---------------- |
+| Tables (`tables`)   | CURRENT · REGISTERED | Table service    |
 | Kitchen (`kitchen`) | CURRENT · REGISTERED | Kitchen stations |
-| KDS (`kds`) | CURRENT · REGISTERED | Kitchen display |
+| KDS (`kds`)         | CURRENT · REGISTERED | Kitchen display  |
 
 ## Ops & integrations
 
-| Module | Status | Phase 1 mapping |
-|--------|--------|-----------------|
-| Printing (`printing`) | CURRENT · REGISTERED | Receipts / KOT / printers |
-| Notification (`notification`) | CURRENT · REGISTERED | WhatsApp delivery |
-| Backup (`backup`) | CURRENT · REGISTERED | Backup/restore, Drive |
+| Module                        | Status               | Phase 1 mapping           |
+| ----------------------------- | -------------------- | ------------------------- |
+| Printing (`printing`)         | CURRENT · REGISTERED | Receipts / KOT / printers |
+| Notification (`notification`) | CURRENT · REGISTERED | WhatsApp delivery         |
+| Backup (`backup`)             | CURRENT · REGISTERED | Backup/restore, Drive     |
 
 ---
 
@@ -86,10 +86,10 @@ Modules are reusable business capabilities. Phase 2 ships a **lightweight regist
 15. ~~Order domain boundary~~ — **CURRENT Phase 2.14 done** ([phase-2.14-order-domain-boundary.md](../03-architecture/phase-2.14-order-domain-boundary.md)) — ownership facade + cancel/restore on `orderRoutes`; void×cancel pinned
 16. ~~Payment domain boundary~~ — **Phase 2.15 done** ([phase-2.15-payment-domain-boundary.md](../03-architecture/phase-2.15-payment-domain-boundary.md)) — PaymentTenderService + soft-gated tables/kds; money unchanged
 17. ~~POS orchestration boundary~~ — **Phase 2.16 done** ([phase-2.16-pos-orchestration-boundary.md](../03-architecture/phase-2.16-pos-orchestration-boundary.md)) — checkout coordinator + addons/kds gates; no domain math on client
-18. ~~Restaurant isolation~~ — **Phase 2.17 done** ([phase-2.17-restaurant-isolation.md](../03-architecture/phase-2.17-restaurant-isolation.md)) — Order soft-gates tables/kds; shared ↛ restaurant deps; fail-closed remount deferred
+18. ~~Restaurant isolation~~ — **Phase 2.17 done** ([phase-2.17-restaurant-isolation.md](../03-architecture/phase-2.17-restaurant-isolation.md)) — Order soft-gates tables/kds; shared ↛ restaurant deps
 19. ~~Synthetic Retail validation~~ — **Phase 2.18 done** ([phase-2.18-synthetic-retail-validation.md](../03-architecture/phase-2.18-synthetic-retail-validation.md)) — retail-test stronger; not production
 20. ~~Phase 2 final exit gate~~ — **done** ([phase-2-final-exit-gate.md](../03-architecture/phase-2-final-exit-gate.md))
-21. Fail-closed dependency enforcement / route remount — **Phase 3**
+21. ~~Fail-closed remount~~ — **Phase 3.1 done** ([phase-3.1-fail-closed-remount.md](../03-architecture/phase-3.1-fail-closed-remount.md))
 22. Inventory UI / legacy tax column cleanup — **Phase 3**
 23. Formal events bus for modules — **Phase 3**
 24. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — **Phase 3**

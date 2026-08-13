@@ -211,6 +211,7 @@ function SettingsNavItem({
 
 function KdsDefaultViewCard() {
   const { t } = useI18n();
+  const { t: tCommon } = useTranslation('common');
   const [view, setView] = useState<'tabs' | 'kanban'>('tabs');
   const [savedView, setSavedView] = useState<'tabs' | 'kanban'>('tabs');
   const [saving, setSaving] = useState(false);
@@ -300,7 +301,7 @@ function KdsDefaultViewCard() {
           disabled={!dirty || saving}
           className="px-4 py-2 bg-flo-brand-600 text-white rounded-lg hover:opacity-90 disabled:opacity-50 font-medium text-sm"
         >
-          {saving ? t('common.saving') : t('common.save')}
+          {saving ? t('common.saving') : tCommon('save')}
         </button>
       </div>
     </Panel>
@@ -315,6 +316,7 @@ export default function SettingsPage() {
   usePrinterStatusSync();
   const { t, language, setLanguage } = useI18n();
   const { t: tSettings } = useTranslation('settings');
+  const { t: tCommon } = useTranslation('common');
   const { formatDate, formatTime, formatDateTime } = useFormatDate();
   const isAdmin = currentTenant?.role === 'admin' || currentTenant?.role === 'owner';
   const canViewTaxConfiguration =
@@ -2114,7 +2116,7 @@ export default function SettingsPage() {
       await api.put('/settings/telemetry_enabled', { value: enabled ? 'true' : 'false' });
     } catch {
       setTelemetryEnabled(previous);
-      toast.error(t('settings.saveFailed'));
+      toast.error(tSettings('saveFailed'));
     } finally {
       setSavingTelemetry(false);
     }
@@ -2128,7 +2130,7 @@ export default function SettingsPage() {
       await api.put('/settings/diagnostics_consent', { value: enabled ? 'true' : 'false' });
     } catch {
       setDiagnosticsConsent(previous);
-      toast.error(t('settings.saveFailed'));
+      toast.error(tSettings('saveFailed'));
     } finally {
       setSavingDiagnosticsConsent(false);
     }
@@ -2212,7 +2214,7 @@ export default function SettingsPage() {
       toast.success(res.data?.message || t('settings.networkModeSaved'));
     } catch {
       setNetworkMode(previous);
-      toast.error(t('settings.saveFailed'));
+      toast.error(tSettings('saveFailed'));
     } finally {
       setSavingNetworkMode(false);
     }
@@ -2237,7 +2239,7 @@ export default function SettingsPage() {
     } catch {
       setKdsEnabledSetting(previous);
       posSettings.setKdsEnabled(previous);
-      toast.error(t('settings.saveFailed'));
+      toast.error(tSettings('saveFailed'));
     } finally {
       setSavingKdsEnabled(false);
     }
@@ -2257,7 +2259,7 @@ export default function SettingsPage() {
       );
     } catch {
       setServerAppEnabledSetting(previous);
-      toast.error(t('settings.saveFailed'));
+      toast.error(tSettings('saveFailed'));
     } finally {
       setSavingServerAppEnabled(false);
     }
@@ -2278,7 +2280,7 @@ export default function SettingsPage() {
     } catch {
       setKotPrintingEnabledSetting(previous);
       posSettings.setKotPrintingEnabled(previous);
-      toast.error(t('settings.saveFailed'));
+      toast.error(tSettings('saveFailed'));
     } finally {
       setSavingKotPrintingEnabled(false);
     }
@@ -2303,7 +2305,7 @@ export default function SettingsPage() {
     } catch {
       setShiftsEnabledSetting(previous);
       setRequireOpenShiftForCashSetting(previousCashGate);
-      toast.error(t('settings.saveFailed'));
+      toast.error(tSettings('saveFailed'));
     } finally {
       setSavingShiftsEnabled(false);
     }
@@ -2326,7 +2328,7 @@ export default function SettingsPage() {
       );
     } catch {
       setRequireOpenShiftForCashSetting(previous);
-      toast.error(t('settings.saveFailed'));
+      toast.error(tSettings('saveFailed'));
     } finally {
       setSavingRequireOpenShiftForCash(false);
     }
@@ -2345,7 +2347,7 @@ export default function SettingsPage() {
       setSavedGlobalCashbackPercent(String(parsedRate));
       if (!silent) toast.success(t('settings.loyaltySaved'));
     } catch (err) {
-      if (!silent) toast.error(t('settings.saveFailed'));
+      if (!silent) toast.error(tSettings('saveFailed'));
       throw err;
     } finally {
       setSavingLoyalty(false);
@@ -2360,7 +2362,7 @@ export default function SettingsPage() {
       setGlobalRateCandidates(0);
       toast.success(t('settings.applyGlobalRateDone', { count: updated }));
     } catch {
-      toast.error(t('settings.saveFailed'));
+      toast.error(tSettings('saveFailed'));
     } finally {
       setApplyingGlobalRate(false);
     }
@@ -2381,7 +2383,7 @@ export default function SettingsPage() {
       setSavedDiscountRequiresApproval(discountRequiresApproval);
       if (!silent) toast.success(t('settings.discountSaved'));
     } catch (err) {
-      if (!silent) toast.error(t('settings.saveFailed'));
+      if (!silent) toast.error(tSettings('saveFailed'));
       throw err;
     } finally {
       setSavingDiscount(false);
@@ -2463,7 +2465,7 @@ export default function SettingsPage() {
       if (!silent) {
         const message =
           (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
-          t('settings.saveFailed');
+          tSettings('saveFailed');
         toast.error(message);
       }
       throw err;
@@ -2497,7 +2499,7 @@ export default function SettingsPage() {
           t('settings.orderNumberingSaved', { defaultValue: 'Order number settings saved' }),
         );
     } catch (err) {
-      if (!silent) toast.error(t('settings.saveFailed'));
+      if (!silent) toast.error(tSettings('saveFailed'));
       throw err;
     } finally {
       setSavingOrderNumbering(false);
@@ -3944,10 +3946,10 @@ export default function SettingsPage() {
                         </div>
                         <DialogFooter>
                           <Button variant="outline" onClick={() => setShowStationForm(false)}>
-                            {t('common.cancel')}
+                            {tCommon('cancel')}
                           </Button>
                           <Button onClick={saveStation} disabled={savingStation}>
-                            {savingStation ? t('common.saving') : t('common.save')}
+                            {savingStation ? t('common.saving') : tCommon('save')}
                           </Button>
                         </DialogFooter>
                       </DialogContent>
@@ -5414,7 +5416,7 @@ export default function SettingsPage() {
                     </p>
                     {backups.length === 0 ? (
                       <p className="text-sm text-flo-text-muted py-4 text-center">
-                        {backupsLoading ? t('common.loading') : t('settings.backupHistoryEmpty')}
+                        {backupsLoading ? tCommon('loading') : t('settings.backupHistoryEmpty')}
                       </p>
                     ) : (
                       <div className="divide-y divide-gray-100">

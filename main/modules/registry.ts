@@ -1,6 +1,7 @@
 /**
  * Opervia module registry — read-only queries over catalog + active vertical.
- * Dependency lists are metadata only (soft diagnostics in Phase 2.2; not fail-closed).
+ * Phase 3.1: unknown vertical ids fail closed (no silent restaurant fallback).
+ * Soft diagnostics remain for logging; remount uses assertFailClosedComposition.
  */
 import { getCatalogModule, MODULE_CATALOG, MODULE_IDS } from './catalog';
 import {
@@ -15,8 +16,17 @@ import {
   OPERVIA_RETAIL_TEST_VERTICAL_ID,
   SYNTHETIC_VERTICALS,
 } from './fixtures/retail-test-vertical';
-import type { CapabilityId, ModuleId, ModuleDefinition, OperviaModule, VerticalDefinition } from './types';
+import { CompositionValidationError } from './errors';
+import type {
+  CapabilityId,
+  ModuleId,
+  ModuleDefinition,
+  OperviaModule,
+  VerticalDefinition,
+} from './types';
 import { CAPABILITY_IDS } from './types';
+
+export { CompositionValidationError };
 
 export {
   MODULE_CATALOG,
@@ -37,10 +47,7 @@ export function getModuleCapabilities(moduleId: string): readonly CapabilityId[]
   return getModule(moduleId)?.capabilities ?? [];
 }
 
-export function moduleOwnsCapability(
-  moduleId: string,
-  capability: CapabilityId,
-): boolean {
+export function moduleOwnsCapability(moduleId: string, capability: CapabilityId): boolean {
   return getModuleCapabilities(moduleId).includes(capability);
 }
 
@@ -67,16 +74,20 @@ export function getActiveVerticalId(): string {
   return ACTIVE_VERTICAL_ID;
 }
 
-export function getVerticalDefinition(verticalId?: string): VerticalDefinition {
+/** Resolve a known production or synthetic vertical; throw if unknown. */
+export function resolveKnownVertical(verticalId?: string): VerticalDefinition {
   const id = verticalId || ACTIVE_VERTICAL_ID;
-  const found =
-    VERTICALS.find((v) => v.id === id) ||
-    SYNTHETIC_VERTICALS.find((v) => v.id === id);
+  const found = VERTICALS.find((v) => v.id === id) || SYNTHETIC_VERTICALS.find((v) => v.id === id);
   if (!found) {
-    // Unknown ids fall back to the active production vertical (restaurant).
-    return OPERVIA_RESTAURANT_VERTICAL;
+    throw new CompositionValidationError(
+      `Unknown vertical id: ${id}. Fail-closed: refusing restaurant fallback.`,
+    );
   }
   return found;
+}
+
+export function getVerticalDefinition(verticalId?: string): VerticalDefinition {
+  return resolveKnownVertical(verticalId);
 }
 
 export function getEnabledModules(verticalId?: string): readonly ModuleId[] {
@@ -105,7 +116,7 @@ export function getModuleDependencies(moduleId: string): readonly ModuleId[] {
   return mod ? mod.dependencies : [];
 }
 
-/** Descriptive prefix → module map (does not change Express mounting). */
+/** Descriptive prefix → module map (mounting uses getRouteMountPlan / registerRoutes). */
 export function getRouteModuleMap(): Record<string, ModuleId> {
   const map: Record<string, ModuleId> = {};
   for (const mod of MODULE_CATALOG) {
@@ -122,7 +133,9 @@ export function getRouteModuleMap(): Record<string, ModuleId> {
  * Unknown types fall back to the active production vertical (restaurant).
  */
 export function verticalIdForBusinessType(businessType: string | null | undefined): string {
-  const normalized = String(businessType || 'restaurant').trim().toLowerCase();
+  const normalized = String(businessType || 'restaurant')
+    .trim()
+    .toLowerCase();
   if (normalized === 'restaurant') return OPERVIA_RESTAURANT_VERTICAL_ID;
   // Never map tenant business_type onto synthetic / future verticals.
   return ACTIVE_VERTICAL_ID;

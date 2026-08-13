@@ -2,8 +2,19 @@
  * i18next foundation for Opervia.
  *
  * Namespaced locale files live under `src/locales/{lang}/`.
- * Existing flat-catalog `lib/i18n.ts` remains for unmigrated UI.
- * Migrate surfaces gradually via `useTranslation(namespace)`.
+ * Dual-catalog period: legacy flat `lib/i18n/{en,es,pt}.json` (via `lib/i18n.ts`
+ * + `useI18n`) still owns unmigrated UI. Do not delete those keys.
+ *
+ * Migrated onto i18next so far (namespace key, not dotted legacy path):
+ *   settings — languages, languageEn/Es/Pt, saveFailed
+ *   common   — save, cancel, loading (selected dialogs + settings)
+ *   pos      — checkout (PrepaidCheckoutModal, TableCheckoutModal)
+ *   orders   — completed (OrdersFilterBar)
+ *   products — title (products page header/loading)
+ *
+ * Keep using `useTranslation(ns)` alongside `useI18n()`; swap only keys that
+ * already exist in both catalogs. English fallback: i18next `fallbackLng: 'en'`
+ * plus the legacy catalog still present for everything else.
  */
 
 import i18n from 'i18next';

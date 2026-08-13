@@ -27,13 +27,17 @@ import { getCurrencySymbol, getCountryByCode } from '@/lib/countries';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useConfirm } from '@/hooks/use-confirm';
 import { useI18n } from '@/hooks/useI18n';
+import { useTranslation } from 'react-i18next';
 import { isModuleEnabled } from '@/lib/modules';
 
 export default function ProductsPage() {
   const { t } = useI18n();
+  const { t: tProducts } = useTranslation('products');
   const searchParams = useSearchParams();
   const { currentTenant } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<ProductsTabType>(() => parseProductsTab(searchParams?.get('tab')) ?? 'products');
+  const [activeTab, setActiveTab] = useState<ProductsTabType>(
+    () => parseProductsTab(searchParams?.get('tab')) ?? 'products',
+  );
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [addonGroups, setAddonGroups] = useState<AddonGroup[]>([]);
@@ -45,15 +49,40 @@ export default function ProductsPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const { confirm, ConfirmDialog } = useConfirm();
   const [editingAddonGroup, setEditingAddonGroup] = useState<AddonGroup | null>(null);
-  const [categoryForm, setCategoryForm] = useState({ name: '', description: '', color: '', is_active: true });
-  const [addonForm, setAddonForm] = useState({ name: '', description: '', is_required: false, allow_multiple_quantities: false, min_selection: 0, max_selection: 10 });
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    description: '',
+    color: '',
+    is_active: true,
+  });
+  const [addonForm, setAddonForm] = useState({
+    name: '',
+    description: '',
+    is_required: false,
+    allow_multiple_quantities: false,
+    min_selection: 0,
+    max_selection: 10,
+  });
   const [showAddonModal, setShowAddonModal] = useState(false);
 
-  const [addonList, setAddonList] = useState<{ id?: number | string; name: string; price: number; is_active?: boolean }[]>([]);
+  const [addonList, setAddonList] = useState<
+    { id?: number | string; name: string; price: number; is_active?: boolean }[]
+  >([]);
   const [form, setForm] = useState({
-    name: '', category_id: '', price: '', cost_price: '', cb_percent: '', sku: '', barcode: '',
-    tax_category_id: '', tax_behavior: 'country_default', description: '',
-    track_inventory: false, stock_quantity: '0', low_stock_threshold: '5', is_active: true,
+    name: '',
+    category_id: '',
+    price: '',
+    cost_price: '',
+    cb_percent: '',
+    sku: '',
+    barcode: '',
+    tax_category_id: '',
+    tax_behavior: 'country_default',
+    description: '',
+    track_inventory: false,
+    stock_quantity: '0',
+    low_stock_threshold: '5',
+    is_active: true,
     tags: [] as string[],
     customTag: '',
     addon_group_ids: [] as (number | string)[],
@@ -66,16 +95,26 @@ export default function ProductsPage() {
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvResult, setCsvResult] = useState<Record<string, unknown> | null>(null);
   const [csvUploading, setCsvUploading] = useState(false);
-  const [catDeleteModal, setCatDeleteModal] = useState<{ open: boolean; id: number | null; name: string; productCount: number }>({ open: false, id: null, name: '', productCount: 0 });
+  const [catDeleteModal, setCatDeleteModal] = useState<{
+    open: boolean;
+    id: number | null;
+    name: string;
+    productCount: number;
+  }>({ open: false, id: null, name: '', productCount: 0 });
   const [catReassignTo, setCatReassignTo] = useState<string>('');
 
-  const [taxCategories, setTaxCategories] = useState<{ id: string; label: string; rate_percent?: number | null; rate_label?: string | null }[]>([]);
+  const [taxCategories, setTaxCategories] = useState<
+    { id: string; label: string; rate_percent?: number | null; rate_label?: string | null }[]
+  >([]);
   const [defaultTaxCategoryId, setDefaultTaxCategoryId] = useState('');
   const [showBulkTaxModal, setShowBulkTaxModal] = useState(false);
   const [bulkTaxCategoryId, setBulkTaxCategoryId] = useState('');
   const [bulkTaxApplying, setBulkTaxApplying] = useState(false);
 
-  const currency = getCurrencySymbol(currentTenant?.currency || 'INR', getCountryByCode(currentTenant?.country ?? 'IN')?.locale);
+  const currency = getCurrencySymbol(
+    currentTenant?.currency || 'INR',
+    getCountryByCode(currentTenant?.country ?? 'IN')?.locale,
+  );
   const fmt = useFormatCurrency();
   const addonsEnabled = isModuleEnabled('addons');
   const isOwnerOrManager = currentTenant?.role === 'owner' || currentTenant?.role === 'manager';
@@ -112,26 +151,40 @@ export default function ProductsPage() {
         if (agRes) setAddonGroups((agRes.data.addon_groups as AddonGroup[]) || []);
       })
       .catch((err: unknown) => {
-        if (!(err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))) toast.error(t('products.failedToLoad'));
+        if (!(err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError')))
+          toast.error(t('products.failedToLoad'));
       })
-      .finally(() => { setLoading(false); });
-    api.get('/tax/categories', { signal: controller.signal })
+      .finally(() => {
+        setLoading(false);
+      });
+    api
+      .get('/tax/categories', { signal: controller.signal })
       .then((res) => {
-        const data = res.data as { categories?: { id: string; label: string; rate_percent?: number | null; rate_label?: string | null }[]; default_category_id?: string | null };
+        const data = res.data as {
+          categories?: {
+            id: string;
+            label: string;
+            rate_percent?: number | null;
+            rate_label?: string | null;
+          }[];
+          default_category_id?: string | null;
+        };
         setTaxCategories(data.categories || []);
         setDefaultTaxCategoryId(data.default_category_id || '');
       })
       .catch((err: unknown) => {
-        if (!(err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))) setTaxCategories([]);
+        if (!(err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError')))
+          setTaxCategories([]);
       });
-    api.get('/settings/loyalty', { signal: controller.signal })
+    api
+      .get('/settings/loyalty', { signal: controller.signal })
       .then((res) => {
         setLoyaltyEnabled(!!res.data.loyalty_enabled);
         setGlobalCashbackPercent(Number(res.data.global_cashback_percent) || 0);
       })
       .catch(() => {});
     return () => controller.abort();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const openCsvModal = (type: 'categories' | 'products' | 'addons') => {
@@ -162,11 +215,15 @@ export default function ProductsPage() {
     setBulkTaxApplying(true);
     try {
       const results = await Promise.allSettled(
-        legacyProducts.map((p) => api.put(`/products/${p.id}`, { tax_category_id: bulkTaxCategoryId })),
+        legacyProducts.map((p) =>
+          api.put(`/products/${p.id}`, { tax_category_id: bulkTaxCategoryId }),
+        ),
       );
       const failedCount = results.filter((r) => r.status === 'rejected').length;
       if (failedCount > 0) {
-        toast.error(`Assigned category to ${results.length - failedCount} of ${results.length} products — ${failedCount} failed`);
+        toast.error(
+          `Assigned category to ${results.length - failedCount} of ${results.length} products — ${failedCount} failed`,
+        );
       } else {
         toast.success(`Tax category assigned to ${results.length} product(s)`);
       }
@@ -187,7 +244,9 @@ export default function ProductsPage() {
       setCsvResult(res.data);
       fetchData();
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? t('common.importFailed');
+      const msg =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+        t('common.importFailed');
       toast.error(msg);
     } finally {
       setCsvUploading(false);
@@ -196,10 +255,24 @@ export default function ProductsPage() {
 
   const resetForm = () => {
     setForm({
-      name: '', category_id: '', price: '', cost_price: '', cb_percent: '', sku: '', barcode: '',
-      tax_category_id: '', tax_behavior: 'country_default', description: '',
-      track_inventory: false, stock_quantity: '0', low_stock_threshold: '5', is_active: true,
-      tags: [], customTag: '', addon_group_ids: [], image_url: null,
+      name: '',
+      category_id: '',
+      price: '',
+      cost_price: '',
+      cb_percent: '',
+      sku: '',
+      barcode: '',
+      tax_category_id: '',
+      tax_behavior: 'country_default',
+      description: '',
+      track_inventory: false,
+      stock_quantity: '0',
+      low_stock_threshold: '5',
+      is_active: true,
+      tags: [],
+      customTag: '',
+      addon_group_ids: [],
+      image_url: null,
     });
     setImageTouched(false);
     setEditingProduct(null);
@@ -219,7 +292,10 @@ export default function ProductsPage() {
       category_id: product.category_id != null ? String(product.category_id) : '',
       price: String(product.price),
       cost_price: String(product.cost_price || ''),
-      cb_percent: product.cb_percent === null || product.cb_percent === undefined ? '' : String(product.cb_percent),
+      cb_percent:
+        product.cb_percent === null || product.cb_percent === undefined
+          ? ''
+          : String(product.cb_percent),
       sku: product.sku || '',
       barcode: product.barcode || '',
       tax_category_id: product.tax_category_id || '',
@@ -284,7 +360,9 @@ export default function ProductsPage() {
       resetForm();
       fetchData();
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { errors?: Record<string, string[]>; error?: string } } };
+      const error = err as {
+        response?: { data?: { errors?: Record<string, string[]>; error?: string } };
+      };
       const firstError = error.response?.data?.errors
         ? Object.values(error.response.data.errors)[0]?.[0]
         : error.response?.data?.error || t('products.failedToSave');
@@ -293,7 +371,13 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!await confirm(t('products.deleteConfirm'), { destructive: true, confirmLabel: t('common.delete') })) return;
+    if (
+      !(await confirm(t('products.deleteConfirm'), {
+        destructive: true,
+        confirmLabel: t('common.delete'),
+      }))
+    )
+      return;
     try {
       await api.delete(`/products/${id}`);
       toast.success(t('products.deleted'));
@@ -311,14 +395,24 @@ export default function ProductsPage() {
 
   const openEditCategory = (cat: Category) => {
     setEditingCategory(cat);
-    setCategoryForm({ name: cat.name, description: cat.description || '', color: cat.color || '', is_active: cat.is_active });
+    setCategoryForm({
+      name: cat.name,
+      description: cat.description || '',
+      color: cat.color || '',
+      is_active: cat.is_active,
+    });
     setShowForm(true);
   };
 
   const handleCategorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload = { name: categoryForm.name, description: categoryForm.description || null, color: categoryForm.color || null, is_active: categoryForm.is_active };
+      const payload = {
+        name: categoryForm.name,
+        description: categoryForm.description || null,
+        color: categoryForm.color || null,
+        is_active: categoryForm.is_active,
+      };
       if (editingCategory) {
         await api.put(`/categories/${editingCategory.id}`, payload);
         toast.success(t('products.categoryUpdated'));
@@ -335,7 +429,7 @@ export default function ProductsPage() {
   };
 
   const handleCategoryDelete = async (id: number, name: string) => {
-    const productCount = products.filter(p => p.category_id === id).length;
+    const productCount = products.filter((p) => p.category_id === id).length;
     if (productCount > 0) {
       setCatReassignTo('');
       setCatDeleteModal({ open: true, id, name, productCount });
@@ -347,7 +441,9 @@ export default function ProductsPage() {
       toast.success(t('products.categoryDeleted'));
       fetchData();
     } catch (err: unknown) {
-      const e = err as { response?: { status?: number; data?: { error?: string; productCount?: number } } };
+      const e = err as {
+        response?: { status?: number; data?: { error?: string; productCount?: number } };
+      };
       if (e?.response?.status === 400 && e?.response?.data?.productCount) {
         setCatReassignTo('');
         setCatDeleteModal({ open: true, id, name, productCount: e.response.data.productCount });
@@ -360,7 +456,9 @@ export default function ProductsPage() {
   const handleCategoryReassignDelete = async () => {
     if (!catDeleteModal.id || !catReassignTo) return;
     try {
-      await api.delete(`/categories/${catDeleteModal.id}?action=reassign&reassign_to=${catReassignTo}`);
+      await api.delete(
+        `/categories/${catDeleteModal.id}?action=reassign&reassign_to=${catReassignTo}`,
+      );
       toast.success(t('products.reassignAndDelete'));
       setCatDeleteModal({ open: false, id: null, name: '', productCount: 0 });
       fetchData();
@@ -384,7 +482,14 @@ export default function ProductsPage() {
   };
 
   const resetAddonForm = () => {
-    setAddonForm({ name: '', description: '', is_required: false, allow_multiple_quantities: false, min_selection: 0, max_selection: 10 });
+    setAddonForm({
+      name: '',
+      description: '',
+      is_required: false,
+      allow_multiple_quantities: false,
+      min_selection: 0,
+      max_selection: 10,
+    });
     setEditingAddonGroup(null);
     setShowAddonModal(false);
     setAddonList([]);
@@ -392,15 +497,37 @@ export default function ProductsPage() {
 
   const openEditAddonGroup = (group: AddonGroup) => {
     setEditingAddonGroup(group);
-    setAddonForm({ name: group.name, description: group.description || '', is_required: Boolean(group.is_required), allow_multiple_quantities: Boolean(group.allow_multiple_quantities), min_selection: group.min_selection, max_selection: group.max_selection });
-    setAddonList(group.addons?.map((a) => ({ id: a.id, name: a.name, price: a.price, is_active: Boolean(a.is_active) })) || []);
+    setAddonForm({
+      name: group.name,
+      description: group.description || '',
+      is_required: Boolean(group.is_required),
+      allow_multiple_quantities: Boolean(group.allow_multiple_quantities),
+      min_selection: group.min_selection,
+      max_selection: group.max_selection,
+    });
+    setAddonList(
+      group.addons?.map((a) => ({
+        id: a.id,
+        name: a.name,
+        price: a.price,
+        is_active: Boolean(a.is_active),
+      })) || [],
+    );
     setShowAddonModal(true);
   };
 
   const handleAddonGroupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload = { name: addonForm.name, description: addonForm.description || null, is_required: addonForm.is_required, allow_multiple_quantities: addonForm.allow_multiple_quantities, min_selection: addonForm.min_selection, max_selection: addonForm.max_selection, addons: addonList };
+      const payload = {
+        name: addonForm.name,
+        description: addonForm.description || null,
+        is_required: addonForm.is_required,
+        allow_multiple_quantities: addonForm.allow_multiple_quantities,
+        min_selection: addonForm.min_selection,
+        max_selection: addonForm.max_selection,
+        addons: addonList,
+      };
       if (editingAddonGroup) {
         await api.put(`/addon-groups/${editingAddonGroup.id}`, payload);
         toast.success(t('products.addonGroupUpdated'));
@@ -410,29 +537,40 @@ export default function ProductsPage() {
       }
       resetAddonForm();
       fetchData();
-    } catch { toast.error(t('products.failedToSaveAddonGroup')); }
+    } catch {
+      toast.error(t('products.failedToSaveAddonGroup'));
+    }
   };
 
   const handleAddonGroupDelete = async (id: number | string) => {
-    if (!await confirm(t('products.deleteAddonGroupConfirm'), { destructive: true, confirmLabel: t('common.delete') })) return;
+    if (
+      !(await confirm(t('products.deleteAddonGroupConfirm'), {
+        destructive: true,
+        confirmLabel: t('common.delete'),
+      }))
+    )
+      return;
     try {
       await api.delete(`/addon-groups/${id}`);
       toast.success(t('products.addonGroupDeleted'));
       fetchData();
-    } catch { toast.error(t('common.failedToDelete')); }
+    } catch {
+      toast.error(t('common.failedToDelete'));
+    }
   };
 
   const addAddonItem = () => setAddonList((prev) => [...prev, { name: '', price: 0 }]);
-  const updateAddonItem = (idx: number, field: string, value: string | number) => setAddonList((prev) => prev.map((a, i) => i === idx ? { ...a, [field]: value } : a));
+  const updateAddonItem = (idx: number, field: string, value: string | number) =>
+    setAddonList((prev) => prev.map((a, i) => (i === idx ? { ...a, [field]: value } : a)));
   const removeAddonItem = (idx: number) => setAddonList((prev) => prev.filter((_, i) => i !== idx));
 
   if (loading) {
-    return <LoadingState label={t('products.title')} className="min-h-[16rem]" />;
+    return <LoadingState label={tProducts('title')} className="min-h-[16rem]" />;
   }
 
   return (
     <div>
-      <PageHeader title={t('products.title')} />
+      <PageHeader title={tProducts('title')} />
 
       <ProductsTabBar
         activeTab={activeTab}
@@ -449,7 +587,13 @@ export default function ProductsPage() {
         <>
           <div className="flex justify-end gap-2 mb-4">
             {isOwnerOrManager && taxCategories.length > 0 && (
-              <Button variant="outline" onClick={() => { setBulkTaxCategoryId(''); setShowBulkTaxModal(true); }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setBulkTaxCategoryId('');
+                  setShowBulkTaxModal(true);
+                }}
+              >
                 Assign tax category
               </Button>
             )}
@@ -461,36 +605,36 @@ export default function ProductsPage() {
             </Button>
           </div>
 
-      {/* Product Table */}
-      <ProductsTable
-        products={products}
-        categories={categories}
-        taxCategories={taxCategories}
-        loyaltyEnabled={loyaltyEnabled}
-        globalCashbackPercent={globalCashbackPercent}
-        isOwnerOrManager={isOwnerOrManager}
-        fmt={fmt}
-        t={t}
-        onEdit={openEdit}
-        onDelete={handleDelete}
-      />
+          {/* Product Table */}
+          <ProductsTable
+            products={products}
+            categories={categories}
+            taxCategories={taxCategories}
+            loyaltyEnabled={loyaltyEnabled}
+            globalCashbackPercent={globalCashbackPercent}
+            isOwnerOrManager={isOwnerOrManager}
+            fmt={fmt}
+            t={t}
+            onEdit={openEdit}
+            onDelete={handleDelete}
+          />
 
-      <ProductFormDialog
-        open={activeTab === 'products' && showForm}
-        onOpenChange={(open) => !open && resetForm()}
-        editing={editingProduct}
-        form={form}
-        onFormChange={setForm}
-        onImageTouched={() => setImageTouched(true)}
-        onSubmit={handleSubmit}
-        categories={categories}
-        addonGroups={addonGroups}
-        taxCategories={taxCategories}
-        loyaltyEnabled={loyaltyEnabled}
-        globalCashbackPercent={globalCashbackPercent}
-        addonsEnabled={addonsEnabled}
-        currency={currency}
-      />
+          <ProductFormDialog
+            open={activeTab === 'products' && showForm}
+            onOpenChange={(open) => !open && resetForm()}
+            editing={editingProduct}
+            form={form}
+            onFormChange={setForm}
+            onImageTouched={() => setImageTouched(true)}
+            onSubmit={handleSubmit}
+            categories={categories}
+            addonGroups={addonGroups}
+            taxCategories={taxCategories}
+            loyaltyEnabled={loyaltyEnabled}
+            globalCashbackPercent={globalCashbackPercent}
+            addonsEnabled={addonsEnabled}
+            currency={currency}
+          />
         </>
       )}
 
@@ -500,7 +644,12 @@ export default function ProductsPage() {
             <Button variant="outline" onClick={() => openCsvModal('categories')}>
               <FileSpreadsheet size={16} className="mr-1" /> CSV
             </Button>
-            <Button onClick={() => { resetCategoryForm(); setShowForm(true); }}>
+            <Button
+              onClick={() => {
+                resetCategoryForm();
+                setShowForm(true);
+              }}
+            >
               <Plus size={16} className="mr-1" /> {t('products.addCategory')}
             </Button>
           </div>
@@ -529,7 +678,12 @@ export default function ProductsPage() {
             <Button variant="outline" onClick={() => openCsvModal('addons')}>
               <FileSpreadsheet size={16} className="mr-1" /> CSV
             </Button>
-            <Button onClick={() => { resetAddonForm(); setShowAddonModal(true); }}>
+            <Button
+              onClick={() => {
+                resetAddonForm();
+                setShowAddonModal(true);
+              }}
+            >
               <Plus size={16} className="mr-1" /> {t('products.addAddonGroup')}
             </Button>
           </div>
@@ -584,7 +738,9 @@ export default function ProductsPage() {
 
       <CategoryDeleteDialog
         open={catDeleteModal.open}
-        onOpenChange={(open) => !open && setCatDeleteModal({ open: false, id: null, name: '', productCount: 0 })}
+        onOpenChange={(open) =>
+          !open && setCatDeleteModal({ open: false, id: null, name: '', productCount: 0 })
+        }
         categoryName={catDeleteModal.name}
         productCount={catDeleteModal.productCount}
         categories={categories}

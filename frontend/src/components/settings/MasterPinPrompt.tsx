@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useI18n } from '@/hooks/useI18n';
+import { useTranslation } from 'react-i18next';
 
 interface MasterPinPromptProps {
   open: boolean;
@@ -25,8 +26,16 @@ interface MasterPinPromptProps {
 
 const PIN_REGEX = /^\d{4}$/;
 
-export function MasterPinPrompt({ open, mode, title, description, onCancel, onSubmit }: MasterPinPromptProps) {
+export function MasterPinPrompt({
+  open,
+  mode,
+  title,
+  description,
+  onCancel,
+  onSubmit,
+}: MasterPinPromptProps) {
   const { t } = useI18n();
+  const { t: tCommon } = useTranslation('common');
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -76,15 +85,18 @@ export function MasterPinPrompt({ open, mode, title, description, onCancel, onSu
         <DialogHeader>
           <DialogTitle>{title || t('settings.masterPin')}</DialogTitle>
           <DialogDescription>
-            {description || (mode === 'set'
-              ? t('settings.setPinDescription')
-              : t('settings.verifyPinDescription'))}
+            {description ||
+              (mode === 'set'
+                ? t('settings.setPinDescription')
+                : t('settings.verifyPinDescription'))}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="master-pin">{mode === 'set' ? t('settings.newPin') : t('settings.masterPin')}</Label>
+            <Label htmlFor="master-pin">
+              {mode === 'set' ? t('settings.newPin') : t('settings.masterPin')}
+            </Label>
             <Input
               id="master-pin"
               type="password"
@@ -123,10 +135,14 @@ export function MasterPinPrompt({ open, mode, title, description, onCancel, onSu
 
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel} disabled={submitting}>
-            {t('common.cancel')}
+            {tCommon('cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={submitting || pin.length !== 4}>
-            {submitting ? t('common.loading') : mode === 'set' ? t('settings.setPinButton') : t('settings.confirmButton')}
+            {submitting
+              ? tCommon('loading')
+              : mode === 'set'
+                ? t('settings.setPinButton')
+                : t('settings.confirmButton')}
           </Button>
         </DialogFooter>
       </DialogContent>
