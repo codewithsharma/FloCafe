@@ -21,6 +21,11 @@ export function isAllowedLocalWindowUrl(rawUrl: string, port: number, localIp?: 
   }
 }
 
+/** Main-frame will-navigate / will-redirect policy (same local HTTP allowlist). */
+export function isAllowedRendererNavigation(rawUrl: string, port: number, localIp?: string): boolean {
+  return isAllowedLocalWindowUrl(rawUrl, port, localIp);
+}
+
 export function isSafeExternalUrl(rawUrl: string): boolean {
   try {
     const parsed = new URL(rawUrl);

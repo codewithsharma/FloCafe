@@ -25,6 +25,10 @@ import { initializeJWTSecret, JwtSecretError } from './services/jwt-secret';
 import log from 'electron-log/main';
 import { autoUpdater } from 'electron-updater';
 import { isAllowedLocalWindowUrl, isSafeExternalUrl } from './security/url-allowlist';
+import {
+  attachRendererNavigationGuards,
+  getPrimaryRendererWebPreferences,
+} from './security/browser-window-security';
 
 // ── GPU compatibility ────────────────────────────────────────────────────────
 // On Windows, some systems hit "GPU process exited unexpectedly" (exit code
@@ -223,12 +227,7 @@ function createWindow(): void {
     minWidth: 1024,
     minHeight: 768,
     title: 'Nexora',
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: false,
-    },
+    webPreferences: getPrimaryRendererWebPreferences(path.join(__dirname, 'preload.js')),
     show: false,
   });
 
@@ -242,6 +241,12 @@ function createWindow(): void {
   // Always load from the embedded Express server (serves static Next.js export).
   // This avoids file:// protocol issues and keeps dev/prod behaviour identical.
   mainWindow.loadURL(`http://localhost:${getServerPort()}`);
+
+  // Fail-closed main-frame navigation / redirects (P0.6 Phase A).
+  attachRendererNavigationGuards(mainWindow.webContents, {
+    getPort: () => getServerPort(),
+    getLocalIp: () => getLocalIP(),
+  });
 
   // Allow target="_blank" links to open new windows for local URLs (e.g. the KDS page).
   // External URLs are sent to the system browser instead.
@@ -257,6 +262,7 @@ function createWindow(): void {
           webPreferences: {
             contextIsolation: true,
             nodeIntegration: false,
+            sandbox: true,
           },
         },
       };
@@ -267,6 +273,14 @@ function createWindow(): void {
       console.warn('[Flo] Blocked unsafe external URL scheme:', url);
     }
     return { action: 'deny' };
+  });
+
+  // Child windows from window.open inherit no navigation listeners by default.
+  mainWindow.webContents.on('did-create-window', (childWindow) => {
+    attachRendererNavigationGuards(childWindow.webContents, {
+      getPort: () => getServerPort(),
+      getLocalIp: () => getLocalIP(),
+    });
   });
 
   // Intercept all renderer downloads and show a save dialog instead of

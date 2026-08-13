@@ -9,6 +9,7 @@ import { getKdsPort } from './kds-server';
 import { authorizeMasterPin, isMasterPinAvailable, isMasterPinSet } from './services/master-pin';
 import { runHealthCheck, applySafeFixes } from './services/schema-health';
 import { getStatus as getWhatsAppStatus } from './services/whatsapp';
+import { attachRendererNavigationGuards } from './security/browser-window-security';
 
 // Settings keys the renderer is allowed to write via IPC.
 // Must stay in sync with routes/settings.ts ALLOWED_WILDCARD_KEYS.
@@ -278,6 +279,7 @@ export function registerIpcHandlers(): void {
         preload: path.join(__dirname, 'preload.js'),
         contextIsolation: true,
         nodeIntegration: false,
+        sandbox: true,
       },
     });
 
@@ -286,6 +288,10 @@ export function registerIpcHandlers(): void {
     });
 
     const localIP = getLocalIP();
+    attachRendererNavigationGuards(activeKdsWindow.webContents, {
+      getPort: () => getKdsPort(),
+      getLocalIp: () => getLocalIP(),
+    });
     activeKdsWindow.loadURL(`http://${localIP}:${port}/kds`);
   });
 

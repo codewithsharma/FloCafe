@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-08-13 — Electron security P0.6 Phase A (Accepted + Implemented)
+
+Phase A shipped: primary/KDS/popup `sandbox: true` via `getPrimaryRendererWebPreferences()` / `main/security/browser-window-security.ts`; `attachRendererNavigationGuards` fail-closed on `will-navigate`/`will-redirect` (same allowlist as `isAllowedLocalWindowUrl` / `isAllowedRendererNavigation`); child windows guarded; preload unchanged. Tests: `tests/electron-sandbox-phase-a.test.ts`, `npm run test:electron-sandbox` → `test:security`. No JWT/LAN/schema/auth/business-logic changes; Win32 `disable-gpu-sandbox` orthogonal. Verdict **GREEN WITH HARDENING**. Phase B (IPC auth/shrink) not started — pending approval. See `docs/15-project-management/p0.6-electron-security-audit.md`.
+
+## 2026-08-13 — Electron security P0.6 Phase 1 discovery (Superseded by Phase A)
+
+Discovery verdict was **YELLOW — HARDENING REQUIRED**. Confirmed `sandbox: false` had no functional requirement; Windows GPU switch is separate. Dominant residual risk (post–Phase A still true): XSS → unauthenticated IPC + stolen `localStorage` JWT → local API. Phase A implemented same day.
+
 ## 2026-08-13 — JWT secret storage Option B (Accepted + Implemented)
 
 CEO+CTO approved. Production secret via Electron `safeStorage` → `userData/jwt-secret.enc`. SQLite plaintext removed after crash-safe migration. `JWT_SECRET` env CI-only. Rotate/recover via owner + Master PIN. Schema v74 marker `jwt_secret_storage`. See `docs/15-project-management/p0.2-jwt-secret-storage-audit.md`.

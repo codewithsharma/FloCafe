@@ -951,10 +951,9 @@ router.post('/jwt-secret/rotate', authRateLimit(), (req: Request, res: Response)
     logAuditEvent({
       action: 'jwt_secret.rotated',
       actorUserId: user.id,
-      actorRole: 'owner',
       entityType: 'security',
       entityId: 'jwt_secret',
-      metadata: { method: 'rotate' },
+      metadata: { method: 'rotate', actor_role: 'owner' },
     });
     res.json({ ok: true, message: 'JWT signing secret rotated. All sessions must sign in again.' });
   } catch (error: any) {
@@ -996,10 +995,9 @@ router.post('/jwt-secret/recover', authRateLimit(), (req: Request, res: Response
     logAuditEvent({
       action: 'jwt_secret.recovered',
       actorUserId: user.id,
-      actorRole: 'owner',
       entityType: 'security',
       entityId: 'jwt_secret',
-      metadata: { method: 'recover' },
+      metadata: { method: 'recover', actor_role: 'owner' },
     });
     res.json({ ok: true, message: 'JWT signing secret recovered. Sign in again with your password.' });
   } catch (error: any) {
