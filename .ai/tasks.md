@@ -81,7 +81,8 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P2.13 Product ↔ Tax ownership boundary (2026-08-13) — config refs vs calc vs historical snapshot; no schema/money change
 - [x] **P2.14 INTERIM Phase 2 exit gate** (2026-08-13) — catalog metadata truth + exit docs; **PASS WITH DOCUMENTED DEFERMENTS**; doc preserved (not deleted)
 - [x] **P2.14 CURRENT Order domain boundary** (2026-08-13) — characterize cancel/stock + void×cancel; `main/services/order.ts`; relocate item cancel/restore onto `orderRoutes`; no money/inventory policy change
-- [ ] Phase 2 continuation — further Order facade (create/addItems / money rollup) if tasked; do **not** claim Phase 2 complete
+- [x] **P2.15 Payment domain boundary** (2026-08-13) — `main/services/payment-tender.ts`; soft-gate tables/kds on bill-paid; no FIN-01/money/schema/API change; retail-test not production
+- [ ] Phase 2 continuation — further Order/Payment facade depth if tasked; do **not** claim Phase 2 complete
 - [ ] **Phase 3** Fail-closed dependency enforcement (still no packages; after pilot proof)
 - [ ] **Phase 3** Inventory stock ledger UI
 - [ ] **Phase 3** Legacy product tax_type/tax_rate cleanup (deferred; characterized in 2.13)

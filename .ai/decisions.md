@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.15 Payment domain boundary (Accepted + Implemented)
+
+Extracted `preparePaymentBatch` / `applyPaymentBatch` into `main/services/payment-tender.ts` with ownership markers (`PAYMENT_OWNED` / `PAYMENT_DOES_NOT_OWN`). Soft-gated bill-paid restaurant side effects: table free behind `isModuleEnabled('tables')`; KDS notify behind `isModuleEnabled('kds')`. Restaurant ACTIVE vertical keeps both modules enabled → identical behavior. Synthetic `retail-test` excludes both (composition-only; not production). No FIN-01 / refund / tax / money math change; no schema migration; no API contract change; `payment-cash.ts` and `refund.ts` untouched. Tests: `payment-boundary`, `payment-without-restaurant`. Doc: `phase-2.15-payment-domain-boundary.md`.
+
 ## 2026-08-13 — Phase 2.14 / Phase 2 Exit Gate (Accepted + Implemented)
 
 Phase 2 modular foundation declared **COMPLETE** with exit decision **PASS WITH DOCUMENTED DEFERMENTS**. Code audit confirmed registry/contracts/composition, Inventory write+ledger+history read, Tax facade/HTTP/snapshot, Product ownership maps, Restaurant compatibility, synthetic `retail-test` quarantine, schema **v75**, and full exit test matrix PASS. Phase 2.14 changes: catalog `routePrefixes` aligned to real mounts; soft deps declare product→tax, order→inventory/tax, payment→tax; exit docs (`.ai/*`, `phase-2-exit-gate.md`, architecture index updates). Explicitly deferred to Phase 3: packages, fail-closed, multi-vertical runtime, production Retail+, Inventory UI, void×cancel restock fix, legacy tax columns, `db.ts` rewrite. Do not rewrite historical commits for co-author trailers. Doc: `phase-2-exit-gate.md`.
