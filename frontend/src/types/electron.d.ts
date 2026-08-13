@@ -7,12 +7,10 @@ export interface ElectronAPI {
   // Menu
   onMenuAction: (callback: (action: string) => void) => (() => void);
 
-  // Database
+  // Database (desktop dialogs + Master PIN)
   backupDatabase: (pin?: string) => Promise<{ success: boolean; path?: string; error?: string }>;
-  restoreBackup: (pin?: string, backupPath?: string) => Promise<{ success: boolean; error?: string }>;
-  dbHealthCheck: () => Promise<HealthCheckReport | { error: string }>;
-  dbApplySafeFixes: (findingIds?: string[]) => Promise<{ applied: string[]; skipped: string[]; errors: { id: string; error: string }[] }>;
-  dbInitialize: (pin: string, confirmationPhrase: string) => Promise<{ success: boolean; backupPath?: string; error?: string }>;
+  /** Optional managed backup fileName under userData/backups — never an absolute path. */
+  restoreBackup: (pin?: string, fileName?: string) => Promise<{ success: boolean; error?: string }>;
   getMasterPinStatus: () => Promise<{ available: boolean; isSet: boolean }>;
 
   // App info
@@ -36,7 +34,8 @@ export interface ElectronAPI {
   onUpdateStatus: (callback: (status: UpdateStatus) => void) => (() => void);
   getUpdateStatus: () => Promise<{ status: UpdateStatus['status']; info: { version: string } }>;
   checkForUpdates: () => Promise<void>;
-  restartAndInstall: () => Promise<void>;
+  /** Requires active owner/manager JWT (renderer passes existing access token). */
+  restartAndInstall: (token: string) => Promise<{ success: boolean; error?: string }>;
 
   // Platform
   platform: string;

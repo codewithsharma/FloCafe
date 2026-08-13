@@ -4,9 +4,10 @@
 
 - 🔒 SEC: LAN exposure is mode-gated (`network_mode`; default `localhost`). Cleartext HTTP/WS still applies on staff LAN when `kds_lan`/`lan` selected — guest Wi‑Fi unsupported; TLS deferred. See `p0.1-lan-security-audit.md` (GREEN WITH HARDENING).
 - 🔒 SEC: JWT signing secret in Electron `safeStorage` (`userData/jwt-secret.enc`). SQLite/Drive backups no longer carry forge key. Remaining: same-OS-user malware can still decrypt; Linux needs desktop keyring. See `p0.2-jwt-secret-storage-audit.md` (GREEN WITH HARDENING).
-- 🔒 SEC: Electron renderer sandbox + navigation — **Phase A done** (`sandbox: true`, fail-closed `will-navigate`/`will-redirect`). Residual P0.6: unauthenticated IPC + XSS→API via `localStorage` JWT (Phase B pending). Win32 `disable-gpu-sandbox` remains orthogonal. See `p0.6-electron-security-audit.md` (Phase A GREEN WITH HARDENING).
-- 🔒 SEC: Several IPC handlers mutate DB/printers/updates without auth (`db-apply-safe-fixes`, `save-printer`, `restart-and-install`, orphan settings/printers/summary). Preload is allowlisted but still reachable from compromised renderer. (**Phase B**)
-- 🔒 SEC: `restore-backup` still accepts arbitrary filesystem paths after Master PIN; CSP `unsafe-inline` remains. (**Phase B / P1**)
+- 🔒 SEC: Electron renderer sandbox + navigation — **Phase A done**. Phase B1 **GREEN WITH HARDENING**. Phase B2 **IMPLEMENTED — GREEN WITH HARDENING** (`p0.6-updater-security-audit.md`): `restart-and-install` owner/manager JWT; status/check public; Master PIN not used. Overall P0.6 residual → Phase C (CSP / localStorage JWT). Win32 `disable-gpu-sandbox` orthogonal.
+- 🔒 SEC: Stolen active owner/manager JWT can still authorize `restart-and-install` (accepted residual; same as HTTP API). XSS without that role cannot force install.
+- 🔒 SEC: Orphan privileged IPC (DB tools, settings, printers, summary, KDS open, WhatsApp status) and renderer absolute restore paths — **mitigated in B1** (removed / `fileName` + `validateExternalRestorePath`).
+- 🔒 SEC: CSP `'unsafe-inline'` + JWT in `localStorage` — XSS→API chain remains (Phase C / later).
 - 🔒 SEC: `terminal_id` is identification, not authentication; knowing the string + JWT role can close a shift.
 - ⚠️ RISK: M6 refunds API + minimal Orders refund UI shipped; **refund receipt print still deferred**. Card refunds are record-only (no gateway).
 - ⚠️ RISK: Financial audit coverage improved for payments (`payment.received`); still sparse on discounts, PIN overrides, DB import/export, Master PIN ops.

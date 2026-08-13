@@ -1,8 +1,24 @@
 # Decisions
 
+## 2026-08-13 — Electron updater IPC Phase B2 (Accepted + Implemented)
+
+CEO+CTO-directed Option B. `restart-and-install` requires active owner/manager JWT via `authorizeOwnerManagerJwt` (`main/security/ipc-auth.ts`) + `handleRestartAndInstall` (`main/security/restart-and-install.ts`). Reuses `getJWTSecret` / revoke / stale / `getUserAuthStatus`. Master PIN intentionally **not** used. `get-status` / `get-update-status` / `check-for-updates` remain public. Audit action `updater.restart_and_install` (no token/secret in metadata). Preload: `restartAndInstall(token)`. Tests: `tests/electron-ipc-phase-b2.test.ts`, `npm run test:electron-ipc-b2` → `test:security`. Verdict **GREEN WITH HARDENING**. Residual: stolen owner/manager JWT; CSP/localStorage → Phase C. See `docs/15-project-management/p0.6-updater-security-audit.md`.
+
+## 2026-08-13 — Electron updater IPC Phase B2 discovery (Superseded by implementation)
+
+Discovery verdict was **YELLOW — HARDENING REQUIRED**. Recommended Option B; implemented same day.
+
+## 2026-08-13 — Electron IPC security Phase B1 (Accepted + Implemented)
+
+Hybrid D B1 shipped: orphan IPC removed (`db-health-check`, `db-apply-safe-fixes`, `db-initialize`, `get-settings`/`set-setting`, `get-printers`/`save-printer`, `get-daily-summary`, `get-kds-info`, `open-kds-window`, `whatsapp-get-status`); restore hardened to managed `fileName` under `userData/backups` or OS picker path validated by `validateExternalRestorePath` (`main/security/restore-path.ts`); Settings passes `backup.fileName`; Master PIN unchanged; retained desktop bridge (backup/restore, master-pin-status, get-app-info, status/updates). Tests: `tests/electron-ipc-phase-b1.test.ts`, `npm run test:electron-ipc-b1` → `test:security`. Verdict **GREEN WITH HARDENING**. Phase B2 discovery completed same day (`p0.6-updater-security-audit.md`); implementation still pending approval. See `docs/15-project-management/p0.6-ipc-security-architecture.md`.
+
+## 2026-08-13 — Electron IPC security Phase B discovery (Superseded by B1 implementation)
+
+Discovery recommended **Hybrid D**; B1 implemented same day. Residual: authorize `restart-and-install` in B2.
+
 ## 2026-08-13 — Electron security P0.6 Phase A (Accepted + Implemented)
 
-Phase A shipped: primary/KDS/popup `sandbox: true` via `getPrimaryRendererWebPreferences()` / `main/security/browser-window-security.ts`; `attachRendererNavigationGuards` fail-closed on `will-navigate`/`will-redirect` (same allowlist as `isAllowedLocalWindowUrl` / `isAllowedRendererNavigation`); child windows guarded; preload unchanged. Tests: `tests/electron-sandbox-phase-a.test.ts`, `npm run test:electron-sandbox` → `test:security`. No JWT/LAN/schema/auth/business-logic changes; Win32 `disable-gpu-sandbox` orthogonal. Verdict **GREEN WITH HARDENING**. Phase B (IPC auth/shrink) not started — pending approval. See `docs/15-project-management/p0.6-electron-security-audit.md`.
+Phase A shipped: primary/KDS/popup `sandbox: true` via `getPrimaryRendererWebPreferences()` / `main/security/browser-window-security.ts`; `attachRendererNavigationGuards` fail-closed on `will-navigate`/`will-redirect` (same allowlist as `isAllowedLocalWindowUrl` / `isAllowedRendererNavigation`); child windows guarded; preload unchanged. Tests: `tests/electron-sandbox-phase-a.test.ts`, `npm run test:electron-sandbox` → `test:security`. No JWT/LAN/schema/auth/business-logic changes; Win32 `disable-gpu-sandbox` orthogonal. Verdict **GREEN WITH HARDENING**. Phase B1 later implemented (see B1 ADR); B2 pending. See `docs/15-project-management/p0.6-electron-security-audit.md`.
 
 ## 2026-08-13 — Electron security P0.6 Phase 1 discovery (Superseded by Phase A)
 

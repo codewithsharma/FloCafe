@@ -186,7 +186,7 @@ export function getDbPath(): string {
   return path.join(userDataPath, 'flo.db');
 }
 
-function getBackupDir(): string {
+export function getBackupDir(): string {
   const userDataPath = app.getPath('userData');
   return path.join(userDataPath, 'backups');
 }

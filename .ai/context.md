@@ -20,7 +20,7 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 3. Money-path REAL→cents migration — **documentation only** until approved
 4. LAN security / HTTP exposure — **IMPLEMENTED** (`network_mode` localhost|kds_lan|lan; audit `p0.1-lan-security-audit.md` → GREEN WITH HARDENING)
 5. JWT secret storage — **IMPLEMENTED** (safeStorage → `jwt-secret.enc`; GREEN WITH HARDENING)
-6. Electron sandbox / process security — **Phase A IMPLEMENTED → GREEN WITH HARDENING** (`docs/15-project-management/p0.6-electron-security-audit.md`); sandbox + navigation guards shipped; **Phase B IPC hardening pending approval**
+6. Electron sandbox / process security — **Phase A GREEN**; **Phase B1 GREEN WITH HARDENING**; **Phase B2 IMPLEMENTED — GREEN WITH HARDENING** (`docs/15-project-management/p0.6-updater-security-audit.md`); `restart-and-install` owner/manager JWT; status/check public; Master PIN not used
 
 **Frozen until pilots prove reliability:** AI, aggregators (Swiggy/Zomato/ONDC), multi-tenant SaaS, multi-location implementation, ERP inventory, payment terminals, Bluetooth print, microservices.
 
@@ -45,4 +45,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-P0.6 **Phase B** (IPC auth/shrink + restore path allowlist + KDS preload reduction) — pending CEO+CTO approval. Do **not** start Phase B until approved.
+P0.6 Phase C (CSP / session JWT / GPU sandbox) deferred. Next P0 candidates: P0.3 money migration (docs-only until approved) or P0.7 documentation truth.

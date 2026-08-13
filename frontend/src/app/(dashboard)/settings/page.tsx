@@ -292,7 +292,7 @@ export default function SettingsPage() {
     | { mode: 'backup' }
     | { mode: 'backup-custom' }
     | { mode: 'import'; payload: { data: ImportPayload; overwrite: boolean } }
-    | { mode: 'restore'; payload: { backupPath: string } }
+    | { mode: 'restore'; payload: { fileName: string } }
     | { mode: 'delete-backup'; payload: { fileName: string } }
     | { mode: 'delete-cloud' }
     | { mode: 'cancel-cloud-deletion' }
@@ -467,7 +467,7 @@ export default function SettingsPage() {
       if (!window.electronAPI?.restoreBackup) {
         return { success: false, error: t('common.notAvailable') };
       }
-      const result = await window.electronAPI.restoreBackup(pin, pinGate.payload.backupPath);
+      const result = await window.electronAPI.restoreBackup(pin, pinGate.payload.fileName);
       if (result.success) {
         toast.success(t('restore.success'));
         setPinGate(null);
@@ -590,7 +590,7 @@ export default function SettingsPage() {
         toast.error(t('common.notAvailable'));
         return;
       }
-      const result = await window.electronAPI.restoreBackup('', backup.path);
+      const result = await window.electronAPI.restoreBackup('', backup.fileName);
       if (result.success) {
         toast.success(t('restore.success'));
         setTimeout(() => window.location.reload(), 1500);
@@ -599,7 +599,7 @@ export default function SettingsPage() {
       }
       return;
     }
-    setPinGate({ mode: 'restore', payload: { backupPath: backup.path } });
+    setPinGate({ mode: 'restore', payload: { fileName: backup.fileName } });
   };
 
   const handleDeleteBackup = async (backup: BackupInfo) => {

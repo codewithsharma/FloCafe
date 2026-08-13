@@ -22,7 +22,11 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
   - [x] P0.4.1 LAN hardening: `network_mode` bind hosts, mDNS/QR gates, Settings UI, `tests/network-mode.test.ts`; TLS deferred P2
 - [x] P0.5 / JWT secret storage — IMPLEMENTED → GREEN WITH HARDENING (`p0.2-jwt-secret-storage-audit.md`; `main/services/jwt-secret.ts`; schema v74)
 - [x] P0.6 Phase A Electron sandbox + navigation — IMPLEMENTED → GREEN WITH HARDENING (`p0.6-electron-security-audit.md`; `main/security/browser-window-security.ts`; `tests/electron-sandbox-phase-a.test.ts`)
-- [ ] P0.6 Phase B IPC auth/shrink + restore path allowlist + KDS preload reduction — pending CEO+CTO approval
+- [x] P0.6 Phase B IPC security discovery — COMPLETE (`p0.6-ipc-security-architecture.md`) → Hybrid D
+- [x] P0.6 Phase B1 — orphan IPC removal + restore path allowlist + KDS `open-kds-window` removed — IMPLEMENTED → GREEN WITH HARDENING (`tests/electron-ipc-phase-b1.test.ts`; `npm run test:electron-ipc-b1`)
+- [x] P0.6 Phase B2 discovery — COMPLETE (`p0.6-updater-security-audit.md`) → YELLOW; recommend Option B (owner/manager JWT)
+- [x] P0.6 Phase B2 implementation — `restart-and-install` owner/manager JWT + audit; `tests/electron-ipc-phase-b2.test.ts`; GREEN WITH HARDENING
+- [ ] P0.6 Phase C — CSP / session JWT / GPU sandbox (deferred)
 - [ ] P0.7 Documentation truth — roadmap/feature-list/production-readiness match code; Nexora POS vs RestaurantOS identity
 
 ## P1 — Pilot reliability

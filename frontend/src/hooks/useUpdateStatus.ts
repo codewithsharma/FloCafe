@@ -31,9 +31,10 @@ export function useUpdateStatus() {
   };
 
   const restartAndInstall = () => {
-    if (typeof window !== 'undefined' && window.electronAPI) {
-      window.electronAPI.restartAndInstall();
-    }
+    if (typeof window === 'undefined' || !window.electronAPI) return;
+    // Existing auth access token — do not move JWT storage in B2.
+    const token = localStorage.getItem('token') || '';
+    void window.electronAPI.restartAndInstall(token);
   };
 
   return { updateStatus, appVersion, checkForUpdates, restartAndInstall };

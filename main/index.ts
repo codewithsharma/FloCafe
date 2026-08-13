@@ -29,6 +29,7 @@ import {
   attachRendererNavigationGuards,
   getPrimaryRendererWebPreferences,
 } from './security/browser-window-security';
+import { handleRestartAndInstall } from './security/restart-and-install';
 
 // ── GPU compatibility ────────────────────────────────────────────────────────
 // On Windows, some systems hit "GPU process exited unexpectedly" (exit code
@@ -70,6 +71,7 @@ console.log('[Log] Log files location:', logPath);
 
 let updateAvailable = false;
 let updateDownloaded = false;
+let updateDownloadedVersion: string | null = null;
 
 function setupAutoUpdater(): void {
   autoUpdater.logger = log;
@@ -115,6 +117,7 @@ function setupAutoUpdater(): void {
     // autoInstallOnAppQuit is disabled, only that explicit action installs it.
     console.log('[Update] Download complete:', info.version);
     updateDownloaded = true;
+    updateDownloadedVersion = info.version ?? null;
     mainWindow?.webContents.send('update-status', {
       status: 'ready-to-install',
       version: info.version
@@ -671,13 +674,22 @@ async function initialize(): Promise<void> {
       checkForUpdates();
     });
 
-    ipcMain.handle('restart-and-install', () => {
-      if (!updateDownloaded) {
-        log.warn('[Update] Ignoring install request before an update is downloaded');
-        return;
+    ipcMain.handle('restart-and-install', (_event, token?: string) => {
+      const result = handleRestartAndInstall(token, {
+        updateDownloaded,
+        fromVersion: app.getVersion(),
+        toVersion: updateDownloadedVersion,
+        markQuitting: () => {
+          isQuitting = true;
+        },
+        quitAndInstall: () => {
+          autoUpdater.quitAndInstall();
+        },
+      });
+      if (!result.success) {
+        log.warn('[Update] restart-and-install rejected:', result.error);
       }
-      isQuitting = true;
-      autoUpdater.quitAndInstall();
+      return result;
     });
 
     ipcMain.handle('get-status', () => {
