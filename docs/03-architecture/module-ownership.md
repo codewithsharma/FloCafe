@@ -1,6 +1,6 @@
 # Module Ownership Map
 
-**Status:** DOCUMENTATION (Phase 2.13)
+**Status:** DOCUMENTATION (Phase 2 **COMPLETE** / [final exit](phase-2-final-exit-gate.md))
 **Date:** 2026-08-13
 **Source:** `main/modules/catalog.ts`, `main/routes/`, `main/services/`, `main/db.ts`
 
@@ -13,9 +13,9 @@ Practical ownership for future extraction. Implementations remain colocated in t
 | product | Catalog items | `products` | Tax facade validation only (no calculate) | products, POS grid | `products` (+ tax config refs) | core, category, tax | N | Tax config columns colocated; inventory columns |
 | category | Catalog groups | `categories` | — | products tabs | `categories` | core | N | Coupled to products UI |
 | inventory | Stock counts + ledger | **`inventory`** (read); writes via products/orders | **`inventory` service** + `inventory_movements` | products OOS | product stock columns + movements | product | N | Stock columns on products; write HTTP still product-nested |
-| pos | Sell surface | `pos-info` (thin) | — | `pos/*` | orders/bills/… | product, order, payment | N | Orchestrates many modules |
-| order | Order lifecycle | `orders`, `order-items`, `held-orders` | tax, inventory, shift, kds | orders, POS | `orders`, `order_items`, `held_orders`, … | product, core, inventory, tax | N | Deep payment/KDS coupling |
-| payment | Tender / bills | `bills`, `payment-methods` | `payment-cash`, `receipt` | PaymentModal, settings | `bills`, `payment_*` | order, tax | N | Money path + shift hooks |
+| pos | Sell surface | `pos-info` (thin) | checkout-coordinator (frontend) | `pos/*` | orders/bills/… | product, order, payment | N | Orchestrator (2.16); extract last |
+| order | Order lifecycle | `orders`, `order-items`, `held-orders` | **`order` ownership facade**; inventory/tax callees | orders, POS | `orders`, `order_items`, `held_orders` | product, core, inventory, tax | N | Fat create/add-items; KDS/tables soft-gated |
+| payment | Tender / bills | `bills`, `payment-methods` | **`payment-tender`**, `payment-cash` | PaymentModal | `bills`, `payment_*` | order, tax | N | generate/print/split still in bills.ts |
 | refund | Refunds | `refunds` | `refund`, `shift` | RefundDialog | `refunds`, idempotency | payment | N | Tied to bills/shifts; no inventory restock |
 | tax | Tax compute | **`tax`**, `tax-packs` | **`tax`, `tax-engine`** | TaxConfigurationPanel | tax pack tables + snapshots | core | N | Denormalized snapshots |
 | shift | Shifts / recon | `shifts` | `shift`, `day-close` | shifts, operations | `shifts`, `day_closes` | core, payment | N | Money path coupling |

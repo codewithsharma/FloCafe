@@ -1,6 +1,6 @@
 # Opervia Modules
 
-**Status:** Phase 2 **CONTINUATION in progress** — CURRENT **2.16 POS orchestration** ([phase-2.16-pos-orchestration-boundary.md](../03-architecture/phase-2.16-pos-orchestration-boundary.md)) + **2.17 Restaurant isolation** ([phase-2.17-restaurant-isolation.md](../03-architecture/phase-2.17-restaurant-isolation.md)). Prior **2.15 Payment** / **2.14 Order**; INTERIM exit gate preserved ([phase-2-exit-gate.md](../03-architecture/phase-2-exit-gate.md) — PASS WITH DOCUMENTED DEFERMENTS). Phase 3 = extraction / multi-vertical / fail-closed remount.
+**Status:** Phase 2 foundation **COMPLETE** ([phase-2-final-exit-gate.md](../03-architecture/phase-2-final-exit-gate.md)). INTERIM exit preserved. Phase 3 = extraction / production multi-vertical / fail-closed.
 **Contract:** [module-system.md](../03-architecture/module-system.md)
 **Platform:** [opervia-platform.md](../00-product/opervia-platform.md)
 
@@ -88,16 +88,19 @@ Modules are reusable business capabilities. Phase 2 ships a **lightweight regist
 17. ~~POS orchestration boundary~~ — **Phase 2.16 done** ([phase-2.16-pos-orchestration-boundary.md](../03-architecture/phase-2.16-pos-orchestration-boundary.md)) — checkout coordinator + addons/kds gates; no domain math on client
 18. ~~Restaurant isolation~~ — **Phase 2.17 done** ([phase-2.17-restaurant-isolation.md](../03-architecture/phase-2.17-restaurant-isolation.md)) — Order soft-gates tables/kds; shared ↛ restaurant deps; fail-closed remount deferred
 19. ~~Synthetic Retail validation~~ — **Phase 2.18 done** ([phase-2.18-synthetic-retail-validation.md](../03-architecture/phase-2.18-synthetic-retail-validation.md)) — retail-test stronger; not production
-20. Fail-closed dependency enforcement / route remount — **Phase 3**
-20. Inventory UI / legacy tax column cleanup — **Phase 3**
-21. Formal events bus for modules — **Phase 3**
-22. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — **Phase 3**
+20. ~~Phase 2 final exit gate~~ — **done** ([phase-2-final-exit-gate.md](../03-architecture/phase-2-final-exit-gate.md))
+21. Fail-closed dependency enforcement / route remount — **Phase 3**
+22. Inventory UI / legacy tax column cleanup — **Phase 3**
+23. Formal events bus for modules — **Phase 3**
+24. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — **Phase 3**
 
 **Do not** create Opervia Custom or extract every folder into packages yet.
 
 ## Related architecture
 
-- [phase-2.17-restaurant-isolation.md](../03-architecture/phase-2.17-restaurant-isolation.md) (2.17)
+- [phase-2-final-exit-gate.md](../03-architecture/phase-2-final-exit-gate.md)
+- [phase-2.18-synthetic-retail-validation.md](../03-architecture/phase-2.18-synthetic-retail-validation.md)
+- [phase-2.17-restaurant-isolation.md](../03-architecture/phase-2.17-restaurant-isolation.md)
 - [phase-2.16-pos-orchestration-boundary.md](../03-architecture/phase-2.16-pos-orchestration-boundary.md) (CURRENT 2.16)
 - [phase-2.15-payment-domain-boundary.md](../03-architecture/phase-2.15-payment-domain-boundary.md) (2.15)
 - [phase-2.14-order-domain-boundary.md](../03-architecture/phase-2.14-order-domain-boundary.md) (2.14)

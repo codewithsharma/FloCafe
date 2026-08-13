@@ -1,6 +1,6 @@
 # Extraction Readiness
 
-**Status:** DOCUMENTATION (Phase 2 **COMPLETE** / exit gate 2.14)
+**Status:** DOCUMENTATION (Phase 2 **COMPLETE** / [final exit gate](phase-2-final-exit-gate.md))
 **Date:** 2026-08-13
 
 This is an architecture map — **not** a mandate to extract packages.
@@ -13,11 +13,30 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 |--------|----------|---------------------------|
 | Customer | MEDIUM | Extract after phone util boundary + loyalty read API |
 | Inventory | **MEDIUM** | Writes + ledger + history read API; stock columns still on products |
-| Product | HIGH | Tax **config refs** owned as persistence only (2.13); stock writes via Inventory; columns still colocated |
-| Tax | **MEDIUM** | Snapshot + facade + clearer Product config boundary (2.13); denormalized snapshots + money-path orchestration remain |
-| POS | HIGH | Orchestrator — extract last among commerce |
-| Tables | MEDIUM | Clear order FK contract; restaurant package candidate |
-| KDS | HIGH | WS + order stream contract required |
+| Product | HIGH | Tax config refs as persistence only; stock writes via Inventory |
+| Tax | **MEDIUM** | Facade + snapshot; denormalized snapshots remain |
+| Order | **LOW–MEDIUM** | Ownership facade + cancel/restore on orderRoutes (2.14); create/add-items still fat routes |
+| Payment | **MEDIUM** (tender) / LOW (package) | `payment-tender` extracted (2.15); generate/print/split still in bills.ts |
+| POS | HIGH | Orchestrator (2.16 coordinator); extract last among commerce |
+| Tables | MEDIUM | Soft-gated from Order/Payment (2.17); order FK remains |
+| KDS | HIGH | Soft-gated notify; WS + order stream still coupled |
+
+## Phase 2 COMPLETE vs Phase 3 FUTURE
+
+**Phase 2** established ownership, contracts, composition, Inventory/Tax/Order/Payment/POS seams, and synthetic Retail composition.
+
+**Phase 3** should focus on: package ports, `db.ts` split, fail-closed remount, production Retail+, Inventory UI, void×cancel product fix, legacy tax columns.
+
+## Related
+
+- [phase-2-final-exit-gate.md](phase-2-final-exit-gate.md)
+- [phase-2-exit-gate.md](phase-2-exit-gate.md) (interim)
+- [phase-2.14-order-domain-boundary.md](phase-2.14-order-domain-boundary.md)
+- [phase-2.15-payment-domain-boundary.md](phase-2.15-payment-domain-boundary.md)
+- [phase-2.16-pos-orchestration-boundary.md](phase-2.16-pos-orchestration-boundary.md)
+- [phase-2.17-restaurant-isolation.md](phase-2.17-restaurant-isolation.md)
+- [phase-2.18-synthetic-retail-validation.md](phase-2.18-synthetic-retail-validation.md)
+
 
 ## Detail
 
@@ -28,89 +47,46 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 - **Frontend:** customers page + POS search/modals
 - **Route coupling:** customers router + search/CRM helpers still partly in `index.ts`
 - **Blockers:** shared `lib/phone.ts`; CRM helpers inlined in `index.ts`
-- **Action:** Extract search/CRM into customer routes; document loyalty read port
 
-### Inventory — MEDIUM (Phase 2.12 history read complete)
+### Inventory — MEDIUM
 
-- **Deps:** product
-- **DB:** `products` stock columns + append-only `inventory_movements` (schema v75+)
-- **Service:** `main/services/inventory.ts` (all app stock writes + `listInventoryMovements`)
-- **Routes:** `main/routes/inventory.ts` (`GET /api/inventory/movements`); stock adjust/create/PUT still on products
-- **Blockers:** columns colocated with product; no backfill; no Inventory UI; current-stock reads still product SQL; order txn orchestration; void×cancel restock call-site nuance (exit deferment)
-- **Action:** Optional UI / column split before package cut (Phase 3)
+- **Service:** `main/services/inventory.ts` owns stock writes + history reads
+- **Blockers:** columns on products; no backfill; void×cancel call-site pinned (2.14)
 
-Phase 2.12 added Inventory-owned history HTTP. Rating stays **MEDIUM** — not HIGH.
+### Product — HIGH
 
-### Product — HIGH (Phase 2.13 ownership map clearer)
+- Tax config refs only; stock writes via Inventory; legacy `tax_type`/`tax_rate`
 
-- **Deps:** core, category, tax (config validation via Tax facade)
-- **DB:** `products` also holds inventory + tax **config** fields (stock **writes** via Inventory; tax calc not on Product)
-- **Frontend:** products workspace + POS grid
-- **Blockers:** tax config columns colocated; menu CSV; physical stock column colocation; legacy `tax_type`/`tax_rate`
-- **Action:** Optional legacy column removal / stock column port later — extraction still HIGH
+### Tax — MEDIUM
 
-Phase 2.13 clarified Product owns persistence of tax config refs only (no calculate / no tax-engine). Rating stays **HIGH**.
+- Facade + `EngineTaxSnapshot`; denormalized snapshots co-owned with Order/Bill
 
-### Tax — MEDIUM (Phase 2.13 ownership map clearer)
+### Order — LOW–MEDIUM (Phase 2.14)
 
-- **Deps:** core
-- **DB:** pack tables + denormalized tax on products/orders/bills
-- **Services:** `tax.ts` (facade + adapters + discount scale + frozen snapshot types), `tax-engine.ts`
-- **Routes:** `main/routes/tax.ts` (`/api/tax/*`); pack lifecycle remains `tax-packs.ts`
-- **Blockers:** denormalized snapshots still co-owned with Order/Bill rows; product hosts config columns; deep money-path orchestration
-- **Action:** Prefer Tax facade (done); optional digest-in-snapshot later; historical bill immutability characterized in 2.13
+- **Service:** `main/services/order.ts` ownership markers
+- **Routes:** cancel/restore on `orderRoutes`; create/add-items still fat
+- **Does not own:** Inventory stock, tax engine, payment tender, KDS/tables (soft-gated)
 
-Phase 2.11 froze `EngineTaxSnapshot`; Phase 2.13 clarified Product config vs Tax calc vs historical snapshot. Rating stays **MEDIUM** — clearer map, not package-ready.
+### Payment — MEDIUM tender (Phase 2.15)
 
-### POS — HIGH
+- **Service:** `main/services/payment-tender.ts`
+- **Does not own:** tax engine, inventory, KDS, tables (soft-gated), printing
+- bills.ts still hosts generate/discount/print/split-check
 
-- **Deps:** product, order, payment
-- **Routes:** thin `pos-info`; real sell path is orders/bills UI
-- **Frontend:** large `components/pos/*`
-- **Blockers:** orchestration across domains; not a single backend package
-- **Action:** Treat as composition shell; extract domains underneath first
+### POS — HIGH (Phase 2.16)
 
-### Tables — MEDIUM
+- Coordinator extracts place/prepaid HTTP; page still owns retry/discount/print glue
+- Does not own tax/stock/tender internals
 
-- **Deps:** order
-- **DB:** `tables`; `orders.table_id`
-- **Frontend:** tables page + POS picker + server-standalone
-- **Blockers:** order FK; dine-in workflow flags (`tables_required`)
-- **Action:** Define table↔order port; good restaurant vertical package later
+### Tables — MEDIUM / KDS — HIGH
 
-### KDS — HIGH
+- Soft-gated from Order/Payment (2.17); still restaurant modules
 
-- **Deps:** order, kitchen, product
-- **Services:** WebSocket notify in `kds.ts`
-- **Frontend:** kds + kds-standalone
-- **Blockers:** live order stream; kitchen station assignment in `db.ts`
-- **Action:** Explicit KDS event/port interface before extraction
+## Explicitly deferred (Phase 3)
 
-## Phase 2 COMPLETE vs Phase 3 FUTURE
+Package extraction, npm workspaces, fail-closed remount, production Retail+, inventory UI, ledger backfill, void×cancel product fix, `db.ts` split.
 
-**Phase 2** established ownership, contracts, composition, and domain boundaries in-place.
+## Related (detail)
 
-**Phase 3** should focus on:
-
-- Package extraction / stronger module ports
-- Deeper `db.ts` decomposition
-- Fail-closed dependency enforcement (after pilots)
-- Runtime multi-vertical support
-- Production Retail / Grocery / Salon / Pharmacy / Hospitality / Custom
-- Module lifecycle / marketplace
-- Inventory UI + advanced inventory
-- Legacy tax column cleanup
-- Void×cancel restock characterization fix
-
-## Explicitly deferred
-
-Package extraction, npm workspaces, multi-repo modules, marketplace, lifecycle, fail-closed deps, inventory movement UI, ledger backfill, schema CHECK for non-zero deltas.
-
-## Related
-
-- [phase-2-exit-gate.md](phase-2-exit-gate.md)
-- [phase-2.8-inventory-ledger.md](phase-2.8-inventory-ledger.md)
-- [phase-2.9-product-inventory-boundary.md](phase-2.9-product-inventory-boundary.md)
-- [phase-2.13-product-tax-ownership.md](phase-2.13-product-tax-ownership.md)
 - [module-contract.md](module-contract.md)
 - [module-ownership.md](module-ownership.md)

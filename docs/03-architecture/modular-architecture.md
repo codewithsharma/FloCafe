@@ -1,6 +1,6 @@
 # Opervia Modular Architecture
 
-**Status:** Phase 2 **COMPLETE** (exit: [phase-2-exit-gate.md](phase-2-exit-gate.md) — PASS WITH DOCUMENTED DEFERMENTS). Phase 1 Restaurant runtime **preserved**. Phase 3 TARGET = packages / fail-closed / multi-vertical.
+**Status:** Phase 2 **COMPLETE** — final gate [phase-2-final-exit-gate.md](phase-2-final-exit-gate.md) (**PASS WITH DOCUMENTED DEFERMENTS**). Interim catalog exit: [phase-2-exit-gate.md](phase-2-exit-gate.md). Phase 1 Restaurant runtime **preserved**. Phase 3 TARGET = packages / fail-closed / production multi-vertical.
 **Product:** [opervia-platform.md](../00-product/opervia-platform.md) · [principles.md](../00-product/principles.md)
 **Decision:** [ADR-010](../14-decisions/ADR-010-opervia-platform.md)
 
@@ -65,12 +65,13 @@ Composition flows **upward**: Core enables Modules; Verticals select and configu
 | Frontend nav | Broader `requiresModule` + `isFeatureAvailable` (Phase 2.2) |
 | Tax-packs | Only existing **plugin-like** system (not the module registry) |
 
-**Phase 2.1–2.14 COMPLETE** — exit gate [phase-2-exit-gate.md](phase-2-exit-gate.md):
+**Phase 2.1–2.18 COMPLETE** — final gate [phase-2-final-exit-gate.md](phase-2-final-exit-gate.md):
 
-- 2.1 registry · 2.2 consumers · 2.3 composition · 2.4 platform API/settings gates · 2.5 retail-test · 2.6 contract/capabilities
-- 2.7 Inventory/Tax boundaries · 2.8 ledger · 2.9 product stock ownership · 2.10 tax HTTP · 2.11 snapshot · 2.12 movements API · 2.13 product/tax ownership · 2.14 exit hardening
+- 2.1–2.13 registry through Product↔Tax (prior)
+- INTERIM 2.14 catalog exit (preserved)
+- CURRENT 2.14 Order · 2.15 Payment · 2.16 POS · 2.17 Restaurant isolation · 2.18 synthetic Retail
 
-**Phase 3 (future):** package extraction, fail-closed deps, Inventory UI, legacy tax cleanup, void×cancel restock hardening, multi-vertical runtime, production Retail+ — do not start without explicit kickoff.
+**Phase 3 (future):** package extraction, fail-closed remount, Inventory UI, void×cancel product fix, production Retail+ — do not start without explicit kickoff.
 
 ## Explicit non-goals (now)
 
@@ -81,6 +82,7 @@ Composition flows **upward**: Core enables Modules; Verticals select and configu
 
 ## Related
 
+- [phase-2-final-exit-gate.md](phase-2-final-exit-gate.md)
 - [phase-2-exit-gate.md](phase-2-exit-gate.md)
 - [module-system.md](module-system.md)
 - [extraction-readiness.md](extraction-readiness.md)

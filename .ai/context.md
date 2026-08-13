@@ -19,10 +19,10 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 | **Opervia** | Canonical platform brand |
 | **Opervia Restaurant** | Active production vertical (`ACTIVE_VERTICAL_ID = restaurant`) |
 | **retail-test** | Synthetic composition fixture only (`SYNTHETIC_VERTICALS`) — not production |
-| **Phase 2** | **CONTINUATION** — CURRENT **2.18 Synthetic Retail**; 2.14–2.17 Order/Payment/POS/Restaurant isolation done; INTERIM exit gate preserved (`phase-2-exit-gate.md`). Final exit next. |
-| **Phase 3** | **FUTURE** — package extraction, fail-closed deps/remount, multi-vertical runtime, production Retail+, deeper `db.ts` split |
+| **Phase 2** | **COMPLETE** — final gate `docs/03-architecture/phase-2-final-exit-gate.md` (**PASS WITH DOCUMENTED DEFERMENTS**). Interim catalog exit preserved. |
+| **Phase 3** | **FUTURE** — package extraction, fail-closed remount, production Retail+, `db.ts` split |
 
-Phase 2 delivered so far: registry → … → INTERIM 2.14 exit → 2.14 Order → 2.15 Payment → 2.16 POS → 2.17 Restaurant isolation → **2.18 synthetic Retail validation**.
+Phase 2 delivered: registry → … → CURRENT 2.14 Order → 2.15 Payment → 2.16 POS → 2.17 Restaurant isolation → 2.18 synthetic Retail → **final exit gate**.
 
 ## Active work — Opervia Restaurant v1.0 / pilot hardening
 
@@ -68,4 +68,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 2 CONTINUATION** — **2.16 POS orchestration** (checkout coordinator + addons/kds gates) and **2.17 Restaurant isolation** landed. Do **not** claim Phase 2 complete. Next: pilot P0/P1 reliability, or further facade depth only if tasked. Deferred: void×cancel restock fix, Inventory UI, legacy tax columns, package extraction, fail-closed remount; POS page still owns retry/discount UX debt.
+**Phase 2 COMPLETE.** Do not start Phase 3 unless explicitly tasked. Pilot focus remains P0/P1 reliability. Deferred: packages, fail-closed remount, production Retail+, Inventory UI, void×cancel product fix.

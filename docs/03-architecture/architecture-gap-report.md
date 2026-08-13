@@ -7,7 +7,7 @@
 
 This report does **not** rewrite historical audits in `docs/15-project-management/`.
 
-> **Phase 2 status:** COMPLETE (PASS WITH DOCUMENTED DEFERMENTS). Schema **v75**. Module registry **exists** (`main/modules/`). Inventory ledger + history API exist. Soft composition exists; fail-closed / packages / multi-vertical runtime remain **Phase 3**. Prefer the exit gate over sections below when they conflict.
+> **Phase 2 status:** COMPLETE ([phase-2-final-exit-gate.md](phase-2-final-exit-gate.md) — PASS WITH DOCUMENTED DEFERMENTS). Schema **v75**. Registry exists. Order/Payment/POS seams + synthetic retail-test. Soft composition; fail-closed / packages / production Retail remain **Phase 3**.
 
 ---
 
