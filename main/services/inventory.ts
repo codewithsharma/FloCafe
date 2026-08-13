@@ -1,21 +1,22 @@
 /**
- * Inventory domain boundary (Phase 2.7 + 2.8).
+ * Inventory domain boundary (Phase 2.7–2.9).
  *
- * Owns: product stock state mutations, append-only movement ledger,
+ * Owns: ALL application-level stock quantity writes, append-only movement ledger,
  * availability checks, low-stock filter fragment, read-only reconciliation helpers.
  *
- * Does NOT own: product creation/pricing/categories, sales, payments, orders,
+ * Does NOT own: product metadata (name/price/category), sales, payments, orders,
  * refunds (refunds intentionally do not restock — no refund ledger rows).
  *
- * Dual representation (Phase 2.8):
- *   products.stock_quantity     = current-state cache (runtime source of truth)
+ * Dual representation:
+ *   products.stock_quantity     = current-state cache (runtime reads OK)
  *   inventory_movements         = durable append-only history (from migration v75)
  *
- * Pre-migration history is NOT reconstructed. Ledger starts at migration time.
+ * Write ownership (Phase 2.9): Product create/update routes stock through
+ * applyAbsoluteStockChange / adjustProductStock. Zero-delta skips movements.
+ * Opening stock uses movement_type `adjustment` + reason `opening` (no schema change).
  *
- * Transaction rule: stock UPDATE + movement INSERT must share the caller's
- * SQLite withTxn scope (or withTxn inside adjustProductStock). Never commit
- * one without the other. Never UPDATE/DELETE movement rows in normal ops.
+ * Transaction rule: stock UPDATE + movement INSERT share caller withTxn (or
+ * withTxn inside adjustProductStock). Never UPDATE/DELETE movement rows.
  */
 
 import { getDatabase, now, withTxn } from '../db';
@@ -126,6 +127,55 @@ function readStockAfter(db: any, productId: string | number): number {
   return Number(row?.stock_quantity ?? 0);
 }
 
+/**
+ * Set absolute stock quantity and record an adjustment movement when delta ≠ 0.
+ * Callers MUST be inside the same SQLite transaction as related product writes.
+ * Uses movement_type `adjustment` (no separate opening type — avoid schema change).
+ */
+export function applyAbsoluteStockChange(
+  db: any,
+  productId: string | number,
+  newQuantity: number,
+  ref?: InventoryMovementRef,
+): { changed: boolean; delta: number; stockAfter: number } {
+  if (typeof newQuantity !== 'number' || !Number.isFinite(newQuantity) || newQuantity < 0) {
+    throw new InventoryServiceError(400, 'quantity must be a non-negative number');
+  }
+
+  const current = readStockAfter(db, productId);
+  const delta = newQuantity - current;
+  if (delta === 0) {
+    return { changed: false, delta: 0, stockAfter: current };
+  }
+
+  const updatedAt = now();
+  const result = db.prepare(
+    'UPDATE products SET stock_quantity = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
+  ).run(newQuantity, updatedAt, productId) as { changes: number };
+
+  if (result.changes === 0) {
+    throw new InventoryServiceError(404, 'Product not found');
+  }
+
+  const stockAfter = readStockAfter(db, productId);
+  if (Number((current + delta).toFixed(6)) !== Number(stockAfter.toFixed(6))) {
+    throw new InventoryServiceError(500, 'Stock mutation invariant violated');
+  }
+
+  recordMovement(db, {
+    productId,
+    quantityDelta: delta,
+    movementType: 'adjustment',
+    stockAfter,
+    referenceType: ref?.referenceType ?? 'product',
+    referenceId: ref?.referenceId ?? String(productId),
+    reason: ref?.reason ?? 'set',
+    createdAt: updatedAt,
+  });
+
+  return { changed: true, delta, stockAfter };
+}
+
 /** Sale / add-items path: check then decrement when tracking. No floor on UPDATE. */
 export function decrementTrackedStock(
   db: any,
@@ -214,6 +264,10 @@ export function adjustProductStock(
       delta = quantity;
     } else {
       delta = -quantity;
+    }
+
+    if (delta === 0) {
+      return product;
     }
 
     const updatedAt = now();

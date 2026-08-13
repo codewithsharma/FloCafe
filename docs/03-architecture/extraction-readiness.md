@@ -12,8 +12,8 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 | Module | Coupling | Recommended future action |
 |--------|----------|---------------------------|
 | Customer | MEDIUM | Extract after phone util boundary + loyalty read API |
-| Product | HIGH | Route product CRUD stock writes through Inventory ledger |
-| Inventory | **MEDIUM** | Service + ledger exist; split stock columns / movement API before package |
+| Inventory | **MEDIUM** | Service + ledger + Product CRUD write ownership; columns still on products |
+| Product | HIGH | Tax columns remain; stock writes now delegated to Inventory |
 | Tax | **MEDIUM** | Facade + discount scale centralized; freeze snapshots / finish HTTP consolidation |
 | POS | HIGH | Orchestrator — extract last among commerce |
 | Tables | MEDIUM | Clear order FK contract; restaurant package candidate |
@@ -30,22 +30,22 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 - **Blockers:** shared `lib/phone.ts`; CRM helpers inlined in `index.ts`
 - **Action:** Extract search/CRM into customer routes; document loyalty read port
 
-### Product — HIGH
-
-- **Deps:** core, category
-- **DB:** `products` also holds inventory + tax fields
-- **Frontend:** products workspace + POS grid
-- **Blockers:** inventory columns; tax category FKs; menu CSV writes; create/PUT stock bypasses ledger
-- **Action:** Split stock/tax concerns; route stock edits through Inventory
-
-### Inventory — MEDIUM
+### Inventory — MEDIUM (Phase 2.9 write ownership complete)
 
 - **Deps:** product
 - **DB:** `products` stock columns + append-only `inventory_movements` (schema v75+)
-- **Service:** `main/services/inventory.ts`
-- **Routes:** none dedicated (stock adjust on products; orders call Inventory)
-- **Blockers:** columns colocated with product; no backfill; product PUT/create bypasses ledger; no movement HTTP/UI
-- **Action:** Wire product CRUD stock into ledger; optional history API; then consider package cut
+- **Service:** `main/services/inventory.ts` (all app stock writes)
+- **Routes:** none dedicated (stock adjust on products; product create/PUT delegate stock)
+- **Blockers:** columns colocated with product; no backfill; no movement HTTP/UI; reads still product SQL
+- **Action:** Optional history API / column split before package cut
+
+### Product — HIGH
+
+- **Deps:** core, category
+- **DB:** `products` also holds inventory + tax fields (stock **writes** now via Inventory)
+- **Frontend:** products workspace + POS grid
+- **Blockers:** tax category FKs; menu CSV; physical stock column colocation
+- **Action:** Tax column ownership next; consider stock column port later
 
 ### Tax — MEDIUM
 
@@ -86,6 +86,6 @@ Package extraction, npm workspaces, multi-repo modules, marketplace, lifecycle, 
 ## Related
 
 - [phase-2.8-inventory-ledger.md](phase-2.8-inventory-ledger.md)
-- [phase-2.7-domain-boundaries.md](phase-2.7-domain-boundaries.md)
+- [phase-2.9-product-inventory-boundary.md](phase-2.9-product-inventory-boundary.md)
 - [module-contract.md](module-contract.md)
 - [module-ownership.md](module-ownership.md)

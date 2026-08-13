@@ -50,4 +50,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 2.8 Inventory movement ledger shipped (2026-08-13).** Append-only `inventory_movements` (v75); stock cache retained; refunds still no restock. Next: tax HTTP consolidation, product CRUD stock→ledger, or fail-closed design after pilots.
+**Phase 2.9 Product↔Inventory write ownership shipped (2026-08-13).** Product create/PUT stock routes through Inventory + ledger; no schema change. Next: tax HTTP consolidation, movement API/UI, or fail-closed after pilots.

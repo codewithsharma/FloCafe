@@ -1,9 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { getDatabase, now, generateShortId, getSettingValue } from '../db';
+import { getDatabase, now, generateShortId, getSettingValue, withTxn } from '../db';
 import { requireRole, isBlockedSsrfTarget } from '../middleware/security';
 import { getActiveCountryPack, hasConfiguredTaxCategories } from '../services/tax';
 import {
   adjustProductStock,
+  applyAbsoluteStockChange,
   InventoryServiceError,
   LOW_STOCK_SQL_FRAGMENT,
 } from '../services/inventory';
@@ -586,32 +587,47 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
     }
 
     const id = generateShortId('products');
+    const initialStock = typeof stock_quantity === 'number' && Number.isFinite(stock_quantity)
+      ? stock_quantity
+      : 0;
 
-    // Wrap product INSERT + addon_group INSERTs in a transaction
-    // so a partial failure doesn't leave orphaned records
-    const insertProduct = db.transaction(() => {
-      db.prepare(`
-        INSERT INTO products (id, category_id, name, sku, barcode, description, price, cost,
-          tax_type, tax_rate, tax_category_id, tax_behavior, track_inventory, stock_quantity, low_stock_threshold,
-          is_active, image_url, sort_order, cb_percent, tags, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        id, category_id || null, name, sku || null, barcode || null, description || null, price, cost_price || 0,
-        'none', 0, tax_category_id || null, tax_behavior || 'country_default',
-        track_inventory ? 1 : 0, stock_quantity || 0, low_stock_threshold || 0,
-        is_active !== false ? 1 : 0, image_url || null,
-        sort_order || 0, cb_percent !== undefined ? cb_percent : null, JSON.stringify(tags || []),
-        now(), now()
-      );
+    // Product identity INSERT starts at stock 0; Inventory owns the stock write
+    // (+ opening adjustment movement when initialStock ≠ 0) in the same txn.
+    try {
+      withTxn(() => {
+        db.prepare(`
+          INSERT INTO products (id, category_id, name, sku, barcode, description, price, cost,
+            tax_type, tax_rate, tax_category_id, tax_behavior, track_inventory, stock_quantity, low_stock_threshold,
+            is_active, image_url, sort_order, cb_percent, tags, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          id, category_id || null, name, sku || null, barcode || null, description || null, price, cost_price || 0,
+          'none', 0, tax_category_id || null, tax_behavior || 'country_default',
+          track_inventory ? 1 : 0, 0, low_stock_threshold || 0,
+          is_active !== false ? 1 : 0, image_url || null,
+          sort_order || 0, cb_percent !== undefined ? cb_percent : null, JSON.stringify(tags || []),
+          now(), now()
+        );
 
-      if (addon_group_ids && addon_group_ids.length > 0) {
-        const insertAgp = db.prepare('INSERT INTO addon_group_product (addon_group_id, product_id) VALUES (?, ?)');
-        for (const agId of addon_group_ids) {
-          insertAgp.run(agId, id);
+        if (addon_group_ids && addon_group_ids.length > 0) {
+          const insertAgp = db.prepare('INSERT INTO addon_group_product (addon_group_id, product_id) VALUES (?, ?)');
+          for (const agId of addon_group_ids) {
+            insertAgp.run(agId, id);
+          }
         }
+
+        applyAbsoluteStockChange(db, id, initialStock, {
+          referenceType: 'product_create',
+          referenceId: id,
+          reason: 'opening',
+        });
+      });
+    } catch (error: any) {
+      if (error instanceof InventoryServiceError) {
+        return res.status(error.statusCode).json({ error: error.message });
       }
-    });
-    insertProduct();
+      throw error;
+    }
 
     const product = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
     res.status(201).json({ product });
@@ -674,62 +690,79 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
     const hasImageUrl = 'image_url' in req.body;
     const hasTaxCategoryId = 'tax_category_id' in req.body;
     const hasCbPercent = 'cb_percent' in req.body;
+    const hasStockQuantity = 'stock_quantity' in req.body
+      && typeof stock_quantity === 'number'
+      && Number.isFinite(stock_quantity);
+    const productId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
-    db.prepare(`
-      UPDATE products SET
-        category_id = COALESCE(@category_id, category_id),
-        name = COALESCE(@name, name),
-        sku = COALESCE(@sku, sku),
-        barcode = COALESCE(@barcode, barcode),
-        description = COALESCE(@description, description),
-        price = COALESCE(@price, price),
-        cost = COALESCE(@cost, cost),
-        tax_type = 'none',
-        tax_rate = 0,
-        tax_category_id = CASE WHEN @has_tax_category_id = 1 THEN @tax_category_id ELSE tax_category_id END,
-        tax_behavior = COALESCE(@tax_behavior, tax_behavior),
-        track_inventory = COALESCE(@track_inventory, track_inventory),
-        stock_quantity = COALESCE(@stock_quantity, stock_quantity),
-        low_stock_threshold = COALESCE(@low_stock_threshold, low_stock_threshold),
-        is_active = COALESCE(@is_active, is_active),
-        image_url = CASE WHEN @has_image_url = 1 THEN @image_url ELSE image_url END,
-        sort_order = COALESCE(@sort_order, sort_order),
-        cb_percent = CASE WHEN @has_cb_percent = 1 THEN @cb_percent ELSE cb_percent END,
-        tags = COALESCE(@tags, tags),
-        updated_at = @updated_at
-      WHERE id = @id
-    `).run({
-      category_id, name, sku, barcode, description, price, cost: cost_price,
-      tax_category_id, tax_behavior,
-      has_tax_category_id: hasTaxCategoryId ? 1 : 0,
-      track_inventory: track_inventory ? 1 : track_inventory === 0 ? 0 : null,
-      stock_quantity, low_stock_threshold,
-      is_active: is_active !== undefined ? (is_active ? 1 : 0) : null,
-      has_image_url: hasImageUrl ? 1 : 0,
-      image_url: hasImageUrl ? image_url : null,
-      sort_order,
-      has_cb_percent: hasCbPercent ? 1 : 0,
-      cb_percent: hasCbPercent ? cb_percent : null,
-      tags: tags ? JSON.stringify(tags) : null,
-      updated_at: now(),
-      id: req.params.id
-    });
+    try {
+      withTxn(() => {
+        // Metadata only — stock_quantity is owned by Inventory (below).
+        db.prepare(`
+          UPDATE products SET
+            category_id = COALESCE(@category_id, category_id),
+            name = COALESCE(@name, name),
+            sku = COALESCE(@sku, sku),
+            barcode = COALESCE(@barcode, barcode),
+            description = COALESCE(@description, description),
+            price = COALESCE(@price, price),
+            cost = COALESCE(@cost, cost),
+            tax_type = 'none',
+            tax_rate = 0,
+            tax_category_id = CASE WHEN @has_tax_category_id = 1 THEN @tax_category_id ELSE tax_category_id END,
+            tax_behavior = COALESCE(@tax_behavior, tax_behavior),
+            track_inventory = COALESCE(@track_inventory, track_inventory),
+            low_stock_threshold = COALESCE(@low_stock_threshold, low_stock_threshold),
+            is_active = COALESCE(@is_active, is_active),
+            image_url = CASE WHEN @has_image_url = 1 THEN @image_url ELSE image_url END,
+            sort_order = COALESCE(@sort_order, sort_order),
+            cb_percent = CASE WHEN @has_cb_percent = 1 THEN @cb_percent ELSE cb_percent END,
+            tags = COALESCE(@tags, tags),
+            updated_at = @updated_at
+          WHERE id = @id
+        `).run({
+          category_id, name, sku, barcode, description, price, cost: cost_price,
+          tax_category_id, tax_behavior,
+          has_tax_category_id: hasTaxCategoryId ? 1 : 0,
+          track_inventory: track_inventory ? 1 : track_inventory === 0 ? 0 : null,
+          low_stock_threshold,
+          is_active: is_active !== undefined ? (is_active ? 1 : 0) : null,
+          has_image_url: hasImageUrl ? 1 : 0,
+          image_url: hasImageUrl ? image_url : null,
+          sort_order,
+          has_cb_percent: hasCbPercent ? 1 : 0,
+          cb_percent: hasCbPercent ? cb_percent : null,
+          tags: tags ? JSON.stringify(tags) : null,
+          updated_at: now(),
+          id: productId,
+        });
 
-    // Update addon group links — wrapped in transaction for atomicity
-    if (addon_group_ids !== undefined) {
-      const updateAddons = db.transaction(() => {
-        db.prepare('DELETE FROM addon_group_product WHERE product_id = ?').run(req.params.id);
-        if (addon_group_ids && addon_group_ids.length > 0) {
-          const insertAgp = db.prepare('INSERT INTO addon_group_product (addon_group_id, product_id) VALUES (?, ?)');
-          for (const agId of addon_group_ids) {
-            insertAgp.run(agId, req.params.id);
+        if (hasStockQuantity) {
+          applyAbsoluteStockChange(db, productId, stock_quantity, {
+            referenceType: 'product_update',
+            referenceId: productId,
+            reason: 'product_update',
+          });
+        }
+
+        if (addon_group_ids !== undefined) {
+          db.prepare('DELETE FROM addon_group_product WHERE product_id = ?').run(productId);
+          if (addon_group_ids && addon_group_ids.length > 0) {
+            const insertAgp = db.prepare('INSERT INTO addon_group_product (addon_group_id, product_id) VALUES (?, ?)');
+            for (const agId of addon_group_ids) {
+              insertAgp.run(agId, productId);
+            }
           }
         }
       });
-      updateAddons();
+    } catch (error: any) {
+      if (error instanceof InventoryServiceError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      throw error;
     }
 
-    const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+    const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(productId);
     res.json({ product: updated });
   } catch (error: any) {
     console.error("[API] Internal error:", error);

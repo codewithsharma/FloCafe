@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.9 Product↔Inventory write ownership (Accepted + Implemented)
+
+Product create/PUT no longer mutate `stock_quantity` via route SQL. Create inserts product at stock 0 then `applyAbsoluteStockChange` (adjustment + reason `opening` when ≠ 0). Update applies metadata without stock column then Inventory absolute set (reason `product_update`). Zero-delta skips movements. Same `withTxn` for metadata+stock. Soft-delete unchanged; ledger preserved. No schema migration; no `opening` movement_type (reuse `adjustment`). API shape unchanged; no frontend. Tests: `product-inventory-boundary.test.ts`. Inventory stays MEDIUM (stronger write ownership; columns still on products).
+
 ## 2026-08-13 — Phase 2.8 Inventory movement ledger (Accepted + Implemented)
 
 Append-only `inventory_movements` at schema **v75**. Dual model: `products.stock_quantity` = runtime current-state cache; ledger = durable history from migration onward (no backfill). Types: `sale`, `cancel_restore`, `adjustment` only. Refunds/voids still do not restock and write no rows. Stock UPDATE + INSERT share one SQLite txn. No new HTTP/UI. Diagnostics: `calculateLedgerStock`, `compareCurrentStockToLedger`. Docs: `phase-2.8-inventory-ledger.md`. Tests: `inventory-ledger.test.ts`. Extraction readiness Inventory MEDIUM→MEDIUM (stronger history, still product-column coupled). Next: product CRUD stock via ledger, movement API/UI, or tax HTTP consolidation.

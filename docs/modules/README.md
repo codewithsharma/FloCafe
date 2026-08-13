@@ -34,7 +34,7 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 | Category (`category`) | CURRENT · REGISTERED | Categories |
 | Menu (`menu`) | CURRENT · REGISTERED (Restaurant) | Menu CSV / catalog presentation |
 | Addons (`addons`) | CURRENT · REGISTERED (Restaurant) | Addon-groups / modifiers |
-| Inventory (`inventory`) | CURRENT (stock + ledger v75+) · REGISTERED | Stock counts + append-only movements; history API/UI PLANNED |
+| Inventory (`inventory`) | CURRENT (stock writes + ledger v75+) · REGISTERED | All app stock writes via Inventory; history API/UI PLANNED |
 
 ## Commerce
 
@@ -77,10 +77,11 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 6. ~~Module contract + capabilities~~ — **Phase 2.6 done** ([module-contract.md](../03-architecture/module-contract.md))
 7. ~~Inventory + Tax domain boundaries~~ — **Phase 2.7 done** ([phase-2.7-domain-boundaries.md](../03-architecture/phase-2.7-domain-boundaries.md))
 8. ~~Inventory movement ledger~~ — **Phase 2.8 done** ([phase-2.8-inventory-ledger.md](../03-architecture/phase-2.8-inventory-ledger.md))
-9. Fail-closed dependency enforcement — deferred (after pilot proof)
-10. Product CRUD stock → ledger / tax HTTP consolidation / movement API — next
-11. Formal events bus for modules — deferred
-12. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — deferred
+9. ~~Product↔Inventory stock write ownership~~ — **Phase 2.9 done** ([phase-2.9-product-inventory-boundary.md](../03-architecture/phase-2.9-product-inventory-boundary.md))
+10. Fail-closed dependency enforcement — deferred (after pilot proof)
+11. Tax HTTP consolidation / movement API — next
+12. Formal events bus for modules — deferred
+13. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — deferred
 
 **Do not** create Opervia Custom or extract every folder into packages yet.
 
@@ -96,6 +97,7 @@ Modules are reusable business capabilities. Phase 2.1 adds a **lightweight regis
 - [module-contract.md](../03-architecture/module-contract.md)
 - [phase-2.7-domain-boundaries.md](../03-architecture/phase-2.7-domain-boundaries.md)
 - [phase-2.8-inventory-ledger.md](../03-architecture/phase-2.8-inventory-ledger.md)
+- [phase-2.9-product-inventory-boundary.md](../03-architecture/phase-2.9-product-inventory-boundary.md)
 - [module-ownership.md](../03-architecture/module-ownership.md)
 - [extraction-readiness.md](../03-architecture/extraction-readiness.md)
 - [vertical-architecture.md](../03-architecture/vertical-architecture.md)
