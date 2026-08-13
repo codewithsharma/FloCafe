@@ -1,6 +1,6 @@
 # Extraction Readiness
 
-**Status:** DOCUMENTATION (Phase 2.6)
+**Status:** DOCUMENTATION (Phase 2.7)
 **Date:** 2026-08-13
 
 This is an architecture map — **not** a mandate to extract packages.
@@ -12,9 +12,9 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 | Module | Coupling | Recommended future action |
 |--------|----------|---------------------------|
 | Customer | MEDIUM | Extract after phone util boundary + loyalty read API |
-| Product | HIGH | Stabilize tax/inventory column ownership first |
-| Inventory | HIGH | Need dedicated ledger + routes before package |
-| Tax | HIGH | Isolate denormalized snapshots / pack engine |
+| Product | HIGH | Stabilize remaining tax/inventory column ownership |
+| Inventory | **MEDIUM** | Service boundary exists; ledger before package |
+| Tax | **MEDIUM** | Facade + discount scale centralized; freeze snapshots / finish HTTP consolidation |
 | POS | HIGH | Orchestrator — extract last among commerce |
 | Tables | MEDIUM | Clear order FK contract; restaurant package candidate |
 | KDS | HIGH | WS + order stream contract required |
@@ -38,21 +38,22 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 - **Blockers:** inventory columns; tax category FKs; menu CSV writes
 - **Action:** Split stock/tax concerns before package cut
 
-### Inventory — HIGH
+### Inventory — MEDIUM (was HIGH in Phase 2.6)
 
 - **Deps:** product
 - **DB:** columns on `products` only (no ledger)
-- **Routes:** none dedicated (stock adjust on products/orders)
-- **Blockers:** no module boundary in code; ledger PLANNED
-- **Action:** Implement stock ledger + routes before extraction
+- **Service:** `main/services/inventory.ts` (Phase 2.7)
+- **Routes:** none dedicated (stock adjust still on products; orders call Inventory)
+- **Blockers:** no ledger; columns colocated with product
+- **Action:** Optional stock ledger before package extraction
 
-### Tax — HIGH
+### Tax — MEDIUM (was HIGH in Phase 2.6)
 
 - **Deps:** core
 - **DB:** pack tables + denormalized tax on products/orders/bills
-- **Services:** `tax.ts`, `tax-engine.ts`
+- **Services:** `tax.ts` (facade + adapters + discount scale), `tax-engine.ts`
 - **Blockers:** preview/categories still partially in `index.ts`; deep money-path use
-- **Action:** Consolidate tax HTTP surface; freeze snapshot contract
+- **Action:** Finish consolidating tax HTTP; freeze snapshot contract
 
 ### POS — HIGH
 
@@ -80,9 +81,10 @@ Coupling: **LOW** | **MEDIUM** | **HIGH**
 
 ## Explicitly deferred
 
-Package extraction, npm workspaces, multi-repo modules, marketplace, lifecycle.
+Package extraction, npm workspaces, multi-repo modules, marketplace, lifecycle, fail-closed deps, inventory ledger schema.
 
 ## Related
 
+- [phase-2.7-domain-boundaries.md](phase-2.7-domain-boundaries.md)
 - [module-contract.md](module-contract.md)
 - [module-ownership.md](module-ownership.md)

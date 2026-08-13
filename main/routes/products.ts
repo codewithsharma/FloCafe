@@ -2,6 +2,11 @@ import { Router, Request, Response } from 'express';
 import { getDatabase, now, generateShortId, getSettingValue } from '../db';
 import { requireRole, isBlockedSsrfTarget } from '../middleware/security';
 import { getActiveCountryPack, hasConfiguredTaxCategories } from '../services/tax';
+import {
+  adjustProductStock,
+  InventoryServiceError,
+  LOW_STOCK_SQL_FRAGMENT,
+} from '../services/inventory';
 import * as crypto from 'crypto';
 import * as dns from 'dns';
 import * as https from 'https';
@@ -301,7 +306,7 @@ router.get('/', (req: Request, res: Response) => {
       params.push(req.query.barcode);
     }
     if (req.query.low_stock === 'true') {
-      query += ' AND p.track_inventory = 1 AND p.stock_quantity <= p.low_stock_threshold';
+      query += LOW_STOCK_SQL_FRAGMENT;
     }
 
     query += ' ORDER BY p.sort_order, p.name';
@@ -751,41 +756,13 @@ router.delete('/:id', requireRole('owner', 'manager'), (req: Request, res: Respo
 router.post('/:id/stock', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
     const { action, quantity } = req.body;
-
-    if (!action || quantity === undefined) {
-      return res.status(400).json({ error: 'Action and quantity are required' });
-    }
-
-    if (!['set', 'increase', 'decrease'].includes(action)) {
-      return res.status(400).json({ error: 'Invalid action. Use: set, increase, decrease' });
-    }
-    if (typeof quantity !== 'number' || !Number.isFinite(quantity) || quantity < 0) {
-      return res.status(400).json({ error: 'quantity must be a non-negative number' });
-    }
-
-    const db = getDatabase();
-    const product = db.prepare('SELECT * FROM products WHERE id = ? AND deleted_at IS NULL').get(req.params.id);
-    if (!product) {
-      return res.status(404).json({ error: 'Product not found' });
-    }
-
-    let result;
-    if (action === 'set') {
-      result = db.prepare('UPDATE products SET stock_quantity = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL')
-        .run(quantity, now(), req.params.id);
-    } else if (action === 'increase') {
-      result = db.prepare('UPDATE products SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL')
-        .run(quantity, now(), req.params.id);
-    } else {
-      result = db.prepare('UPDATE products SET stock_quantity = stock_quantity - ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL AND stock_quantity >= ?')
-        .run(quantity, now(), req.params.id, quantity);
-    }
-    if (result.changes === 0) {
-      return res.status(400).json({ error: action === 'decrease' ? 'Insufficient stock' : 'Product not found' });
-    }
-    const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+    const productId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const updated = adjustProductStock(productId, action, quantity);
     res.json({ product: updated });
   } catch (error: any) {
+    if (error instanceof InventoryServiceError) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }

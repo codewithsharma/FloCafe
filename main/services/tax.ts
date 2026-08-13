@@ -1,7 +1,27 @@
+/**
+ * Tax domain boundary (Phase 2.7).
+ *
+ * Owns: tax calculation adapters, discount tax scaling, snapshot scale/invert,
+ * charge taxes, preview, pack resolution for compute, payable-rounding helpers
+ * re-exported from tax-engine.
+ *
+ * Does NOT own: products, orders, payments, refunds, reporting UI, tax-pack
+ * install/activate lifecycle (those consume Tax).
+ *
+ * Authoritative line engine: TaxEngine.calculate in tax-engine.ts.
+ * Prefer calculateTax(...) as the stable facade name for that engine entrypoint.
+ *
+ * Money-path discount scaling of *item* tax totals historically used
+ * Math.round(x * ratio * 100) / 100 in orders/bills/index. That behavior is
+ * preserved here via scaleItemTaxForDiscountRatio — do not silently switch to
+ * Decimal ROUND_HALF_UP without characterization + intentional migration.
+ */
 import Decimal from 'decimal.js';
 import { getDatabase, getSettingValue } from '../db';
 import { getBundledCountryPack } from '../tax-packs/bundled';
 import { getCountryByCode, type TaxIdFormat } from '../countries';
+import { TaxEngine, applyPayableRounding } from './tax-engine';
+import type { CountryPack, TaxRule } from '../tax-packs/types';
 
 interface TenantInfo {
   country: string;
@@ -71,12 +91,61 @@ export interface TaxRollup {
   snapshotJson: string | null;
 }
 
-import { TaxEngine, applyPayableRounding } from './tax-engine';
-import type { CountryPack, TaxRule } from '../tax-packs/types';
-
 function round(value: number, decimals: number = 2): number {
   if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) return 0;
   return Number(Math.round(Number(value + 'e' + decimals)) + 'e-' + decimals);
+}
+
+/** Stable facade over TaxEngine.calculate — Order/POS/Bills call Tax, not the engine class directly when practical. */
+export function calculateTax(
+  input: Parameters<typeof TaxEngine.calculate>[0],
+): ReturnType<typeof TaxEngine.calculate> {
+  return TaxEngine.calculate(input);
+}
+
+/** Re-export payable rounding so consumers can import from the Tax boundary. */
+export { applyPayableRounding };
+
+/**
+ * Historical money-path discount tax scale used by orders/bills/item-cancel.
+ * Preserves Math.round(amount * ratio * 100) / 100 exactly.
+ */
+export function computeDiscountTaxRatio(discountedSubtotal: number, subtotal: number): number {
+  return subtotal > 0 ? discountedSubtotal / subtotal : 1;
+}
+
+export function scaleItemTaxForDiscountRatio(
+  itemTaxAmount: number,
+  itemExclusiveTaxAmount: number,
+  taxRatio: number,
+): { taxAmount: number; exclusiveTaxAmount: number } {
+  return {
+    taxAmount: Math.round(itemTaxAmount * taxRatio * 100) / 100,
+    exclusiveTaxAmount: Math.round(itemExclusiveTaxAmount * taxRatio * 100) / 100,
+  };
+}
+
+/**
+ * Convenience: when discountAmount > 0 and subtotal > 0, scale; else identity.
+ * Matches route branching in orders.ts / bills.ts / index.ts.
+ */
+export function scaleItemTaxAfterOrderDiscount(args: {
+  itemTaxAmount: number;
+  itemExclusiveTaxAmount: number;
+  discountAmount: number;
+  subtotal: number;
+}): { taxAmount: number; exclusiveTaxAmount: number; taxRatio: number } {
+  let taxRatio = 1;
+  let taxAmount = args.itemTaxAmount;
+  let exclusiveTaxAmount = args.itemExclusiveTaxAmount;
+  if (args.discountAmount > 0 && args.subtotal > 0) {
+    const discountedSubtotal = Math.max(0, args.subtotal - args.discountAmount);
+    taxRatio = computeDiscountTaxRatio(discountedSubtotal, args.subtotal);
+    const scaled = scaleItemTaxForDiscountRatio(taxAmount, exclusiveTaxAmount, taxRatio);
+    taxAmount = scaled.taxAmount;
+    exclusiveTaxAmount = scaled.exclusiveTaxAmount;
+  }
+  return { taxAmount, exclusiveTaxAmount, taxRatio };
 }
 
 // Same country -> bundled-pack selection used by calculateItemTax below and

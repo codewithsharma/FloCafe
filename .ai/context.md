@@ -50,4 +50,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 2.6 module contract + capabilities shipped (2026-08-13).** Metadata-only; auth unchanged; no package extraction. Next: **P2.7** deepen inventory/tax boundaries per extraction-readiness, or documented fail-closed design after pilot proof.
+**Phase 2.7 Inventory + Tax domain boundaries shipped (2026-08-13).** Service seams in place; no schema/package extraction. Next: inventory ledger (optional) or tax HTTP consolidation / fail-closed design after pilot proof.

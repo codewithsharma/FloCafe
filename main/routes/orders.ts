@@ -7,8 +7,10 @@ import {
   combineItemAndChargeTaxes,
   getActiveCountryPack,
   getConfiguredChargeTaxCategories,
+  scaleItemTaxAfterOrderDiscount,
 } from '../services/tax';
 import { applyPayableRounding } from '../services/tax-engine';
+import { assertStockAvailable, decrementTrackedStock, restoreTrackedStock } from '../services/inventory';
 import { notifyKdsUpdate, notifyOrderUpdated } from '../services/kds';
 import { cloudSync } from '../services/cloud-sync';
 import { validateOrderNotes, validateItemNotes } from './orders-validation';
@@ -434,10 +436,7 @@ router.post('/', requireRole('owner', 'manager', 'cashier', 'waiter'), (req: Req
         if (!product) {
           throw new Error(`Product ${item.product_id} not found`);
         }
-
-        if (product.track_inventory && product.stock_quantity < item.quantity) {
-          throw new Error(`Insufficient stock for ${product.name}`);
-        }
+        assertStockAvailable(product, item.quantity);
 
         const unitPrice = parseFloat(product.price);
         const quantity = item.quantity;
@@ -495,10 +494,8 @@ router.post('/', requireRole('owner', 'manager', 'cashier', 'waiter'), (req: Req
         );
         insertOrderItemAddons(db, insertItemResult.lastInsertRowid, item.addons, itemCreatedAt);
 
-        if (product.track_inventory) {
-          db.prepare('UPDATE products SET stock_quantity = stock_quantity - ?, updated_at = ? WHERE id = ?')
-            .run(quantity, now(), product.id);
-        }
+        // Inventory boundary: reserve stock at order create (inside withTxn).
+        decrementTrackedStock(db, product, quantity, now());
       }
 
       const chargeTaxes = calculateConfiguredChargeTaxes(tenantInfo, chargeContext, customer);
@@ -653,9 +650,7 @@ router.post('/:id/items', requireRole('owner', 'manager', 'cashier', 'waiter'), 
         if (!product) {
           throw new Error(`Product ${item.product_id} not found`);
         }
-        if (product.track_inventory && product.stock_quantity < item.quantity) {
-          throw new Error(`Insufficient stock for ${product.name}`);
-        }
+        assertStockAvailable(product, item.quantity);
 
         const unitPrice = parseFloat(product.price);
         const quantity = item.quantity;
@@ -702,10 +697,7 @@ router.post('/:id/items', requireRole('owner', 'manager', 'cashier', 'waiter'), 
         );
         insertOrderItemAddons(db, insertItemResult.lastInsertRowid, item.addons, itemCreatedAt);
 
-        if (product.track_inventory) {
-          db.prepare('UPDATE products SET stock_quantity = stock_quantity - ?, updated_at = ? WHERE id = ?')
-            .run(quantity, now(), product.id);
-        }
+        decrementTrackedStock(db, product, quantity, now());
       }
 
       // BUG #3 FIX: Filter out cancelled items from total recalculation
@@ -742,14 +734,15 @@ router.post('/:id/items', requireRole('owner', 'manager', 'cashier', 'waiter'), 
       }
 
       const discountedSubtotal = Math.max(0, subtotal - newDiscountAmount);
-      let newTaxAmount = totalTax;
-      let newExclusiveTax = exclusiveTax;
-      let taxRatio = 1;
-      if (newDiscountAmount > 0 && subtotal > 0) {
-        taxRatio = discountedSubtotal / subtotal;
-        newTaxAmount = Math.round(totalTax * taxRatio * 100) / 100;
-        newExclusiveTax = Math.round(exclusiveTax * taxRatio * 100) / 100;
-      }
+      const scaledTax = scaleItemTaxAfterOrderDiscount({
+        itemTaxAmount: totalTax,
+        itemExclusiveTaxAmount: exclusiveTax,
+        discountAmount: newDiscountAmount,
+        subtotal,
+      });
+      const newTaxAmount = scaledTax.taxAmount;
+      const newExclusiveTax = scaledTax.exclusiveTaxAmount;
+      const taxRatio = scaledTax.taxRatio;
 
       const chargeTaxes = calculateConfiguredChargeTaxes(tenantInfo, {
         ...currentOrder,
@@ -903,10 +896,7 @@ router.patch('/:id/status', requireRole('owner', 'manager', 'cashier', 'chef', '
           const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(req.params.id) as any[];
           for (const item of items) {
             const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.product_id) as any;
-            if (product && product.track_inventory) {
-              db.prepare('UPDATE products SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?')
-                .run(item.quantity, nowStr, product.id);
-            }
+            restoreTrackedStock(db, product, item.quantity, nowStr);
           }
           db.prepare('UPDATE orders SET status = ?, cancelled_at = ?, cancellation_reason = ?, updated_at = ? WHERE id = ?')
             .run(status, nowStr, reason, nowStr, req.params.id);
@@ -1157,10 +1147,15 @@ router.patch('/:id/discount', requireRole('owner', 'manager'), (req: Request, re
       let newExclusiveTax = exclusiveTax;
       let taxRatio = 1;
       if (discountAmount > 0 && currentOrder.subtotal > 0) {
-        const discountedSubtotal = Math.max(0, currentOrder.subtotal - discountAmount);
-        taxRatio = discountedSubtotal / currentOrder.subtotal;
-        newTaxAmount = Math.round(freshTax * taxRatio * 100) / 100;
-        newExclusiveTax = Math.round(exclusiveTax * taxRatio * 100) / 100;
+        const scaled = scaleItemTaxAfterOrderDiscount({
+          itemTaxAmount: freshTax,
+          itemExclusiveTaxAmount: exclusiveTax,
+          discountAmount,
+          subtotal: currentOrder.subtotal,
+        });
+        newTaxAmount = scaled.taxAmount;
+        newExclusiveTax = scaled.exclusiveTaxAmount;
+        taxRatio = scaled.taxRatio;
       }
 
       const discountedSubtotal = Math.max(0, currentOrder.subtotal - discountAmount);
@@ -1379,14 +1374,15 @@ router.patch('/:id/items/:itemId/discount', requireRole('owner', 'manager'), (re
 
       // Recalculate tax on discounted subtotal
       const discountedSubtotal = Math.max(0, orderSubtotal - newOrderDiscount);
-      let newOrderTax = orderTax;
-      let newExclusiveOrderTax = exclusiveOrderTax;
-      let taxRatio = 1;
-      if (newOrderDiscount > 0 && orderSubtotal > 0) {
-        taxRatio = discountedSubtotal / orderSubtotal;
-        newOrderTax = Math.round(orderTax * taxRatio * 100) / 100;
-        newExclusiveOrderTax = Math.round(exclusiveOrderTax * taxRatio * 100) / 100;
-      }
+      const scaledOrderTax = scaleItemTaxAfterOrderDiscount({
+        itemTaxAmount: orderTax,
+        itemExclusiveTaxAmount: exclusiveOrderTax,
+        discountAmount: newOrderDiscount,
+        subtotal: orderSubtotal,
+      });
+      const newOrderTax = scaledOrderTax.taxAmount;
+      const newExclusiveOrderTax = scaledOrderTax.exclusiveTaxAmount;
+      const taxRatio = scaledOrderTax.taxRatio;
 
       const chargeTaxes = calculateConfiguredChargeTaxes(tenantInfo, {
         ...order,

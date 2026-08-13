@@ -72,6 +72,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P2.4 Composition GET + settings module gates (2026-08-13)
 - [x] P2.5 Synthetic retail-test composition validation (2026-08-13)
 - [x] P2.6 Module contract + capabilities (2026-08-13)
+- [x] P2.7 Inventory + Tax domain boundary hardening (2026-08-13) — `main/services/inventory.ts`; tax facade + discount scale; no schema / no packages
 - [ ] Fail-closed dependency enforcement (still no packages; after pilot proof)
 - [ ] Inventory stock ledger (movements + adjustments) before BOM/procurement
 - [ ] Recipes/BOM, wastage (after ledger)

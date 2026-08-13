@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.7 Inventory + Tax domain boundaries (Accepted + Implemented)
+
+In-place boundary hardening only. New `main/services/inventory.ts` owns stock assert/decrement/restore/adjust/low-stock fragment; callers (orders/products/index) keep `withTxn`. No `routes/inventory.ts` (HTTP remains under products). Tax: facade `calculateTax`, re-export payable rounding, centralize Math.round discount item-tax scale without changing money values. No schema migration, no db.ts rewrite, no package extraction, no frontend redesign, no fail-closed deps. Extraction readiness Inventory/Tax HIGH→MEDIUM. Docs: `phase-2.7-domain-boundaries.md`. Tests: `inventory-boundary`, `tax-boundary`. Next: optional ledger schema or tax HTTP consolidation after pilots.
+
 ## 2026-08-13 — Phase 2.6 Module contract + capabilities (Accepted + Implemented)
 
 Extended `OperviaModule` / `ModuleDefinition` with required domain-level `capabilities` (`CapabilityId`, `{domain}.{verb}`). Soft integrity via `validateModuleDefinitions` + extended `validateRegistryIntegrity`. Helpers: `getModuleCapabilities`, `moduleOwnsCapability`, `findCapabilityOwner` — discovery only, never authorization. No nav/settings/permissions metadata in catalog; no HTTP API expansion; no frontend capability consumers; no fail-closed; no package extraction. Docs: `module-contract.md`, `module-ownership.md`, `extraction-readiness.md`. Tests: `module-contract.test.ts`. Next: deepen inventory/tax boundaries or fail-closed design after pilots.

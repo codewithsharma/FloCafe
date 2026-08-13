@@ -20,6 +20,8 @@ import {
   calculateConfiguredChargeTaxes,
   combineItemAndChargeTaxes,
   getActiveCountryPack,
+  scaleItemTaxForDiscountRatio,
+  computeDiscountTaxRatio,
 } from '../services/tax';
 import { applyPayableRounding } from '../services/tax-engine';
 import { sendEvent } from '../services/telemetry';
@@ -987,9 +989,11 @@ router.post('/:id/applyDiscount', requireRole('owner', 'manager'), (req: Request
     }
 
     const discountedSubtotal = Math.max(0, bill.subtotal - discountAmount);
-    const taxRatio = bill.subtotal > 0 ? discountedSubtotal / bill.subtotal : 1;
-    const newTaxAmount = Math.round(itemTaxAmount * taxRatio * 100) / 100;
-    const newExclusiveTax = Math.round(itemExclusiveTax * taxRatio * 100) / 100;
+    const taxRatio = computeDiscountTaxRatio(discountedSubtotal, bill.subtotal);
+    // Bills historically always Math.round even when ratio === 1.
+    const scaled = scaleItemTaxForDiscountRatio(itemTaxAmount, itemExclusiveTax, taxRatio);
+    const newTaxAmount = scaled.taxAmount;
+    const newExclusiveTax = scaled.exclusiveTaxAmount;
     const tenantInfo = {
       country: getSettingValue('country') || 'IN',
       business_type: getSettingValue('business_type') || 'restaurant',

@@ -44,8 +44,10 @@ import {
   getActiveCountryPack,
   invertTaxBreakdown,
   invertTaxSnapshot,
+  scaleItemTaxAfterOrderDiscount,
 } from '../services/tax';
 import { applyPayableRounding } from '../services/tax-engine';
+import { restoreTrackedStock } from '../services/inventory';
 import { cloudSync } from '../services/cloud-sync';
 import { parsePhoneE164, stripPhoneDigits } from '../lib/phone';
 import QRCode from 'qrcode';
@@ -412,14 +414,15 @@ export function registerRoutes(app: Express): void {
         }
 
         const discountedSubtotal = Math.max(0, subtotal - newDiscountAmount);
-        let newTaxAmount = totalTax;
-        let newExclusiveTax = exclusiveTax;
-        let taxRatio = 1;
-        if (newDiscountAmount > 0 && subtotal > 0) {
-          taxRatio = discountedSubtotal / subtotal;
-          newTaxAmount = Math.round(totalTax * taxRatio * 100) / 100;
-          newExclusiveTax = Math.round(exclusiveTax * taxRatio * 100) / 100;
-        }
+        const scaledTax = scaleItemTaxAfterOrderDiscount({
+          itemTaxAmount: totalTax,
+          itemExclusiveTaxAmount: exclusiveTax,
+          discountAmount: newDiscountAmount,
+          subtotal,
+        });
+        const newTaxAmount = scaledTax.taxAmount;
+        const newExclusiveTax = scaledTax.exclusiveTaxAmount;
+        const taxRatio = scaledTax.taxRatio;
         const tenantInfo = {
           country: getSettingValue('country') || 'IN',
           business_type: getSettingValue('business_type') || 'restaurant',
@@ -460,10 +463,7 @@ export function registerRoutes(app: Express): void {
           const allItems = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(orderId) as any[];
           for (const i of allItems) {
             const product = db.prepare('SELECT * FROM products WHERE id = ?').get(i.product_id) as any;
-            if (product?.track_inventory) {
-              db.prepare('UPDATE products SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?')
-                .run(i.quantity, now(), product.id);
-            }
+            restoreTrackedStock(db, product, i.quantity, now());
           }
           db.prepare(`
             UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?,
@@ -598,14 +598,15 @@ export function registerRoutes(app: Express): void {
         }
 
         const discountedSubtotal = Math.max(0, subtotal - newDiscountAmount);
-        let newTaxAmount = totalTax;
-        let newExclusiveTax = exclusiveTax;
-        let taxRatio = 1;
-        if (newDiscountAmount > 0 && subtotal > 0) {
-          taxRatio = discountedSubtotal / subtotal;
-          newTaxAmount = Math.round(totalTax * taxRatio * 100) / 100;
-          newExclusiveTax = Math.round(exclusiveTax * taxRatio * 100) / 100;
-        }
+        const scaledTax = scaleItemTaxAfterOrderDiscount({
+          itemTaxAmount: totalTax,
+          itemExclusiveTaxAmount: exclusiveTax,
+          discountAmount: newDiscountAmount,
+          subtotal,
+        });
+        const newTaxAmount = scaledTax.taxAmount;
+        const newExclusiveTax = scaledTax.exclusiveTaxAmount;
+        const taxRatio = scaledTax.taxRatio;
         const tenantInfo = {
           country: getSettingValue('country') || 'IN',
           business_type: getSettingValue('business_type') || 'restaurant',
