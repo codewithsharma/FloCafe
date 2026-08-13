@@ -11,6 +11,7 @@ import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
+import { isModuleEnabled, verticalIdForBusinessType } from '@/lib/modules';
 import toast from 'react-hot-toast';
 import { COUNTRIES, countryName } from '@/lib/countries';
 import { dialCodeFor } from '@/lib/phone';
@@ -243,6 +244,11 @@ export default function SettingsPage() {
   const { formatDate, formatTime, formatDateTime } = useFormatDate();
   const isAdmin = currentTenant?.role === 'admin' || currentTenant?.role === 'owner';
   const canViewTaxConfiguration = currentTenant?.role === 'owner' || currentTenant?.role === 'manager';
+  const settingsVerticalId = verticalIdForBusinessType(currentTenant?.business_type ?? 'restaurant');
+  const showTaxSettingsTab = canViewTaxConfiguration && isModuleEnabled('tax', settingsVerticalId);
+  const showShiftsSettingsTab = canViewTaxConfiguration && isModuleEnabled('shift', settingsVerticalId);
+  const showKdsSettingsTab = isModuleEnabled('kds', settingsVerticalId);
+  const showLoyaltySettingsTab = isModuleEnabled('loyalty', settingsVerticalId);
   const { confirm, ConfirmDialog } = useConfirm();
 
   const [loyaltyEnabled, setLoyaltyEnabled] = useState(false);
@@ -2185,7 +2191,7 @@ export default function SettingsPage() {
             <SettingsNavItem label={t('settings.storeDetails')} value="store" active={activeTab} onClick={setActiveTab} />
             <SettingsNavItem label={t('settings.tabPrinters')} value="receipts-printers" active={activeTab} onClick={setActiveTab} />
             <SettingsNavItem label={t('settings.paymentMethods', { defaultValue: 'Payments' })} value="payments" active={activeTab} onClick={setActiveTab} />
-            {canViewTaxConfiguration && (
+            {showTaxSettingsTab && (
               <SettingsNavItem label={t('settings.taxConfiguration')} value="tax" active={activeTab} onClick={setActiveTab} />
             )}
 
@@ -2194,10 +2200,12 @@ export default function SettingsPage() {
               <p className="text-[11px] font-bold uppercase tracking-widest text-flo-text-muted">{t('settings.navGroupOperations')}</p>
             </div>
             <SettingsNavItem label={t('settings.posWorkflow')} value="pos" active={activeTab} onClick={setActiveTab} />
-            {canViewTaxConfiguration && (
+            {showShiftsSettingsTab && (
               <SettingsNavItem label={t('settings.tabShifts')} value="shifts" active={activeTab} onClick={setActiveTab} />
             )}
-            <SettingsNavItem label={t('settings.tabKds')} value="kds" active={activeTab} onClick={setActiveTab} />
+            {showKdsSettingsTab && (
+              <SettingsNavItem label={t('settings.tabKds')} value="kds" active={activeTab} onClick={setActiveTab} />
+            )}
             <SettingsNavItem label={t('settings.tablesideOrdering')} value="server-app" active={activeTab} onClick={setActiveTab} />
             {/* WhatsApp opt-in lives under Operations because the receive-bill
                 workflow is what the cashier touches every time a customer pays. */}
@@ -2207,7 +2215,9 @@ export default function SettingsPage() {
             <div className="hidden md:block px-3 pt-4 pb-2 mt-3 mb-1 border-b border-flo-border">
               <p className="text-[11px] font-bold uppercase tracking-widest text-flo-text-muted">{t('settings.navGroupCustomers')}</p>
             </div>
-            <SettingsNavItem label={t('settings.loyalty')} value="loyalty" active={activeTab} onClick={setActiveTab} />
+            {showLoyaltySettingsTab && (
+              <SettingsNavItem label={t('settings.loyalty')} value="loyalty" active={activeTab} onClick={setActiveTab} />
+            )}
             <SettingsNavItem label={t('settings.discounts')} value="discounts" active={activeTab} onClick={setActiveTab} />
 
             {/* Integrations group (formerly "Data") */}
@@ -2522,13 +2532,13 @@ export default function SettingsPage() {
           <PaymentMethodsSettings isAdmin={isAdmin} />
         </TabsContent>
 
-        {canViewTaxConfiguration && (
+        {showTaxSettingsTab && (
           <TabsContent value="tax">
             <TaxConfigurationPanel isOwner={currentTenant?.role === 'owner'} />
           </TabsContent>
         )}
 
-        {canViewTaxConfiguration && (
+        {showShiftsSettingsTab && (
           <TabsContent value="shifts">
             <div className="pb-6 max-w-3xl space-y-4">
               <Panel>
@@ -2781,6 +2791,7 @@ export default function SettingsPage() {
         </TabsContent>
 
         {/* Kitchen Display — own tab under Operations */}
+        {showKdsSettingsTab && (
         <TabsContent value="kds">
           <div className="pb-6 max-w-3xl space-y-6">
             {/* KDS on/off (issue #133) — not every business runs a Kitchen Display. */}
@@ -3169,7 +3180,9 @@ export default function SettingsPage() {
             )}
           </div>
         </TabsContent>
+        )}
 
+        {showLoyaltySettingsTab && (
         <TabsContent value="loyalty">
           <div className="pb-6 max-w-3xl space-y-6">
             {/* Loyalty */}
@@ -3243,6 +3256,7 @@ export default function SettingsPage() {
             </Panel>
           </div>
         </TabsContent>
+        )}
 
         <TabsContent value="discounts">
           <div className="pb-6 max-w-3xl space-y-6">

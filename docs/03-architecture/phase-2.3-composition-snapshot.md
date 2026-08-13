@@ -143,8 +143,8 @@ Support tooling, admin diagnostics, and optional platform APIs can consume the s
 - Route remounting from registry
 - Feature-flag removal
 - Database module tables / migrations
-- Settings tab inventory UI gating (Phase 2.3 secondary; deferred)
-- HTTP `/api/platform/composition` (until needed)
+- Settings tab inventory UI gating — **Phase 2.4** ([phase-2.4-platform-composition-api.md](phase-2.4-platform-composition-api.md))
+- HTTP `/api/platform/composition` — **Phase 2.4** ([phase-2.4-platform-composition-api.md](phase-2.4-platform-composition-api.md))
 
 ## Acceptance
 

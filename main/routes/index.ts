@@ -30,6 +30,7 @@ import { heldOrderRoutes } from './held-orders';
 import { whatsappRoutes } from './whatsapp';
 import { supportTicketRoutes } from './support-ticket';
 import { auditLogRoutes } from './audit-logs';
+import { platformRoutes } from './platform';
 import { shiftRoutes } from './shifts';
 import { refundRoutes } from './refunds';
 import { logAuditEvent } from '../services/audit-log';
@@ -111,6 +112,7 @@ export function registerRoutes(app: Express): void {
   app.use('/api/whatsapp', whatsappRoutes);
   app.use('/api/support-ticket', supportTicketRoutes);
   app.use('/api/audit-logs', auditLogRoutes);
+  app.use('/api/platform', platformRoutes);
   app.use('/api/shifts', shiftRoutes);
 
   // Tax preview

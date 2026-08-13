@@ -74,6 +74,16 @@ export interface CompositionSnapshotOptions {
   enabledModules?: readonly ModuleId[];
 }
 
+/** Minimal HTTP projection of {@link getCompositionSnapshot} (Phase 2.4). */
+export interface PlatformCompositionResponse {
+  verticalId: string;
+  verticalName: string;
+  enabledModules: readonly ModuleId[];
+  diagnostics: {
+    valid: boolean;
+  };
+}
+
 function emptyKindCounts(): Record<ModuleKind, number> {
   return { core: 0, shared: 0, restaurant: 0 };
 }
@@ -191,6 +201,24 @@ export function getCompositionSnapshot(
     diagnostics: {
       valid: dependencyReport.valid && integrity.valid,
       warnings,
+    },
+  };
+}
+
+/**
+ * Minimal read-only composition for platform/support HTTP consumers.
+ * Never throws. Does not expose dependency internals, registry issues, or paths.
+ */
+export function getPlatformCompositionResponse(
+  options?: CompositionSnapshotOptions,
+): PlatformCompositionResponse {
+  const snapshot = getCompositionSnapshot(options);
+  return {
+    verticalId: snapshot.vertical.id,
+    verticalName: snapshot.vertical.name,
+    enabledModules: snapshot.modules.enabled,
+    diagnostics: {
+      valid: snapshot.diagnostics.valid,
     },
   };
 }

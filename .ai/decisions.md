@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-13 — Phase 2.4 Composition read API + settings gates (Accepted + Implemented)
+
+Minimal authenticated `GET /api/platform/composition` for owner/manager via existing JWT + `requireRole`. Response is `getPlatformCompositionResponse()` — projection of Phase 2.3 snapshot without dependency/integrity internals. Settings tabs tax/shifts/kds/loyalty gated with `isModuleEnabled`; feature flags unchanged inside tabs. No module UI, no schema change, no package extraction. Tests: `platform-composition-api.test.ts`, `flo-settings-module-gating.test.ts`. Docs: `phase-2.4-platform-composition-api.md`. Next: P2.5 fail-closed deps or broader gates.
+
 ## 2026-08-13 — Phase 2.3 Composition snapshot (Accepted + Implemented)
 
 Read-only `getCompositionSnapshot()` in `main/modules/composition.ts` — orchestrates registry + Phase 2.2 diagnostics (no duplicate validation). Deterministic sorted output; dev-only `[Opervia Composition]` log. No HTTP endpoint, no settings UI, no schema change, no package extraction. Tests: `module-composition.test.ts`. Docs: `phase-2.3-composition-snapshot.md`. Next: P2.4 optional GET / settings gates.

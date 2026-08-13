@@ -35,6 +35,7 @@ export {
 export {
   COMPOSITION_SNAPSHOT_SCHEMA_VERSION,
   getCompositionSnapshot,
+  getPlatformCompositionResponse,
   formatCompositionDiagnosticsLog,
   logCompositionSnapshotIfDev,
 } from './composition';
@@ -54,4 +55,5 @@ export type {
   CompositionSnapshotOptions,
   CompositionModuleEntry,
   CompositionDiagnosticWarning,
+  PlatformCompositionResponse,
 } from './composition';

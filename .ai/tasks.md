@@ -44,7 +44,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [ ] P0.7 Documentation truth — roadmap/feature-list/production-readiness match code; CURRENT Opervia Restaurant vs TARGET modular platform
 - [x] P2.2 Broaden module consumers (nav/UI) + soft dep diagnostics — **IMPLEMENTED**
 - [x] P2.3 Read-only composition snapshot — **IMPLEMENTED** (`phase-2.3-composition-snapshot.md`; in-process only; still no package extraction)
-- [ ] P2.4 Optional authenticated composition GET / deeper settings module gates
+- [x] P2.4 Composition read API + settings module gates — **IMPLEMENTED** (`phase-2.4-platform-composition-api.md`; GET `/api/platform/composition`; tax/shifts/kds/loyalty settings gates)
 
 ## P1 — Pilot reliability
 
@@ -67,7 +67,8 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P2.1 Module registry + Restaurant vertical definition (2026-08-13) — may land before pilots as a non-behavioral seam
 - [x] P2.2 Broaden registry consumers + soft dependency diagnostics (2026-08-13)
 - [x] P2.3 Read-only composition snapshot (2026-08-13)
-- [ ] P2.4 Optional composition GET / settings module gates (still no packages)
+- [x] P2.4 Composition GET + settings module gates (2026-08-13)
+- [ ] Fail-closed dependency enforcement or broader settings gates (still no packages)
 - [ ] Inventory stock ledger (movements + adjustments) before BOM/procurement
 - [ ] Recipes/BOM, wastage (after ledger)
 - [ ] Suppliers / PO / receiving

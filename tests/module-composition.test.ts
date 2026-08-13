@@ -10,6 +10,7 @@ import {
   MODULE_CATALOG,
   getRouteModuleMap,
   getCompositionSnapshot,
+  getPlatformCompositionResponse,
   validateRegistryIntegrity,
   getModuleDiagnosticsSnapshot,
 } from '../main/modules';
@@ -95,6 +96,15 @@ function main(): void {
   assert.deepEqual(invalid.dependencies.missing, invalidAgain.dependencies.missing);
   assert.doesNotThrow(() => getCompositionSnapshot({ enabledModules: ['kds'] as ModuleId[] }));
   console.log('   ✓ invalid synthetic set (non-throwing)');
+
+  const apiProjection = getPlatformCompositionResponse();
+  assert.equal(apiProjection.verticalId, 'restaurant');
+  assert.equal(apiProjection.verticalName, 'Opervia Restaurant');
+  assert.deepEqual([...apiProjection.enabledModules], sortedEnabled);
+  assert.equal(apiProjection.diagnostics.valid, true);
+  assert.ok(!('schemaVersion' in apiProjection));
+  assert.ok(!('dependencies' in apiProjection));
+  console.log('   ✓ minimal platform HTTP projection');
 
   console.log('='.repeat(60));
   console.log('✅ Phase 2.3 module composition contracts passed');
