@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import { Bonjour } from 'bonjour-service';
-import { initDatabase, closeDatabase, SchemaVersionMismatchError } from './db';
+import { initDatabase, closeDatabase, SchemaVersionMismatchError, DatabaseRecoveryRequiredError, isDatabaseOpen } from './db';
 import { startServer, stopServer, getLocalIP, isServerRunning, getServerPort } from './server';
 import { cloudSync } from './services/cloud-sync';
 import { telemetry, sendEvent as sendTelemetryEvent } from './services/telemetry';
@@ -22,6 +22,12 @@ import {
   shouldAdvertiseMdns,
 } from './services/network-mode';
 import { initializeJWTSecret, JwtSecretError } from './services/jwt-secret';
+import {
+  isRecoveryRequired,
+  getRecoveryReason,
+  setRecoveryRequired,
+  getInstallState,
+} from './services/install-state';
 import log from 'electron-log/main';
 import { autoUpdater } from 'electron-updater';
 import { isAllowedLocalWindowUrl, isSafeExternalUrl } from './security/url-allowlist';
@@ -223,7 +229,7 @@ if (gotSingleInstanceLock) {
   });
 }
 
-function createWindow(): void {
+function createWindow(initialPath: string = '/'): void {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -243,7 +249,8 @@ function createWindow(): void {
 
   // Always load from the embedded Express server (serves static Next.js export).
   // This avoids file:// protocol issues and keeps dev/prod behaviour identical.
-  mainWindow.loadURL(`http://localhost:${getServerPort()}`);
+  const normalized = initialPath.startsWith('/') ? initialPath : `/${initialPath}`;
+  mainWindow.loadURL(`http://localhost:${getServerPort()}${normalized === '/' ? '' : normalized}`);
 
   // Fail-closed main-frame navigation / redirects (P0.6 Phase A).
   attachRendererNavigationGuards(mainWindow.webContents, {
@@ -623,8 +630,23 @@ async function initialize(): Promise<void> {
   try {
     console.log('[Flo] Initializing...');
 
+    let recoveryMode = false;
     console.log('[Flo] Initializing database...');
-    initDatabase();
+    try {
+      initDatabase();
+      if (isRecoveryRequired()) {
+        recoveryMode = true;
+        console.error('[Flo] REC-01 recovery required:', getRecoveryReason());
+      }
+    } catch (err) {
+      if (err instanceof DatabaseRecoveryRequiredError) {
+        setRecoveryRequired(err.reason);
+        recoveryMode = true;
+        console.error('[Flo] REC-01 recovery required:', err.reason);
+      } else {
+        throw err;
+      }
+    }
 
     console.log('[Flo] Initializing JWT signing secret (secure storage)...');
     try {
@@ -640,6 +662,33 @@ async function initialize(): Promise<void> {
 
     console.log('[Flo] Starting local server...');
     await startServer();
+
+    if (recoveryMode) {
+      console.warn('[Flo] Running in DATABASE RECOVERY mode — POS/KDS/LAN services not started');
+      console.log('[Flo] Registering IPC handlers (restore)...');
+      registerIpcHandlers();
+      ipcMain.handle('recovery-quit', () => {
+        isQuitting = true;
+        app.quit();
+        return { success: true };
+      });
+      ipcMain.handle('get-status', () => ({
+        server: isServerRunning() ? 'running' : 'stopped',
+        kdsServer: 'stopped',
+        serverApp: 'stopped',
+        recovery_required: true,
+        recovery_reason: getRecoveryReason(),
+        install_state: getInstallState({
+          databasePresent: isDatabaseOpen(),
+        }).state,
+        uptime: process.uptime(),
+        port: PORT,
+      }));
+      createWindow('/recovery');
+      createTray();
+      console.log('[Flo] Recovery UI ready');
+      return;
+    }
 
     cloudSync.start();
     telemetry.start();
@@ -698,6 +747,7 @@ async function initialize(): Promise<void> {
         server: isServerRunning() ? 'running' : 'stopped',
         kdsServer: isKdsServerRunning() ? 'running' : 'stopped',
         serverApp: isServerAppRunning() ? 'running' : 'stopped',
+        recovery_required: false,
         memory: {
           heapUsed: Math.round(mem.heapUsed / 1024 / 1024),
           heapTotal: Math.round(mem.heapTotal / 1024 / 1024),

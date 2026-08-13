@@ -13,7 +13,7 @@
 
 ## Operational
 
-- ⚠️ RISK: **P1.2 GREEN WITH CONDITIONS (76)** — destroy→restore financial/JWT continuity proven by E2E. Residual **REC-01:** missing `flo.db` still silently creates empty DB (unchanged). New-machine JWT recover needs Master PIN (file not in backup) + no recover UI. See `p1.2-backup-restore-continuity.md`.
+- ⚠️ RISK: **P1.2 REC-01 GREEN WITH HARDENING** — factory-reset marker ordered after durable empty DB; recovery middleware fail-closed. Residual: corrupt-but-openable live DB still starts with warnings; JWT recover UI still missing; no backup `installation_id`. New-machine recover still needs Master PIN.
 - ⚠️ RISK: Upgrades seed `network_mode=localhost`. Existing LAN KDS/POS/waiter setups need Settings → `kds_lan` or `lan` + restart before tablets reconnect.
 - ⚠️ RISK: Electron renderer `flo_terminal_id` and host `settings.terminal_id` may differ. POS requests send the client id; header-less `openShift` still uses the host id.
 - ⚠️ RISK: Lost `terminal_id` (cleared localStorage) orphans an open shift; managers must force-close.

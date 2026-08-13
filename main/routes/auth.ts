@@ -684,11 +684,70 @@ router.post('/recover-password', authRateLimit(), (req: Request, res: Response) 
 
 router.get('/setup/status', (_req: Request, res: Response) => {
   try {
+    const {
+      isRecoveryRequired,
+      getRecoveryReason,
+      getInstallState,
+      isInstallationInitialized,
+    } = require('../services/install-state');
+    const { isDatabaseOpen, getDbPath } = require('../db');
+    const fs = require('fs');
+
+    if (isRecoveryRequired()) {
+      return res.json({
+        needsSetup: false,
+        recoveryRequired: true,
+        recovery_required: true,
+        reason: getRecoveryReason(),
+        installState: 'RECOVERY_REQUIRED',
+        userCount: 0,
+        initialRole: INITIAL_ADMIN_ROLE,
+        schemaVersion: null,
+        masterPinAvailable: isMasterPinAvailable(),
+      });
+    }
+
+    if (!isDatabaseOpen()) {
+      const marker = isInstallationInitialized();
+      if (marker) {
+        return res.json({
+          needsSetup: false,
+          recoveryRequired: true,
+          recovery_required: true,
+          reason: 'missing_database',
+          installState: 'RECOVERY_REQUIRED',
+          userCount: 0,
+          initialRole: INITIAL_ADMIN_ROLE,
+          schemaVersion: null,
+          masterPinAvailable: isMasterPinAvailable(),
+        });
+      }
+      return res.json({
+        needsSetup: true,
+        recoveryRequired: false,
+        recovery_required: false,
+        reason: null,
+        installState: 'FIRST_INSTALL',
+        userCount: 0,
+        initialRole: INITIAL_ADMIN_ROLE,
+        schemaVersion: null,
+        masterPinAvailable: isMasterPinAvailable(),
+      });
+    }
+
     const db = getDatabase();
     const userCount = getUserCount(db);
-    const needsSetup = userCount === 0;
+    const needsSetup = userCount === 0 && !isInstallationInitialized();
+    const install = getInstallState({
+      databasePresent: fs.existsSync(getDbPath()),
+      operationalUsers: userCount,
+    });
     res.json({
       needsSetup,
+      recoveryRequired: install.state === 'RECOVERY_REQUIRED',
+      recovery_required: install.state === 'RECOVERY_REQUIRED',
+      reason: install.reason,
+      installState: install.state,
       userCount,
       initialRole: INITIAL_ADMIN_ROLE,
       schemaVersion: getCurrentSchemaVersion(),
@@ -705,6 +764,27 @@ router.get('/setup/status', (_req: Request, res: Response) => {
 
 router.post('/setup/initialize', (req: Request, res: Response) => {
   try {
+    const { isRecoveryRequired, isInstallationInitialized, markInstallationInitialized } = require('../services/install-state');
+    const { isDatabaseOpen } = require('../db');
+    if (isRecoveryRequired()) {
+      return res.status(403).json({
+        error: 'Database recovery required. Restore a backup instead of running first-time setup.',
+        recovery_required: true,
+        code: 'DATABASE_RECOVERY_REQUIRED',
+      });
+    }
+    if (isInstallationInitialized()) {
+      const users = isDatabaseOpen() ? getUserCount(getDatabase()) : 0;
+      if (users === 0) {
+        return res.status(403).json({
+          error: 'Database recovery required. Restore a backup instead of running first-time setup.',
+          recovery_required: true,
+          code: 'DATABASE_RECOVERY_REQUIRED',
+        });
+      }
+      return res.status(403).json({ error: 'Setup already complete. This endpoint is disabled.' });
+    }
+
     if (!requireLocalSetup(req, res)) return;
 
     const {
@@ -862,6 +942,8 @@ router.post('/setup/initialize', (req: Request, res: Response) => {
 
       seedSetupProfile(db, normalizedSetupProfile, normalizedServiceModel, language, country);
     })();
+
+    markInstallationInitialized();
 
     applySetupTelemetryOptIn(telemetry_opt_in === true);
     applySetupDiagnosticsOptIn(diagnostics_opt_in === true);

@@ -48,4 +48,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**P1.2 continuity E2E implemented** (`p1.2-backup-restore-continuity.md`) — **GREEN WITH CONDITIONS (76)**. Destroy→restore financial/JWT continuity proven (`tests/backup-restore-continuity.test.ts`). **REC-01** (silent empty DB) unchanged — needs separate approval. Phase C deferred. Pilot ops: Master PIN / Scenario B recover.
+**REC-01 implemented + security hardening** (`p1.2-rec-01-recovery-audit.md`) — **GREEN WITH HARDENING**. Factory-reset clears marker only after durable empty DB; recovery middleware fail-closed (`RECOVERY_STATE_UNAVAILABLE`). P1.2 continuity remains proven. Phase C deferred.

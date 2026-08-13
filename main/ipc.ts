@@ -9,10 +9,12 @@ import {
   createBackup,
   restoreBackup,
   getCurrentSchemaVersion,
+  getSupportedSchemaVersion,
   getSchemaVersionFromBackup,
   withDatabaseMaintenanceLock,
   getBackupDir,
   getDbPath,
+  isDatabaseOpen,
 } from './db';
 import { clearInMemoryRevokedTokens, clearUserAuthCache } from './middleware/security';
 import { clearJWTSecretCache } from './routes/auth';
@@ -21,6 +23,7 @@ import {
   resolveManagedBackupPath,
   validateExternalRestorePath,
 } from './security/restore-path';
+import { isRecoveryRequired, markInstallationInitialized, clearRecoveryRequired } from './services/install-state';
 
 async function performRestore(backupPath: string): Promise<{
   success: boolean;
@@ -30,6 +33,7 @@ async function performRestore(backupPath: string): Promise<{
   tablesRestored?: number;
   message?: string;
   error?: string;
+  relaunch?: boolean;
 }> {
   const backupVersion = getSchemaVersionFromBackup(backupPath);
 
@@ -40,7 +44,9 @@ async function performRestore(backupPath: string): Promise<{
     };
   }
 
-  const versionMismatch = backupVersion !== getCurrentSchemaVersion();
+  const currentVersion = isDatabaseOpen() ? getCurrentSchemaVersion() : getSupportedSchemaVersion();
+  const versionMismatch = backupVersion !== currentVersion;
+  const wasRecovery = isRecoveryRequired() || !isDatabaseOpen();
 
   if (versionMismatch) {
     const confirmResult = await dialog.showMessageBox({
@@ -49,27 +55,39 @@ async function performRestore(backupPath: string): Promise<{
       defaultId: 1,
       title: 'Schema Version Mismatch',
       message: `Backup was created with Schema v${backupVersion}`,
-      detail: `Current database uses Schema v${getCurrentSchemaVersion()}.\n\nRestoring will import data only (common fields) to preserve new database structure.\n\nDo you want to continue?`,
+      detail: `Current database uses Schema v${currentVersion}.\n\nRestoring will import data only (common fields) to preserve new database structure.\n\nDo you want to continue?`,
     });
 
     if (confirmResult.response !== 0) {
       return { success: false, error: 'Cancelled' };
     }
 
+    if (!isDatabaseOpen()) {
+      return {
+        success: false,
+        error: 'Cannot perform data-only restore while the operational database is missing. Use a same-schema backup, or reinstall matching app version.',
+      };
+    }
+
     const restoreResult = await withDatabaseMaintenanceLock(() => restoreBackup(backupPath, false));
     clearUserAuthCache();
     clearInMemoryRevokedTokens();
     clearJWTSecretCache();
+    if (restoreResult.success) {
+      markInstallationInitialized();
+      clearRecoveryRequired();
+    }
     return {
       success: restoreResult.success,
       mode: restoreResult.mode,
       backupVersion,
-      currentVersion: getCurrentSchemaVersion(),
+      currentVersion: isDatabaseOpen() ? getCurrentSchemaVersion() : currentVersion,
       tablesRestored: restoreResult.tablesRestored,
       message: restoreResult.success
         ? `Restored ${restoreResult.tablesRestored} tables (data-only mode due to version mismatch)`
         : `Restore failed: ${restoreResult.error}`,
       error: restoreResult.error,
+      relaunch: restoreResult.success && wasRecovery,
     };
   }
 
@@ -77,14 +95,19 @@ async function performRestore(backupPath: string): Promise<{
   clearUserAuthCache();
   clearInMemoryRevokedTokens();
   clearJWTSecretCache();
+  if (restoreResult.success) {
+    markInstallationInitialized();
+    clearRecoveryRequired();
+  }
   return {
     success: restoreResult.success,
     mode: restoreResult.mode,
     backupVersion,
-    currentVersion: getCurrentSchemaVersion(),
+    currentVersion: isDatabaseOpen() ? getCurrentSchemaVersion() : currentVersion,
     tablesRestored: restoreResult.tablesRestored,
     message: restoreResult.success ? 'Database restored successfully' : `Restore failed: ${restoreResult.error}`,
     error: restoreResult.error,
+    relaunch: restoreResult.success && wasRecovery,
   };
 }
 
@@ -147,7 +170,14 @@ export function registerIpcHandlers(): void {
         backupPath = validateExternalRestorePath(result.filePaths[0], getDbPath());
       }
 
-      return await performRestore(backupPath);
+      const restoreOutcome = await performRestore(backupPath);
+      if (restoreOutcome.success && restoreOutcome.relaunch) {
+        setImmediate(() => {
+          app.relaunch();
+          app.exit(0);
+        });
+      }
+      return restoreOutcome;
     } catch (error: any) {
       console.error('[IPC] restore-backup: Error:', error);
       return { success: false, error: error.message };

@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   backupDatabase: (pin?: string) => ipcRenderer.invoke('backup-database', pin),
   restoreBackup: (pin?: string, fileName?: string) => ipcRenderer.invoke('restore-backup', pin, fileName),
   getMasterPinStatus: () => ipcRenderer.invoke('master-pin-status'),
+  recoveryQuit: () => ipcRenderer.invoke('recovery-quit'),
 
   getAppInfo: () => ipcRenderer.invoke('get-app-info'),
   getStatus: () => ipcRenderer.invoke('get-status'),

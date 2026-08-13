@@ -7,9 +7,34 @@ import * as fs from 'fs';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 import { BUNDLED_COUNTRY_PACKS, bundledPackVersionId } from './tax-packs/bundled';
+import {
+  clearInstallationMarker,
+  isInstallationInitialized,
+  markInstallationInitialized,
+  setRecoveryRequired,
+  clearRecoveryRequired,
+} from './services/install-state';
 
 let db: Database.Database;
 let dbHealthError: string | null = null;
+
+/** Typed fail-closed condition when an existing install is missing its operational DB (REC-01). */
+export class DatabaseRecoveryRequiredError extends Error {
+  readonly code = 'DATABASE_RECOVERY_REQUIRED';
+  readonly reason: 'missing_database' | 'empty_database';
+
+  constructor(reason: 'missing_database' | 'empty_database', message?: string) {
+    super(message || (reason === 'missing_database'
+      ? 'Operational database is missing — restore required'
+      : 'Operational database is empty for an initialized installation — restore required'));
+    this.name = 'DatabaseRecoveryRequiredError';
+    this.reason = reason;
+  }
+}
+
+export function isDatabaseOpen(): boolean {
+  return Boolean(db);
+}
 
 // Database backup, restore, and wipe operations must not overlap. The lock is
 // a FIFO promise chain so a rejected operation cannot strand later work.
@@ -436,14 +461,37 @@ function recoverInterruptedDatabaseReplacement(dbPath: string, backupDir: string
   }
 }
 
-export function initDatabase(recoverInterruptedReplacement = true): void {
+export type InitDatabaseOptions = {
+  recoverInterruptedReplacement?: boolean;
+  /**
+   * Factory-reset only: allow creating a new empty DB while the installation
+   * marker is still present. Marker is cleared only after durable commit.
+   */
+  allowCreateDespiteMarker?: boolean;
+};
+
+export function initDatabase(recoverInterruptedReplacement: boolean | InitDatabaseOptions = true): void {
+  const opts: InitDatabaseOptions = typeof recoverInterruptedReplacement === 'boolean'
+    ? { recoverInterruptedReplacement }
+    : recoverInterruptedReplacement;
+  const shouldRecoverInterrupted = opts.recoverInterruptedReplacement !== false;
+  const allowCreateDespiteMarker = opts.allowCreateDespiteMarker === true;
+
   const dbPath = getDbPath();
   const backupDir = getBackupDir();
 
   if (!fs.existsSync(backupDir)) {
     fs.mkdirSync(backupDir, { recursive: true });
   }
-  if (recoverInterruptedReplacement) recoverInterruptedDatabaseReplacement(dbPath, backupDir);
+  if (shouldRecoverInterrupted) recoverInterruptedDatabaseReplacement(dbPath, backupDir);
+
+  const dbExists = pathEntryExists(dbPath);
+  // Marker + missing DB is RECOVERY unless this is an in-progress factory reset
+  // that intentionally recreates an empty DB before clearing the marker.
+  if (!dbExists && isInstallationInitialized() && !allowCreateDespiteMarker) {
+    setRecoveryRequired('missing_database');
+    throw new DatabaseRecoveryRequiredError('missing_database');
+  }
 
   console.log(`[DB] Opening database at: ${dbPath}`);
   dbHealthError = null;
@@ -461,6 +509,26 @@ export function initDatabase(recoverInterruptedReplacement = true): void {
   repairSequences();
   autoRepairPaymentDetails();
   autoRepairDefaultPrinter();
+
+  // REC-01: marker + empty operational café must not look like first install.
+  try {
+    const userCount = (db.prepare('SELECT COUNT(*) AS c FROM users').get() as { c: number }).c;
+    if (isInstallationInitialized() && userCount === 0) {
+      setRecoveryRequired('empty_database');
+      console.error('[DB] REC-01: installation marker present but users=0 — recovery required');
+    } else if (userCount > 0) {
+      // Safe one-time backfill for pre-marker installs; never mark empty DBs.
+      if (!isInstallationInitialized()) {
+        markInstallationInitialized();
+        console.log('[DB] Backfilled installation marker for existing café');
+      } else {
+        clearRecoveryRequired();
+      }
+    }
+  } catch (err: any) {
+    // Schema too new / missing users table is handled elsewhere; do not swallow mismatch.
+    if (err instanceof DatabaseRecoveryRequiredError) throw err;
+  }
 }
 
 export function ensureCloudIdentity(): { posHash: string; deviceSecret: string } {
@@ -868,9 +936,17 @@ function removeDatabaseFiles(dbPath: string): string[] {
  * same maintenance lock used by ordinary backups. On a failed wipe/reopen,
  * restore the safety backup before surfacing the error so callers never see a
  * false success or an intentionally closed database.
+ *
+ * REC-01: the installation marker is cleared ONLY after the empty reset DB is
+ * durably committed. A crash after wipe but before clear leaves the marker in
+ * place so the next boot enters RECOVERY_REQUIRED (not silent FIRST_INSTALL).
  */
-export async function resetDatabaseWithBackup(): Promise<{ backupPath: string }> {
+export async function resetDatabaseWithBackup(options?: {
+  /** Test-only: fail after empty init, before marker clear / success. */
+  injectFailureAfterEmptyInit?: boolean;
+}): Promise<{ backupPath: string }> {
   return withDatabaseMaintenanceLock(async () => {
+    const hadMarkerAtStart = isInstallationInitialized();
     const { path: backupPath } = await createBackupUnlocked();
     const dbPath = getDbPath();
     const baselineForeignKeyViolations = getForeignKeyViolationKeys(getDatabase());
@@ -891,16 +967,23 @@ export async function resetDatabaseWithBackup(): Promise<{ backupPath: string }>
       if (failures.length > 0) {
         throw new Error(`Could not remove database files: ${failures.join(', ')}`);
       }
-      initDatabase(false);
+      // Marker still on disk here: crash ⇒ RECOVERY_REQUIRED on next boot.
+      // allowCreateDespiteMarker: empty recreate must not trip missing-DB recovery.
+      initDatabase({ recoverInterruptedReplacement: false, allowCreateDespiteMarker: true });
       getDatabase().pragma('wal_checkpoint(TRUNCATE)');
       syncFile(dbPath);
       if (!syncDirectory(path.dirname(dbPath)) && process.platform !== 'win32') {
         throw new Error('Could not durably commit reset database');
       }
+      if (options?.injectFailureAfterEmptyInit) {
+        throw new Error('Injected factory-reset failure after empty init');
+      }
       writeReplacementJournal(journalPath, {
         phase: 'committed', recoveryPath, dbPath,
         baselineForeignKeyViolations: [...baselineForeignKeyViolations],
       });
+      // FIRST_INSTALL only after durable empty reset succeeded.
+      clearInstallationMarker();
       replacementCompleted = true;
       return { backupPath };
     } catch (error: any) {
@@ -915,6 +998,11 @@ export async function resetDatabaseWithBackup(): Promise<{ backupPath: string }>
           throw new Error('Could not durably recover reset database');
         }
         initDatabase(false);
+        // Marker was never cleared on the failure path; ensure it remains if
+        // the install was previously initialized (belt-and-suspenders vs backfill).
+        if (hadMarkerAtStart && !isInstallationInitialized()) {
+          markInstallationInitialized();
+        }
         recoveryCompleted = true;
       } catch (recoveryError: any) {
         throw new Error(
@@ -1484,12 +1572,122 @@ function mergeRevocations(dbInstance: Database.Database, rows: RevocationRow[]):
   for (const row of rows) merge.run(row.token_hash, row.expires_at, row.revoked_at);
 }
 
+/**
+ * REC-01: restore when flo.db is absent (recovery mode). Does not create an
+ * empty operational café first — only installs a validated backup file.
+ */
+function restoreBackupWithNoLiveDatabase(
+  backupPath: string,
+  forceDirect: boolean,
+  backupSchemaVersion: number,
+  pragmaVersion: number,
+  metadataStampPresent: boolean,
+  metadataVersion: number,
+  supportedVersion: number,
+): RestoreResult {
+  if (metadataStampPresent && (metadataVersion <= 0 || metadataVersion !== pragmaVersion)) {
+    return {
+      success: false,
+      mode: forceDirect ? 'direct' : 'data_only',
+      backupSchemaVersion,
+      currentSchemaVersion: supportedVersion,
+      tablesRestored: 0,
+      error: 'Backup schema metadata does not match the SQLite header',
+    };
+  }
+  if (pragmaVersion > supportedVersion) {
+    return {
+      success: false,
+      mode: 'direct',
+      backupSchemaVersion,
+      currentSchemaVersion: supportedVersion,
+      tablesRestored: 0,
+      error: `Direct restore rejected: backup schema v${pragmaVersion} is newer than supported schema v${supportedVersion}`,
+    };
+  }
+
+  let probe: Database.Database | undefined;
+  try {
+    probe = new Database(backupPath, { readonly: true, fileMustExist: true });
+    const integrity = probe.prepare('PRAGMA integrity_check').all() as { integrity_check: string }[];
+    if (integrity.some((row) => row.integrity_check !== 'ok')) {
+      return {
+        success: false,
+        mode: 'direct',
+        backupSchemaVersion,
+        currentSchemaVersion: supportedVersion,
+        tablesRestored: 0,
+        error: 'Backup failed integrity validation',
+      };
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      mode: 'direct',
+      backupSchemaVersion,
+      currentSchemaVersion: supportedVersion,
+      tablesRestored: 0,
+      error: error?.message || 'Invalid or corrupt backup file',
+    };
+  } finally {
+    probe?.close();
+  }
+
+  const dbPath = getDbPath();
+  try {
+    removeDatabaseFiles(dbPath);
+    fs.copyFileSync(backupPath, dbPath);
+    syncFile(dbPath);
+    initDatabase(false);
+    const freshDb = getDatabase();
+    const integrity = freshDb.prepare('PRAGMA integrity_check').all() as { integrity_check: string }[];
+    if (integrity.some((row) => row.integrity_check !== 'ok')) {
+      closeDatabase();
+      removeDatabaseFiles(dbPath);
+      setRecoveryRequired('missing_database');
+      return {
+        success: false,
+        mode: 'direct',
+        backupSchemaVersion,
+        currentSchemaVersion: supportedVersion,
+        tablesRestored: 0,
+        error: 'Restored database failed integrity validation',
+      };
+    }
+    const userCount = (freshDb.prepare('SELECT COUNT(*) AS c FROM users').get() as { c: number }).c;
+    if (userCount > 0) {
+      markInstallationInitialized();
+    }
+    clearRecoveryRequired();
+    return {
+      success: true,
+      mode: 'direct',
+      backupSchemaVersion,
+      currentSchemaVersion: getCurrentSchemaVersion(),
+      tablesRestored: getTables(freshDb).length,
+    };
+  } catch (error: any) {
+    try { closeDatabase(); } catch { /* ignore */ }
+    try { removeDatabaseFiles(dbPath); } catch { /* ignore */ }
+    if (isInstallationInitialized()) setRecoveryRequired('missing_database');
+    return {
+      success: false,
+      mode: 'direct',
+      backupSchemaVersion,
+      currentSchemaVersion: supportedVersion,
+      tablesRestored: 0,
+      error: error?.message || 'Restore failed',
+    };
+  }
+}
+
 export function restoreBackup(backupPath: string, forceDirect: boolean = false): RestoreResult {
   console.log('[DB] restoreBackup: Starting restore from:', backupPath);
+  const supportedVersion = getSupportedSchemaVersion();
   try {
     backupPath = materializeRestoreSource(backupPath, getDbPath());
   } catch (error: any) {
-    const currentVersion = getCurrentSchemaVersion();
+    const currentVersion = isDatabaseOpen() ? getCurrentSchemaVersion() : supportedVersion;
     return {
       success: false,
       mode: forceDirect ? 'direct' : 'data_only',
@@ -1512,7 +1710,7 @@ export function restoreBackup(backupPath: string, forceDirect: boolean = false):
     pragmaVersion = Number(backupDb.pragma('user_version', { simple: true }));
   } catch (error: any) {
     // Corrupt / non-SQLite files must fail closed without touching the live DB.
-    const currentVersion = getCurrentSchemaVersion();
+    const currentVersion = isDatabaseOpen() ? getCurrentSchemaVersion() : supportedVersion;
     return {
       success: false,
       mode: forceDirect ? 'direct' : 'data_only',
@@ -1531,6 +1729,12 @@ export function restoreBackup(backupPath: string, forceDirect: boolean = false):
   const backupSchemaVersion = Number.isFinite(metadataVersion) && metadataVersion > 0
     ? metadataVersion
     : pragmaVersion;
+
+  // REC-01 recovery: no live DB open — validate backup and install into empty slot.
+  if (!isDatabaseOpen()) {
+    return restoreBackupWithNoLiveDatabase(backupPath, forceDirect, backupSchemaVersion, pragmaVersion, metadataStampPresent, metadataVersion, supportedVersion);
+  }
+
   const currentDb = getDatabase();
   const currentVersion = getCurrentSchemaVersion();
   // Never let restoring an older snapshot resurrect a token that was revoked
@@ -1632,6 +1836,9 @@ export function restoreBackup(backupPath: string, forceDirect: boolean = false):
         phase: 'committed', recoveryPath, dbPath,
         baselineForeignKeyViolations: [...baselineForeignKeyViolations],
       });
+      const userCount = (freshDb.prepare('SELECT COUNT(*) AS c FROM users').get() as { c: number }).c;
+      if (userCount > 0) markInstallationInitialized();
+      clearRecoveryRequired();
       return {
         success: true,
         mode: 'direct',
@@ -1727,8 +1934,12 @@ function materializeRestoreSource(sourcePath: string, livePath: string): string 
     if (openedStat.dev !== sourceStat.dev || openedStat.ino !== sourceStat.ino || openedStat.size !== sourceStat.size) {
       throw new Error('Restore source changed while it was being opened');
     }
-    const liveStat = fs.lstatSync(livePath);
-    if (openedStat.dev === liveStat.dev && openedStat.ino === liveStat.ino) throw new Error('Restore source cannot be the live database');
+    if (pathEntryExists(livePath)) {
+      const liveStat = fs.lstatSync(livePath);
+      if (openedStat.dev === liveStat.dev && openedStat.ino === liveStat.ino) {
+        throw new Error('Restore source cannot be the live database');
+      }
+    }
     const sourceBytes = fs.readFileSync(sourceFd);
     const finalStat = fs.fstatSync(sourceFd);
     if (finalStat.dev !== openedStat.dev || finalStat.ino !== openedStat.ino || finalStat.size !== openedStat.size || finalStat.mtimeMs !== openedStat.mtimeMs) {
@@ -1896,6 +2107,10 @@ function dataOnlyRestore(
       }
     }
 
+    const restoredUsers = (getDatabase().prepare('SELECT COUNT(*) AS c FROM users').get() as { c: number }).c;
+    if (restoredUsers > 0) markInstallationInitialized();
+    clearRecoveryRequired();
+
     return {
       success: true,
       mode: 'data_only',
@@ -1966,6 +2181,11 @@ export function getSchemaVersionFromBackup(backupPath: string): number | null {
 
 export function getCurrentSchemaVersion(): number {
   return db.pragma('user_version', { simple: true }) as number;
+}
+
+/** Highest schema version this build can migrate/serve (safe when no live DB). */
+export function getSupportedSchemaVersion(): number {
+  return MIGRATIONS[MIGRATIONS.length - 1]?.version ?? 0;
 }
 
 /**

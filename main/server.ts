@@ -23,12 +23,51 @@ let activePort = PORT;
 let activeListenHost: ListenHost = '127.0.0.1';
 
 /**
- * JWT verification middleware. Skips health check and auth routes (those
- * verify tokens individually). Protects all resource routes from unauthenticated
- * LAN access.
+ * REC-01: block money/business APIs while recovery is required.
+ * Fail closed if recovery-state evaluation itself throws.
  */
+export function recoveryApiProtectionMiddleware(req: Request, res: Response, next: NextFunction): void {
+  try {
+    const { isRecoveryRequired, getRecoveryReason } = require('./services/install-state');
+    if (!isRecoveryRequired()) {
+      next();
+      return;
+    }
+    if (!req.path.startsWith('/api')) {
+      next();
+      return;
+    }
+    if (req.path === '/api/health') {
+      next();
+      return;
+    }
+    if (req.path === '/api/auth/setup/status') {
+      next();
+      return;
+    }
+    if (req.path.startsWith('/api/auth/jwt-secret')) {
+      next();
+      return;
+    }
+    res.status(503).json({
+      error: 'Database recovery required',
+      recovery_required: true,
+      reason: getRecoveryReason(),
+    });
+  } catch {
+    // Fail closed: never continue into money/business routes when state is unknown.
+    res.status(503).json({
+      error: 'Database recovery state unavailable',
+      recovery_required: true,
+      reason: 'RECOVERY_STATE_UNAVAILABLE',
+    });
+  }
+}
+
 function requireAuth(req: Request, res: Response, next: NextFunction): void {
   // Only protect API routes — static files and SPA fallback must pass through
+  // JWT verification: skips health check and auth routes (those verify tokens
+  // individually). Protects all resource routes from unauthenticated LAN access.
   if (!req.path.startsWith('/api')) { next(); return; }
   // Health check — unauthenticated
   if (req.path === '/api/health') { next(); return; }
@@ -182,8 +221,23 @@ export function startServer(): Promise<void> {
     // ── Auth middleware (skips /api/health and /api/auth) ─────────────
     app.use(requireAuth);
 
+    // REC-01: block money/business APIs while recovery is required (fail closed).
+    app.use(recoveryApiProtectionMiddleware);
+
     // ── API health check ───────────────────────────────────────────────
     app.get('/api/health', (_req: Request, res: Response) => {
+      const { isRecoveryRequired, getRecoveryReason, getInstallState } = require('./services/install-state');
+      if (isRecoveryRequired()) {
+        return res.status(503).json({
+          status: 'recovery_required',
+          recovery_required: true,
+          reason: getRecoveryReason(),
+          install_state: getInstallState().state,
+          service: 'Flo Local API',
+          version: process.env.npm_package_version || '2.4.7',
+          timestamp: new Date().toISOString(),
+        });
+      }
       const db = getDbHealth();
       res.status(db.ok ? 200 : 503).json({
         status: db.ok ? 'ok' : 'error',

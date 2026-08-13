@@ -31,14 +31,23 @@ function LoginContent() {
     fetch('/api/auth/setup/status')
       .then(r => r.ok ? r.json() : null)
       .then(data => {
+        if (data?.recoveryRequired || data?.recovery_required) {
+          router.replace('/recovery');
+          return;
+        }
         if (data?.needsSetup) router.replace('/setup');
       })
       .catch(() => {});
 
     fetch('/api/health')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data && data.status !== 'ok') {
+      .then(async (r) => {
+        const data = await r.json().catch(() => null);
+        if (!data) return;
+        if (data.recovery_required || data.status === 'recovery_required') {
+          router.replace('/recovery');
+          return;
+        }
+        if (data.status !== 'ok') {
           setDbError(data.db || t('auth.dbErrorPrefix'));
         }
       })

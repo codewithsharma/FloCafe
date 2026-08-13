@@ -10,8 +10,9 @@ export interface ElectronAPI {
   // Database (desktop dialogs + Master PIN)
   backupDatabase: (pin?: string) => Promise<{ success: boolean; path?: string; error?: string }>;
   /** Optional managed backup fileName under userData/backups — never an absolute path. */
-  restoreBackup: (pin?: string, fileName?: string) => Promise<{ success: boolean; error?: string }>;
+  restoreBackup: (pin?: string, fileName?: string) => Promise<{ success: boolean; error?: string; relaunch?: boolean }>;
   getMasterPinStatus: () => Promise<{ available: boolean; isSet: boolean }>;
+  recoveryQuit: () => Promise<{ success: boolean }>;
 
   // App info
   getAppInfo: () => Promise<{

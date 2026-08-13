@@ -10,67 +10,88 @@ export function getLandingPage(): string {
   return '/pos';
 }
 
-const PUBLIC_PATHS = ['/kds', '/kds-standalone', '/auth/login', '/auth/register', '/auth/recover', '/setup'];
+const PUBLIC_PATHS = [
+  '/kds',
+  '/kds-standalone',
+  '/auth/login',
+  '/auth/register',
+  '/auth/recover',
+  '/setup',
+  '/recovery',
+];
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
   const { user, currentTenant, loading, loadFromStorage } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
-  const [needsSetup, setNeedsSetup] = useState<boolean | null>(null); // null = still checking
+  const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
+  const [recoveryRequired, setRecoveryRequired] = useState<boolean | null>(null);
 
   const isPublicPath = PUBLIC_PATHS.some(p => pathname === p || pathname?.startsWith(p + '/'));
   const isSetupPath = pathname === '/setup' || pathname?.startsWith('/setup/');
+  const isRecoveryPath = pathname === '/recovery' || pathname?.startsWith('/recovery/');
   const isKdsPath = pathname?.startsWith('/kds');
 
   useEffect(() => {
     loadFromStorage();
   }, [loadFromStorage]);
 
-  // Single effect: determine where to redirect after auth state + setup status are known
   useEffect(() => {
-    if (loading) return; // wait for auth state to load
+    if (loading) return;
 
-    // If we don't know setup status yet, fetch it
-    if (!isKdsPath && needsSetup === null) {
+    if (!isKdsPath && (needsSetup === null || recoveryRequired === null)) {
       const controller = new AbortController();
       let active = true;
       api.get('/auth/setup/status', { signal: controller.signal })
         .then(({ data }) => {
-          if (active) setNeedsSetup(data.needsSetup);
+          if (!active) return;
+          const recovering = Boolean(data.recoveryRequired || data.recovery_required);
+          setRecoveryRequired(recovering);
+          setNeedsSetup(recovering ? false : Boolean(data.needsSetup));
         })
         .catch((err) => {
           if (!active || (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))) return;
           console.error('[AuthGuard] Failed to check setup status:', err);
-          // Fail closed: do not allow normal app routes when setup state is unknown.
-          setNeedsSetup(true);
+          // Fail closed toward recovery when unknown — never invent first-run.
+          setRecoveryRequired(true);
+          setNeedsSetup(false);
         });
       return () => {
         active = false;
         controller.abort();
-      }; // wait for the result before redirecting
+      };
     }
 
-    if (needsSetup && !isSetupPath) {
+    if (recoveryRequired && !isRecoveryPath) {
+      router.push('/recovery');
+      return;
+    }
+
+    if (recoveryRequired && isSetupPath) {
+      router.push('/recovery');
+      return;
+    }
+
+    if (!recoveryRequired && needsSetup && !isSetupPath) {
       router.push('/setup');
       return;
     }
 
-    if (isPublicPath) return; // don't redirect from public paths unless setup is needed
+    if (isPublicPath) return;
 
-    // Auth loaded + setup status known + not on public path
     if (!user) {
       router.push('/auth/login');
     } else if (!currentTenant) {
       router.push('/auth/login?select_tenant=true');
     }
-  }, [loading, user, currentTenant, isPublicPath, isSetupPath, isKdsPath, needsSetup, router]);
+  }, [loading, user, currentTenant, isPublicPath, isSetupPath, isRecoveryPath, isKdsPath, needsSetup, recoveryRequired, router]);
 
-  if (isKdsPath || isSetupPath) {
+  if (isKdsPath || isSetupPath || isRecoveryPath) {
     return <>{children}</>;
   }
 
-  if (loading || needsSetup === null || needsSetup === true) {
+  if (loading || needsSetup === null || recoveryRequired === null || needsSetup === true || recoveryRequired === true) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-flo-bg">
         <div className="flex flex-col items-center gap-3">

@@ -1,5 +1,17 @@
 # Decisions
 
+## 2026-08-13 — P1.2 REC-01 security hardening (Accepted + Implemented)
+
+Final review fixes only (no redesign): (1) factory reset clears `install-state.json` **after** durable empty DB commit; recreate uses `allowCreateDespiteMarker`; failure keeps/restores marker + safety-backup rollback; (2) `recoveryApiProtectionMiddleware` fail-closed → HTTP 503 `RECOVERY_STATE_UNAVAILABLE` (never `next()` on eval failure). Behavioral tests REC01-05/06/07/13/14/15. See `p1.2-rec-01-recovery-audit.md`.
+
+## 2026-08-13 — P1.2 REC-01 fail-closed missing DB (Accepted + Implemented)
+
+Durable `userData/install-state.json` marker. Missing/empty operational DB with marker → `RECOVERY_REQUIRED` (no silent empty café). Setup blocked; money APIs 503; KDS/mDNS skipped; `/recovery` reuses Master PIN IPC restore. Factory reset clears marker after durable empty reset. Backfill only when `users > 0`. Tests: `tests/rec-01-recovery.test.ts`. See `p1.2-rec-01-recovery-audit.md`.
+
+## 2026-08-13 — P1.2 REC-01 recovery discovery (Superseded by implementation)
+
+Discovery was **YELLOW**. Implementation completed same day.
+
 ## 2026-08-13 — P1.2 Backup→destroy→restore continuity (Accepted + Implemented)
 
 Continuity E2E landed. Score **76/100 — GREEN WITH CONDITIONS**. Suite `tests/backup-restore-continuity.test.ts` (wired into `npm run test:backup`) proves fixture → backup → destroy → restore for orders/bills/payments/refunds/FIN-01/shifts/day-close/audits + Scenario A/B JWT. Minimal prod fix: corrupt/non-SQLite backup open in `restoreBackup` returns `{ success: false }` without touching live DB. **REC-01** (missing `flo.db` → silent empty DB) documented/tested and **not changed**. No JWT/FIN-01/backup-format redesign. See `docs/15-project-management/p1.2-backup-restore-continuity.md`.
