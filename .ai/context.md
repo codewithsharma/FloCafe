@@ -70,4 +70,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 4.13 table merge discovery COMPLETE.** Autonomous pipeline continues at 4.14 (service charge **ADR only**). Do **not** implement merge. Do **not** wire service charge.
+**Phase 4.14 service charge ADR Proposed (paper COMPLETE).** Autonomous pipeline continues at 4.15 (wastage). Do **not** wire service charge. Human Accept is required before a future charging phase.

@@ -10,18 +10,18 @@ This roadmap is derived from repository evidence (Phase 4 discovery, feature-lis
 
 ## Roadmap table
 
-| Phase | Capability                                     | Vertical                             | Risk                         | Schema                         | Money                              | Status       |
-| ----: | ---------------------------------------------- | ------------------------------------ | ---------------------------- | ------------------------------ | ---------------------------------- | ------------ |
-|   4.6 | ADR-013 Retail product variants / SKU identity | Retail (shared catalog identity)     | Medium (policy)              | NO now (ADR may require later) | NO                                 | **COMPLETE** |
-|   4.7 | Restaurant 86 (sold-out) workflow              | Restaurant first; shared `is_active` | Low                          | NO                             | NO                                 | **COMPLETE** |
-|   4.8 | Reports multi-day range picker                 | Shared                               | Low                          | NO                             | Read-only                          | **COMPLETE** |
-|   4.9 | Customer deactivate lifecycle                  | Shared                               | Low                          | NO                             | NO                                 | **COMPLETE** |
-|  4.10 | FIN-01 collectible outstanding display         | Shared                               | Medium (money UX)            | NO                             | Display only — no writes           | **COMPLETE** |
-|  4.11 | Inventory on-hand valuation report             | Shared                               | Low                          | NO                             | NO                                 | **COMPLETE** |
-|  4.12 | Retail POS fulfillment-type honesty            | Retail                               | Low                          | NO                             | NO                                 | **COMPLETE** |
-|  4.13 | Restaurant table merge discovery               | Restaurant                           | Medium                       | TBD                            | TBD (open orders only)             | **COMPLETE** |
-|  4.14 | Configurable service charge ADR                | Restaurant (tax infra shared)        | High                         | TBD                            | YES — ADR required                 | PENDING      |
-|  4.15 | Wastage stock decrease action                  | Shared                               | Low–medium (inventory write) | NO                             | Inventory write; not tender/refund | PENDING      |
+| Phase | Capability                                     | Vertical                             | Risk                         | Schema                         | Money                              | Status                                 |
+| ----: | ---------------------------------------------- | ------------------------------------ | ---------------------------- | ------------------------------ | ---------------------------------- | -------------------------------------- |
+|   4.6 | ADR-013 Retail product variants / SKU identity | Retail (shared catalog identity)     | Medium (policy)              | NO now (ADR may require later) | NO                                 | **COMPLETE**                           |
+|   4.7 | Restaurant 86 (sold-out) workflow              | Restaurant first; shared `is_active` | Low                          | NO                             | NO                                 | **COMPLETE**                           |
+|   4.8 | Reports multi-day range picker                 | Shared                               | Low                          | NO                             | Read-only                          | **COMPLETE**                           |
+|   4.9 | Customer deactivate lifecycle                  | Shared                               | Low                          | NO                             | NO                                 | **COMPLETE**                           |
+|  4.10 | FIN-01 collectible outstanding display         | Shared                               | Medium (money UX)            | NO                             | Display only — no writes           | **COMPLETE**                           |
+|  4.11 | Inventory on-hand valuation report             | Shared                               | Low                          | NO                             | NO                                 | **COMPLETE**                           |
+|  4.12 | Retail POS fulfillment-type honesty            | Retail                               | Low                          | NO                             | NO                                 | **COMPLETE**                           |
+|  4.13 | Restaurant table merge discovery               | Restaurant                           | Medium                       | TBD                            | TBD (open orders only)             | **COMPLETE**                           |
+|  4.14 | Configurable service charge ADR                | Restaurant (tax infra shared)        | High                         | TBD                            | YES — ADR required                 | **COMPLETE** (paper; ADR-014 Proposed) |
+|  4.15 | Wastage stock decrease action                  | Shared                               | Low–medium (inventory write) | NO                             | Inventory write; not tender/refund | PENDING                                |
 
 ---
 

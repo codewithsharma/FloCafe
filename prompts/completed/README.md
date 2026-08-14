@@ -8,6 +8,7 @@
 - [phase-4.11.md](phase-4.11.md) — Inventory on-hand valuation report
 - [phase-4.12.md](phase-4.12.md) — Retail POS fulfillment-type honesty
 - [phase-4.13.md](phase-4.13.md) — Restaurant table merge discovery
+- [phase-4.14.md](phase-4.14.md) — Service charge ADR-014 (Proposed)
 
 When a phase in `prompts/phases/` is genuinely complete (all gates in that prompt’s Completion Criteria), either:
 

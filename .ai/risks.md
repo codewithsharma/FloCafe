@@ -35,7 +35,7 @@
 - ⚠️ RISK: Void + full-order cancel stock over-restore — **CLOSED in Phase 3.4** (skip `voided` / `void_adjustment` on restore; expect stock 8).
 - 🔴 DEBT: Extraction readiness: Order LOW–MEDIUM; Payment tender MEDIUM; Inventory/Tax MEDIUM; Product HIGH; POS/KDS HIGH — see `extraction-readiness.md`. Phase 2 COMPLETE; extraction is Phase 3.
 - ⚠️ RISK: **Accounting CSV UTC boundary** — export uses UTC calendar days (same as Reports `/summary`); day-close uses tenant TZ. Phase 4.8 added start/end date UI; 93-day cap unchanged.
-- ⚠️ RISK: Table merge is **NOT BUILT**. Transfer 409s if the target has an active order. Combining billed checks is a money-path ADR. Do not implement merge from this discovery.
+- ⚠️ RISK: **ADR-014 service charge Proposed** — tax kind exists; amount columns do not. Do not persist a non-zero service charge until human Accept + v76 wiring phase. Tips remain out of scope.
 - ⚠️ RISK: Tax discount scale (Math.round money path) differs from preview Decimal scale — intentional compatibility; do not unify without golden tests + product decision. Tax-packs and settings tax HTTP intentionally left outside `routes/tax.ts`. Open-order charge tax may recompute from live pack rates using frozen category IDs (paid bills unchanged — characterized in Phase 2.13).
 
 ## Debt (do not giant-rewrite)
