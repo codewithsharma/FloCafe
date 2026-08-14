@@ -16,6 +16,8 @@ import {
   getModuleDependencies,
   getRouteModuleMap,
   OPERVIA_RESTAURANT_VERTICAL_ID,
+  ACTIVE_VERTICAL_ID,
+  resolveActiveVerticalIdFromConfigModule,
 } from '../main/modules';
 
 function main(): void {
@@ -31,10 +33,28 @@ function main(): void {
   assert.equal(unique.size, ids.length, 'module IDs must be unique');
 
   for (const required of [
-    'core', 'customer', 'product', 'category', 'inventory', 'pos', 'order',
-    'payment', 'refund', 'tax', 'shift', 'staff', 'loyalty', 'reporting',
-    'printing', 'notification', 'backup', 'tables', 'kitchen', 'kds',
-    'menu', 'addons',
+    'core',
+    'customer',
+    'product',
+    'category',
+    'inventory',
+    'pos',
+    'order',
+    'payment',
+    'refund',
+    'tax',
+    'shift',
+    'staff',
+    'loyalty',
+    'reporting',
+    'printing',
+    'notification',
+    'backup',
+    'tables',
+    'kitchen',
+    'kds',
+    'menu',
+    'addons',
   ] as const) {
     assert.ok(ids.includes(required), `registry includes ${required}`);
     const mod = getModule(required);
@@ -51,9 +71,31 @@ function main(): void {
 
   // ── Restaurant vertical ───────────────────────────────────────────
   assert.equal(getActiveVerticalId(), OPERVIA_RESTAURANT_VERTICAL_ID);
+  // Turbopack may resolve registry's lazy require('./vertical-config') to a module
+  // that does not export getCommittedActiveVerticalId → "t is not a function" in UI.
+  assert.equal(
+    resolveActiveVerticalIdFromConfigModule({}),
+    ACTIVE_VERTICAL_ID,
+    'missing getCommittedActiveVerticalId falls back (browser mis-resolve)',
+  );
+  assert.equal(
+    resolveActiveVerticalIdFromConfigModule(null),
+    ACTIVE_VERTICAL_ID,
+    'null config module falls back',
+  );
+  assert.equal(
+    resolveActiveVerticalIdFromConfigModule({
+      getCommittedActiveVerticalId: () => 'retail',
+    }),
+    'retail',
+    'valid committed resolver is used',
+  );
   const vertical = getVerticalDefinition();
   assert.equal(vertical.id, 'restaurant');
-  assert.ok(vertical.name.toLowerCase().includes('restaurant'), 'vertical name mentions Restaurant');
+  assert.ok(
+    vertical.name.toLowerCase().includes('restaurant'),
+    'vertical name mentions Restaurant',
+  );
   assert.ok(Array.isArray(vertical.enabledModules));
   assert.ok(vertical.enabledModules.includes('core'));
   assert.ok(vertical.enabledModules.includes('customer'));
@@ -80,7 +122,10 @@ function main(): void {
   // ── Dependencies (metadata only) ──────────────────────────────────
   const kdsDeps = getModuleDependencies('kds');
   assert.ok(kdsDeps.includes('order'), 'kds depends on order');
-  assert.ok(kdsDeps.includes('kitchen') || kdsDeps.includes('product'), 'kds has kitchen or product dep');
+  assert.ok(
+    kdsDeps.includes('kitchen') || kdsDeps.includes('product'),
+    'kds has kitchen or product dep',
+  );
   const tablesDeps = getModuleDependencies('tables');
   assert.ok(tablesDeps.includes('order'), 'tables depends on order');
   console.log('   ✓ dependency metadata');
@@ -99,8 +144,12 @@ function main(): void {
 
   // ── Route map (descriptive) ───────────────────────────────────────
   const routeMap = getRouteModuleMap();
-  assert.ok(routeMap['/api/customers'] === 'customer' || routeMap['/customers'] === 'customer'
-    || Object.values(routeMap).includes('customer'), 'route map mentions customer');
+  assert.ok(
+    routeMap['/api/customers'] === 'customer' ||
+      routeMap['/customers'] === 'customer' ||
+      Object.values(routeMap).includes('customer'),
+    'route map mentions customer',
+  );
   assert.ok(Object.values(routeMap).includes('kds'), 'route map mentions kds');
   console.log('   ✓ descriptive route map');
 

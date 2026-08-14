@@ -83,7 +83,6 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!isOwner || !isModuleEnabled('inventory', verticalId)) {
-      setLowStockCount(0);
       return;
     }
     const controller = new AbortController();

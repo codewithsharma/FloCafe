@@ -23,9 +23,13 @@ Module._load = function (request: string, parent: unknown, isMain: boolean) {
 };
 
 const {
-  initTestDb, startServer, seedOwnerUser,
-  assert, assertEqual,
-  getResults, closeDatabase,
+  initTestDb,
+  startServer,
+  seedOwnerUser,
+  assert,
+  assertEqual,
+  getResults,
+  closeDatabase,
 } = require('./helpers/test-setup');
 
 const { registerRoutes } = require('../main/routes/index');
@@ -46,10 +50,7 @@ const {
 
 const ENV_KEY = ACTIVE_VERTICAL_ENV_KEY as string;
 
-function withEnv(
-  value: string | undefined,
-  fn: () => void,
-): void {
+function withEnv(value: string | undefined, fn: () => void): void {
   const prev = process.env[ENV_KEY];
   const had = Object.prototype.hasOwnProperty.call(process.env, ENV_KEY);
   try {
@@ -75,14 +76,19 @@ function expectCompositionError(fn: () => void, label: string): void {
   try {
     fn();
   } catch (err: any) {
-    threw = err instanceof CompositionValidationError
-      || err?.name === 'CompositionValidationError'
-      || /fail-closed|unknown vertical|empty/i.test(String(err?.message || ''));
+    threw =
+      err instanceof CompositionValidationError ||
+      err?.name === 'CompositionValidationError' ||
+      /fail-closed|unknown vertical|empty/i.test(String(err?.message || ''));
   }
   assert(threw, label);
 }
 
-async function probeStatus(baseUrl: string, urlPath: string, headers: Record<string, string> = {}): Promise<number> {
+async function probeStatus(
+  baseUrl: string,
+  urlPath: string,
+  headers: Record<string, string> = {},
+): Promise<number> {
   const response = await (globalThis as any).fetch(baseUrl + urlPath, {
     headers: { 'Content-Type': 'application/json', ...headers },
   });
@@ -94,7 +100,11 @@ async function main() {
   console.log('='.repeat(60));
 
   assertEqual(ENV_KEY, 'ACTIVE_VERTICAL_ID', 'config env key is ACTIVE_VERTICAL_ID');
-  assertEqual(ACTIVE_VERTICAL_ID, OPERVIA_RESTAURANT_VERTICAL_ID, 'compile-time default constant remains restaurant');
+  assertEqual(
+    ACTIVE_VERTICAL_ID,
+    OPERVIA_RESTAURANT_VERTICAL_ID,
+    'compile-time default constant remains restaurant',
+  );
 
   // ── Test 1 — Default (unset) ──────────────────────────────────────────
   console.log('\nTest 1 — unset env → restaurant');
@@ -118,8 +128,21 @@ async function main() {
     assert(plan.mounted.includes('/api/products'), 'restaurant mounts core products');
   });
 
+  // ── Test 3b — Production retail ───────────────────────────────────────
+  console.log('\nTest 3b — ACTIVE_VERTICAL_ID=retail (production)');
+  withEnv('retail', () => {
+    assertEqual(resolveActiveVerticalId(), 'retail', 'production retail selected');
+    commitActiveVerticalFromEnv();
+    assertEqual(getActiveVerticalId(), 'retail', 'active id is retail');
+    const plan = getRouteMountPlan(getActiveVerticalId());
+    assert(plan.mounted.includes('/api/products'), 'retail mounts products');
+    assert(!plan.mounted.includes('/api/tables'), 'retail omits tables');
+  });
+
   // ── Test 3 — Safe retail-test ─────────────────────────────────────────
-  console.log('\nTest 3 — ACTIVE_VERTICAL_ID=retail-test (safe composition, not production Retail)');
+  console.log(
+    '\nTest 3 — ACTIVE_VERTICAL_ID=retail-test (safe composition, not production Retail)',
+  );
   withEnv('retail-test', () => {
     assertEqual(resolveActiveVerticalId(), OPERVIA_RETAIL_TEST_VERTICAL_ID, 'retail-test selected');
     commitActiveVerticalFromEnv();
@@ -138,31 +161,19 @@ async function main() {
       () => resolveActiveVerticalId(),
       'unknown vertical throws CompositionValidationError',
     );
-    expectCompositionError(
-      () => commitActiveVerticalFromEnv(),
-      'commit unknown fails closed',
-    );
+    expectCompositionError(() => commitActiveVerticalFromEnv(), 'commit unknown fails closed');
   });
 
   // ── Test 5 — Malformed / empty ────────────────────────────────────────
   console.log('\nTest 5 — empty / whitespace fail closed (not default)');
   withEnv('', () => {
-    expectCompositionError(
-      () => resolveActiveVerticalId(),
-      'empty string fails closed',
-    );
+    expectCompositionError(() => resolveActiveVerticalId(), 'empty string fails closed');
   });
   withEnv('   ', () => {
-    expectCompositionError(
-      () => resolveActiveVerticalId(),
-      'whitespace-only fails closed',
-    );
+    expectCompositionError(() => resolveActiveVerticalId(), 'whitespace-only fails closed');
   });
   withEnv('unknown', () => {
-    expectCompositionError(
-      () => resolveActiveVerticalId(),
-      'unknown fails closed',
-    );
+    expectCompositionError(() => resolveActiveVerticalId(), 'unknown fails closed');
   });
 
   // ── Diagnostics ───────────────────────────────────────────────────────
@@ -239,9 +250,10 @@ async function main() {
       listenReached = true;
       await startServer(app);
     } catch (err: any) {
-      threw = err instanceof CompositionValidationError
-        || err?.name === 'CompositionValidationError'
-        || /unknown vertical|fail-closed/i.test(String(err?.message || ''));
+      threw =
+        err instanceof CompositionValidationError ||
+        err?.name === 'CompositionValidationError' ||
+        /unknown vertical|fail-closed/i.test(String(err?.message || ''));
     } finally {
       resetActiveVerticalResolutionForTests();
       if (had) process.env[ENV_KEY] = prev;
@@ -256,8 +268,12 @@ async function main() {
     path.join(__dirname, '../main/modules/vertical-config.ts'),
     'utf8',
   );
-  assert(!/function\s+switchVertical|setVertical\s*\(|changeVertical|reloadVertical/.test(verticalConfigSrc),
-    'no runtime vertical switch helpers');
+  assert(
+    !/function\s+switchVertical|setVertical\s*\(|changeVertical|reloadVertical/.test(
+      verticalConfigSrc,
+    ),
+    'no runtime vertical switch helpers',
+  );
 
   closeDatabase();
 

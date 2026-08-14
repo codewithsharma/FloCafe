@@ -11,6 +11,11 @@ import {
   VERTICALS,
 } from './verticals';
 import {
+  OPERVIA_RETAIL_VERTICAL,
+  OPERVIA_RETAIL_VERTICAL_ID,
+  OPERVIA_RETAIL_ENABLED_MODULES,
+} from './retail-vertical';
+import {
   OPERVIA_RETAIL_TEST_ENABLED_MODULES,
   OPERVIA_RETAIL_TEST_VERTICAL,
   OPERVIA_RETAIL_TEST_VERTICAL_ID,
@@ -35,6 +40,9 @@ export {
   OPERVIA_RESTAURANT_VERTICAL,
   ACTIVE_VERTICAL_ID,
   VERTICALS,
+  OPERVIA_RETAIL_VERTICAL_ID,
+  OPERVIA_RETAIL_VERTICAL,
+  OPERVIA_RETAIL_ENABLED_MODULES,
   OPERVIA_RETAIL_TEST_VERTICAL_ID,
   OPERVIA_RETAIL_TEST_VERTICAL,
   OPERVIA_RETAIL_TEST_ENABLED_MODULES,
@@ -70,12 +78,33 @@ export function getModule(id: string): OperviaModule | undefined {
   return getCatalogModule(id);
 }
 
+/**
+ * Resolve active vertical from a vertical-config-like module export.
+ * Turbopack may mis-resolve registry's lazy `require('./vertical-config')` to a
+ * sibling chunk that lacks `getCommittedActiveVerticalId` — callers must not
+ * assume the named export exists (renderer crash: "t is not a function").
+ */
+export function resolveActiveVerticalIdFromConfigModule(
+  verticalConfig: Partial<{ getCommittedActiveVerticalId: () => string }> | null | undefined,
+  fallback: string = ACTIVE_VERTICAL_ID,
+): string {
+  if (verticalConfig && typeof verticalConfig.getCommittedActiveVerticalId === 'function') {
+    return verticalConfig.getCommittedActiveVerticalId();
+  }
+  return fallback;
+}
+
 export function getActiveVerticalId(): string {
   // Phase 3.2: prefer committed deploy/start resolution (env), else resolve without lock.
   // Lazy require avoids load-time cycle with vertical-config → registry.
-  const { getCommittedActiveVerticalId } =
-    require('./vertical-config') as typeof import('./vertical-config');
-  return getCommittedActiveVerticalId();
+  try {
+    const verticalConfig = require('./vertical-config') as Partial<
+      typeof import('./vertical-config')
+    >;
+    return resolveActiveVerticalIdFromConfigModule(verticalConfig);
+  } catch {
+    return ACTIVE_VERTICAL_ID;
+  }
 }
 
 /** Resolve a known production or synthetic vertical; throw if unknown. */
@@ -144,15 +173,16 @@ export function getRouteModuleMap(): Record<string, ModuleId> {
 
 /**
  * Map Phase 1 business_type setting to a vertical id.
- * Synthetic fixtures (e.g. retail-test) are never selected from business_type.
- * Unknown types fall back to the active production vertical (restaurant).
+ * Production `retail` maps to retail. Synthetic fixtures (retail-test) are never
+ * selected from business_type. Unknown types fall back to compile-time default.
  */
 export function verticalIdForBusinessType(businessType: string | null | undefined): string {
   const normalized = String(businessType || 'restaurant')
     .trim()
     .toLowerCase();
   if (normalized === 'restaurant') return OPERVIA_RESTAURANT_VERTICAL_ID;
-  // Never map tenant business_type onto synthetic / future verticals.
+  if (normalized === 'retail') return OPERVIA_RETAIL_VERTICAL_ID;
+  // Never map tenant business_type onto synthetic fixtures.
   return ACTIVE_VERTICAL_ID;
 }
 

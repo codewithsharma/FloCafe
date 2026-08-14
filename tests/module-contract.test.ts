@@ -159,9 +159,12 @@ function main(): void {
   console.log('   ✓ invalid definitions soft-reported (non-throwing)');
 
   // ── Vertical composition ────────────────────────────────────────────────
-  assert.equal(VERTICALS.length, 1);
-  assert.equal(VERTICALS[0]!.id, 'restaurant');
+  assert.equal(VERTICALS.length, 2);
+  assert.ok(VERTICALS.some((v) => v.id === 'restaurant'));
+  assert.ok(VERTICALS.some((v) => v.id === 'retail'));
+  assert.ok(!VERTICALS.some((v) => v.id === 'retail-test'));
   assert.equal(validateVerticalDependencies('restaurant').valid, true);
+  assert.equal(validateVerticalDependencies('retail').valid, true);
   assert.equal(validateVerticalDependencies('retail-test').valid, true);
   for (const id of OPERVIA_RESTAURANT_ENABLED_MODULES) {
     assert.ok(getModule(id), `restaurant module ${id}`);
@@ -170,7 +173,7 @@ function main(): void {
     assert.ok(getModule(id), `retail-test module ${id}`);
   }
   assert.ok(SYNTHETIC_VERTICALS.some((v) => v.id === 'retail-test'));
-  console.log('   ✓ restaurant + retail-test compositions valid');
+  console.log('   ✓ restaurant + retail + retail-test compositions valid');
 
   // ── Composition snapshot unchanged for HTTP surface ─────────────────────
   const snap = getCompositionSnapshot();

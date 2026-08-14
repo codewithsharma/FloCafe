@@ -15,11 +15,8 @@ import { useShift } from '@/hooks/useShift';
 import { canManageShifts, canForceCloseShifts } from '@/lib/shifts';
 import ShiftStatusSection from '@/components/shifts/ShiftStatusSection';
 import UpdateBadge from '@/components/layout/UpdateBadge';
-import {
-  filterNavItems,
-  isNavItemActive,
-  type FloNavItem,
-} from '@/config/navigation';
+import { filterNavItems, isNavItemActive, type FloNavItem } from '@/config/navigation';
+import { usePlatformComposition } from '@/hooks/usePlatformComposition';
 import {
   Sidebar,
   SidebarContent,
@@ -57,9 +54,7 @@ export default function FloSidebar() {
   const { t } = useI18n();
   const { confirm, ConfirmDialog } = useConfirm();
   const [emailNeedsAttention, setEmailNeedsAttention] = useState(false);
-  const [online, setOnline] = useState(
-    typeof navigator !== 'undefined' ? navigator.onLine : true,
-  );
+  const [online, setOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const terminalId = useMemo(() => {
     if (typeof window === 'undefined') return null;
     return getClientTerminalId();
@@ -67,6 +62,8 @@ export default function FloSidebar() {
 
   const role = currentTenant?.role || 'cashier';
   const businessType = currentTenant?.business_type || 'restaurant';
+  const { data: composition } = usePlatformComposition(!!currentTenant);
+  const compositionVerticalId = composition?.verticalId;
   const canManage = canManageShifts(role);
   const canForceClose = canForceCloseShifts(role);
   const shiftState = useShift();
@@ -84,8 +81,9 @@ export default function FloSidebar() {
         tablesRequired,
         kdsEnabled,
         whatsappEnabled,
+        verticalId: compositionVerticalId,
       }),
-    [role, businessType, tablesRequired, kdsEnabled, whatsappEnabled],
+    [role, businessType, tablesRequired, kdsEnabled, whatsappEnabled, compositionVerticalId],
   );
 
   const primaryItems = navItems.filter((i) => i.section === 'primary');
@@ -106,17 +104,22 @@ export default function FloSidebar() {
 
   useEffect(() => {
     if (!currentTenant) return;
-    api.get('/settings/business')
+    api
+      .get('/settings/business')
       .then((res) => {
-        setTablesRequired(typeof res.data.tables_required === 'boolean' ? res.data.tables_required : true);
+        setTablesRequired(
+          typeof res.data.tables_required === 'boolean' ? res.data.tables_required : true,
+        );
       })
-      .catch(() => { });
-    api.get('/settings/kds_enabled')
+      .catch(() => {});
+    api
+      .get('/settings/kds_enabled')
       .then((res) => setKdsEnabled(res.data.setting?.value !== 'false'))
-      .catch(() => { });
-    api.get('/whatsapp/status')
+      .catch(() => {});
+    api
+      .get('/whatsapp/status')
       .then((res) => setWhatsappEnabled(!!res.data?.enabled))
-      .catch(() => { });
+      .catch(() => {});
   }, [currentTenant, setTablesRequired, setKdsEnabled, setWhatsappEnabled]);
 
   useEffect(() => {
@@ -129,10 +132,14 @@ export default function FloSidebar() {
           api.get('/settings/cloud'),
         ]);
         if (!active) return;
-        const deletionStatus = accountResponse.data?.deletion_request?.status || cloudResponse.data?.cloud_deletion_status;
+        const deletionStatus =
+          accountResponse.data?.deletion_request?.status ||
+          cloudResponse.data?.cloud_deletion_status;
         setEmailNeedsAttention(
-          (accountResponse.data?.cloud_account_available !== false && Boolean(accountResponse.data?.email) && !accountResponse.data?.verified)
-          || ['pending', 'processing', 'failed'].includes(deletionStatus),
+          (accountResponse.data?.cloud_account_available !== false &&
+            Boolean(accountResponse.data?.email) &&
+            !accountResponse.data?.verified) ||
+            ['pending', 'processing', 'failed'].includes(deletionStatus),
         );
       } catch {
         if (active) setEmailNeedsAttention(false);
@@ -193,10 +200,7 @@ export default function FloSidebar() {
             <StatusBadge variant={online ? 'success' : 'danger'} dot>
               {online ? t('flo.shell.online') : t('flo.shell.offline')}
             </StatusBadge>
-            <span
-              className="truncate tabular-nums"
-              title={terminalId || undefined}
-            >
+            <span className="truncate tabular-nums" title={terminalId || undefined}>
               {t('flo.shell.terminal')}: {truncateTerminalId(terminalId)}
             </span>
           </div>
@@ -206,17 +210,13 @@ export default function FloSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
-              {primaryItems.map(renderNavLink)}
-            </SidebarMenu>
+            <SidebarMenu>{primaryItems.map(renderNavLink)}</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
         {secondaryItems.length > 0 ? (
           <SidebarGroup>
             <SidebarGroupContent>
-              <SidebarMenu>
-                {secondaryItems.map(renderNavLink)}
-              </SidebarMenu>
+              <SidebarMenu>{secondaryItems.map(renderNavLink)}</SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         ) : null}

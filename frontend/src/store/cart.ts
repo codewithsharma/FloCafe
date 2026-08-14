@@ -11,12 +11,28 @@ interface CartState {
   deliveryAddress: string;
   orderNotes: string;
 
-  addItem: (product: Product, quantity?: number, addons?: Addon[], specialInstructions?: string) => void;
-  updateItemDetails: (cartItemId: string, quantity: number, addons: Addon[], specialInstructions: string) => void;
+  addItem: (
+    product: Product,
+    quantity?: number,
+    addons?: Addon[],
+    specialInstructions?: string,
+  ) => void;
+  updateItemDetails: (
+    cartItemId: string,
+    quantity: number,
+    addons: Addon[],
+    specialInstructions: string,
+  ) => void;
   removeItem: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
-  loadItems: (items: CartItem[], tableId: string | null, customerId: number | string | null, guestCount: number, orderNotes?: string) => void;
+  loadItems: (
+    items: CartItem[],
+    tableId: string | null,
+    customerId: number | string | null,
+    guestCount: number,
+    orderNotes?: string,
+  ) => void;
   setOrderType: (type: CartState['orderType']) => void;
   setTableId: (id: string | null) => void;
   setCustomerId: (id: number | string | null) => void;
@@ -29,7 +45,11 @@ interface CartState {
   itemCount: () => number;
 }
 
-function generateCartItemId(productId: number | string, addons: Addon[], specialInstructions: string): string {
+function generateCartItemId(
+  productId: number | string,
+  addons: Addon[],
+  specialInstructions: string,
+): string {
   const parts = [String(productId)];
   if (addons.length > 0) {
     const addonStr = [...addons]
@@ -61,13 +81,14 @@ export const useCartStore = create<CartState>((set, get) => ({
 
     if (existing) {
       set({
-        items: items.map((i) =>
-          i.id === itemId ? { ...i, quantity: i.quantity + quantity } : i
-        ),
+        items: items.map((i) => (i.id === itemId ? { ...i, quantity: i.quantity + quantity } : i)),
       });
     } else {
       set({
-        items: [...items, { id: itemId, product, quantity, addons, special_instructions: specialInstructions }],
+        items: [
+          ...items,
+          { id: itemId, product, quantity, addons, special_instructions: specialInstructions },
+        ],
       });
     }
   },
@@ -81,7 +102,9 @@ export const useCartStore = create<CartState>((set, get) => ({
     if (newId === cartItemId) {
       set({
         items: items.map((i) =>
-          i.id === cartItemId ? { ...i, quantity, addons, special_instructions: specialInstructions } : i
+          i.id === cartItemId
+            ? { ...i, quantity, addons, special_instructions: specialInstructions }
+            : i,
         ),
       });
       return;
@@ -98,7 +121,9 @@ export const useCartStore = create<CartState>((set, get) => ({
     } else {
       set({
         items: items.map((i) =>
-          i.id === cartItemId ? { ...i, id: newId, quantity, addons, special_instructions: specialInstructions } : i
+          i.id === cartItemId
+            ? { ...i, id: newId, quantity, addons, special_instructions: specialInstructions }
+            : i,
         ),
       });
     }
@@ -114,21 +139,31 @@ export const useCartStore = create<CartState>((set, get) => ({
       return;
     }
     set({
-      items: get().items.map((i) =>
-        i.id === cartItemId ? { ...i, quantity } : i
-      ),
+      items: get().items.map((i) => (i.id === cartItemId ? { ...i, quantity } : i)),
     });
   },
 
-  clearCart: () => {
-    set({ items: [], tableId: null, customerId: null, customer: null, guestCount: 1, orderType: 'dine_in', deliveryAddress: '', orderNotes: '' });
-  },
+  clearCart: () =>
+    set((state) => ({
+      items: [],
+      tableId: null,
+      customerId: null,
+      customer: null,
+      guestCount: 1,
+      orderType: state.orderType,
+      deliveryAddress: state.orderType === 'delivery' ? state.deliveryAddress : '',
+      orderNotes: '',
+    })),
 
   loadItems: (items, tableId, customerId, guestCount, orderNotes) => {
     set({ items, tableId, customerId, guestCount, orderNotes: orderNotes || '' });
   },
 
-  setOrderType: (type) => set((state) => ({ orderType: type, deliveryAddress: type !== 'delivery' ? '' : state.deliveryAddress })),
+  setOrderType: (type) =>
+    set((state) => ({
+      orderType: type,
+      deliveryAddress: type !== 'delivery' ? '' : state.deliveryAddress,
+    })),
   setTableId: (id) => set({ tableId: id }),
   setCustomerId: (id) => set({ customerId: id }),
   setCustomer: (customer) => set({ customer, customerId: customer?.id ?? null }),
@@ -140,7 +175,10 @@ export const useCartStore = create<CartState>((set, get) => ({
     return get().items.reduce((sum, item) => {
       const itemPrice = Number(item.product?.price) || 0;
       const itemQty = Number(item.quantity) || 1;
-      const addonTotal = (item.addons || []).reduce((a, addon) => a + (Number(addon.price) || 0) * (Number(addon.quantity) || 1), 0);
+      const addonTotal = (item.addons || []).reduce(
+        (a, addon) => a + (Number(addon.price) || 0) * (Number(addon.quantity) || 1),
+        0,
+      );
       return sum + (itemPrice + addonTotal) * itemQty;
     }, 0);
   },

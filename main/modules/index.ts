@@ -1,5 +1,5 @@
 /**
- * Opervia module registry public surface (Phase 2.1–2.2 + Phase 3.1 remount).
+ * Opervia module registry public surface (Phase 2.1–3.3).
  */
 export {
   MODULE_CATALOG,
@@ -8,6 +8,9 @@ export {
   OPERVIA_RESTAURANT_VERTICAL,
   ACTIVE_VERTICAL_ID,
   VERTICALS,
+  OPERVIA_RETAIL_VERTICAL_ID,
+  OPERVIA_RETAIL_VERTICAL,
+  OPERVIA_RETAIL_ENABLED_MODULES,
   OPERVIA_RETAIL_TEST_VERTICAL_ID,
   OPERVIA_RETAIL_TEST_VERTICAL,
   OPERVIA_RETAIL_TEST_ENABLED_MODULES,
@@ -15,6 +18,7 @@ export {
   listModules,
   getModule,
   getActiveVerticalId,
+  resolveActiveVerticalIdFromConfigModule,
   getVerticalDefinition,
   resolveKnownVertical,
   getEnabledModules,
@@ -68,8 +72,9 @@ export {
   logStartupCompositionIfAppropriate,
 } from './vertical-config';
 
+export { OPERVIA_SHARED_COMMERCE_MODULES } from './shared-commerce-modules';
 export { OPERVIA_RESTAURANT_ENABLED_MODULES } from './verticals';
-// Synthetic retail-test is re-exported via registry (not production VERTICALS).
+// Production retail in VERTICALS; synthetic retail-test in SYNTHETIC_VERTICALS.
 
 export type {
   ModuleId,

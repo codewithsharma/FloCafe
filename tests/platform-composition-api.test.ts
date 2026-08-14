@@ -24,7 +24,12 @@ const jwt = require('jsonwebtoken');
 const nodeAssert = require('node:assert/strict');
 const request = require('supertest');
 const {
-  initTestDb, createApp, assert, assertEqual, closeDatabase, now,
+  initTestDb,
+  createApp,
+  assert,
+  assertEqual,
+  closeDatabase,
+  now,
 } = require('./helpers/test-setup');
 
 const { platformRoutes } = require('../main/routes/platform');
@@ -35,15 +40,20 @@ const {
 } = require('../main/modules');
 
 function seedUser(db: any, id: string, role: string, email: string) {
-  db.prepare(`
+  db.prepare(
+    `
     INSERT OR REPLACE INTO users (id, name, email, password, role, pin_hash, is_active, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)
-  `).run(
-    id, `${role} user`, email,
+  `,
+  ).run(
+    id,
+    `${role} user`,
+    email,
     bcrypt.hashSync('testpass123', 10),
     role,
     bcrypt.hashSync('1234', 10),
-    now(), now(),
+    now(),
+    now(),
   );
   const token = jwt.sign({ userId: id, email, role }, getJWTSecret(), { expiresIn: '1h' });
   return { Authorization: `Bearer ${token}` };
@@ -85,11 +95,9 @@ async function main() {
     assertEqual(noAuth.body.error, 'Authentication required', 'no auth message');
 
     console.log('\n2. Invalid token → 401');
-    const badTokenValue = jwt.sign(
-      { userId: 'bad-user', role: 'owner' },
-      'wrong-secret-for-test',
-      { expiresIn: '1h' },
-    );
+    const badTokenValue = jwt.sign({ userId: 'bad-user', role: 'owner' }, 'wrong-secret-for-test', {
+      expiresIn: '1h',
+    });
     const badToken = await request(app)
       .get('/api/platform/composition')
       .set('Authorization', `Bearer ${badTokenValue}`);
@@ -97,25 +105,33 @@ async function main() {
     assertEqual(badToken.body.error, 'Invalid or expired token', 'bad token message');
 
     console.log('\n3. Authorized roles → 200');
-    for (const [label, auth] of [['owner', ownerAuth], ['manager', managerAuth]] as const) {
+    for (const [label, auth] of [
+      ['owner', ownerAuth],
+      ['manager', managerAuth],
+    ] as const) {
       const res = await request(app).get('/api/platform/composition').set(auth);
       assertEqual(res.status, 200, `${label} status`);
       assertEqual(res.body.verticalId, 'restaurant', `${label} verticalId`);
       assertEqual(res.body.verticalName, 'Opervia Restaurant', `${label} verticalName`);
       nodeAssert.equal(res.body.diagnostics.valid, true, `${label} diagnostics.valid`);
       nodeAssert.ok(Array.isArray(res.body.enabledModules), `${label} enabledModules array`);
-      assertEqual(res.body.enabledModules.length, OPERVIA_RESTAURANT_ENABLED_MODULES.length, `${label} module count`);
+      assertEqual(
+        res.body.enabledModules.length,
+        OPERVIA_RESTAURANT_ENABLED_MODULES.length,
+        `${label} module count`,
+      );
     }
 
-    console.log('\n4. Unauthorized roles → 403');
+    console.log('\n4. POS roles can read composition (Phase 3.3 Retail UI alignment)');
     for (const [label, auth] of [
       ['cashier', cashierAuth],
       ['waiter', waiterAuth],
       ['chef', chefAuth],
     ] as const) {
       const res = await request(app).get('/api/platform/composition').set(auth);
-      assertEqual(res.status, 403, `${label} status`);
-      assertEqual(res.body.error, 'Insufficient permissions', `${label} message`);
+      assertEqual(res.status, 200, `${label} status`);
+      assertEqual(res.body.verticalId, 'restaurant', `${label} verticalId`);
+      nodeAssert.ok(Array.isArray(res.body.enabledModules), `${label} enabledModules array`);
     }
 
     console.log('\n5. Response shape matches getPlatformCompositionResponse()');
@@ -145,7 +161,11 @@ async function main() {
     assert(postRes.status === 404 || postRes.status === 405, 'POST not allowed');
 
     console.log('\n9. Query verticalId ignored (single-tenant restaurant only)');
-    for (const qs of ['?verticalId=retail-test', '?verticalId=retail', '?vertical_id=retail-test']) {
+    for (const qs of [
+      '?verticalId=retail-test',
+      '?verticalId=retail',
+      '?vertical_id=retail-test',
+    ]) {
       const probed = await request(app).get(`/api/platform/composition${qs}`).set(ownerAuth);
       assertEqual(probed.status, 200, `${qs} status`);
       assertEqual(probed.body.verticalId, 'restaurant', `${qs} still restaurant`);

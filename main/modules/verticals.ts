@@ -1,32 +1,19 @@
 /**
  * Opervia Restaurant vertical — declarative composition of Phase 1 modules.
+ * Production Retail lives in retail-vertical.ts (Phase 3.3).
  */
 import type { ModuleId, VerticalDefinition } from './types';
+import { OPERVIA_SHARED_COMMERCE_MODULES } from './shared-commerce-modules';
+import { OPERVIA_RETAIL_VERTICAL } from './retail-vertical';
 
 export const OPERVIA_RESTAURANT_VERTICAL_ID = 'restaurant';
 
 /**
  * Modules enabled for Opervia Restaurant (Phase 1 product).
- * Order is documentation-friendly; enablement is a set.
+ * Shared commerce + restaurant-only stack.
  */
 export const OPERVIA_RESTAURANT_ENABLED_MODULES: readonly ModuleId[] = [
-  'core',
-  'customer',
-  'product',
-  'category',
-  'inventory',
-  'pos',
-  'order',
-  'payment',
-  'refund',
-  'tax',
-  'shift',
-  'staff',
-  'loyalty',
-  'reporting',
-  'printing',
-  'notification',
-  'backup',
+  ...OPERVIA_SHARED_COMMERCE_MODULES,
   'tables',
   'kitchen',
   'kds',
@@ -46,4 +33,8 @@ export const OPERVIA_RESTAURANT_VERTICAL: VerticalDefinition = {
 /** Compile-time default when ACTIVE_VERTICAL_ID env is unset (Phase 3.2). */
 export const ACTIVE_VERTICAL_ID = OPERVIA_RESTAURANT_VERTICAL_ID;
 
-export const VERTICALS: readonly VerticalDefinition[] = [OPERVIA_RESTAURANT_VERTICAL];
+/** Production verticals (deploy/start selectable). Default remains restaurant. */
+export const VERTICALS: readonly VerticalDefinition[] = [
+  OPERVIA_RESTAURANT_VERTICAL,
+  OPERVIA_RETAIL_VERTICAL,
+];

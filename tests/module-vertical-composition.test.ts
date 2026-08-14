@@ -45,13 +45,14 @@ function main(): void {
   // ── Active production vertical unchanged ────────────────────────────────
   assert.equal(getActiveVerticalId(), 'restaurant');
   assert.equal(ACTIVE_VERTICAL_ID, OPERVIA_RESTAURANT_VERTICAL_ID);
-  assert.equal(VERTICALS.length, 1);
-  assert.equal(VERTICALS[0]!.id, 'restaurant');
+  assert.equal(VERTICALS.length, 2);
+  assert.ok(VERTICALS.some((v) => v.id === 'restaurant'));
+  assert.ok(VERTICALS.some((v) => v.id === 'retail'));
   assert.ok(
     !VERTICALS.some((v) => v.id === OPERVIA_RETAIL_TEST_VERTICAL_ID),
     'retail-test must not be in production VERTICALS',
   );
-  console.log('   ✓ production VERTICALS remain restaurant-only');
+  console.log('   ✓ production VERTICALS include restaurant + retail');
 
   // ── Restaurant composition ──────────────────────────────────────────────
   const restaurant = getCompositionSnapshot({ verticalId: 'restaurant' });
@@ -149,14 +150,16 @@ function main(): void {
 
   // ── Production contamination guards ─────────────────────────────────────
   assert.equal(verticalIdForBusinessType('restaurant'), 'restaurant');
-  assert.equal(verticalIdForBusinessType('retail'), 'restaurant');
+  assert.equal(verticalIdForBusinessType('retail'), 'retail');
   assert.equal(verticalIdForBusinessType('retail-test'), 'restaurant');
   assert.equal(getVerticalDefinition().id, 'restaurant');
   const apiDefault = getPlatformCompositionResponse();
   assert.equal(apiDefault.verticalId, 'restaurant');
   assert.equal(apiDefault.verticalName, 'Opervia Restaurant');
   assert.ok(apiDefault.enabledModules.includes('kds'));
-  console.log('   ✓ business_type / API default stay restaurant');
+  console.log(
+    '   ✓ business_type retail→retail; retail-test stays off synthetic; API default restaurant',
+  );
 
   console.log('='.repeat(60));
   console.log('✅ Phase 2.5 vertical composition contracts passed');

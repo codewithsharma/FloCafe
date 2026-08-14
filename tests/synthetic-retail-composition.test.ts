@@ -23,13 +23,7 @@ import {
 } from '../main/modules';
 import type { ModuleId } from '../main/modules';
 
-const RESTAURANT_ONLY: readonly ModuleId[] = [
-  'tables',
-  'kitchen',
-  'kds',
-  'menu',
-  'addons',
-];
+const RESTAURANT_ONLY: readonly ModuleId[] = ['tables', 'kitchen', 'kds', 'menu', 'addons'];
 
 const REQUIRED_RETAIL: readonly ModuleId[] = [
   'core',
@@ -56,21 +50,20 @@ function main(): void {
   console.log('='.repeat(60));
 
   assert.equal(ACTIVE_VERTICAL_ID, 'restaurant');
-  assert.equal(VERTICALS.length, 1);
+  assert.equal(VERTICALS.length, 2);
+  assert.ok(VERTICALS.some((v) => v.id === 'restaurant'));
+  assert.ok(VERTICALS.some((v) => v.id === 'retail'));
   assert.ok(!VERTICALS.some((v) => v.id === 'retail-test'));
   assert.ok(SYNTHETIC_VERTICALS.some((v) => v.id === OPERVIA_RETAIL_TEST_VERTICAL_ID));
-  assert.equal(verticalIdForBusinessType('retail'), 'restaurant');
+  assert.equal(verticalIdForBusinessType('retail'), 'retail');
   assert.equal(verticalIdForBusinessType('retail-test'), 'restaurant');
   const api = getPlatformCompositionResponse();
   assert.equal(api.verticalId, 'restaurant');
-  console.log('   ✓ retail-test remains synthetic; production stays restaurant');
+  console.log('   ✓ retail-test remains synthetic; VERTICALS include restaurant + retail');
 
   const retail = getCompositionSnapshot({ verticalId: 'retail-test' });
   assert.equal(retail.vertical.id, 'retail-test');
-  assert.deepEqual(
-    [...OPERVIA_RETAIL_TEST_ENABLED_MODULES].sort(),
-    [...REQUIRED_RETAIL].sort(),
-  );
+  assert.deepEqual([...OPERVIA_RETAIL_TEST_ENABLED_MODULES].sort(), [...REQUIRED_RETAIL].sort());
   for (const id of REQUIRED_RETAIL) {
     assert.ok(retail.modules.enabled.includes(id), `retail-test includes ${id}`);
   }

@@ -12,10 +12,7 @@ import {
   getNavItemById,
   isNavItemActive,
 } from '../frontend/src/config/navigation';
-import {
-  STATUS_BADGE_VARIANTS,
-  varianceTone,
-} from '../frontend/src/lib/flo-display';
+import { STATUS_BADGE_VARIANTS, varianceTone } from '../frontend/src/lib/flo-display';
 
 const ROOT = path.join(__dirname, '..');
 const FRONTEND = path.join(ROOT, 'frontend/src');
@@ -39,8 +36,17 @@ function main(): void {
 
   const ids = FLO_NAV_ITEMS.map((item) => item.id);
   for (const required of [
-    'home', 'pos', 'tables', 'orders', 'kitchen', 'customers',
-    'inventory', 'reports', 'operations', 'team', 'settings',
+    'home',
+    'pos',
+    'tables',
+    'orders',
+    'kitchen',
+    'customers',
+    'inventory',
+    'reports',
+    'operations',
+    'team',
+    'settings',
   ]) {
     assert.ok(ids.includes(required), `nav includes ${required}`);
   }
@@ -124,10 +130,7 @@ function main(): void {
   assert.equal(isNavItemActive('/orders', getNavItemById('pos')!), false);
 
   for (const bad of ['/print-test', '/order-history-demo', '/addon-groups']) {
-    assert.ok(
-      !FLO_NAV_ITEMS.some((i) => i.href === bad),
-      `primary nav must not include ${bad}`,
-    );
+    assert.ok(!FLO_NAV_ITEMS.some((i) => i.href === bad), `primary nav must not include ${bad}`);
   }
   console.log('   ✓ navigation configuration');
 
@@ -165,10 +168,16 @@ function main(): void {
 
   const dashboardLayout = read('app/(dashboard)/layout.tsx');
   assert.ok(dashboardLayout.includes('AppShell'), 'dashboard layout uses AppShell');
-  assert.ok(!dashboardLayout.includes("from '@/components/layout/Sidebar'"), 'old Sidebar not imported in dashboard layout');
+  assert.ok(
+    !dashboardLayout.includes("from '@/components/layout/Sidebar'"),
+    'old Sidebar not imported in dashboard layout',
+  );
 
   const floSidebar = read('components/flo/Sidebar.tsx');
-  assert.ok(floSidebar.includes('FLO_NAV_ITEMS') || floSidebar.includes('filterNavItems'), 'flo Sidebar uses nav config');
+  assert.ok(
+    floSidebar.includes('FLO_NAV_ITEMS') || floSidebar.includes('filterNavItems'),
+    'flo Sidebar uses nav config',
+  );
   assert.ok(floSidebar.includes('/kds'), 'flo Sidebar kitchen points to /kds');
 
   const appShell = read('components/flo/AppShell.tsx');
@@ -176,10 +185,16 @@ function main(): void {
 
   const money = read('components/flo/MoneyDisplay.tsx');
   assert.ok(money.includes('useFormatCurrency'), 'MoneyDisplay uses currency hook');
-  assert.ok(money.includes('tabular-nums') || money.includes('text-numeric'), 'MoneyDisplay uses tabular nums');
+  assert.ok(
+    money.includes('tabular-nums') || money.includes('text-numeric'),
+    'MoneyDisplay uses tabular nums',
+  );
 
   const variance = read('components/flo/VarianceIndicator.tsx');
-  assert.ok(variance.includes('varianceTone') || variance.includes('formatVarianceLabel'), 'VarianceIndicator uses variance semantics');
+  assert.ok(
+    variance.includes('varianceTone') || variance.includes('formatVarianceLabel'),
+    'VarianceIndicator uses variance semantics',
+  );
 
   const statusBadge = read('components/flo/StatusBadge.tsx');
   assert.ok(statusBadge.includes('variant'), 'StatusBadge has variants');
@@ -189,18 +204,27 @@ function main(): void {
   assert.ok(exists('app/(dashboard)/operations/page.tsx'), '/operations page exists');
 
   const reportsPage = read('app/(dashboard)/reports/page.tsx');
-  assert.ok(reportsPage.includes('EmptyState') || reportsPage.includes('Panel'), 'reports uses flo primitives');
+  assert.ok(
+    reportsPage.includes('EmptyState') || reportsPage.includes('Panel'),
+    'reports uses flo primitives',
+  );
   assert.ok(!/fake|mock revenue|lorem/i.test(reportsPage), 'reports has no fake metrics');
 
   const menuHandler = read('components/layout/MenuActionHandler.tsx');
-  assert.ok(menuHandler.includes("'/reports'") || menuHandler.includes('"/reports"'), 'MenuActionHandler still targets /reports');
+  assert.ok(
+    menuHandler.includes("'/reports'") || menuHandler.includes('"/reports"'),
+    'MenuActionHandler still targets /reports',
+  );
   console.log('   ✓ routes');
 
   const css = read('app/globals.css');
   assert.ok(css.includes('--flo-brand-600'), 'flo brand token defined');
   assert.ok(css.includes('--flo-bg'), 'flo bg token defined');
   assert.ok(css.includes('--flo-success'), 'flo success token defined');
-  assert.ok(css.includes('--color-flo-brand-600') || css.includes('--color-flo-bg'), 'flo colors registered in theme');
+  assert.ok(
+    css.includes('--color-flo-brand-600') || css.includes('--color-flo-bg'),
+    'flo colors registered in theme',
+  );
   // Flo brand may be indigo (design system) or current token hex — require a defined brand color
   assert.ok(
     /--color-brand:\s*#[0-9A-Fa-f]{6}/.test(css) || /--flo-brand-600:\s*#[0-9A-Fa-f]{6}/.test(css),
@@ -211,6 +235,17 @@ function main(): void {
   const rootLayout = read('app/layout.tsx');
   assert.ok(rootLayout.includes('Opervia'), 'root metadata uses Opervia');
   assert.ok(!rootLayout.includes('Nexora'), 'root metadata no longer Nexora');
+  // MenuActionHandler → MasterPinPrompt uses useTranslation; must sit inside I18nextProvider
+  // or every route logs NO_I18NEXT_INSTANCE and can crash with "t is not a function".
+  const providersOpen = rootLayout.indexOf('<AppProviders');
+  const menuHandlerJsx = rootLayout.indexOf('<MenuActionHandler');
+  const providersClose = rootLayout.indexOf('</AppProviders>');
+  assert.ok(providersOpen !== -1, 'root layout mounts AppProviders');
+  assert.ok(menuHandlerJsx !== -1, 'root layout mounts MenuActionHandler');
+  assert.ok(
+    providersOpen < menuHandlerJsx && menuHandlerJsx < providersClose,
+    'MenuActionHandler must mount inside AppProviders (i18next context)',
+  );
 
   const manifest = fs.readFileSync(path.join(ROOT, 'frontend/public/manifest.json'), 'utf8');
   assert.ok(manifest.includes('Opervia'), 'manifest uses Opervia');
@@ -219,8 +254,14 @@ function main(): void {
   const en = fs.readFileSync(path.join(FRONTEND, 'lib/i18n/en.json'), 'utf8');
   assert.ok(en.includes('"common.brandName": "Opervia"'), 'i18n brandName is Opervia');
   assert.ok(en.includes('"flo.nav.home"') || en.includes('"nav.home"'), 'home nav i18n key');
-  assert.ok(en.includes('"flo.nav.reports"') || en.includes('"nav.reports"'), 'reports nav i18n key');
-  assert.ok(en.includes('"flo.nav.operations"') || en.includes('"nav.operations"'), 'operations nav i18n key');
+  assert.ok(
+    en.includes('"flo.nav.reports"') || en.includes('"nav.reports"'),
+    'reports nav i18n key',
+  );
+  assert.ok(
+    en.includes('"flo.nav.operations"') || en.includes('"nav.operations"'),
+    'operations nav i18n key',
+  );
   console.log('   ✓ branding');
 
   console.log('='.repeat(60));

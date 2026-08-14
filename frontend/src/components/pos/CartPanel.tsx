@@ -1,8 +1,16 @@
 'use client';
 
 import {
-  ShoppingCart, UtensilsCrossed, Package, Truck,
-  Plus, Minus, Trash2, Pause, MapPin, SquarePen,
+  ShoppingCart,
+  UtensilsCrossed,
+  Package,
+  Truck,
+  Plus,
+  Minus,
+  Trash2,
+  Pause,
+  MapPin,
+  SquarePen,
   Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,6 +23,8 @@ import type { Table, Order, OrderItem, CartItem } from '@/lib/types';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
 import { isModuleEnabled } from '@/lib/modules';
+import { usePlatformComposition } from '@/hooks/usePlatformComposition';
+import { useAuthStore } from '@/store/auth';
 
 interface Props {
   tables: Table[];
@@ -34,20 +44,27 @@ const orderTypeIcons = {
 };
 
 export default function CartPanel({
-  tables, submitting, onPlaceOrder, onEditItem, variant = 'sidebar', existingOrder,
+  tables,
+  submitting,
+  onPlaceOrder,
+  onEditItem,
+  variant = 'sidebar',
+  existingOrder,
 }: Props) {
   const cart = useCartStore();
   const heldOrders = useHeldOrdersStore();
   const billingType = usePosSettingsStore((s) => s.billingType);
   const { t } = useI18n();
-  const tablesModuleEnabled = isModuleEnabled('tables');
+  const { currentTenant } = useAuthStore();
+  const { data: composition } = usePlatformComposition(!!currentTenant);
+  const tablesModuleEnabled = isModuleEnabled('tables', composition?.verticalId);
   const fmt = useFormatCurrency();
   const canHold =
-    tablesModuleEnabled
-    && cart.orderType === 'dine_in'
-    && cart.tableId
-    && cart.items.length > 0
-    && billingType === 'postpaid';
+    tablesModuleEnabled &&
+    cart.orderType === 'dine_in' &&
+    cart.tableId &&
+    cart.items.length > 0 &&
+    billingType === 'postpaid';
   const isDrawer = variant === 'drawer';
 
   const handleHold = async () => {
@@ -61,7 +78,13 @@ export default function CartPanel({
     }
     const tableName = tables.find((tbl) => tbl.id === cart.tableId)?.name || cart.tableId;
     try {
-      await heldOrders.holdOrder(cart.tableId, cart.items, cart.customerId, cart.guestCount, cart.orderNotes);
+      await heldOrders.holdOrder(
+        cart.tableId,
+        cart.items,
+        cart.customerId,
+        cart.guestCount,
+        cart.orderNotes,
+      );
       cart.clearCart();
       toast.success(t('pos.orderHeldFor', { table: tableName }));
     } catch (err: unknown) {
@@ -74,7 +97,9 @@ export default function CartPanel({
     <div
       className={cn(
         'flex flex-col h-full min-h-0',
-        isDrawer ? 'w-full' : 'w-full rounded-flo-lg border border-flo-border bg-flo-surface shadow-sm',
+        isDrawer
+          ? 'w-full'
+          : 'w-full rounded-flo-lg border border-flo-border bg-flo-surface shadow-sm',
       )}
     >
       {/* Order type + pax */}
@@ -84,7 +109,12 @@ export default function CartPanel({
             .filter((type) => tablesModuleEnabled || type !== 'dine_in')
             .map((type) => {
               const Icon = orderTypeIcons[type];
-              const label = type === 'dine_in' ? t('pos.orderTypeDineIn') : type === 'takeaway' ? t('pos.orderTypeTakeaway') : t('pos.orderTypeDelivery');
+              const label =
+                type === 'dine_in'
+                  ? t('pos.orderTypeDineIn')
+                  : type === 'takeaway'
+                    ? t('pos.orderTypeTakeaway')
+                    : t('pos.orderTypeDelivery');
               const active = cart.orderType === type;
               return (
                 <button
@@ -93,7 +123,9 @@ export default function CartPanel({
                   onClick={() => cart.setOrderType(type)}
                   className={cn(
                     'flex-1 flex items-center justify-center gap-1 min-h-11 rounded-flo-sm text-caption font-medium transition-colors',
-                    active ? 'bg-flo-surface text-flo-brand-700 shadow-sm' : 'text-flo-text-muted hover:text-flo-text',
+                    active
+                      ? 'bg-flo-surface text-flo-brand-700 shadow-sm'
+                      : 'text-flo-text-muted hover:text-flo-text',
                   )}
                 >
                   <Icon className="size-3.5" aria-hidden />
@@ -110,9 +142,33 @@ export default function CartPanel({
               <span>{t('pos.pax', { defaultValue: 'Pax' })}</span>
             </div>
             <div className="flex items-center gap-2">
-              <button type="button" aria-label={t('pos.decreasePax', { defaultValue: 'Decrease pax' })} onClick={() => cart.setGuestCount(Math.max(1, cart.guestCount - 1))} className="size-11 rounded-full bg-flo-surface-muted flex items-center justify-center hover:bg-flo-border"><Minus className="size-4" /></button>
-              <input aria-label={t('pos.pax', { defaultValue: 'Pax' })} type="number" min="1" max="99" value={cart.guestCount} onChange={(e) => cart.setGuestCount(Math.min(99, Math.max(1, Number(e.target.value) || 1)))} className="w-10 text-center text-body font-semibold tabular-nums border-0 outline-none bg-transparent" />
-              <button type="button" aria-label={t('pos.increasePax', { defaultValue: 'Increase pax' })} onClick={() => cart.setGuestCount(Math.min(99, cart.guestCount + 1))} className="size-11 rounded-full bg-flo-surface-muted flex items-center justify-center hover:bg-flo-border"><Plus className="size-4" /></button>
+              <button
+                type="button"
+                aria-label={t('pos.decreasePax', { defaultValue: 'Decrease pax' })}
+                onClick={() => cart.setGuestCount(Math.max(1, cart.guestCount - 1))}
+                className="size-11 rounded-full bg-flo-surface-muted flex items-center justify-center hover:bg-flo-border"
+              >
+                <Minus className="size-4" />
+              </button>
+              <input
+                aria-label={t('pos.pax', { defaultValue: 'Pax' })}
+                type="number"
+                min="1"
+                max="99"
+                value={cart.guestCount}
+                onChange={(e) =>
+                  cart.setGuestCount(Math.min(99, Math.max(1, Number(e.target.value) || 1)))
+                }
+                className="w-10 text-center text-body font-semibold tabular-nums border-0 outline-none bg-transparent"
+              />
+              <button
+                type="button"
+                aria-label={t('pos.increasePax', { defaultValue: 'Increase pax' })}
+                onClick={() => cart.setGuestCount(Math.min(99, cart.guestCount + 1))}
+                className="size-11 rounded-full bg-flo-surface-muted flex items-center justify-center hover:bg-flo-border"
+              >
+                <Plus className="size-4" />
+              </button>
             </div>
           </div>
         )}
@@ -133,24 +189,41 @@ export default function CartPanel({
 
       {/* Line items */}
       <div className={cn('flex-1 overflow-y-auto p-3 md:p-4 min-h-0', isDrawer && 'max-h-[40vh]')}>
-        {existingOrder && existingOrder.items && existingOrder.items.filter((i: OrderItem) => i.status !== 'cancelled').length > 0 && (
-          <div className="mb-3 pb-3 border-b border-dashed border-flo-border">
-            <p className="text-caption font-semibold text-flo-text-muted uppercase tracking-wider mb-2">{t('pos.alreadyOrdered')}</p>
-            <div className="space-y-1.5">
-              {existingOrder.items.filter((i: OrderItem) => i.status !== 'cancelled').map((item: OrderItem) => (
-                <div key={item.id} className="flex justify-between items-center gap-2">
-                  <span className="text-caption text-flo-text-muted truncate">{item.quantity}× {item.product_name}</span>
-                  <span className="text-caption text-flo-text-muted tabular-nums shrink-0">{fmt(Number(item.total))}</span>
-                </div>
-              ))}
+        {existingOrder &&
+          existingOrder.items &&
+          existingOrder.items.filter((i: OrderItem) => i.status !== 'cancelled').length > 0 && (
+            <div className="mb-3 pb-3 border-b border-dashed border-flo-border">
+              <p className="text-caption font-semibold text-flo-text-muted uppercase tracking-wider mb-2">
+                {t('pos.alreadyOrdered')}
+              </p>
+              <div className="space-y-1.5">
+                {existingOrder.items
+                  .filter((i: OrderItem) => i.status !== 'cancelled')
+                  .map((item: OrderItem) => (
+                    <div key={item.id} className="flex justify-between items-center gap-2">
+                      <span className="text-caption text-flo-text-muted truncate">
+                        {item.quantity}× {item.product_name}
+                      </span>
+                      <span className="text-caption text-flo-text-muted tabular-nums shrink-0">
+                        {fmt(Number(item.total))}
+                      </span>
+                    </div>
+                  ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {cart.items.length === 0 ? (
-          <div className={cn('flex flex-col items-center justify-center text-flo-text-muted', existingOrder ? 'py-4' : isDrawer ? 'py-8' : 'py-12')}>
+          <div
+            className={cn(
+              'flex flex-col items-center justify-center text-flo-text-muted',
+              existingOrder ? 'py-4' : isDrawer ? 'py-8' : 'py-12',
+            )}
+          >
             <ShoppingCart className={existingOrder ? 'size-6' : 'size-10'} aria-hidden />
-            <p className="mt-2 text-body">{existingOrder ? t('pos.addNewItemsAbove') : t('pos.cartEmpty')}</p>
+            <p className="mt-2 text-body">
+              {existingOrder ? t('pos.addNewItemsAbove') : t('pos.cartEmpty')}
+            </p>
           </div>
         ) : (
           <ul className="space-y-3">
@@ -166,7 +239,9 @@ export default function CartPanel({
                 </button>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-body font-medium text-flo-text truncate">{item.product.name}</p>
+                    <p className="text-body font-medium text-flo-text truncate">
+                      {item.product.name}
+                    </p>
                     {onEditItem && (
                       <button
                         type="button"
@@ -182,20 +257,40 @@ export default function CartPanel({
                     <div className="mt-0.5">
                       {item.addons.map((a) => (
                         <p key={a.id} className="text-caption text-flo-text-muted">
-                          + {a.name}{(a.quantity || 1) > 1 ? ` ×${a.quantity}` : ''} {Number(a.price) > 0 && `(${fmt(Number(a.price) * (a.quantity || 1))})`}
+                          + {a.name}
+                          {(a.quantity || 1) > 1 ? ` ×${a.quantity}` : ''}{' '}
+                          {Number(a.price) > 0 && `(${fmt(Number(a.price) * (a.quantity || 1))})`}
                         </p>
                       ))}
                     </div>
                   )}
                   {item.special_instructions && (
-                    <p className="text-caption text-flo-text-muted italic mt-0.5 break-words">{item.special_instructions}</p>
+                    <p className="text-caption text-flo-text-muted italic mt-0.5 break-words">
+                      {item.special_instructions}
+                    </p>
                   )}
-                  <p className="text-numeric text-flo-text-secondary mt-0.5">{fmt(Number(item.product.price))}</p>
+                  <p className="text-numeric text-flo-text-secondary mt-0.5">
+                    {fmt(Number(item.product.price))}
+                  </p>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <button type="button" onClick={() => cart.updateQuantity(item.id, item.quantity - 1)} className="size-11 rounded-full bg-flo-surface-muted flex items-center justify-center hover:bg-flo-border"><Minus className="size-4" /></button>
-                  <span className="text-body font-medium w-6 text-center tabular-nums">{item.quantity}</span>
-                  <button type="button" onClick={() => cart.updateQuantity(item.id, item.quantity + 1)} className="size-11 rounded-full bg-flo-surface-muted flex items-center justify-center hover:bg-flo-border"><Plus className="size-4" /></button>
+                  <button
+                    type="button"
+                    onClick={() => cart.updateQuantity(item.id, item.quantity - 1)}
+                    className="size-11 rounded-full bg-flo-surface-muted flex items-center justify-center hover:bg-flo-border"
+                  >
+                    <Minus className="size-4" />
+                  </button>
+                  <span className="text-body font-medium w-6 text-center tabular-nums">
+                    {item.quantity}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => cart.updateQuantity(item.id, item.quantity + 1)}
+                    className="size-11 rounded-full bg-flo-surface-muted flex items-center justify-center hover:bg-flo-border"
+                  >
+                    <Plus className="size-4" />
+                  </button>
                 </div>
               </li>
             ))}
@@ -215,7 +310,9 @@ export default function CartPanel({
               maxLength={200}
               className="w-full min-h-11 px-3 py-2 text-body border border-flo-border rounded-flo-md resize-none bg-flo-bg focus:outline-none focus:ring-2 focus:ring-flo-brand-500/20 focus:border-flo-brand-500"
             />
-            <p className="text-caption text-flo-text-muted text-right mt-0.5 tabular-nums">{cart.orderNotes.length}/200</p>
+            <p className="text-caption text-flo-text-muted text-right mt-0.5 tabular-nums">
+              {cart.orderNotes.length}/200
+            </p>
           </div>
         )}
         <div className="flex justify-between mb-1 text-body">
@@ -228,7 +325,11 @@ export default function CartPanel({
         </div>
         <div className="flex gap-2">
           {canHold && (
-            <Button variant="outline" onClick={handleHold} className="flex-1 min-h-12 border-flo-border">
+            <Button
+              variant="outline"
+              onClick={handleHold}
+              className="flex-1 min-h-12 border-flo-border"
+            >
               <Pause className="size-4 mr-1" aria-hidden /> {t('pos.holdButton')}
             </Button>
           )}

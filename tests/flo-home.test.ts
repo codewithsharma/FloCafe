@@ -48,6 +48,13 @@ function main(): void {
     !dashboard.includes('bg-white rounded-xl'),
     'legacy card pattern removed from dashboard',
   );
+  assert.ok(dashboard.includes('isModuleEnabled'), 'dashboard gates tables via isModuleEnabled');
+  assert.ok(
+    dashboard.includes('usePlatformComposition') &&
+      (dashboard.includes("isModuleEnabled('tables',") ||
+        dashboard.includes('isModuleEnabled("tables",')),
+    'dashboard passes composition verticalId into isModuleEnabled (avoid browser getActiveVerticalId)',
+  );
   console.log('   ✓ slim HOME command center');
 
   const dayClose = read('components/dashboard/DayCloseCard.tsx');

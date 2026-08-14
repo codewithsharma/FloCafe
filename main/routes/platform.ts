@@ -7,13 +7,17 @@ import { getPlatformCompositionResponse } from '../modules';
 
 const router = Router();
 
-router.get('/composition', requireRole('owner', 'manager'), (_req: Request, res: Response) => {
-  try {
-    res.json(getPlatformCompositionResponse());
-  } catch (error: unknown) {
-    console.error('[Platform] Composition snapshot failed:', error);
-    res.status(500).json({ error: 'Could not load platform composition' });
-  }
-});
+router.get(
+  '/composition',
+  requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'),
+  (_req: Request, res: Response) => {
+    try {
+      res.json(getPlatformCompositionResponse());
+    } catch (error: unknown) {
+      console.error('[Platform] Composition snapshot failed:', error);
+      res.status(500).json({ error: 'Could not load platform composition' });
+    }
+  },
+);
 
 export { router as platformRoutes };

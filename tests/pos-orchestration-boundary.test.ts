@@ -43,22 +43,31 @@ function main(): void {
   assert.ok(page.includes("from '@/lib/modules'"), 'pos page imports module registry');
   assert.ok(page.includes('isModuleEnabled'), 'pos page uses isModuleEnabled');
   assert.ok(
-    page.includes("from '@/lib/pos/checkout-coordinator'")
-      || page.includes('placePostpaidOrder')
-      || page.includes('placePrepaidOrder'),
+    page.includes("from '@/lib/pos/checkout-coordinator'") ||
+      page.includes('placePostpaidOrder') ||
+      page.includes('placePrepaidOrder'),
     'pos page wires checkout coordinator',
   );
   assert.ok(page.includes('placePostpaidOrder'), 'page calls placePostpaidOrder');
   assert.ok(page.includes('placePrepaidOrder'), 'page calls placePrepaidOrder');
-  assert.ok(coordinator.includes('export async function placePostpaidOrder'), 'coordinator exports placePostpaidOrder');
-  assert.ok(coordinator.includes('export async function placePrepaidOrder'), 'coordinator exports placePrepaidOrder');
+  assert.ok(
+    coordinator.includes('export async function placePostpaidOrder'),
+    'coordinator exports placePostpaidOrder',
+  );
+  assert.ok(
+    coordinator.includes('export async function placePrepaidOrder'),
+    'coordinator exports placePrepaidOrder',
+  );
   assert.ok(coordinator.includes("'/orders'"), 'coordinator posts /orders');
   assert.ok(coordinator.includes('/bills/generate'), 'coordinator posts bill generate');
   assert.ok(coordinator.includes('/payments'), 'coordinator posts bill payments');
 
   // --- ownership markers ---
   assert.ok(Array.isArray(POS_OWNED) && POS_OWNED.length > 0, 'POS_OWNED exported');
-  assert.ok(Array.isArray(POS_DOES_NOT_OWN) && POS_DOES_NOT_OWN.length > 0, 'POS_DOES_NOT_OWN exported');
+  assert.ok(
+    Array.isArray(POS_DOES_NOT_OWN) && POS_DOES_NOT_OWN.length > 0,
+    'POS_DOES_NOT_OWN exported',
+  );
   assert.ok(
     POS_DOES_NOT_OWN.some((s) => /tax engine/i.test(s)),
     'POS_DOES_NOT_OWN documents tax engine',
@@ -78,12 +87,12 @@ function main(): void {
   );
 
   // --- module gates: tables (existing), addons, kds/kot ---
-  assert.ok(page.includes("isModuleEnabled('tables')"), 'tables module gate present');
-  assert.ok(page.includes("isModuleEnabled('addons')"), 'addons module gate present');
+  // Phase 3.3: gates may pass composition verticalId: isModuleEnabled('tables', verticalId)
+  assert.ok(/isModuleEnabled\(\s*['"]tables['"]/.test(page), 'tables module gate present');
+  assert.ok(/isModuleEnabled\(\s*['"]addons['"]/.test(page), 'addons module gate present');
   assert.ok(
-    page.includes("isFeatureAvailable('kds'") || (
-      page.includes("isModuleEnabled('kds')") && page.includes('kotPrintingEnabled')
-    ),
+    /isFeatureAvailable\(\s*['"]kds['"]/.test(page) ||
+      (/isModuleEnabled\(\s*['"]kds['"]/.test(page) && page.includes('kotPrintingEnabled')),
     'KOT print gated with kds module + kotPrintingEnabled (isFeatureAvailable pattern)',
   );
   assert.ok(
@@ -115,7 +124,10 @@ function main(): void {
   if (fs.existsSync(posInfo)) {
     const src = read(posInfo);
     assert.ok(src.split('\n').length < 120, 'pos-info.ts stays thin');
-    assert.ok(!/calculateTax|decrementStock|preparePaymentBatch/.test(src), 'pos-info does not own domain math');
+    assert.ok(
+      !/calculateTax|decrementStock|preparePaymentBatch/.test(src),
+      'pos-info does not own domain math',
+    );
   }
 
   console.log('   ✓ checkout-coordinator + orchestration ownership markers');

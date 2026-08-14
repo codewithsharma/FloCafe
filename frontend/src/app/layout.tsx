@@ -54,8 +54,8 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: FLO_THEME_BOOTSTRAP }} />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <MenuActionHandler />
         <AppProviders>
+          <MenuActionHandler />
           <AuthGuard>{children}</AuthGuard>
           <Toaster position="top-right" />
         </AppProviders>
