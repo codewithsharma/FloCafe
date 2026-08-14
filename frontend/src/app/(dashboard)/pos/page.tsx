@@ -43,6 +43,8 @@ import { useSupportDiagnosticsPreview } from '@/hooks/useSupportDiagnosticsPrevi
 import { getCurrencySymbol, getCountryByCode } from '@/lib/countries';
 import { isFeatureAvailable, isModuleEnabled } from '@/lib/modules';
 import { placePostpaidOrder, placePrepaidOrder } from '@/lib/pos/checkout-coordinator';
+import { usePlatformComposition } from '@/hooks/usePlatformComposition';
+import { findProductByScanCode } from '@/lib/pos/product-search';
 
 const PREPAID_ATTEMPT_STORAGE_KEY = 'flo.prepaid.checkout.attempt';
 const POSTPAID_ATTEMPT_STORAGE_KEY = 'flo.postpaid.order.attempt';
@@ -67,8 +69,10 @@ interface PrepaidAttempt {
 
 export default function POSPage() {
   const { currentTenant, user } = useAuthStore();
-  const tablesModuleEnabled = isModuleEnabled('tables');
-  const addonsModuleEnabled = isModuleEnabled('addons');
+  const { data: composition } = usePlatformComposition(!!currentTenant);
+  const verticalId = composition?.verticalId;
+  const tablesModuleEnabled = isModuleEnabled('tables', verticalId);
+  const addonsModuleEnabled = isModuleEnabled('addons', verticalId);
   const cart = useCartStore();
   const heldOrders = useHeldOrdersStore();
   const {
@@ -212,7 +216,7 @@ export default function POSPage() {
     // kot_printing_enabled is coarser than auto_print_kot: when it's off, no
     // KOT print command should go out at all, regardless of the auto-print
     // preference (issue #133). KDS module gate: isFeatureAvailable ≡ module ∧ flag.
-    if (!isFeatureAvailable('kds', kotPrintingEnabled)) return;
+    if (!isFeatureAvailable('kds', kotPrintingEnabled, verticalId)) return;
     if (!autoPrintKot) return;
 
     try {
@@ -279,6 +283,15 @@ export default function POSPage() {
       /* ignore */
     }
   };
+
+  useEffect(() => {
+    // Retail / no-tables: default to takeaway so POS does not require table selection.
+    if (composition && !tablesModuleEnabled && cart.orderType === 'dine_in') {
+      cart.setOrderType('takeaway');
+      cart.setTableId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when composition/modules settle
+  }, [composition?.verticalId, tablesModuleEnabled]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -368,9 +381,10 @@ export default function POSPage() {
     showPrepaidCheckout;
 
   useBarcodeScanner((code) => {
-    const product = products.find((p) => p.barcode === code);
+    const product = findProductByScanCode(products, code);
     if (product) {
       handleProductClick(product);
+      toast.success(t('pos.barcodeAdded', { name: product.name }));
     } else {
       toast.error(t('pos.barcodeNotFound', { code }));
     }

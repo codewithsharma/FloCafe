@@ -324,9 +324,10 @@ router.get('/', (req: Request, res: Response) => {
       query += ' AND p.is_active = 1 AND (c.id IS NULL OR c.is_active = 1)';
     }
     if (req.query.search) {
-      query += ' AND (p.name LIKE ? OR p.sku LIKE ?)';
+      // Phase 4.1: name OR sku OR barcode (LIKE). Exact scan remains ?barcode=.
+      query += ' AND (p.name LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ?)';
       const searchTerm = `%${req.query.search}%`;
-      params.push(searchTerm, searchTerm);
+      params.push(searchTerm, searchTerm, searchTerm);
     }
     if (req.query.barcode) {
       // Exact match — this is the scan-to-lookup path, not a fuzzy search.

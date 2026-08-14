@@ -16,16 +16,25 @@ const os = require('os');
 const path = require('path');
 const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'flo-issue-137-'));
 Module._load = function (request: string, parent: unknown, isMain: boolean) {
-  if (request === 'electron') return { app: { isPackaged: true, getPath: () => testDir, getVersion: () => 'test' } };
+  if (request === 'electron')
+    return { app: { isPackaged: true, getPath: () => testDir, getVersion: () => 'test' } };
   return originalLoad.apply(this, arguments as any);
 };
 
 process.env.JWT_SECRET = 'test-secret-issue-137';
 
 const {
-  initTestDb, createApp, startServer,
-  seedOwnerUser, seedCategory, seedProduct,
-  api, assert, assertEqual, getResults, closeDatabase,
+  initTestDb,
+  createApp,
+  startServer,
+  seedOwnerUser,
+  seedCategory,
+  seedProduct,
+  api,
+  assert,
+  assertEqual,
+  getResults,
+  closeDatabase,
 } = require('./helpers/test-setup');
 
 const { productRoutes } = require('../main/routes/products');
@@ -51,7 +60,11 @@ async function main() {
         body: { category_id: 'cat-137', name: 'Water Bottle', price: 20, barcode: '8901234567890' },
         headers: authHeader,
       });
-      assertEqual(res.status, 201, `product with barcode created (got ${res.status}, ${JSON.stringify(res.data)})`);
+      assertEqual(
+        res.status,
+        201,
+        `product with barcode created (got ${res.status}, ${JSON.stringify(res.data)})`,
+      );
       assertEqual(res.data.product.barcode, '8901234567890', 'barcode persisted on create');
       createdId = res.data.product.id;
     }
@@ -60,7 +73,12 @@ async function main() {
     {
       const res = await api(baseUrl, '/api/products', {
         method: 'POST',
-        body: { category_id: 'cat-137', name: 'Another Water Bottle', price: 25, barcode: '8901234567890' },
+        body: {
+          category_id: 'cat-137',
+          name: 'Another Water Bottle',
+          price: 25,
+          barcode: '8901234567890',
+        },
         headers: authHeader,
       });
       assertEqual(res.status, 400, 'B: duplicate barcode rejected with 400');
@@ -69,15 +87,21 @@ async function main() {
 
     console.log('\n─── Scenario C: exact-match ?barcode= lookup (the POS scan path) ───');
     {
-      const res = await api(baseUrl, '/api/products?barcode=8901234567890', { headers: authHeader });
+      const res = await api(baseUrl, '/api/products?barcode=8901234567890', {
+        headers: authHeader,
+      });
       assertEqual(res.status, 200, 'C: lookup succeeds');
       assertEqual(res.data.products.length, 1, 'C: exactly one product matches');
       assertEqual(res.data.products[0].id, createdId, 'C: correct product returned');
     }
 
-    console.log('\n─── Scenario D: lookup for an unknown barcode returns no results (not an error) ───');
+    console.log(
+      '\n─── Scenario D: lookup for an unknown barcode returns no results (not an error) ───',
+    );
     {
-      const res = await api(baseUrl, '/api/products?barcode=0000000000000', { headers: authHeader });
+      const res = await api(baseUrl, '/api/products?barcode=0000000000000', {
+        headers: authHeader,
+      });
       assertEqual(res.status, 200, 'D: unknown barcode still returns 200');
       assertEqual(res.data.products.length, 0, 'D: empty result set');
     }
@@ -118,9 +142,50 @@ async function main() {
         body: { barcode: '8901234567890' }, // already used by the Water Bottle from Scenario A
         headers: authHeader,
       });
-      assertEqual(clash.status, 400, 'F: stealing another product\'s barcode is rejected');
+      assertEqual(clash.status, 400, "F: stealing another product's barcode is rejected");
     }
 
+    console.log('\n─── Scenario G: Phase 4.1 search matches barcode (name OR sku OR barcode) ───');
+    {
+      const byBarcode = await api(baseUrl, '/api/products?search=8901234567890', {
+        headers: authHeader,
+      });
+      assertEqual(byBarcode.status, 200, 'G: search by barcode digits succeeds');
+      assert(
+        (byBarcode.data.products || []).some((p: { id: string }) => p.id === createdId),
+        'G: search includes barcode match',
+      );
+
+      const bySkuName = await api(baseUrl, '/api/products', {
+        method: 'POST',
+        body: {
+          category_id: 'cat-137',
+          name: 'Classic White T-Shirt',
+          price: 499,
+          sku: 'TSHIRT-WHT-M',
+          barcode: '8909999888777',
+        },
+        headers: authHeader,
+      });
+      assertEqual(bySkuName.status, 201, 'G: retail sample product created');
+      const skuId = bySkuName.data.product.id;
+
+      const bySku = await api(baseUrl, '/api/products?search=TSHIRT-WHT', { headers: authHeader });
+      assertEqual(bySku.status, 200, 'G: search by SKU substring succeeds');
+      assert(
+        (bySku.data.products || []).some((p: { id: string }) => p.id === skuId),
+        'G: search includes SKU match',
+      );
+
+      const byName = await api(baseUrl, '/api/products?search=White%20T-Shirt', {
+        headers: authHeader,
+      });
+      assertEqual(byName.status, 200, 'G: search by name succeeds');
+      assert(
+        (byName.data.products || []).some((p: { id: string }) => p.id === skuId),
+        'G: search includes name match',
+      );
+    }
   } finally {
     server.close();
     closeDatabase();

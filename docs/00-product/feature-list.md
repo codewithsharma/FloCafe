@@ -8,18 +8,19 @@ Evidence paths reference the Opervia codebase (repo: FloCafe) as of schema **v75
 
 ## POS & Orders
 
-| Feature                                   | Status  | Evidence                                                                     | Production readiness               |
-| ----------------------------------------- | ------- | ---------------------------------------------------------------------------- | ---------------------------------- |
-| POS product grid & cart                   | [BUILT] | `frontend/src/app/(dashboard)/pos/page.tsx`, `frontend/src/store/cart.ts`    | High — E2E layout tests            |
-| Order types (dine-in, takeaway, delivery) | [BUILT] | `frontend/src/lib/order-types.ts`, `orders.type` column                      | High                               |
-| Order lifecycle                           | [BUILT] | `main/routes/orders.ts`                                                      | High — integration tests           |
-| Held orders (table carts)                 | [BUILT] | `main/routes/held-orders.ts`, `held_orders` table                            | High — `tests/held-orders.test.ts` |
-| Order notes validation                    | [BUILT] | `tests/order-notes-validation.test.ts`                                       | High                               |
-| Barcode product lookup                    | [BUILT] | `frontend/src/hooks/useBarcodeScanner.ts`, `tests/issue-137-barcode.test.ts` | Medium                             |
-| Cancel order (manager PIN)                | [BUILT] | `tests/cancel-override.test.ts`                                              | High                               |
-| Void/cancel line items                    | [BUILT] | `main/routes/index.ts` PATCH cancel/restore                                  | High                               |
-| Split checks                              | [BUILT] | `main/routes/bills.ts`, `bill_items`, v59 migration                          | High — payment tests               |
-| Prepaid checkout                          | [BUILT] | `frontend/src/components/pos/PrepaidCheckoutModal.tsx`, E2E spec             | High                               |
+| Feature                                   | Status  | Evidence                                                                                          | Production readiness               |
+| ----------------------------------------- | ------- | ------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| POS product grid & cart                   | [BUILT] | `frontend/src/app/(dashboard)/pos/page.tsx`, `frontend/src/store/cart.ts`                         | High — E2E layout tests            |
+| Order types (dine-in, takeaway, delivery) | [BUILT] | `frontend/src/lib/order-types.ts`, `orders.type` column                                           | High                               |
+| Order lifecycle                           | [BUILT] | `main/routes/orders.ts`                                                                           | High — integration tests           |
+| Held orders (table carts)                 | [BUILT] | `main/routes/held-orders.ts`, `held_orders` table                                                 | High — `tests/held-orders.test.ts` |
+| Order notes validation                    | [BUILT] | `tests/order-notes-validation.test.ts`                                                            | High                               |
+| Barcode product lookup                    | [BUILT] | Wedge + POS name/SKU/barcode search (Phase 4.1); `?barcode=` exact; `?search=` name\|sku\|barcode | High                               |
+| Retail floor usability (chrome + search)  | [BUILT] | Phase 4.1: tables settings gated; `/tables` fail-closed; POS SKU/barcode search + scan toasts     | High                               |
+| Cancel order (manager PIN)                | [BUILT] | `tests/cancel-override.test.ts`                                                                   | High                               |
+| Void/cancel line items                    | [BUILT] | `main/routes/index.ts` PATCH cancel/restore                                                       | High                               |
+| Split checks                              | [BUILT] | `main/routes/bills.ts`, `bill_items`, v59 migration                                               | High — payment tests               |
+| Prepaid checkout                          | [BUILT] | `frontend/src/components/pos/PrepaidCheckoutModal.tsx`, E2E spec                                  | High                               |
 
 Order lifecycle statuses (VERIFIED): `pending` → `preparing` → `ready` → `served` → `completed` | `cancelled`. New orders start as **`pending`**.
 
@@ -165,18 +166,18 @@ Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webus
 
 ## Integrations & Cloud
 
-| Feature                        | Status      | Evidence                                                                                                                                    | Production readiness |
-| ------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| FloAdmin cloud sync            | [BUILT]     | `main/services/cloud-sync.ts`                                                                                                               | Medium               |
-| WhatsApp bill delivery         | [BUILT]     | `main/services/whatsapp.ts`                                                                                                                 | Medium — Baileys RC  |
-| RevFlo mobile pairing          | [BUILT]     | `POST /api/mobile/pairing-code`                                                                                                             | Medium               |
-| Server App (waiter :3003)      | [BUILT]     | `main/server-app.ts`                                                                                                                        | Medium               |
-| Device management (mobile/KDS) | [PARTIAL]   | RevFlo pairing, KDS station assignment                                                                                                      | Medium               |
-| Online ordering                | [NOT BUILT] | —                                                                                                                                           | —                    |
-| Delivery aggregator APIs       | [FROZEN]    | Swiggy/Zomato/ONDC — STRATEGY freeze                                                                                                        | —                    |
-| Accounting integrations        | [NOT BUILT] | —                                                                                                                                           | —                    |
-| Retail vertical (composition)  | [PARTIAL]   | `ACTIVE_VERTICAL_ID=retail` + `main/modules/retail-vertical.ts`; shared commerce modules; **no retail-native UX** (barcode-first depth, PO) | Medium               |
-| Modular platform registry      | [BUILT]     | `main/modules/` Phase 2 CLOSED; Phase 3.1–3.4 composition/remount                                                                           | High                 |
+| Feature                        | Status      | Evidence                                                                                                                | Production readiness |
+| ------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| FloAdmin cloud sync            | [BUILT]     | `main/services/cloud-sync.ts`                                                                                           | Medium               |
+| WhatsApp bill delivery         | [BUILT]     | `main/services/whatsapp.ts`                                                                                             | Medium — Baileys RC  |
+| RevFlo mobile pairing          | [BUILT]     | `POST /api/mobile/pairing-code`                                                                                         | Medium               |
+| Server App (waiter :3003)      | [BUILT]     | `main/server-app.ts`                                                                                                    | Medium               |
+| Device management (mobile/KDS) | [PARTIAL]   | RevFlo pairing, KDS station assignment                                                                                  | Medium               |
+| Online ordering                | [NOT BUILT] | —                                                                                                                       | —                    |
+| Delivery aggregator APIs       | [FROZEN]    | Swiggy/Zomato/ONDC — STRATEGY freeze                                                                                    | —                    |
+| Accounting integrations        | [NOT BUILT] | —                                                                                                                       | —                    |
+| Retail vertical (composition)  | [PARTIAL]   | Composition selectable; Phase 4.1 floor usability (settings/tables/search). Still missing returns/restock, PO, variants | Medium               |
+| Modular platform registry      | [BUILT]     | `main/modules/` Phase 2 CLOSED; Phase 3.1–3.4 composition/remount                                                       | High                 |
 
 ## Multi-location & Sync
 

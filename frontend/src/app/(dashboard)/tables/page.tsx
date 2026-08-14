@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, LayoutGrid } from 'lucide-react';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
@@ -15,6 +15,9 @@ import {
   AddTableDialog,
   type AddTableFormState,
 } from '@/components/tables';
+import { useAuthStore } from '@/store/auth';
+import { usePlatformComposition } from '@/hooks/usePlatformComposition';
+import { isFeatureAvailable } from '@/lib/modules';
 
 const DEFAULT_FORM: AddTableFormState = {
   name: '',
@@ -23,8 +26,42 @@ const DEFAULT_FORM: AddTableFormState = {
   section: '',
 };
 
+/**
+ * Phase 4.1 — tables available only when the tables module is enabled for the
+ * active vertical AND tables_required is on. Mirrors /kds fail-closed; uses
+ * platform composition verticalId (not process ACTIVE_VERTICAL_ID alone).
+ */
+function useTablesAvailableCheck(): boolean | null {
+  const { currentTenant } = useAuthStore();
+  const { data: composition, isLoading: compositionLoading } =
+    usePlatformComposition(!!currentTenant);
+  const [flagOn, setFlagOn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get('/settings/business')
+      .then((res) => {
+        if (cancelled) return;
+        const d = res.data || {};
+        setFlagOn(typeof d.tables_required === 'boolean' ? d.tables_required : true);
+      })
+      .catch(() => {
+        if (!cancelled) setFlagOn(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!currentTenant) return null;
+  if (compositionLoading || flagOn === null) return null;
+  return isFeatureAvailable('tables', flagOn, composition?.verticalId);
+}
+
 export default function TablesPage() {
   const { t } = useI18n();
+  const tablesAvailable = useTablesAvailableCheck();
   const [tables, setTables] = useState<Table[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,8 +94,10 @@ export default function TablesPage() {
   };
 
   useEffect(() => {
+    if (tablesAvailable !== true) return;
     const load = () => {
-      api.get('/tables')
+      api
+        .get('/tables')
         .then(({ data }) => setTables(data.tables || []))
         .catch(() => toast.error(t('tables.loadFailed')))
         .finally(() => setLoading(false));
@@ -67,7 +106,7 @@ export default function TablesPage() {
     const interval = setInterval(load, 10000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [tablesAvailable]);
 
   const [syncedShowDetails, setSyncedShowDetails] = useState(showDetails);
   if (showDetails !== syncedShowDetails) {
@@ -76,9 +115,10 @@ export default function TablesPage() {
   }
 
   useEffect(() => {
-    if (!showDetails) return;
+    if (tablesAvailable !== true || !showDetails) return;
     const fetchOrders = () => {
-      api.get('/orders', { params: { status: 'pending,preparing,ready,served', per_page: 500 } })
+      api
+        .get('/orders', { params: { status: 'pending,preparing,ready,served', per_page: 500 } })
         .then(({ data }) => setOrders(data.orders || []))
         .catch(() => {
           // silently fail — tables still show
@@ -87,7 +127,7 @@ export default function TablesPage() {
     fetchOrders();
     const interval = setInterval(fetchOrders, 10000);
     return () => clearInterval(interval);
-  }, [showDetails]);
+  }, [tablesAvailable, showDetails]);
 
   const ordersByTable = showDetails ? buildOrdersByTable(orders) : new Map<string, Order[]>();
 
@@ -122,6 +162,21 @@ export default function TablesPage() {
       toast.error(e.response?.data?.error || t('tables.updateStatusFailed'));
     }
   };
+
+  if (tablesAvailable === null) {
+    return <LoadingState className="min-h-[60vh]" />;
+  }
+
+  if (tablesAvailable === false) {
+    return (
+      <EmptyState
+        className="min-h-[60vh]"
+        icon={<LayoutGrid size={40} strokeWidth={1.5} />}
+        title={t('tables.tablesUnavailable')}
+        description={t('tables.tablesUnavailableDescription')}
+      />
+    );
+  }
 
   if (loading) {
     return <LoadingState label={t('tables.title')} className="min-h-[16rem]" />;

@@ -103,6 +103,10 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Phase 3.6E** Soft-reactivate / inactive-customer UX — **COMPLETE** (`phase-3.6e-inactive-customer-ux.md`). Owner/manager show-inactive; `POST /:id/reactivate`; POS search unchanged.
 - [x] **Phase 3.6F** Cash drawer kick — **COMPLETE** (`phase-3.6f-cash-drawer-kick.md`). ESC/POS via default printer; POS PrinterStatus; no money-path.
 - [x] **Phase 3.6G** WebUSB refund print parity — **COMPLETE** (`phase-3.6g-webusb-refund-print.md`). Server formats + client WebUSB send; network/USB path intact.
+- [x] **Phase 4 product completion discovery** — **COMPLETE** (`docs/04-product/phase-4-product-completion-discovery.md`). Verdict A → 4.1 Retail floor usability.
+- [x] **Phase 4.1** Retail floor usability — **COMPLETE** (`docs/04-product/phase-4.1-retail-floor-usability.md`). Settings tables gate; `/tables` fail-closed; POS name/SKU/barcode + scan feedback; schema v75.
+- [ ] **Phase 4.2** Merchandise return + optional restock (policy ADR first; money+inventory) — not authorized yet.
+- [ ] **Phase 4.3** Accounting export (CSV) — after authorized.
 - [ ] **Phase 3.5** Remaining optional — packages/extraction, recipes/BOM, suppliers/PO (not authorized unless explicitly tasked). Tax cleanup stays deferred (3.5B).
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet
 - [ ] ADR-006 Multi-Location Architecture (design only; no code until approved)

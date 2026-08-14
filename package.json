@@ -58,6 +58,8 @@
     "test:shift-client": "ts-node --transpile-only -P tests/tsconfig.json tests/shift-client.test.ts",
     "test:shift-ui": "ts-node --transpile-only -P tests/tsconfig.json tests/shift-ui.test.ts",
     "test:flo-ui-shell": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-ui-shell.test.ts",
+    "test:retail": "ts-node --transpile-only -P tests/tsconfig.json tests/phase-4.1-retail-floor-usability.test.ts && npm run test:flo-settings-module-gating && npm run test:flo-tables && npm run test:issue-137-barcode",
+    "test:phase-4.1": "npm run test:retail",
     "test:capability-config": "node tests/run-electron-node-test.cjs tests/capability-config.test.ts",
     "test:fail-closed-remount": "node tests/run-electron-node-test.cjs tests/fail-closed-remount.test.ts",
     "test:module-registry": "ts-node --transpile-only -P tests/tsconfig.json tests/module-registry.test.ts && npm run test:module-diagnostics && npm run test:module-composition && npm run test:module-vertical-composition && npm run test:module-contract && npm run test:platform-composition-api && npm run test:flo-settings-module-gating && npm run test:fail-closed-remount && npm run test:capability-config",

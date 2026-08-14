@@ -56,6 +56,7 @@ import {
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import { isModuleEnabled, verticalIdForBusinessType } from '@/lib/modules';
+import { usePlatformComposition } from '@/hooks/usePlatformComposition';
 import toast from 'react-hot-toast';
 import { COUNTRIES, countryName } from '@/lib/countries';
 import { dialCodeFor } from '@/lib/phone';
@@ -321,9 +322,10 @@ export default function SettingsPage() {
   const isAdmin = currentTenant?.role === 'admin' || currentTenant?.role === 'owner';
   const canViewTaxConfiguration =
     currentTenant?.role === 'owner' || currentTenant?.role === 'manager';
-  const settingsVerticalId = verticalIdForBusinessType(
-    currentTenant?.business_type ?? 'restaurant',
-  );
+  const { data: composition } = usePlatformComposition(!!currentTenant);
+  const settingsVerticalId =
+    composition?.verticalId ||
+    verticalIdForBusinessType(currentTenant?.business_type ?? 'restaurant');
   const showTaxSettingsTab = canViewTaxConfiguration && isModuleEnabled('tax', settingsVerticalId);
   const showShiftsSettingsTab =
     canViewTaxConfiguration && isModuleEnabled('shift', settingsVerticalId);
@@ -332,6 +334,8 @@ export default function SettingsPage() {
   const showPrintingSettingsTab = isModuleEnabled('printing', settingsVerticalId);
   const showNotificationSettingsTab = isModuleEnabled('notification', settingsVerticalId);
   const showBackupSettingsTab = isModuleEnabled('backup', settingsVerticalId);
+  /** Phase 4.1 — Restaurant floor control; hidden when tables module is off (Retail). */
+  const showTablesBusinessControls = isModuleEnabled('tables', settingsVerticalId);
   const { confirm, ConfirmDialog } = useConfirm();
 
   const [loyaltyEnabled, setLoyaltyEnabled] = useState(false);
@@ -2910,27 +2914,29 @@ export default function SettingsPage() {
                       <p className="font-medium text-flo-text capitalize">{form.billingType}</p>
                     )}
                   </div>
-                  <div>
-                    <label className="block text-sm text-flo-text-secondary mb-1">
-                      {t('settings.tablesRequired')}
-                    </label>
-                    {isAdmin ? (
-                      <select
-                        value={form.tablesRequired ? 'yes' : 'no'}
-                        onChange={(e) =>
-                          setForm((p) => ({ ...p, tablesRequired: e.target.value === 'yes' }))
-                        }
-                        className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-surface"
-                      >
-                        <option value="yes">{t('settings.tablesRequiredYes')}</option>
-                        <option value="no">{t('settings.tablesRequiredNo')}</option>
-                      </select>
-                    ) : (
-                      <p className="font-medium text-flo-text">
-                        {form.tablesRequired ? t('settings.yes') : t('settings.no')}
-                      </p>
-                    )}
-                  </div>
+                  {showTablesBusinessControls && (
+                    <div>
+                      <label className="block text-sm text-flo-text-secondary mb-1">
+                        {t('settings.tablesRequired')}
+                      </label>
+                      {isAdmin ? (
+                        <select
+                          value={form.tablesRequired ? 'yes' : 'no'}
+                          onChange={(e) =>
+                            setForm((p) => ({ ...p, tablesRequired: e.target.value === 'yes' }))
+                          }
+                          className="w-full px-3 py-2 text-sm border border-flo-border rounded-lg outline-none focus:ring-2 focus:ring-flo-brand-500 bg-flo-surface"
+                        >
+                          <option value="yes">{t('settings.tablesRequiredYes')}</option>
+                          <option value="no">{t('settings.tablesRequiredNo')}</option>
+                        </select>
+                      ) : (
+                        <p className="font-medium text-flo-text">
+                          {form.tablesRequired ? t('settings.yes') : t('settings.no')}
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm text-flo-text-secondary mb-1">
                       {t('settings.taxRegistered', { defaultValue: 'Tax Registered' })}

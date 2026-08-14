@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-08-14 — Phase 4.1 Retail Floor Usability (Accepted + Implemented)
+
+Gate Restaurant floor chrome via existing `isModuleEnabled('tables')` / `isFeatureAvailable` + platform `verticalId` (no second vertical detector). `/tables` fail-closed like `/kds`. POS shared helpers: name/SKU/barcode filter + exact scan match; success/unknown toasts. Minimal API: `?search=` also LIKE barcode. Schema v75. Money/inventory unchanged. Doc: `docs/04-product/phase-4.1-retail-floor-usability.md`. Do not auto-start 4.2.
+
+## 2026-08-14 — Phase 4 Product Completion Discovery (Accepted — Discovery Only)
+
+Discovery doc: `docs/04-product/phase-4-product-completion-discovery.md`. Platform composition (Restaurant 22 / Retail 17 shared) is real; Retail is not a finished product SKU. Highest SAFE NOW slice = **Phase 4.1 Retail floor usability** (chrome suppression + barcode/SKU POS depth). Next money+inventory workflow = return/restock (4.2) after explicit policy. Do not reopen 3.5B/3.5C/REAL→cents/P1.6. No production code or schema change in this discovery. Final verdict: **A** — ready for Phase 4.1.
+
 ## 2026-08-14 — Phase 3.6G WebUSB Refund Print Parity (Accepted + Implemented)
 
 Reuse existing WebUSB `printerService` + server `formatRefundReceipt` / `buildRefundReceiptBytes`. When default printer is `webusb`, `POST /printers/print-refund` returns `{ webusb: true, bytes }`; client sends via WebUSB. Network/USB server dispatch unchanged. Money path unchanged. Doc: `docs/03-architecture/phase-3.6g-webusb-refund-print.md`.

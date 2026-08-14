@@ -22,22 +22,43 @@ function main(): void {
   assert.ok(tablesPage.includes('PageHeader'), 'tables page uses PageHeader');
   assert.ok(tablesPage.includes('LoadingState'), 'tables page uses LoadingState');
   assert.ok(tablesPage.includes('EmptyState'), 'tables page uses EmptyState');
+  assert.ok(
+    tablesPage.includes('isFeatureAvailable'),
+    'tables page fail-closed via isFeatureAvailable',
+  );
+  assert.ok(tablesPage.includes('usePlatformComposition'), 'tables page uses platform composition');
+  assert.ok(tablesPage.includes('tablesUnavailable'), 'tables unavailable messaging');
   assert.ok(tablesPage.includes('TablesGrid'), 'tables page uses TablesGrid');
   assert.ok(tablesPage.includes('ReserveTableDialog'), 'tables page uses ReserveTableDialog');
   assert.ok(tablesPage.includes('AddTableDialog'), 'tables page uses AddTableDialog');
-  assert.ok(tablesPage.includes("localStorage.getItem('tables_showDetails')"), 'details preference preserved');
+  assert.ok(
+    tablesPage.includes("localStorage.getItem('tables_showDetails')"),
+    'details preference preserved',
+  );
   assert.ok(tablesPage.includes('10000'), 'polling interval preserved');
   assert.ok(tablesPage.includes("api.get('/tables')"), 'tables list API preserved');
-  assert.ok(tablesPage.includes("api.patch(`/tables/${"), 'status update API preserved');
+  assert.ok(tablesPage.includes('api.patch(`/tables/${'), 'status update API preserved');
   assert.ok(tablesPage.includes("api.post('/tables'"), 'create table API preserved');
   assert.ok(tablesPage.includes('deactivate'), 'deactivate API preserved');
   assert.ok(tablesPage.includes('reactivate'), 'reactivate API preserved');
-  assert.ok(!tablesPage.includes('bg-white rounded-xl border border-gray-100'), 'legacy card pattern removed from page');
+  assert.ok(
+    !tablesPage.includes('bg-white rounded-xl border border-gray-100'),
+    'legacy card pattern removed from page',
+  );
   console.log('   ✓ tables page orchestration preserved');
 
-  assert.ok(fs.existsSync(path.join(FRONTEND, 'components/tables/TablesGrid.tsx')), 'TablesGrid exists');
-  assert.ok(fs.existsSync(path.join(FRONTEND, 'components/tables/TableDetailCard.tsx')), 'TableDetailCard exists');
-  assert.ok(fs.existsSync(path.join(FRONTEND, 'components/tables/TableCompactCard.tsx')), 'TableCompactCard exists');
+  assert.ok(
+    fs.existsSync(path.join(FRONTEND, 'components/tables/TablesGrid.tsx')),
+    'TablesGrid exists',
+  );
+  assert.ok(
+    fs.existsSync(path.join(FRONTEND, 'components/tables/TableDetailCard.tsx')),
+    'TableDetailCard exists',
+  );
+  assert.ok(
+    fs.existsSync(path.join(FRONTEND, 'components/tables/TableCompactCard.tsx')),
+    'TableCompactCard exists',
+  );
   console.log('   ✓ tables components exist');
 
   const detailCard = read('components/tables/TableDetailCard.tsx');

@@ -21,7 +21,8 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 | **retail** | Production Retail vertical; selectable via `ACTIVE_VERTICAL_ID=retail` (shared commerce modules; no tables/kitchen/kds) |
 | **retail-test** | Synthetic composition; selectable via env for validation only — not production Retail |
 | **Phase 2** | **CLOSED** — final exit + closeout gate `docs/03-architecture/phase-2-closeout-and-phase-3-gate.md` (also `phase-2-final-exit-gate.md`). **PASS WITH DOCUMENTED DEFERMENTS**. |
-| **Phase 3** | **3.1–3.4 COMPLETE**; **3.5A–3.6F COMPLETE** (3.5B DEFERRED; 3.5C no safe extraction); **3.6G WebUSB Refund Print Parity COMPLETE**. Remaining depth work TBD. Deploy/start: `ACTIVE_VERTICAL_ID` env (unset→`restaurant`; empty/unknown fail-closed); `retail` = production Retail; `retail-test` = synthetic validation only. |
+| **Phase 3** | **3.1–3.4 COMPLETE**; **3.5A–3.6G COMPLETE** (3.5B DEFERRED; 3.5C no safe extraction). Deploy/start: `ACTIVE_VERTICAL_ID` env (unset→`restaurant`; empty/unknown fail-closed); `retail` = production Retail; `retail-test` = synthetic validation only. |
+| **Phase 4** | **4.1 Retail floor usability COMPLETE** (`docs/04-product/phase-4.1-retail-floor-usability.md`). Discovery: `phase-4-product-completion-discovery.md`. Next candidates: low-stock hub → return/restock → accounting CSV. Do not auto-start 4.2. |
 
 Phase 2 delivered: registry → … → 2.14 Order → 2.15 Payment → 2.16 POS → 2.17 Restaurant isolation → 2.18 synthetic Retail → final exit → **closeout / Phase 3 gate**.
 
@@ -69,4 +70,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**P1.6 pilot gates / first supervised café** (human/operational; intentionally deferred for engineering). Phase **3.6G COMPLETE** (WebUSB refund print parity — server formats, client `printerService.print`). Continue authorized product-depth slices only; do not reopen 3.5B / extraction / P1.6.
+**Do not auto-implement Phase 4.2.** Recommended next candidates from discovery: (1) low-stock attention hub, (2) return/restock policy + implementation, (3) accounting CSV, (4) exchanges. Prefer explicit authorization. Do **not** reopen 3.5B / 3.5C / REAL→cents / P1.6 engineering.

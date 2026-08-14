@@ -9,10 +9,7 @@ import * as path from 'node:path';
 import { isModuleEnabled, verticalIdForBusinessType } from '../main/modules';
 
 const ROOT = path.join(__dirname, '..');
-const SETTINGS_PAGE = path.join(
-  ROOT,
-  'frontend/src/app/(dashboard)/settings/page.tsx',
-);
+const SETTINGS_PAGE = path.join(ROOT, 'frontend/src/app/(dashboard)/settings/page.tsx');
 
 function readSettingsPage(): string {
   return fs.readFileSync(SETTINGS_PAGE, 'utf8');
@@ -29,7 +26,15 @@ function main(): void {
   assert.ok(source.includes('verticalIdForBusinessType'), 'settings resolves vertical id');
 
   const restaurantVertical = verticalIdForBusinessType('restaurant');
-  for (const mod of ['tax', 'shift', 'kds', 'loyalty', 'printing', 'notification', 'backup'] as const) {
+  for (const mod of [
+    'tax',
+    'shift',
+    'kds',
+    'loyalty',
+    'printing',
+    'notification',
+    'backup',
+  ] as const) {
     assert.equal(isModuleEnabled(mod, restaurantVertical), true, `${mod} enabled for restaurant`);
   }
 
@@ -68,10 +73,32 @@ function main(): void {
     'shifts retains owner/manager role gate',
   );
 
-  assert.ok(!source.includes('isFeatureAvailable('), 'settings tabs do not use isFeatureAvailable for visibility');
+  assert.ok(
+    !source.includes('isFeatureAvailable('),
+    'settings tabs do not use isFeatureAvailable for visibility',
+  );
+
+  // Phase 4.1 — tables business control (tablesRequired) gated by tables module
+  assert.ok(source.includes('showTablesBusinessControls'), 'showTablesBusinessControls defined');
+  assert.ok(
+    source.includes("isModuleEnabled('tables'"),
+    'tables module gate present for business controls',
+  );
+  assert.ok(
+    source.includes("t('settings.tablesRequired')") &&
+      source.includes('{showTablesBusinessControls &&'),
+    'tablesRequired UI wrapped by showTablesBusinessControls',
+  );
+  assert.equal(
+    isModuleEnabled('tables', 'retail-test'),
+    false,
+    'retail-test vertical disables tables module',
+  );
+  assert.equal(isModuleEnabled('tables', 'restaurant'), true, 'restaurant vertical enables tables');
 
   console.log('   ✓ module registry imports and gate variables');
   console.log('   ✓ tax/shifts/kds/loyalty/printing/notification/backup guarded');
+  console.log('   ✓ tablesRequired guarded by tables module (Phase 4.1)');
   console.log('   ✓ restaurant vertical keeps all candidate tabs enabled');
   console.log('\n' + '='.repeat(60));
   console.log('All settings module gating contract tests passed.');

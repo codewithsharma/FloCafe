@@ -12,25 +12,132 @@ import { parseDbTimestamp } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { StatusBadge } from '@/components/flo/StatusBadge';
 import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
+import { findProductByScanCode, productMatchesPosSearch } from '@/lib/pos/product-search';
 
-const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string; activeBg: string; activeText: string }> = {
-  red: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', activeBg: 'bg-red-500', activeText: 'text-white' },
-  orange: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', activeBg: 'bg-orange-500', activeText: 'text-white' },
-  amber: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', activeBg: 'bg-amber-500', activeText: 'text-white' },
-  yellow: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200', activeBg: 'bg-yellow-500', activeText: 'text-white' },
-  lime: { bg: 'bg-lime-50', text: 'text-lime-700', border: 'border-lime-200', activeBg: 'bg-lime-500', activeText: 'text-white' },
-  green: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', activeBg: 'bg-green-500', activeText: 'text-white' },
-  emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', activeBg: 'bg-emerald-500', activeText: 'text-white' },
-  teal: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200', activeBg: 'bg-teal-500', activeText: 'text-white' },
-  cyan: { bg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200', activeBg: 'bg-cyan-500', activeText: 'text-white' },
-  sky: { bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-200', activeBg: 'bg-sky-500', activeText: 'text-white' },
-  blue: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', activeBg: 'bg-blue-500', activeText: 'text-white' },
-  indigo: { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200', activeBg: 'bg-indigo-500', activeText: 'text-white' },
-  violet: { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200', activeBg: 'bg-violet-500', activeText: 'text-white' },
-  purple: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200', activeBg: 'bg-purple-500', activeText: 'text-white' },
-  fuchsia: { bg: 'bg-fuchsia-50', text: 'text-fuchsia-700', border: 'border-fuchsia-200', activeBg: 'bg-fuchsia-500', activeText: 'text-white' },
-  pink: { bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200', activeBg: 'bg-pink-500', activeText: 'text-white' },
-  rose: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', activeBg: 'bg-rose-500', activeText: 'text-white' },
+const CATEGORY_COLORS: Record<
+  string,
+  { bg: string; text: string; border: string; activeBg: string; activeText: string }
+> = {
+  red: {
+    bg: 'bg-red-50',
+    text: 'text-red-700',
+    border: 'border-red-200',
+    activeBg: 'bg-red-500',
+    activeText: 'text-white',
+  },
+  orange: {
+    bg: 'bg-orange-50',
+    text: 'text-orange-700',
+    border: 'border-orange-200',
+    activeBg: 'bg-orange-500',
+    activeText: 'text-white',
+  },
+  amber: {
+    bg: 'bg-amber-50',
+    text: 'text-amber-700',
+    border: 'border-amber-200',
+    activeBg: 'bg-amber-500',
+    activeText: 'text-white',
+  },
+  yellow: {
+    bg: 'bg-yellow-50',
+    text: 'text-yellow-700',
+    border: 'border-yellow-200',
+    activeBg: 'bg-yellow-500',
+    activeText: 'text-white',
+  },
+  lime: {
+    bg: 'bg-lime-50',
+    text: 'text-lime-700',
+    border: 'border-lime-200',
+    activeBg: 'bg-lime-500',
+    activeText: 'text-white',
+  },
+  green: {
+    bg: 'bg-green-50',
+    text: 'text-green-700',
+    border: 'border-green-200',
+    activeBg: 'bg-green-500',
+    activeText: 'text-white',
+  },
+  emerald: {
+    bg: 'bg-emerald-50',
+    text: 'text-emerald-700',
+    border: 'border-emerald-200',
+    activeBg: 'bg-emerald-500',
+    activeText: 'text-white',
+  },
+  teal: {
+    bg: 'bg-teal-50',
+    text: 'text-teal-700',
+    border: 'border-teal-200',
+    activeBg: 'bg-teal-500',
+    activeText: 'text-white',
+  },
+  cyan: {
+    bg: 'bg-cyan-50',
+    text: 'text-cyan-700',
+    border: 'border-cyan-200',
+    activeBg: 'bg-cyan-500',
+    activeText: 'text-white',
+  },
+  sky: {
+    bg: 'bg-sky-50',
+    text: 'text-sky-700',
+    border: 'border-sky-200',
+    activeBg: 'bg-sky-500',
+    activeText: 'text-white',
+  },
+  blue: {
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    border: 'border-blue-200',
+    activeBg: 'bg-blue-500',
+    activeText: 'text-white',
+  },
+  indigo: {
+    bg: 'bg-indigo-50',
+    text: 'text-indigo-700',
+    border: 'border-indigo-200',
+    activeBg: 'bg-indigo-500',
+    activeText: 'text-white',
+  },
+  violet: {
+    bg: 'bg-violet-50',
+    text: 'text-violet-700',
+    border: 'border-violet-200',
+    activeBg: 'bg-violet-500',
+    activeText: 'text-white',
+  },
+  purple: {
+    bg: 'bg-purple-50',
+    text: 'text-purple-700',
+    border: 'border-purple-200',
+    activeBg: 'bg-purple-500',
+    activeText: 'text-white',
+  },
+  fuchsia: {
+    bg: 'bg-fuchsia-50',
+    text: 'text-fuchsia-700',
+    border: 'border-fuchsia-200',
+    activeBg: 'bg-fuchsia-500',
+    activeText: 'text-white',
+  },
+  pink: {
+    bg: 'bg-pink-50',
+    text: 'text-pink-700',
+    border: 'border-pink-200',
+    activeBg: 'bg-pink-500',
+    activeText: 'text-white',
+  },
+  rose: {
+    bg: 'bg-rose-50',
+    text: 'text-rose-700',
+    border: 'border-rose-200',
+    activeBg: 'bg-rose-500',
+    activeText: 'text-white',
+  },
 };
 
 function getCategoryColorClasses(color: string | null | undefined) {
@@ -51,8 +158,14 @@ interface Props {
 }
 
 export default function ProductGrid({
-  categories, products, selectedCategory, setSelectedCategory,
-  search, setSearch, onProductClick, sidebarOpen = true,
+  categories,
+  products,
+  selectedCategory,
+  setSelectedCategory,
+  search,
+  setSearch,
+  onProductClick,
+  sidebarOpen = true,
 }: Props) {
   const cart = useCartStore();
   const { showProductImages } = usePosSettingsStore();
@@ -61,16 +174,23 @@ export default function ProductGrid({
 
   const filtered = products.filter((p) => {
     const matchCat = !selectedCategory || p.category_id === selectedCategory;
-    const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = productMatchesPosSearch(p, search);
     return matchCat && matchSearch;
   });
 
   return (
-    <div data-testid="pos-product-grid" className="flex flex-1 flex-col min-w-0 h-full overflow-hidden rounded-flo-lg border border-flo-border bg-flo-surface">
+    <div
+      data-testid="pos-product-grid"
+      className="flex flex-1 flex-col min-w-0 h-full overflow-hidden rounded-flo-lg border border-flo-border bg-flo-surface"
+    >
       {/* Discovery bar — categories + search */}
       <div className="shrink-0 border-b border-flo-border p-3 md:p-4 space-y-3">
         <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-flo-text-muted pointer-events-none" aria-hidden />
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-flo-text-muted pointer-events-none"
+            aria-hidden
+          />
           <input
             type="search"
             value={search}
@@ -79,10 +199,15 @@ export default function ProductGrid({
               if (e.key !== 'Enter') return;
               const trimmed = search.trim();
               if (!trimmed) return;
-              const match = products.find((p) => p.barcode === trimmed);
+              // Exact barcode/SKU → add once (scanner Enter into focused field).
+              // Name substrings stay as filter-only (no silent no-op on exact miss).
+              const match = findProductByScanCode(products, trimmed);
               if (match) {
                 onProductClick(match);
                 setSearch('');
+                toast.success(t('pos.barcodeAdded', { name: match.name }));
+              } else if (/^\d{4,}$/.test(trimmed) || trimmed.length >= 8) {
+                toast.error(t('pos.barcodeNotFound', { code: trimmed }));
               }
             }}
             placeholder={t('pos.searchProducts')}
@@ -103,29 +228,31 @@ export default function ProductGrid({
           >
             {t('pos.allCategories')}
           </button>
-          {categories.filter((cat) => cat.id != null).map((cat) => {
-            const colorClasses = getCategoryColorClasses(cat.color);
-            const isSelected = selectedCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setSelectedCategory(cat.id)}
-                className={cn(
-                  'min-h-11 shrink-0 px-4 rounded-flo-md text-sm font-medium whitespace-nowrap transition-colors',
-                  isSelected
-                    ? colorClasses
-                      ? `${colorClasses.activeBg} ${colorClasses.activeText}`
-                      : 'bg-flo-brand-600 text-white'
-                    : colorClasses
-                      ? `${colorClasses.bg} ${colorClasses.text} border ${colorClasses.border}`
-                      : 'bg-flo-bg text-flo-text-secondary border border-flo-border hover:border-flo-brand-500',
-                )}
-              >
-                {cat.name}
-              </button>
-            );
-          })}
+          {categories
+            .filter((cat) => cat.id != null)
+            .map((cat) => {
+              const colorClasses = getCategoryColorClasses(cat.color);
+              const isSelected = selectedCategory === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={cn(
+                    'min-h-11 shrink-0 px-4 rounded-flo-md text-sm font-medium whitespace-nowrap transition-colors',
+                    isSelected
+                      ? colorClasses
+                        ? `${colorClasses.activeBg} ${colorClasses.activeText}`
+                        : 'bg-flo-brand-600 text-white'
+                      : colorClasses
+                        ? `${colorClasses.bg} ${colorClasses.text} border ${colorClasses.border}`
+                        : 'bg-flo-bg text-flo-text-secondary border border-flo-border hover:border-flo-brand-500',
+                  )}
+                >
+                  {cat.name}
+                </button>
+              );
+            })}
         </div>
       </div>
 
@@ -145,9 +272,10 @@ export default function ProductGrid({
               .reduce((sum, i) => sum + i.quantity, 0);
 
             const outOfStock = !!product.track_inventory && product.stock_quantity <= 0;
-            const lowStock = !!product.track_inventory
-              && product.stock_quantity > 0
-              && product.stock_quantity <= (product.low_stock_threshold || 0);
+            const lowStock =
+              !!product.track_inventory &&
+              product.stock_quantity > 0 &&
+              product.stock_quantity <= (product.low_stock_threshold || 0);
 
             return (
               <button
@@ -208,7 +336,9 @@ export default function ProductGrid({
                   </div>
                 )}
 
-                <h3 className="text-body font-medium text-flo-text line-clamp-2 leading-snug text-left">{product.name}</h3>
+                <h3 className="text-body font-medium text-flo-text line-clamp-2 leading-snug text-left">
+                  {product.name}
+                </h3>
                 <div className="flex items-center justify-between mt-1.5 gap-1">
                   <p className="text-numeric text-flo-brand-700">{fmt(Number(product.price))}</p>
                   <div className="flex items-center gap-1 shrink-0">
