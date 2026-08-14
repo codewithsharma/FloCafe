@@ -13,6 +13,8 @@ import {
   BarChart3,
   Wrench,
   ArrowRight,
+  TrendingUp,
+  Wallet,
 } from 'lucide-react';
 import { useI18n } from '@/hooks/useI18n';
 import toast from 'react-hot-toast';
@@ -29,6 +31,9 @@ import { isModuleEnabled } from '@/lib/modules';
 
 interface DailyStats {
   sales: number;
+  grossSales?: number;
+  refunds?: number;
+  netSales?: number;
   runningOrders: number;
   pendingOrders: number;
   tablesOccupied: number;
@@ -59,7 +64,8 @@ export default function DashboardPage() {
         setStats(res.data);
       })
       .catch((err: unknown) => {
-        if (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError')) return;
+        if (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))
+          return;
         toast.error(t('common.somethingWrong'));
       })
       .finally(() => {
@@ -109,11 +115,25 @@ export default function DashboardPage() {
 
   const metricTiles = [
     {
-      label: t('dashboard.todaySales'),
-      value: fmt(stats?.sales ?? 0),
+      label: t('dashboard.grossSales'),
+      value: fmt(stats?.grossSales ?? 0),
       icon: Banknote,
       href: '/reports',
       variant: 'success' as const,
+    },
+    {
+      label: t('dashboard.refunds'),
+      value: fmt(stats?.refunds ?? 0),
+      icon: Wallet,
+      href: '/reports',
+      variant: 'warning' as const,
+    },
+    {
+      label: t('dashboard.netSales'),
+      value: fmt(stats?.netSales ?? stats?.sales ?? 0),
+      icon: TrendingUp,
+      href: '/reports',
+      variant: 'info' as const,
     },
     {
       label: t('dashboard.runningOrders'),
@@ -130,22 +150,21 @@ export default function DashboardPage() {
       variant: 'warning' as const,
     },
     ...(isModuleEnabled('tables')
-      ? [{
-          label: t('dashboard.tablesOccupied'),
-          value: stats?.tablesOccupied ?? 0,
-          icon: LayoutGrid,
-          href: '/tables',
-          variant: 'default' as const,
-        }]
+      ? [
+          {
+            label: t('dashboard.tablesOccupied'),
+            value: stats?.tablesOccupied ?? 0,
+            icon: LayoutGrid,
+            href: '/tables',
+            variant: 'default' as const,
+          },
+        ]
       : []),
   ];
 
   return (
     <div>
-      <PageHeader
-        title={t('flo.home.title')}
-        description={t('flo.home.todayDescription')}
-      />
+      <PageHeader title={t('flo.home.title')} description={t('flo.home.todayDescription')} />
 
       {loading ? (
         <LoadingState className="py-20" />

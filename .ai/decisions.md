@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Phase 3.6B Reports Gross / Refunds / Net Sales UI (Accepted + Implemented)
+
+Display-only: Home + Reports bind existing `grossSales` / `refunds` / `netSales` from `daily-stats` and `summary` APIs. No backend money-path changes; no schema change. Doc: `docs/03-architecture/phase-3.6b-reports-gross-refunds-net-ui.md`.
+
 ## 2026-08-14 — Phase 3.6A Refund Receipt Printing (Accepted + Implemented)
 
 Best-effort refund proof print after successful refund. Money path unchanged (`createBillRefund` does not print). Hardware: `POST /printers/print-refund` → thermal `formatRefundReceipt` / `printRefundReceipt`. Audit: `print_type: 'refund'` does not set `bills.printed_at`. Print failure does not roll back refund. Browser/WebUSB refund print parity deferred. Doc: `docs/03-architecture/phase-3.6a-refund-receipt-printing.md`.

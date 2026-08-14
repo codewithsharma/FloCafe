@@ -31,15 +31,14 @@ function main(): void {
   assert.ok(reports.includes('/reports/topProducts'), 'topProducts API wired');
   assert.ok(reports.includes('/reports/recentOrders'), 'recentOrders API wired');
   assert.ok(reports.includes('/reports/insights'), 'insights API wired');
+  assert.ok(reports.includes('grossSales'), 'reports binds grossSales');
+  assert.ok(reports.includes('netSales'), 'reports binds netSales');
   assert.ok(!reports.includes('preparingTitle'), 'placeholder preparing UI removed');
   assert.ok(!reports.includes('bg-white rounded-xl'), 'legacy card pattern not used');
   console.log('   ✓ reports hub live analytics');
 
   const nav = read('config/navigation.ts');
-  assert.ok(
-    /id:\s*'reports'[\s\S]*?status:\s*'live'/.test(nav),
-    'reports nav status is live',
-  );
+  assert.ok(/id:\s*'reports'[\s\S]*?status:\s*'live'/.test(nav), 'reports nav status is live');
   console.log('   ✓ navigation status live');
 
   const en = fs.readFileSync(path.join(FRONTEND, 'lib/i18n/en.json'), 'utf8');

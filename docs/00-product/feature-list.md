@@ -127,7 +127,7 @@ Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webus
 
 | Feature                       | Status      | Evidence                                                                   | Production readiness |
 | ----------------------------- | ----------- | -------------------------------------------------------------------------- | -------------------- |
-| Daily stats & sales summary   | [BUILT]     | `main/routes/reports.ts`                                                   | Medium               |
+| Daily stats & sales summary   | [BUILT]     | `main/routes/reports.ts`; Home/Reports UI Gross/Refunds/Net (Phase 3.6B)   | High                 |
 | Tax component reports         | [BUILT]     | `GET /api/reports/tax-components`                                          | Medium               |
 | Top products & table stats    | [BUILT]     | reports routes                                                             | Medium               |
 | Insights dashboard            | [BUILT]     | `tests/reports-insights.test.ts`                                           | Medium               |

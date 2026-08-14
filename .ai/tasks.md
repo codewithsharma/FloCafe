@@ -96,6 +96,8 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Phase 3.4** Correctness residuals — **COMPLETE** (`phase-3.4-correctness-residuals.md`). KDS notify internal soft-gate; held-orders `tables` gate; void×cancel restock (stock→8); stock-reject HTTP 400; no ALS.
 - [x] **Phase 3.5A** Inventory Ledger UI — **COMPLETE** (`phase-3.5a-inventory-ledger-ui.md`). Reuses `GET /api/inventory/movements`; page `/products/movements`; no schema change.
 - [x] **Phase 3.5B** Legacy tax column cleanup — **DEFERRED** pending pilot evidence and later architectural/API decision (`phase-3.5b-legacy-tax-cleanup-discovery.md`). Schema v75; `tax_type`/`tax_rate` remain; no Mode B, DROP, or migration.
+- [x] **Phase 3.6A** Refund receipt printing — **COMPLETE** (`phase-3.6a-refund-receipt-printing.md`)
+- [x] **Phase 3.6B** Reports Gross/Refunds/Net Sales UI — **COMPLETE** (`phase-3.6b-reports-gross-refunds-net-ui.md`). Display-only; reuses existing report API fields.
 - [ ] **Phase 3.5** Remaining optional — packages/extraction, recipes/BOM, suppliers/PO (not authorized unless explicitly tasked). Tax cleanup stays deferred (3.5B).
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet
 - [ ] ADR-006 Multi-Location Architecture (design only; no code until approved)

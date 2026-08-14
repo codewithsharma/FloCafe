@@ -44,6 +44,9 @@ interface PaymentMethodBreakdown {
 
 interface DailyStats {
   sales: number;
+  grossSales?: number;
+  refunds?: number;
+  netSales?: number;
   runningOrders: number;
   pendingOrders: number;
   tablesOccupied: number;
@@ -53,7 +56,14 @@ interface DailyStats {
 interface DaySummary {
   date: string;
   orders: { count: number; total: number };
-  bills: { count: number; total: number; collected: number };
+  bills: {
+    count: number;
+    total: number;
+    collected: number;
+    grossSales?: number;
+    refunds?: number;
+    netSales?: number;
+  };
   customers: { new: number };
   paymentMethods: PaymentMethodBreakdown[];
 }
@@ -123,7 +133,12 @@ const orderStatusVariant: Record<string, StatusBadgeVariant> = {
 };
 
 function getLocalDateString(date: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
 }
 
 function formatHourLabel(hour: number, locale: string): string {
@@ -165,7 +180,9 @@ export default function ReportsPage() {
   const role = currentTenant?.role;
   const canView = role === 'owner' || role === 'manager';
   const fmt = useFormatCurrency();
-  const locale = currentTenant?.country ? (getCountryByCode(currentTenant.country)?.locale ?? 'en-US') : 'en-US';
+  const locale = currentTenant?.country
+    ? (getCountryByCode(currentTenant.country)?.locale ?? 'en-US')
+    : 'en-US';
   const timeZone = currentTenant?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
   const todayLocal = getLocalDateString(new Date(), timeZone);
   const [selectedDate, setSelectedDate] = useState(todayLocal);
@@ -188,9 +205,20 @@ export default function ReportsPage() {
     if (!canView) return;
     const controller = new AbortController();
     Promise.all([
-      isToday ? api.get('/reports/daily-stats', { signal: controller.signal }) : api.get('/reports/summary', { params: { date: selectedDate }, signal: controller.signal }),
-      api.get('/reports/topProducts', { params: { start_date: selectedDate, end_date: selectedDate, limit: 5 }, signal: controller.signal }),
-      api.get('/reports/recentOrders', { params: { date: selectedDate, limit: 6 }, signal: controller.signal }),
+      isToday
+        ? api.get('/reports/daily-stats', { signal: controller.signal })
+        : api.get('/reports/summary', {
+            params: { date: selectedDate },
+            signal: controller.signal,
+          }),
+      api.get('/reports/topProducts', {
+        params: { start_date: selectedDate, end_date: selectedDate, limit: 5 },
+        signal: controller.signal,
+      }),
+      api.get('/reports/recentOrders', {
+        params: { date: selectedDate, limit: 6 },
+        signal: controller.signal,
+      }),
       api.get('/reports/insights', { params: { days: 30 }, signal: controller.signal }),
     ])
       .then(([statsRes, topRes, recentRes, insightsRes]) => {
@@ -201,7 +229,8 @@ export default function ReportsPage() {
         setInsights(insightsRes.data);
       })
       .catch((err: unknown) => {
-        if (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError')) return;
+        if (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))
+          return;
         toast.error(t('common.somethingWrong'));
       })
       .finally(() => {
@@ -213,7 +242,9 @@ export default function ReportsPage() {
 
   if (!canView) return null;
 
-  const paymentMethods = isToday ? (stats?.paymentMethods ?? []) : (daySummary?.paymentMethods ?? []);
+  const paymentMethods = isToday
+    ? (stats?.paymentMethods ?? [])
+    : (daySummary?.paymentMethods ?? []);
   const paymentMethodsTotal = paymentMethods.reduce((sum, pm) => sum + Number(pm.total), 0);
 
   const dateScopedTiles = isToday
@@ -233,13 +264,15 @@ export default function ReportsPage() {
           variant: 'warning' as const,
         },
         ...(isModuleEnabled('tables')
-          ? [{
-              label: t('dashboard.tablesOccupied'),
-              value: stats?.tablesOccupied ?? 0,
-              icon: LayoutGrid,
-              href: '/tables',
-              variant: 'default' as const,
-            }]
+          ? [
+              {
+                label: t('dashboard.tablesOccupied'),
+                value: stats?.tablesOccupied ?? 0,
+                icon: LayoutGrid,
+                href: '/tables',
+                variant: 'default' as const,
+              },
+            ]
           : []),
       ]
     : [
@@ -259,13 +292,33 @@ export default function ReportsPage() {
         },
       ];
 
+  const grossSales = isToday ? (stats?.grossSales ?? 0) : (daySummary?.bills.grossSales ?? 0);
+  const refundsTotal = isToday ? (stats?.refunds ?? 0) : (daySummary?.bills.refunds ?? 0);
+  const netSales = isToday
+    ? (stats?.netSales ?? stats?.sales ?? 0)
+    : (daySummary?.bills.netSales ?? daySummary?.bills.collected ?? 0);
+
   const metricTiles = [
     {
-      label: isToday ? t('dashboard.todaySales') : t('dashboard.sales'),
-      value: fmt(isToday ? (stats?.sales ?? 0) : (daySummary?.bills.collected ?? 0)),
+      label: t('dashboard.grossSales'),
+      value: fmt(grossSales),
       icon: Banknote,
       href: '/orders',
       variant: 'success' as const,
+    },
+    {
+      label: t('dashboard.refunds'),
+      value: fmt(refundsTotal),
+      icon: Wallet,
+      href: '/orders',
+      variant: 'warning' as const,
+    },
+    {
+      label: t('dashboard.netSales'),
+      value: fmt(netSales),
+      icon: TrendingUp,
+      href: '/orders',
+      variant: 'info' as const,
     },
     ...dateScopedTiles,
     {
@@ -277,9 +330,10 @@ export default function ReportsPage() {
     },
     {
       label: t('dashboard.avgPrepTime'),
-      value: insights?.avgPrepTimeMinutes != null
-        ? localizeTemplate(t('dashboard.minutesValue'), { minutes: insights.avgPrepTimeMinutes })
-        : '—',
+      value:
+        insights?.avgPrepTimeMinutes != null
+          ? localizeTemplate(t('dashboard.minutesValue'), { minutes: insights.avgPrepTimeMinutes })
+          : '—',
       icon: Timer,
       href: '/orders',
       variant: 'default' as const,
@@ -290,7 +344,11 @@ export default function ReportsPage() {
     <div>
       <PageHeader
         title={t('flo.reports.title')}
-        description={isToday ? t('flo.reports.todayDescription') : t('flo.reports.dateDescription', { date: selectedDate })}
+        description={
+          isToday
+            ? t('flo.reports.todayDescription')
+            : t('flo.reports.dateDescription', { date: selectedDate })
+        }
         actions={
           <Input
             type="date"
@@ -345,16 +403,28 @@ export default function ReportsPage() {
                       >
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-body font-medium text-flo-text">#{order.order_number}</span>
+                            <span className="text-body font-medium text-flo-text">
+                              #{order.order_number}
+                            </span>
                             <StatusBadge variant={orderStatusVariant[order.status] ?? 'secondary'}>
-                              {t(`orders.${order.status}` as 'orders.pending' | 'orders.preparing' | 'orders.ready' | 'orders.served' | 'orders.completed' | 'orders.cancelled')}
+                              {t(
+                                `orders.${order.status}` as
+                                  | 'orders.pending'
+                                  | 'orders.preparing'
+                                  | 'orders.ready'
+                                  | 'orders.served'
+                                  | 'orders.completed'
+                                  | 'orders.cancelled',
+                              )}
                             </StatusBadge>
                           </div>
                           <p className="text-caption text-flo-text-muted truncate">
                             {order.customer_name || order.table_name || t('dashboard.walkIn')}
                           </p>
                         </div>
-                        <span className="text-numeric text-flo-text shrink-0">{fmt(Number(order.total))}</span>
+                        <span className="text-numeric text-flo-text shrink-0">
+                          {fmt(Number(order.total))}
+                        </span>
                       </Link>
                     </li>
                   ))}
@@ -376,14 +446,24 @@ export default function ReportsPage() {
               ) : (
                 <ul className="divide-y divide-flo-border -mx-4 md:-mx-6">
                   {topProducts.map((product) => (
-                    <li key={product.product_id} className="flex items-center justify-between gap-3 px-4 md:px-6 py-2.5">
+                    <li
+                      key={product.product_id}
+                      className="flex items-center justify-between gap-3 px-4 md:px-6 py-2.5"
+                    >
                       <div className="min-w-0">
-                        <span className="text-body font-medium text-flo-text">{product.product_name}</span>
+                        <span className="text-body font-medium text-flo-text">
+                          {product.product_name}
+                        </span>
                         <p className="text-caption text-flo-text-muted">
-                          {localizeTemplate(t('dashboard.productSoldOrders'), { quantity: product.total_quantity, orders: product.order_count })}
+                          {localizeTemplate(t('dashboard.productSoldOrders'), {
+                            quantity: product.total_quantity,
+                            orders: product.order_count,
+                          })}
                         </p>
                       </div>
-                      <span className="text-numeric text-flo-text shrink-0">{fmt(Number(product.total_revenue))}</span>
+                      <span className="text-numeric text-flo-text shrink-0">
+                        {fmt(Number(product.total_revenue))}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -406,14 +486,21 @@ export default function ReportsPage() {
               ) : (
                 <ul className="divide-y divide-flo-border -mx-4 md:-mx-6">
                   {insights!.topStaff.map((staff) => (
-                    <li key={staff.user_id} className="flex items-center justify-between gap-3 px-4 md:px-6 py-2.5">
+                    <li
+                      key={staff.user_id}
+                      className="flex items-center justify-between gap-3 px-4 md:px-6 py-2.5"
+                    >
                       <div className="min-w-0">
                         <span className="text-body font-medium text-flo-text">{staff.name}</span>
                         <p className="text-caption text-flo-text-muted">
-                          {localizeTemplate(t('dashboard.staffOrderCount'), { orders: staff.orderCount })}
+                          {localizeTemplate(t('dashboard.staffOrderCount'), {
+                            orders: staff.orderCount,
+                          })}
                         </p>
                       </div>
-                      <span className="text-numeric text-flo-text shrink-0">{fmt(Number(staff.revenue))}</span>
+                      <span className="text-numeric text-flo-text shrink-0">
+                        {fmt(Number(staff.revenue))}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -433,14 +520,21 @@ export default function ReportsPage() {
               ) : (
                 <ul className="divide-y divide-flo-border -mx-4 md:-mx-6">
                   {insights!.topCategories.map((category) => (
-                    <li key={category.category_id ?? category.name} className="flex items-center justify-between gap-3 px-4 md:px-6 py-2.5">
+                    <li
+                      key={category.category_id ?? category.name}
+                      className="flex items-center justify-between gap-3 px-4 md:px-6 py-2.5"
+                    >
                       <div className="min-w-0">
                         <span className="text-body font-medium text-flo-text">{category.name}</span>
                         <p className="text-caption text-flo-text-muted">
-                          {localizeTemplate(t('dashboard.categoryQuantitySold'), { quantity: category.quantity })}
+                          {localizeTemplate(t('dashboard.categoryQuantitySold'), {
+                            quantity: category.quantity,
+                          })}
                         </p>
                       </div>
-                      <span className="text-numeric text-flo-text shrink-0">{fmt(Number(category.revenue))}</span>
+                      <span className="text-numeric text-flo-text shrink-0">
+                        {fmt(Number(category.revenue))}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -464,23 +558,40 @@ export default function ReportsPage() {
                 {paymentMethods.map((pm) => {
                   const meta = PAYMENT_METHODS.find((m) => m.key === pm.method);
                   const Icon = meta?.icon ?? Wallet;
-                  const label = meta ? t(meta.labelKey) : pm.method === 'wallet' ? t('pos.methodWallet') : String(pm.method || t('common.unknown'));
-                  const percent = paymentMethodsTotal > 0 ? Math.round((Number(pm.total) / paymentMethodsTotal) * 100) : 0;
+                  const label = meta
+                    ? t(meta.labelKey)
+                    : pm.method === 'wallet'
+                      ? t('pos.methodWallet')
+                      : String(pm.method || t('common.unknown'));
+                  const percent =
+                    paymentMethodsTotal > 0
+                      ? Math.round((Number(pm.total) / paymentMethodsTotal) * 100)
+                      : 0;
                   return (
                     <div key={pm.method ?? 'unknown'}>
                       <div className="flex items-center justify-between mb-1.5 gap-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <Icon className="size-4 shrink-0 text-flo-text-muted" aria-hidden />
-                          <span className="text-body font-medium text-flo-text truncate">{label}</span>
+                          <span className="text-body font-medium text-flo-text truncate">
+                            {label}
+                          </span>
                         </div>
-                        <span className="text-numeric text-flo-text shrink-0">{fmt(Number(pm.total))}</span>
+                        <span className="text-numeric text-flo-text shrink-0">
+                          {fmt(Number(pm.total))}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="flex-1 h-1.5 bg-flo-surface-muted rounded-full overflow-hidden">
-                          <div className="h-full bg-flo-brand-600 rounded-full" style={{ width: `${percent}%` }} />
+                          <div
+                            className="h-full bg-flo-brand-600 rounded-full"
+                            style={{ width: `${percent}%` }}
+                          />
                         </div>
                         <span className="text-caption text-flo-text-muted shrink-0 tabular-nums">
-                          {localizeTemplate(t('dashboard.paymentMethodCount'), { count: pm.count, percent })}
+                          {localizeTemplate(t('dashboard.paymentMethodCount'), {
+                            count: pm.count,
+                            percent,
+                          })}
                         </span>
                       </div>
                     </div>
@@ -498,14 +609,32 @@ export default function ReportsPage() {
                 {t('dashboard.businessPatterns')}
               </span>
             }
-            description={localizeTemplate(t('dashboard.businessPatternsHint'), { days: insights?.windowDays ?? 30 })}
+            description={localizeTemplate(t('dashboard.businessPatternsHint'), {
+              days: insights?.windowDays ?? 30,
+            })}
           >
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: t('dashboard.busiestHour'), bucket: insights?.busiestHour, format: (h: number) => formatHourLabel(h, locale) },
-                { label: t('dashboard.idlestHour'), bucket: insights?.idlestHour, format: (h: number) => formatHourLabel(h, locale) },
-                { label: t('dashboard.busiestDay'), bucket: insights?.busiestDayOfWeek, format: (d: number) => formatWeekdayLabel(d, locale) },
-                { label: t('dashboard.idlestDay'), bucket: insights?.idlestDayOfWeek, format: (d: number) => formatWeekdayLabel(d, locale) },
+                {
+                  label: t('dashboard.busiestHour'),
+                  bucket: insights?.busiestHour,
+                  format: (h: number) => formatHourLabel(h, locale),
+                },
+                {
+                  label: t('dashboard.idlestHour'),
+                  bucket: insights?.idlestHour,
+                  format: (h: number) => formatHourLabel(h, locale),
+                },
+                {
+                  label: t('dashboard.busiestDay'),
+                  bucket: insights?.busiestDayOfWeek,
+                  format: (d: number) => formatWeekdayLabel(d, locale),
+                },
+                {
+                  label: t('dashboard.idlestDay'),
+                  bucket: insights?.idlestDayOfWeek,
+                  format: (d: number) => formatWeekdayLabel(d, locale),
+                },
               ].map(({ label, bucket, format }) => (
                 <div key={label}>
                   <p className="text-caption text-flo-text-muted mb-1">{label}</p>
