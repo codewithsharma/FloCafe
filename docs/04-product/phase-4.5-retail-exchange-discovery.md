@@ -10,7 +10,7 @@
 
 ## 1. Executive summary
 
-Opervia Retail can already perform the **atomic legs** of a merchandise exchange:
+Operavia Retail can already perform the **atomic legs** of a merchandise exchange:
 
 1. **Return money** — `POST /api/bills/:id/refund` (`createBillRefund`, ADR-009)
 2. **Optional restock** — `POST /api/refunds/:id/restock` (Phase 4.2, ADR-011, retail-only)
@@ -18,7 +18,7 @@ Opervia Retail can already perform the **atomic legs** of a merchandise exchange
 
 There is **no exchange entity**, **no item-level refund contract**, **no net-settlement API**, and **no linked audit trail** tying return + replacement. ADR-011 explicitly lists **exchanges out of scope**.
 
-Economically, an exchange **is** a refund + new sale (plus optional restock). Opervia does **not** require a dedicated `exchanges` table for a **v1 floor workflow**, but **does** require an **ADR** to lock product policy before implementation — especially return-value rules, price-difference settlement, partial-failure recovery, and cross-leg idempotency.
+Economically, an exchange **is** a refund + new sale (plus optional restock). Operavia does **not** require a dedicated `exchanges` table for a **v1 floor workflow**, but **does** require an **ADR** to lock product policy before implementation — especially return-value rules, price-difference settlement, partial-failure recovery, and cross-leg idempotency.
 
 **Recommended architecture (post-ADR):** **Option A — Composition** via a Retail-only **exchange coordinator** (frontend orchestration reusing existing APIs). Avoid Option C (exchange table) for v1 unless audit/linkage requirements exceed composition.
 

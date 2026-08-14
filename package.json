@@ -282,7 +282,7 @@
   },
   "build": {
     "appId": "com.flo.desktop",
-    "productName": "Opervia",
+    "productName": "Operavia",
     "icon": "assets/icon-512.png",
     "afterPack": "scripts/afterPack.js",
     "asar": true,

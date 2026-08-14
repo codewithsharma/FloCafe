@@ -10,7 +10,7 @@
 
 Strengthen `retail-test` as an **architecture validation fixture**, not a production vertical.
 
-Prove: the same shared modules (Customer, Product, Inventory, Order, Payment, Tax, POS, …) can be composed **without** Restaurant modules — so future Opervia Retail does not copy Restaurant business logic.
+Prove: the same shared modules (Customer, Product, Inventory, Order, Payment, Tax, POS, …) can be composed **without** Restaurant modules — so future Operavia Retail does not copy Restaurant business logic.
 
 Also prove a complete takeaway money path (Product → Inventory → Order → Tax → Bill → Payment → historical snapshot) succeeds without tables/KDS/addons.
 
@@ -19,7 +19,7 @@ Also prove a complete takeaway money path (Product → Inventory → Order → T
 | Fact                    | Value                                 |
 | ----------------------- | ------------------------------------- |
 | Id                      | `retail-test`                         |
-| Name                    | Opervia Retail Test                   |
+| Name                    | Operavia Retail Test                  |
 | Version                 | `0.0.0-test`                          |
 | In `VERTICALS`          | **No**                                |
 | `ACTIVE_VERTICAL_ID`    | Still `restaurant`                    |
@@ -74,16 +74,16 @@ Restaurant capabilities are absent from the sale path (no table rows, no KDS/add
 | Application restart / userdata reload | **Not tested** in this suite (same DB process)                           |
 | Runtime ACTIVE switch to retail-test  | **Not done** (by design — synthetic composition only)                    |
 | Fail-closed restaurant route unmount  | **Phase 3**                                                              |
-| Production Opervia Retail vertical    | **Phase 3**                                                              |
+| Production Operavia Retail vertical   | **Phase 3**                                                              |
 | Insufficient-stock HTTP status        | Characterized as `>= 400` (may be 500 today if Error lacks `statusCode`) |
 
 ## 7. TARGET vs DEFERRED
 
-| CURRENT                                       | TARGET (Phase 3)                   | DEFERRED                         |
-| --------------------------------------------- | ---------------------------------- | -------------------------------- |
-| Synthetic composition + soft gates + sale E2E | Production Opervia Retail vertical | Fail-closed route unmount        |
-| Static Express mounts                         | Optional HTTP gating by vertical   | Tenant / runtime vertical switch |
-| dine-in remains an order type                 | Retail order types as needed       | Custom builder / marketplace     |
+| CURRENT                                       | TARGET (Phase 3)                    | DEFERRED                         |
+| --------------------------------------------- | ----------------------------------- | -------------------------------- |
+| Synthetic composition + soft gates + sale E2E | Production Operavia Retail vertical | Fail-closed route unmount        |
+| Static Express mounts                         | Optional HTTP gating by vertical    | Tenant / runtime vertical switch |
+| dine-in remains an order type                 | Retail order types as needed        | Custom builder / marketplace     |
 
 ## 8. Architectural success criterion
 

@@ -1,4 +1,4 @@
-# Opervia Modular Architecture
+# Operavia Modular Architecture
 
 **Status:** Phase 2 **CLOSED** — closeout + Phase 3 gate [phase-2-closeout-and-phase-3-gate.md](phase-2-closeout-and-phase-3-gate.md); final exit [phase-2-final-exit-gate.md](phase-2-final-exit-gate.md) (**PASS WITH DOCUMENTED DEFERMENTS**). Interim catalog exit: [phase-2-exit-gate.md](phase-2-exit-gate.md). Phase 1 Restaurant runtime **preserved**. Phase 3 ordered: fail-closed remount → capability config → production Retail → residuals (do not start until kickoff).
 **Product:** [opervia-platform.md](../00-product/opervia-platform.md) · [principles.md](../00-product/principles.md)
@@ -6,7 +6,7 @@
 
 ## Lego model
 
-Opervia is built like Lego:
+Operavia is built like Lego:
 
 1. **Core** — the baseplate (runtime, auth, data, security)
 2. **Modules** — bricks (reusable business capabilities)
@@ -57,13 +57,13 @@ Composition flows **upward**: Core enables Modules; Verticals select and configu
 
 ## How Phase 1 maps
 
-| Phase 1 reality                      | Modular interpretation                                                 |
-| ------------------------------------ | ---------------------------------------------------------------------- |
-| Monolithic Express routes + services | Pre-extracted **module implementations** colocated in `main/`          |
-| Settings feature flags               | **Configuration** on top of vertical module enablement                 |
-| `business_type` ≈ restaurant         | **CURRENT** vertical: Opervia Restaurant (`main/modules/verticals.ts`) |
-| Frontend nav                         | Broader `requiresModule` + `isFeatureAvailable` (Phase 2.2)            |
-| Tax-packs                            | Only existing **plugin-like** system (not the module registry)         |
+| Phase 1 reality                      | Modular interpretation                                                  |
+| ------------------------------------ | ----------------------------------------------------------------------- |
+| Monolithic Express routes + services | Pre-extracted **module implementations** colocated in `main/`           |
+| Settings feature flags               | **Configuration** on top of vertical module enablement                  |
+| `business_type` ≈ restaurant         | **CURRENT** vertical: Operavia Restaurant (`main/modules/verticals.ts`) |
+| Frontend nav                         | Broader `requiresModule` + `isFeatureAvailable` (Phase 2.2)             |
+| Tax-packs                            | Only existing **plugin-like** system (not the module registry)          |
 
 **Phase 2.1–2.18 COMPLETE** — final gate [phase-2-final-exit-gate.md](phase-2-final-exit-gate.md):
 
@@ -77,7 +77,7 @@ Composition flows **upward**: Core enables Modules; Verticals select and configu
 
 - Microservices / Kubernetes
 - Separate codebase per vertical
-- Opervia Custom builder
+- Operavia Custom builder
 - Mass folder moves or package extraction for its own sake
 
 ## Related

@@ -1,5 +1,5 @@
 /**
- * Opervia module catalog — describes Phase 1 capabilities in place.
+ * Operavia module catalog — describes Phase 1 capabilities in place.
  * Implementations remain in existing routes/services; this is metadata only.
  * Phase 2.6: each module declares domain-level capabilities (not authz).
  *

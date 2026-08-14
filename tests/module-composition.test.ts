@@ -1,5 +1,5 @@
 /**
- * Phase 2.3 — Opervia read-only composition snapshot.
+ * Phase 2.3 — Operavia read-only composition snapshot.
  *
  * Usage: npx ts-node --transpile-only -P tests/tsconfig.json tests/module-composition.test.ts
  */
@@ -42,7 +42,10 @@ function main(): void {
   const sortedEnabled = [...OPERVIA_RESTAURANT_ENABLED_MODULES].sort();
   assert.deepEqual([...snapshot.modules.enabled], sortedEnabled);
   for (const id of sortedEnabled) {
-    assert.ok(snapshot.modules.entries.some((e) => e.id === id), `entry for ${id}`);
+    assert.ok(
+      snapshot.modules.entries.some((e) => e.id === id),
+      `entry for ${id}`,
+    );
   }
   assert.ok(snapshot.modules.enabled.includes('core'));
   assert.ok(snapshot.modules.enabled.includes('kds'));

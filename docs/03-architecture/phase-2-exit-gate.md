@@ -1,4 +1,4 @@
-# Opervia Phase 2 Exit Gate
+# Operavia Phase 2 Exit Gate
 
 **Date:** 2026-08-13  
 **Branch:** `modular-verticles`  
@@ -10,23 +10,23 @@
 
 ## 1. Objective
 
-Prove that Opervia has a reusable, composable, vertical-neutral module architecture with explicit ownership, contracts, composition, and domain boundaries — ready for Phase 3 extraction and additional verticals — **without** rewriting Restaurant behavior, extracting packages, or enabling multi-vertical runtime selection.
+Prove that Operavia has a reusable, composable, vertical-neutral module architecture with explicit ownership, contracts, composition, and domain boundaries — ready for Phase 3 extraction and additional verticals — **without** rewriting Restaurant behavior, extracting packages, or enabling multi-vertical runtime selection.
 
 ---
 
 ## 2. Phase 2 Scope
 
-| In scope | Out of scope |
-|----------|--------------|
-| Module registry, contracts, capabilities | npm packages / workspaces / multi-repo |
-| Soft dependency diagnostics | Fail-closed boot / route unload |
-| Composition snapshot + read API | Module marketplace / install lifecycle |
-| Settings + nav module gates | Production Retail/Grocery/Salon/… |
-| Inventory write ownership + ledger + history read | Inventory movement UI |
-| Tax facade, HTTP boundary, snapshot contract | Tax engine rewrite / legacy column removal |
-| Product↔Inventory / Product↔Tax ownership maps | Runtime tenant vertical switching |
-| Synthetic `retail-test` composition | Custom builder |
-| Characterization tests + exit docs | `db.ts` rewrite |
+| In scope                                          | Out of scope                               |
+| ------------------------------------------------- | ------------------------------------------ |
+| Module registry, contracts, capabilities          | npm packages / workspaces / multi-repo     |
+| Soft dependency diagnostics                       | Fail-closed boot / route unload            |
+| Composition snapshot + read API                   | Module marketplace / install lifecycle     |
+| Settings + nav module gates                       | Production Retail/Grocery/Salon/…          |
+| Inventory write ownership + ledger + history read | Inventory movement UI                      |
+| Tax facade, HTTP boundary, snapshot contract      | Tax engine rewrite / legacy column removal |
+| Product↔Inventory / Product↔Tax ownership maps    | Runtime tenant vertical switching          |
+| Synthetic `retail-test` composition               | Custom builder                             |
+| Characterization tests + exit docs                | `db.ts` rewrite                            |
 
 ---
 
@@ -35,8 +35,8 @@ Prove that Opervia has a reusable, composable, vertical-neutral module architect
 Phases **2.1 → 2.13** shipped on `modular-verticles`. Phase **2.14** closes the gate with catalog metadata alignment and exit documentation.
 
 ```
-Opervia (platform brand)
-  └── Opervia Restaurant (ACTIVE_VERTICAL_ID = restaurant)
+Operavia (platform brand)
+  └── Operavia Restaurant (ACTIVE_VERTICAL_ID = restaurant)
         ├── Module registry (22 modules)
         ├── Composition snapshot + GET /api/platform/composition
         ├── Soft diagnostics (no fail-closed)
@@ -48,23 +48,23 @@ Opervia (platform brand)
 
 ## 4. Module Registry
 
-| Fact | Evidence |
-|------|----------|
-| Catalog | `main/modules/catalog.ts` — **22** modules |
-| Helpers | `isModuleEnabled`, `getEnabledModules`, `isFeatureAvailable` |
-| Integrity | `validateRegistryIntegrity()` — unique IDs, versions, kinds, deps, capabilities, cycle detection |
-| Contract | `main/modules/types.ts` + `tests/module-contract.test.ts` |
-| Capabilities | Domain `CapabilityId`s — discovery only, **not** authorization |
-| Route mounts | Still **static** `registerRoutes` (by design) |
+| Fact         | Evidence                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------ |
+| Catalog      | `main/modules/catalog.ts` — **22** modules                                                       |
+| Helpers      | `isModuleEnabled`, `getEnabledModules`, `isFeatureAvailable`                                     |
+| Integrity    | `validateRegistryIntegrity()` — unique IDs, versions, kinds, deps, capabilities, cycle detection |
+| Contract     | `main/modules/types.ts` + `tests/module-contract.test.ts`                                        |
+| Capabilities | Domain `CapabilityId`s — discovery only, **not** authorization                                   |
+| Route mounts | Still **static** `registerRoutes` (by design)                                                    |
 
 ---
 
 ## 5. Vertical Composition
 
-| Vertical | Role |
-|----------|------|
-| **Opervia Restaurant** | Sole production vertical (`VERTICALS`, `ACTIVE_VERTICAL_ID`) — enables all 22 modules |
-| **retail-test** | Synthetic fixture in `SYNTHETIC_VERTICALS` only — never active, never API-selectable |
+| Vertical                | Role                                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------- |
+| **Operavia Restaurant** | Sole production vertical (`VERTICALS`, `ACTIVE_VERTICAL_ID`) — enables all 22 modules |
+| **retail-test**         | Synthetic fixture in `SYNTHETIC_VERTICALS` only — never active, never API-selectable  |
 
 Composition snapshot (`getCompositionSnapshot`) and platform API report the **active production** vertical only. `?verticalId=` is ignored.
 
@@ -100,11 +100,11 @@ Composition snapshot (`getCompositionSnapshot`) and platform API report the **ac
 
 ## 9. Inventory Ledger
 
-| Fact | Value |
-|------|-------|
-| Schema | **v75** `inventory_movements` |
-| Types | `sale` \| `cancel_restore` \| `adjustment` |
-| Semantics | Append-only; atomic with stock UPDATE; **no backfill** |
+| Fact        | Value                                                                           |
+| ----------- | ------------------------------------------------------------------------------- |
+| Schema      | **v75** `inventory_movements`                                                   |
+| Types       | `sale` \| `cancel_restore` \| `adjustment`                                      |
+| Semantics   | Append-only; atomic with stock UPDATE; **no backfill**                          |
 | History API | `GET /api/inventory/movements` — owner/manager; limit 1–500; keyset `before_id` |
 
 ---
@@ -127,25 +127,25 @@ Composition snapshot (`getCompositionSnapshot`) and platform API report the **ac
 
 ## 12. Product Ownership
 
-| Concern | Owner |
-|---------|-------|
-| Product CRUD / catalog fields | Product |
-| `tax_category_id` / `tax_behavior` persistence | Product (Tax **config refs** only) |
-| Tax calculation / snapshot | Tax |
-| Stock writes | Inventory (Product create/PUT route through Inventory) |
-| Legacy `tax_type` / `tax_rate` | Compatibility (forced none/0; cleanup deferred) |
+| Concern                                        | Owner                                                  |
+| ---------------------------------------------- | ------------------------------------------------------ |
+| Product CRUD / catalog fields                  | Product                                                |
+| `tax_category_id` / `tax_behavior` persistence | Product (Tax **config refs** only)                     |
+| Tax calculation / snapshot                     | Tax                                                    |
+| Stock writes                                   | Inventory (Product create/PUT route through Inventory) |
+| Legacy `tax_type` / `tax_rate`                 | Compatibility (forced none/0; cleanup deferred)        |
 
 ---
 
 ## 13. API Boundaries
 
-| Route | Ownership / notes |
-|-------|-------------------|
+| Route                           | Ownership / notes                                     |
+| ------------------------------- | ----------------------------------------------------- |
 | `GET /api/platform/composition` | Owner/manager; minimal projection; no vertical switch |
-| `GET /api/inventory/movements` | Inventory; owner/manager; bounded pagination |
-| `/api/tax/*` | Tax router |
-| `/api/products/*` | Product; stock mutations call Inventory |
-| Module enable/disable HTTP | **Does not exist** (correct for Phase 2) |
+| `GET /api/inventory/movements`  | Inventory; owner/manager; bounded pagination          |
+| `/api/tax/*`                    | Tax router                                            |
+| `/api/products/*`               | Product; stock mutations call Inventory               |
+| Module enable/disable HTTP      | **Does not exist** (correct for Phase 2)              |
 
 ---
 
@@ -160,7 +160,7 @@ Composition snapshot (`getCompositionSnapshot`) and platform API report the **ac
 
 ## 15. Restaurant Compatibility
 
-Opervia Restaurant enables: core, customer, product, category, inventory, pos, order, payment, refund, tax, shift, staff, loyalty, reporting, printing, notification, backup, tables, kitchen, kds, menu, addons.
+Operavia Restaurant enables: core, customer, product, category, inventory, pos, order, payment, refund, tax, shift, staff, loyalty, reporting, printing, notification, backup, tables, kitchen, kds, menu, addons.
 
 Flags still gate runtime behavior: `tables_required`, `kds_enabled`, `kot_printing_enabled`, `taxes_enabled`, `shifts_enabled`, `loyalty_enabled`, etc. No Restaurant workflow removed; money math unchanged by Phase 2.
 
@@ -174,33 +174,33 @@ Flags still gate runtime behavior: `tables_required`, `kds_enabled`, `kot_printi
 
 ## 17. Database State
 
-| Item | Value |
-|------|-------|
-| Schema version | **v75** |
-| Last migration | `p2_8_inventory_movements_ledger` |
+| Item                | Value                                           |
+| ------------------- | ----------------------------------------------- |
+| Schema version      | **v75**                                         |
+| Last migration      | `p2_8_inventory_movements_ledger`               |
 | Post-2.8 migrations | **None** (2.9–2.14 intentionally schema-stable) |
-| Ledger backfill | **None** |
+| Ledger backfill     | **None**                                        |
 
 ---
 
 ## 18. Remaining Coupling
 
-| Area | Coupling | Notes |
-|------|----------|-------|
-| Inventory | MEDIUM | Stock columns on `products`; write HTTP still product-nested |
-| Tax | MEDIUM | Denormalized snapshots; money-path orchestration |
-| Product | HIGH | Config columns colocated; legacy tax fields |
-| POS / KDS | HIGH | Orchestration / live stream |
-| `db.ts` | HIGH monolith | See §18 inventory below |
+| Area      | Coupling      | Notes                                                        |
+| --------- | ------------- | ------------------------------------------------------------ |
+| Inventory | MEDIUM        | Stock columns on `products`; write HTTP still product-nested |
+| Tax       | MEDIUM        | Denormalized snapshots; money-path orchestration             |
+| Product   | HIGH          | Config columns colocated; legacy tax fields                  |
+| POS / KDS | HIGH          | Orchestration / live stream                                  |
+| `db.ts`   | HIGH monolith | See §18 inventory below                                      |
 
 ### `db.ts` responsibility inventory (highest risk)
 
-| Class | Meaning | Examples |
-|-------|---------|----------|
-| **A** | Infrastructure primitives | open/close, WAL, txn, paths, schema version, backup/restore |
-| **B** | Domain logic misplaced | KDS station helpers, order/tax JSON merge, feature-flag getters |
-| **C** | Compatibility / repair | Startup auto-repairs |
-| **D** | Migration / seed | `MIGRATIONS[]`, schema create |
+| Class | Meaning                   | Examples                                                        |
+| ----- | ------------------------- | --------------------------------------------------------------- |
+| **A** | Infrastructure primitives | open/close, WAL, txn, paths, schema version, backup/restore     |
+| **B** | Domain logic misplaced    | KDS station helpers, order/tax JSON merge, feature-flag getters |
+| **C** | Compatibility / repair    | Startup auto-repairs                                            |
+| **D** | Migration / seed          | `MIGRATIONS[]`, schema create                                   |
 
 Highest Phase 3 risk: **B-in-A** (domain helpers inside DB facade) + migration monolith blast radius. **Do not rewrite in Phase 2.**
 
@@ -216,33 +216,33 @@ See [extraction-readiness.md](extraction-readiness.md). Phase 2 improves maps an
 
 Authoritative scripts (all exist in `package.json`). Recorded PASS at Phase 2 exit audit (pre- and post–2.14 catalog metadata where noted):
 
-| Script | Result |
-|--------|--------|
-| `npm run test:module-registry` | PASS (nests diagnostics, composition, vertical, contract, platform API, settings gating) |
-| `npm run test:module-contract` | PASS |
-| `npm run test:module-composition` | PASS |
-| `npm run test:platform-composition-api` | PASS |
-| `npm run test:flo-settings-module-gating` | PASS |
-| `npm run test:inventory-boundary` | PASS |
-| `npm run test:inventory-ledger` | PASS |
-| `npm run test:product-inventory-boundary` | PASS |
-| `npm run test:inventory-movement-read` | PASS |
-| `npm run test:inventory-movements-api` | PASS |
-| `npm run test:tax-boundary` | PASS |
-| `npm run test:tax-route-boundary` | PASS |
-| `npm run test:tax-snapshot-contract` | PASS |
-| `npm run test:product-tax-boundary` | PASS |
-| `npm run test:integration-tax` | PASS |
-| `npm run test:tax-engine` | PASS |
-| `npm run test:flo-ui-shell` | PASS |
-| `npm run test:flo-products` | PASS |
-| `npm run test:flo-pos` | PASS |
-| `npm run test:flo-home` | PASS |
-| `npm run test:flo-orders` | PASS |
-| `npm run test:smoke` | PASS |
-| `npm run test:network-mode` | PASS |
-| `npm run test:release-config` | PASS |
-| `npm run build` | PASS |
+| Script                                    | Result                                                                                   |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `npm run test:module-registry`            | PASS (nests diagnostics, composition, vertical, contract, platform API, settings gating) |
+| `npm run test:module-contract`            | PASS                                                                                     |
+| `npm run test:module-composition`         | PASS                                                                                     |
+| `npm run test:platform-composition-api`   | PASS                                                                                     |
+| `npm run test:flo-settings-module-gating` | PASS                                                                                     |
+| `npm run test:inventory-boundary`         | PASS                                                                                     |
+| `npm run test:inventory-ledger`           | PASS                                                                                     |
+| `npm run test:product-inventory-boundary` | PASS                                                                                     |
+| `npm run test:inventory-movement-read`    | PASS                                                                                     |
+| `npm run test:inventory-movements-api`    | PASS                                                                                     |
+| `npm run test:tax-boundary`               | PASS                                                                                     |
+| `npm run test:tax-route-boundary`         | PASS                                                                                     |
+| `npm run test:tax-snapshot-contract`      | PASS                                                                                     |
+| `npm run test:product-tax-boundary`       | PASS                                                                                     |
+| `npm run test:integration-tax`            | PASS                                                                                     |
+| `npm run test:tax-engine`                 | PASS                                                                                     |
+| `npm run test:flo-ui-shell`               | PASS                                                                                     |
+| `npm run test:flo-products`               | PASS                                                                                     |
+| `npm run test:flo-pos`                    | PASS                                                                                     |
+| `npm run test:flo-home`                   | PASS                                                                                     |
+| `npm run test:flo-orders`                 | PASS                                                                                     |
+| `npm run test:smoke`                      | PASS                                                                                     |
+| `npm run test:network-mode`               | PASS                                                                                     |
+| `npm run test:release-config`             | PASS                                                                                     |
+| `npm run build`                           | PASS                                                                                     |
 
 ---
 
@@ -283,14 +283,14 @@ All architectural exit criteria for Phase 2 are met in code and characterization
 
 ### Cross-review sign-off
 
-| Role | Verdict |
-|------|---------|
+| Role               | Verdict                         |
+| ------------------ | ------------------------------- |
 | Architecture Chair | PASS WITH DOCUMENTED DEFERMENTS |
-| Senior Backend | PASS WITH DOCUMENTED DEFERMENTS |
-| Senior Frontend | PASS WITH DOCUMENTED DEFERMENTS |
-| Database | PASS WITH DOCUMENTED DEFERMENTS |
-| Security | PASS WITH DOCUMENTED DEFERMENTS |
-| Release Engineer | PASS WITH DOCUMENTED DEFERMENTS |
+| Senior Backend     | PASS WITH DOCUMENTED DEFERMENTS |
+| Senior Frontend    | PASS WITH DOCUMENTED DEFERMENTS |
+| Database           | PASS WITH DOCUMENTED DEFERMENTS |
+| Security           | PASS WITH DOCUMENTED DEFERMENTS |
+| Release Engineer   | PASS WITH DOCUMENTED DEFERMENTS |
 | Skeptical Reviewer | PASS WITH DOCUMENTED DEFERMENTS |
 
 ---

@@ -1,5 +1,5 @@
 /**
- * Opervia Phase 2.1–2.6 — module contract (metadata only).
+ * Operavia Phase 2.1–2.6 — module contract (metadata only).
  * No lifecycle, installers, authorization engine, or package extraction.
  *
  * Capabilities describe what a module provides. They do NOT grant user access.

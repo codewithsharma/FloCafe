@@ -140,16 +140,16 @@ Rationale: Production Retail without fail-closed remount would ship “Restauran
 
 ### Phase 3.3 — Production Retail vertical
 
-|                  |                                                                                                                           |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| **Objective**    | Promote a production Opervia Retail vertical (not `retail-test`) composing Core only; Retail smoke/E2E and operator docs. |
-| **Why**          | Lego proof becomes a shippable second product.                                                                            |
-| **Depends on**   | 3.1 + 3.2                                                                                                                 |
-| **Touch**        | `VERTICALS`, Retail UX deltas (minimal), packaging/docs, E2E                                                              |
-| **Tests**        | Extend `synthetic-retail-sale` patterns to production vertical; restaurant regression green                               |
-| **Acceptance**   | Retail sale without Restaurant; Restaurant vertical still default for café pilots                                         |
-| **Risks**        | Premature product split before café pilots                                                                                |
-| **NOT included** | Grocery/Salon/Pharmacy; recipes/BOM; ERP inventory                                                                        |
+|                  |                                                                                                                            |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**    | Promote a production Operavia Retail vertical (not `retail-test`) composing Core only; Retail smoke/E2E and operator docs. |
+| **Why**          | Lego proof becomes a shippable second product.                                                                             |
+| **Depends on**   | 3.1 + 3.2                                                                                                                  |
+| **Touch**        | `VERTICALS`, Retail UX deltas (minimal), packaging/docs, E2E                                                               |
+| **Tests**        | Extend `synthetic-retail-sale` patterns to production vertical; restaurant regression green                                |
+| **Acceptance**   | Retail sale without Restaurant; Restaurant vertical still default for café pilots                                          |
+| **Risks**        | Premature product split before café pilots                                                                                 |
+| **NOT included** | Grocery/Salon/Pharmacy; recipes/BOM; ERP inventory                                                                         |
 
 ### Phase 3.4 — Correctness & soft-gate residuals
 

@@ -10,7 +10,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] M5 Cash reconciliation + day close (A–H)
 - [x] Flo UI redesign Phases 1–12 + dark mode + component/route guards
 
-## P0 — Production blockers (Opervia Restaurant v1.0)
+## P0 — Production blockers (Operavia Restaurant v1.0)
 
 - [x] P0.1 M6 Refund workflow (API + UI green; receipt print Phase 3.6A)
 - [x] P0.2 Financial-ops audit — YELLOW (`docs/15-project-management/p0.2-financial-ops-audit.md`)
@@ -38,10 +38,10 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P1.5 Pilot ops + DR readiness discovery — COMPLETE (`p1.5-pilot-ops-dr-readiness-audit.md`)
 - [x] P1.5 Pilot ops pack (docs) — runbook + DR drill worksheet + ops doc updates → **docs GREEN; re-drill after shift-enablement + REC-01 hotfixes**
 - [ ] P0.6 Phase C — CSP / session JWT / GPU sandbox (deferred)
-- [x] P0.7a Opervia platform architecture docs — ADR-010 + product/architecture/modules docs (2026-08-13)
-- [x] P0.7b Opervia branding consolidation — STRATEGY, vision, docs/README, package `productName`, UI i18n/manifest, user-facing main strings (2026-08-13); historical audits preserved; `appId`/linux `executableName` unchanged for upgrade continuity
-- [x] P2.1 Lightweight module registry + Opervia Restaurant vertical (`main/modules/`; `tests/module-registry.test.ts`) — **IMPLEMENTED** (metadata seam; no package extraction)
-- [ ] P0.7 Documentation truth — roadmap/feature-list/production-readiness match code; CURRENT Opervia Restaurant vs TARGET modular platform
+- [x] P0.7a Operavia platform architecture docs — ADR-010 + product/architecture/modules docs (2026-08-13)
+- [x] P0.7b Operavia branding consolidation — STRATEGY, vision, docs/README, package `productName`, UI i18n/manifest, user-facing main strings (2026-08-13); historical audits preserved; `appId`/linux `executableName` unchanged for upgrade continuity
+- [x] P2.1 Lightweight module registry + Operavia Restaurant vertical (`main/modules/`; `tests/module-registry.test.ts`) — **IMPLEMENTED** (metadata seam; no package extraction)
+- [ ] P0.7 Documentation truth — roadmap/feature-list/production-readiness match code; CURRENT Operavia Restaurant vs TARGET modular platform
 - [x] P2.2 Broaden module consumers (nav/UI) + soft dep diagnostics — **IMPLEMENTED**
 - [x] P2.3 Read-only composition snapshot — **IMPLEMENTED** (`phase-2.3-composition-snapshot.md`; in-process only; still no package extraction)
 - [x] P2.4 Composition read API + settings module gates — **IMPLEMENTED** (`phase-2.4-platform-composition-api.md`; GET `/api/platform/composition`; tax/shifts/kds/loyalty settings gates)
@@ -54,7 +54,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P1.2 Backup → destroy DB → restore → verify continuity — **implemented** (GREEN WITH CONDITIONS); REC-01 hardening closed
 - [ ] P1.3 Failure/recovery testing matrix (offline, printer, crash, power, duplicate pay/order, token expiry)
 - [x] P1.4 Critical E2E workflows for money paths — **packaged full-app QA 2026-08-13** (`full-app-qa-report.md`; READY WITH CONDITIONS)
-- [x] Complete GUI feature matrix pass (Electron CDP) — `complete-gui-test-report.md` + `$HOME/nexora-full-app-test/evidence/gui-complete/`
+- [x] Complete GUI feature matrix pass (Electron CDP) — `complete-gui-test-report.md` + `$HOME/Operavia-full-app-test/evidence/gui-complete/`
 - [x] QA-INV-TAGS-01 — Array.isArray + recursive parseTags verified in rebuilt TRAINING package; regression `tests/product-tags-parse.test.ts` (commit still pending)
 - [x] QA-FIN01-OVERPAY-01 — **false positive closed**: cash remaining+1 is change-on-cash (PASS); non-cash remaining+1 rejects 400 (PASS). See `pending-complete-test-report.md`
 - [x] Pending-complete matrix — tax advanced, Drive/WA UI, restore UI, light load, JWT file, REC-01 re-drill (`pending-complete-test-report.md`)
@@ -64,7 +64,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P1.6 Pilot release readiness audit + checklists — **READY WITH CONDITIONS** (`p1.6-pilot-release-readiness.md`; signoff/incident log/checklist)
 - [ ] P1.6 Deploy 3 real café pilots and feed production issue loop (blocked on human gates + signed production artifact)
 
-## P2 — After successful pilots (Opervia modular foundation)
+## P2 — After successful pilots (Operavia modular foundation)
 
 - [x] P2.1 Module registry + Restaurant vertical definition (2026-08-13) — may land before pilots as a non-behavioral seam
 - [x] P2.2 Broaden registry consumers + soft dependency diagnostics (2026-08-13)
@@ -134,7 +134,11 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 
 ## Post-audit gates (do not auto-implement)
 
-- [ ] **Restaurant café gates** — signed/notarized artifact, OPS-01, PIN escrow, backup policy, training/sign-off, printer+KDS drill (human).
+- [x] **First café dry-run prep (2026-08-14)** — result sheet created; **NO-GO** (RELEASE BLOCKED + no site access). No production code. No push.
+- [ ] **RC cut** — isolate commit, bump past 3.0.5, sign+notarize (human/release).
+- [ ] **On-site dry run Phases 2–10** — fill `first-cafe-dry-run-result.md` (human/ops).
+- [x] **Pilot ops readiness audit (docs)** — runbook 1–16, staff training checklist, success criteria, `pilot-operations-readiness-report.md` (2026-08-14). No production code. No 4.16.
+- [ ] **Restaurant café gates** — signed/notarized artifact (version bump), OPS-01, PIN escrow, backup policy, training/sign-off, printer+KDS drill, café restore (human).
 - [ ] **P1-06 unopenable DB recovery UI** — software, not this patch.
 - [ ] **Phase 4.6 matrix implementation** — not in this 10; blocked until ADR-013 Accepted with an implementation slice.
 - [ ] **Phase 3.5** Remaining optional — packages/extraction, recipes/BOM, suppliers/PO (not authorized unless explicitly tasked). Tax cleanup stays deferred (3.5B).

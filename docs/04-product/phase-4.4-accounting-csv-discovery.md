@@ -11,7 +11,7 @@
 
 ## 1. Executive summary
 
-Opervia already has **authoritative financial reporting** on the backend (`/api/reports/*`, `bills`, `refunds`, day-close, shifts) with **documented Gross / Refunds / Net / Payments Received semantics**. There is **no accounting CSV export today**.
+Operavia already has **authoritative financial reporting** on the backend (`/api/reports/*`, `bills`, `refunds`, day-close, shifts) with **documented Gross / Refunds / Net / Payments Received semantics**. There is **no accounting CSV export today**.
 
 **Verdict:** Phase 4.4 is **SAFE TO IMPLEMENT** as a **read-only, server-generated CSV** from existing bill + refund columns, without schema changes, money-path changes, or FIN-01 redesign.
 

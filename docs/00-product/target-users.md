@@ -1,6 +1,6 @@
 # Target Users
 
-## CURRENT STATE (Opervia Restaurant)
+## CURRENT STATE (Operavia Restaurant)
 
 **Primary:** Owner-operators of cafés, restaurants, cloud kitchens, bakeries, food trucks.
 

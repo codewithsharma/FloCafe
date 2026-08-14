@@ -6,7 +6,7 @@
 import { MODULE_CATALOG, MODULE_IDS } from './catalog';
 import { VERTICALS } from './verticals';
 import { getModule, getModuleDependencies, getVerticalDefinition } from './registry';
-import type { CapabilityId, ModuleId, OperviaModule } from './types';
+import type { ModuleId, OperviaModule } from './types';
 import { CAPABILITY_IDS } from './types';
 
 const VERSION_RE = /^\d+\.\d+\.\d+/;
@@ -359,7 +359,7 @@ export function formatModuleDiagnosticsLog(
   const integrity = validateRegistryIntegrity();
   const lines: string[] = [];
 
-  lines.push(`[Opervia Modules]`);
+  lines.push(`[Operavia Modules]`);
   lines.push(`Vertical: ${vertical.verticalId}`);
   lines.push(`Modules: ${vertical.enabledModuleCount}`);
 
@@ -402,7 +402,6 @@ export function shouldLogModuleDiagnostics(): boolean {
 export function logModuleDiagnosticsIfDev(verticalId?: string): void {
   if (!shouldLogModuleDiagnostics()) return;
   try {
-    // eslint-disable-next-line no-console -- intentional development diagnostics
     console.info(formatModuleDiagnosticsLog(verticalId));
   } catch {
     // Soft diagnostics must never affect startup.

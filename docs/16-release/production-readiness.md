@@ -1,9 +1,9 @@
 # Production Readiness
 
-> Canonical direction: [`STRATEGY.md`](../../STRATEGY.md). Current product: **Opervia Restaurant**. KPI: 3 cafés × 30 days × zero critical failures.  
+> Canonical direction: [`STRATEGY.md`](../../STRATEGY.md). Current product: **Operavia Restaurant**. KPI: 3 cafés × 30 days × zero critical failures.  
 > Pilot ops pack: [`docs/13-operations/pilot-runbook.md`](../13-operations/pilot-runbook.md).
 
-## CURRENT STATE assessment (Opervia / flo-desktop v3.0.5)
+## CURRENT STATE assessment (Operavia / flo-desktop v3.0.5)
 
 | Area                      | Status     | Notes                                                                                                               |
 | ------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -25,7 +25,7 @@
 ## RestaurantOS production criteria (TARGET)
 
 - [ ] P0 technical debt resolved
-- [x] Shift + refund workflows (Opervia Restaurant)
+- [x] Shift + refund workflows (Operavia Restaurant)
 - [x] Audit log for financial ops (M3; expand coverage ongoing)
 - [x] Security audits through P0.6 + REC-01 (Phase C deferred)
 - [ ] 12-hour soak test passed

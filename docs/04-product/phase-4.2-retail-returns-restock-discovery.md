@@ -12,7 +12,7 @@
 
 ## 1. Executive summary
 
-Opervia already has a **money-only** refund path (`createBillRefund`). Inventory is **deliberately not restored** on refund — locked in ADR-009, service headers, and source-contract tests.
+Operavia already has a **money-only** refund path (`createBillRefund`). Inventory is **deliberately not restored** on refund — locked in ADR-009, service headers, and source-contract tests.
 
 A credible Retail **RETURN → OPTIONAL RESTOCK** capability is **not SAFE NOW**:
 

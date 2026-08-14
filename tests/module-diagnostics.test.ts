@@ -1,5 +1,5 @@
 /**
- * Phase 2.2 — Opervia soft dependency diagnostics + registry integrity.
+ * Phase 2.2 — Operavia soft dependency diagnostics + registry integrity.
  *
  * Usage: npx ts-node --transpile-only -P tests/tsconfig.json tests/module-diagnostics.test.ts
  */
@@ -71,7 +71,7 @@ function main(): void {
 
   // ── Log formatter (pure, non-throwing) ────────────────────────────
   const okLog = formatModuleDiagnosticsLog('restaurant');
-  assert.ok(okLog.includes('[Opervia Modules]'));
+  assert.ok(okLog.includes('[Operavia Modules]'));
   assert.ok(okLog.toLowerCase().includes('restaurant'));
   assert.ok(/valid|Dependencies:\s*valid/i.test(okLog));
 

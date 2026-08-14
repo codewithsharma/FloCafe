@@ -12,7 +12,7 @@
 
 ## 1. Executive summary
 
-Opervia is a **modular POS composition platform**. Restaurant (22 modules) and Retail (17 shared commerce modules) already compose correctly via `ACTIVE_VERTICAL_ID`. Shared sell → pay → refund → shift → day-close → print is **backend-complete** and well tested.
+Operavia is a **modular POS composition platform**. Restaurant (22 modules) and Retail (17 shared commerce modules) already compose correctly via `ACTIVE_VERTICAL_ID`. Shared sell → pay → refund → shift → day-close → print is **backend-complete** and well tested.
 
 What is missing is **product completeness**, not architecture:
 
@@ -64,7 +64,7 @@ P1.6 pilot gates remain intentionally out of engineering focus. Do not reopen 3.
 
 ### Product model check
 
-> Opervia is **not** “Restaurant POS with a retail toggle.”  
+> Operavia is **not** “Restaurant POS with a retail toggle.”  
 > It is “one modular POS platform composed from reusable capabilities.”
 
 **Verdict:** Composition model is real. Product depth is asymmetric — Restaurant workflows are deep; Retail reuses Restaurant-shaped commerce UX with gates, not retail-native workflows.
@@ -391,7 +391,7 @@ Do **not** interleave P1.6 human gates into this engineering sequence (explicitl
 
 ### Phase 4.1 — Retail floor usability (SAFE NOW)
 
-**Goal:** Make `ACTIVE_VERTICAL_ID=retail` feel like Opervia Retail, not “Restaurant with tables hidden.”
+**Goal:** Make `ACTIVE_VERTICAL_ID=retail` feel like Operavia Retail, not “Restaurant with tables hidden.”
 
 **In scope**
 

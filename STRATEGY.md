@@ -1,19 +1,19 @@
 ---
-name: Opervia
+name: Operavia
 last_updated: 2026-08-13
 ---
 
-# Opervia Strategy
+# Operavia Strategy
 
 ## Platform
 
-**Opervia** is the canonical platform and product brand: a modular business platform that powers industry-specific verticals from a single shared codebase.
+**Operavia** is the canonical platform and product brand: a modular business platform that powers industry-specific verticals from a single shared codebase.
 
-> Opervia is a modular business platform designed to power multiple industry-specific products from a single shared codebase. Business capabilities are implemented as reusable modules, while vertical products are compositions of those modules configured for specific industries.
+> Operavia is a modular business platform designed to power multiple industry-specific products from a single shared codebase. Business capabilities are implemented as reusable modules, while vertical products are compositions of those modules configured for specific industries.
 
 **Motto:** Build once. Reuse everywhere. Fix once. Benefit everywhere. Compose without duplication.
 
-**Phase 1 vertical (CURRENT):** **OPERAVIA Restaurant** — local-first Electron café/restaurant POS (formerly branded Opervia POS / Flo POS / FloCafe). Those names are **retired** as an active product name.
+**Phase 1 vertical (CURRENT):** **OPERAVIA Restaurant** — local-first Electron café/restaurant POS (formerly branded Operavia POS / Flo POS / FloCafe). Those names are **retired** as an active product name.
 
 **Future verticals (PLANNED):** Grocery, Salon, Health & Beauty, Pharmacy, Hospitality, Custom. **Retail** is a production-selectable composition (`ACTIVE_VERTICAL_ID=retail`) with partial UX — see [`docs/00-product/verticals.md`](docs/00-product/verticals.md).
 
@@ -26,11 +26,11 @@ Café and restaurant operators lose money and trust when their POS depends on th
 
 ## Our approach
 
-Ship a boringly reliable local-first desktop POS (Electron + SQLite) as **Opervia Restaurant** that keeps billing, kitchen, and cash ops running offline; prove it with real cafés before expanding modular depth and additional verticals.
+Ship a boringly reliable local-first desktop POS (Electron + SQLite) as **Operavia Restaurant** that keeps billing, kitchen, and cash ops running offline; prove it with real cafés before expanding modular depth and additional verticals.
 
 ## Who it's for
 
-**Primary (Phase 1):** Owner-operator of a single-location café or small restaurant — hiring Opervia Restaurant to take orders, run the kitchen, collect payment, reconcile cash, and recover from failure without calling a developer.
+**Primary (Phase 1):** Owner-operator of a single-location café or small restaurant — hiring Operavia Restaurant to take orders, run the kitchen, collect payment, reconcile cash, and recover from failure without calling a developer.
 
 ## Key metrics
 
@@ -62,13 +62,13 @@ _Why it serves the approach:_ Platform depth only after the POS is trusted.
 
 ### Deferred intelligence & integrations (P3)
 
-Payment terminals, aggregators, accounting export, AI — adapters on top of a reliable core. Opervia Custom (module composer) is long-term only.
+Payment terminals, aggregators, accounting export, AI — adapters on top of a reliable core. Operavia Custom (module composer) is long-term only.
 
 _Why it serves the approach:_ Avoids building impressive surfaces on untrusted money paths.
 
 ## Milestones
 
-- **2026-Q3** - Opervia Restaurant v1.0 candidate: refunds + financial/security hardening + tests green
+- **2026-Q3** - Operavia Restaurant v1.0 candidate: refunds + financial/security hardening + tests green
 - **2026-Q3/Q4** - Pilot-ready release: install, backup/restore, recovery, operator docs
 - **+30 days post-pilot start** - 3 cafés × 30 days × zero critical failures → earn modular depth + additional vertical work
 
@@ -79,12 +79,12 @@ _Why it serves the approach:_ Avoids building impressive surfaces on untrusted m
 - Multi-tenant SaaS or premature multi-location implementation (ADR-006 first)
 - ERP inventory / full procurement before ledger foundation
 - Bluetooth printing, payment terminals, microservices, Kubernetes, architecture rewrites
-- Building Opervia Custom or additional verticals before Restaurant pilot success
+- Building Operavia Custom or additional verticals before Restaurant pilot success
 - Describing Phase 1 as a finished multi-vertical platform or as “RestaurantOS” product you install today
-- Keeping **Opervia** as an active product name (retired; historical audits may still say Opervia)
+- Keeping **Operavia** as an active product name (retired; historical audits may still say Operavia)
 
 ## Marketing
 
-**One-liner:** Opervia Restaurant — local-first café POS that keeps your restaurant running when the internet does not.
+**One-liner:** Operavia Restaurant — local-first café POS that keeps your restaurant running when the internet does not.
 
-**Key message:** Opervia is the platform. Opervia Restaurant is the Phase 1 vertical you install today. Moat = reliability, offline billing, data ownership — not AI. Additional verticals compose shared modules later.
+**Key message:** Operavia is the platform. Operavia Restaurant is the Phase 1 vertical you install today. Moat = reliability, offline billing, data ownership — not AI. Additional verticals compose shared modules later.

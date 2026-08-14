@@ -2,7 +2,7 @@
 
 ## CURRENT STATE
 
-**Opervia Restaurant** (Phase 1) is an **Electron 43 desktop application** with three co-located HTTP servers sharing one SQLite database. Canonical brand: **Opervia** (ADR-010). Modular multi-vertical TARGET is documented separately — see [modular-architecture.md](modular-architecture.md) and [architecture-gap-report.md](architecture-gap-report.md).
+**Operavia Restaurant** (Phase 1) is an **Electron 43 desktop application** with three co-located HTTP servers sharing one SQLite database. Canonical brand: **Operavia** (ADR-010). Modular multi-vertical TARGET is documented separately — see [modular-architecture.md](modular-architecture.md) and [architecture-gap-report.md](architecture-gap-report.md).
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

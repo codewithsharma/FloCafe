@@ -38,7 +38,9 @@ import { getDatabase, now, createBackup } from '../db';
 type OAuth2Client = InstanceType<typeof google.auth.OAuth2>;
 
 export const DRIVE_FILE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
-export const DRIVE_BACKUP_FOLDER_NAME = 'Opervia Backups';
+export const DRIVE_BACKUP_FOLDER_NAME = 'Operavia Backups';
+/** Legacy misspelling from prior branding pass — not auto-migrated. */
+export const DRIVE_BACKUP_FOLDER_NAME_LEGACY = 'Opervia Backups';
 
 const DEFAULT_RETENTION = 10;
 const MIN_RETENTION = 1;
@@ -103,7 +105,7 @@ function isSecureStorageAvailable(): boolean {
  */
 export function computeFilesToDelete(
   files: { id: string; createdTime: string }[],
-  retentionCount: number
+  retentionCount: number,
 ): string[] {
   const sorted = [...files].sort((a, b) => a.createdTime.localeCompare(b.createdTime));
   if (sorted.length <= retentionCount) return [];
@@ -114,7 +116,11 @@ export function computeFilesToDelete(
  * Pure scheduling check, split out for unit testing: is a new Drive backup
  * due given the last successful backup time and the configured frequency?
  */
-export function isBackupDue(lastBackupAtIso: string | null, frequency: BackupFrequency, nowMs = Date.now()): boolean {
+export function isBackupDue(
+  lastBackupAtIso: string | null,
+  frequency: BackupFrequency,
+  nowMs = Date.now(),
+): boolean {
   if (!lastBackupAtIso) return true;
   const last = new Date(lastBackupAtIso).getTime();
   if (Number.isNaN(last)) return true;
@@ -129,7 +135,10 @@ class GoogleDriveService {
   /** Arms the hourly schedule check. Never makes a network call by itself — see module doc comment. */
   start(): void {
     this.stop();
-    this.scheduleTimer = setInterval(() => void this.maybeRunScheduled(), SCHEDULE_CHECK_INTERVAL_MS);
+    this.scheduleTimer = setInterval(
+      () => void this.maybeRunScheduled(),
+      SCHEDULE_CHECK_INTERVAL_MS,
+    );
   }
 
   stop(): void {
@@ -143,7 +152,8 @@ class GoogleDriveService {
     const tokens = this.readTokens();
     if (!tokens) return; // never connected, or disconnected — stay silent
     const settings = this.readSettings();
-    const frequency: BackupFrequency = settings.google_drive_frequency === 'weekly' ? 'weekly' : 'daily';
+    const frequency: BackupFrequency =
+      settings.google_drive_frequency === 'weekly' ? 'weekly' : 'daily';
     if (!isBackupDue(settings.google_drive_last_backup_at || null, frequency)) return;
     try {
       await this.backupNow();
@@ -169,7 +179,10 @@ class GoogleDriveService {
     };
   }
 
-  updatePreferences(input: { frequency?: string; retention_count?: number | string }): GoogleDriveStatus {
+  updatePreferences(input: {
+    frequency?: string;
+    retention_count?: number | string;
+  }): GoogleDriveStatus {
     const updates: Record<string, string> = {};
     if (input.frequency !== undefined) {
       if (input.frequency !== 'daily' && input.frequency !== 'weekly') {
@@ -180,7 +193,9 @@ class GoogleDriveService {
     if (input.retention_count !== undefined) {
       const n = Number(input.retention_count);
       if (!Number.isInteger(n) || n < MIN_RETENTION || n > MAX_RETENTION) {
-        throw new Error(`retention_count must be an integer between ${MIN_RETENTION} and ${MAX_RETENTION}`);
+        throw new Error(
+          `retention_count must be an integer between ${MIN_RETENTION} and ${MAX_RETENTION}`,
+        );
       }
       updates.google_drive_retention_count = String(n);
     }
@@ -200,7 +215,9 @@ class GoogleDriveService {
       throw new Error('Google Drive integration is not configured for this build');
     }
     if (!isSecureStorageAvailable()) {
-      throw new Error('Secure storage is not available on this device — cannot safely store the Google Drive connection');
+      throw new Error(
+        'Secure storage is not available on this device — cannot safely store the Google Drive connection',
+      );
     }
 
     const { code, redirectUri } = await this.runLoopbackFlow(creds);
@@ -209,7 +226,9 @@ class GoogleDriveService {
     if (!tokens.refresh_token) {
       // Google only issues a refresh_token on first consent (or with prompt=consent,
       // which we always pass) — without it we can't run unattended scheduled backups.
-      throw new Error('Google did not return a refresh token. Revoke Opervia access at myaccount.google.com/permissions and try connecting again.');
+      throw new Error(
+        'Google did not return a refresh token. Revoke Operavia access at myaccount.google.com/permissions and try connecting again.',
+      );
     }
     this.writeTokens(tokens);
 
@@ -244,15 +263,21 @@ class GoogleDriveService {
       const tokenToRevoke = tokens.refresh_token || tokens.access_token;
       if (tokenToRevoke) {
         try {
-          await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(tokenToRevoke)}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            signal: AbortSignal.timeout(8_000),
-          });
+          await fetch(
+            `https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(tokenToRevoke)}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              signal: AbortSignal.timeout(8_000),
+            },
+          );
         } catch (err) {
           // Local disconnect must still proceed even if Google's revoke endpoint
           // is unreachable — the encrypted token is deleted below regardless.
-          log.warn('[GoogleDrive] revoke request failed (disconnecting locally anyway)', (err as Error).message);
+          log.warn(
+            '[GoogleDrive] revoke request failed (disconnecting locally anyway)',
+            (err as Error).message,
+          );
         }
       }
     }
@@ -352,24 +377,32 @@ class GoogleDriveService {
       }
     }
 
-    const found = await drive.files.list({
-      q: `mimeType='application/vnd.google-apps.folder' and name='${DRIVE_BACKUP_FOLDER_NAME}' and trashed=false`,
-      fields: 'files(id, name)',
-      spaces: 'drive',
-      pageSize: 1,
-    });
-    const existing = found.data.files?.[0]?.id;
-    if (existing) return existing;
+    for (const folderName of [DRIVE_BACKUP_FOLDER_NAME, DRIVE_BACKUP_FOLDER_NAME_LEGACY]) {
+      const found = await drive.files.list({
+        q: `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and trashed=false`,
+        fields: 'files(id, name)',
+        spaces: 'drive',
+        pageSize: 1,
+      });
+      const existing = found.data.files?.[0]?.id;
+      if (existing) return existing;
+    }
 
     const created = await drive.files.create({
-      requestBody: { name: DRIVE_BACKUP_FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' },
+      requestBody: {
+        name: DRIVE_BACKUP_FOLDER_NAME,
+        mimeType: 'application/vnd.google-apps.folder',
+      },
       fields: 'id',
     });
     if (!created.data.id) throw new Error('Google Drive did not return a folder id');
     return created.data.id;
   }
 
-  private async applyRetention(drive: ReturnType<typeof google.drive>, folderId: string): Promise<void> {
+  private async applyRetention(
+    drive: ReturnType<typeof google.drive>,
+    folderId: string,
+  ): Promise<void> {
     const retention = this.retentionFromSettings(this.readSettings());
     const files: { id: string; createdTime: string }[] = [];
     let pageToken: string | undefined;
@@ -382,34 +415,44 @@ class GoogleDriveService {
         pageToken,
         spaces: 'drive',
       });
-      files.push(...(res.data.files || [])
-        .filter((f): f is { id: string; name?: string | null; createdTime: string } => Boolean(f.id && f.createdTime))
-        .map((f) => ({ id: f.id, createdTime: f.createdTime })));
+      files.push(
+        ...(res.data.files || [])
+          .filter((f): f is { id: string; name?: string | null; createdTime: string } =>
+            Boolean(f.id && f.createdTime),
+          )
+          .map((f) => ({ id: f.id, createdTime: f.createdTime })),
+      );
       pageToken = res.data.nextPageToken || undefined;
     } while (pageToken);
     const toDelete = computeFilesToDelete(files, retention);
     // Keep a small bounded concurrency window: retention can involve many
     // files, but serial deletion needlessly prolongs backup completion.
     for (let i = 0; i < toDelete.length; i += 5) {
-      await Promise.all(toDelete.slice(i, i + 5).map(async (id) => {
-        try {
-          await drive.files.delete({ fileId: id });
-        } catch (err) {
-          log.warn('[GoogleDrive] retention delete failed', id, (err as Error).message);
-        }
-      }));
+      await Promise.all(
+        toDelete.slice(i, i + 5).map(async (id) => {
+          try {
+            await drive.files.delete({ fileId: id });
+          } catch (err) {
+            log.warn('[GoogleDrive] retention delete failed', id, (err as Error).message);
+          }
+        }),
+      );
     }
   }
 
   private retentionFromSettings(settings: Record<string, string>): number {
     const parsed = parseInt(settings.google_drive_retention_count || '', 10);
-    if (Number.isInteger(parsed) && parsed >= MIN_RETENTION && parsed <= MAX_RETENTION) return parsed;
+    if (Number.isInteger(parsed) && parsed >= MIN_RETENTION && parsed <= MAX_RETENTION)
+      return parsed;
     return DEFAULT_RETENTION;
   }
 
   // ── Loopback OAuth flow ────────────────────────────────────────────────
 
-  private runLoopbackFlow(creds: { clientId: string; clientSecret: string }): Promise<{ code: string; redirectUri: string }> {
+  private runLoopbackFlow(creds: {
+    clientId: string;
+    clientSecret: string;
+  }): Promise<{ code: string; redirectUri: string }> {
     return new Promise((resolve, reject) => {
       const state = crypto.randomBytes(16).toString('hex');
       let settled = false;
@@ -419,7 +462,11 @@ class GoogleDriveService {
         if (settled) return;
         settled = true;
         clearTimeout(timeout);
-        try { server.close(); } catch { /* already closing */ }
+        try {
+          server.close();
+        } catch {
+          /* already closing */
+        }
         fn();
       };
 
@@ -443,12 +490,13 @@ class GoogleDriveService {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(
           error || !code || returnedState !== state
-            ? '<html><body>Google Drive connection failed. You can close this window and try again in Opervia.</body></html>'
-            : '<html><body>Google Drive connected. You can close this window and return to Opervia.</body></html>'
+            ? '<html><body>Google Drive connection failed. You can close this window and try again in Operavia.</body></html>'
+            : '<html><body>Google Drive connected. You can close this window and return to Operavia.</body></html>',
         );
 
         if (error) return finish(() => reject(new Error(`Google authorization failed: ${error}`)));
-        if (!code || returnedState !== state) return finish(() => reject(new Error('Invalid Google OAuth callback')));
+        if (!code || returnedState !== state)
+          return finish(() => reject(new Error('Invalid Google OAuth callback')));
         finish(() => resolve({ code, redirectUri }));
       });
 
@@ -513,7 +561,10 @@ class GoogleDriveService {
 
   private readSettings(): Record<string, string> {
     const db = getDatabase();
-    const rows = db.prepare('SELECT key, value FROM settings').all() as { key: string; value: string }[];
+    const rows = db.prepare('SELECT key, value FROM settings').all() as {
+      key: string;
+      value: string;
+    }[];
     const s: Record<string, string> = {};
     for (const row of rows) s[row.key] = row.value;
     return s;

@@ -30,7 +30,7 @@ Product → Order → Tax → Bill → Payment
 
 | Id            | Where                                           | Purpose                                  |
 | ------------- | ----------------------------------------------- | ---------------------------------------- |
-| `retail`      | `VERTICALS` (`main/modules/retail-vertical.ts`) | **Production** Opervia Retail            |
+| `retail`      | `VERTICALS` (`main/modules/retail-vertical.ts`) | **Production** Operavia Retail           |
 | `retail-test` | `SYNTHETIC_VERTICALS` (fixtures)                | Architecture / synthetic validation only |
 
 Both share `OPERVIA_SHARED_COMMERCE_MODULES` (17 modules). Do **not** rename one into the other.

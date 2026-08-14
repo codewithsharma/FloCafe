@@ -1,18 +1,10 @@
 /**
- * Phase 2.3 — read-only Opervia composition snapshot.
+ * Phase 2.3 — read-only Operavia composition snapshot.
  * Observability only: does not install, uninstall, or modify modules.
  */
 import { MODULE_CATALOG } from './catalog';
-import {
-  getEnabledModules,
-  getModule,
-  getRouteModuleMap,
-  getVerticalDefinition,
-} from './registry';
-import {
-  getModuleDiagnosticsSnapshot,
-  validateEnabledSetDependencies,
-} from './diagnostics';
+import { getEnabledModules, getModule, getRouteModuleMap, getVerticalDefinition } from './registry';
+import { getModuleDiagnosticsSnapshot, validateEnabledSetDependencies } from './diagnostics';
 import type {
   MissingDependency,
   RegistryIntegrityIssue,
@@ -122,7 +114,9 @@ function dependencyWarnings(missing: readonly MissingDependency[]): CompositionD
   }));
 }
 
-function integrityWarnings(issues: readonly RegistryIntegrityIssue[]): CompositionDiagnosticWarning[] {
+function integrityWarnings(
+  issues: readonly RegistryIntegrityIssue[],
+): CompositionDiagnosticWarning[] {
   return issues.map((issue) => ({
     kind: 'registry_integrity' as const,
     detail: issue.detail,
@@ -146,9 +140,7 @@ function buildWarnings(
  * Read-only snapshot of vertical composition derived from registry + diagnostics.
  * Never throws. Deterministic for a given vertical / enabled-module override.
  */
-export function getCompositionSnapshot(
-  options?: CompositionSnapshotOptions,
-): CompositionSnapshot {
+export function getCompositionSnapshot(options?: CompositionSnapshotOptions): CompositionSnapshot {
   const vertical = getVerticalDefinition(options?.verticalId);
   const enabled = options?.enabledModules
     ? [...options.enabledModules].sort()
@@ -224,13 +216,11 @@ export function getPlatformCompositionResponse(
 }
 
 /** Dev-friendly composition log (pure; no side effects). */
-export function formatCompositionDiagnosticsLog(
-  options?: CompositionSnapshotOptions,
-): string {
+export function formatCompositionDiagnosticsLog(options?: CompositionSnapshotOptions): string {
   const snapshot = getCompositionSnapshot(options);
   const lines: string[] = [];
 
-  lines.push('[Opervia Composition]');
+  lines.push('[Operavia Composition]');
   lines.push(`Vertical: ${snapshot.vertical.name}`);
   lines.push(`Modules: ${snapshot.modules.counts.enabled}`);
 
@@ -261,7 +251,6 @@ export function formatCompositionDiagnosticsLog(
 export function logCompositionSnapshotIfDev(options?: CompositionSnapshotOptions): void {
   if (process.env.NODE_ENV === 'production') return;
   try {
-    // eslint-disable-next-line no-console -- intentional development diagnostics
     console.info(formatCompositionDiagnosticsLog(options));
   } catch {
     // Soft diagnostics must never affect startup.

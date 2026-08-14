@@ -2,12 +2,7 @@
 
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { tagLabel } from '@/components/pos/DietaryBadge';
 import ImageUploader from '@/components/products/ImageUploader';
 import type { AddonGroup, Category, Product } from '@/lib/types';
@@ -46,10 +41,15 @@ export interface ProductFormDialogProps {
   onSubmit: (e: React.FormEvent) => void;
   categories: Category[];
   addonGroups: AddonGroup[];
-  taxCategories: { id: string; label: string; rate_percent?: number | null; rate_label?: string | null }[];
+  taxCategories: {
+    id: string;
+    label: string;
+    rate_percent?: number | null;
+    rate_label?: string | null;
+  }[];
   loyaltyEnabled: boolean;
   globalCashbackPercent: number;
-  /** Show addon-group picker when Opervia `addons` module is enabled. */
+  /** Show addon-group picker when Operavia `addons` module is enabled. */
   addonsEnabled: boolean;
   currency: string;
 }
@@ -99,7 +99,10 @@ export function ProductFormDialog({
               />
             </div>
             <div>
-              <label htmlFor="product-description" className="block text-small font-medium text-flo-text mb-1">
+              <label
+                htmlFor="product-description"
+                className="block text-small font-medium text-flo-text mb-1"
+              >
                 {t('products.categoryDescription')}
               </label>
               <textarea
@@ -111,7 +114,9 @@ export function ProductFormDialog({
               />
             </div>
             <div>
-              <label className="block text-small font-medium text-flo-text mb-1">{t('products.fieldImage')}</label>
+              <label className="block text-small font-medium text-flo-text mb-1">
+                {t('products.fieldImage')}
+              </label>
               <ImageUploader
                 value={form.image_url}
                 onChange={(val) => {
@@ -142,7 +147,9 @@ export function ProductFormDialog({
                 </select>
               </div>
               <div>
-                <label className="block text-small font-medium text-flo-text mb-1">{t('products.fieldSku')}</label>
+                <label className="block text-small font-medium text-flo-text mb-1">
+                  {t('products.fieldSku')}
+                </label>
                 <input
                   type="text"
                   value={form.sku}
@@ -152,7 +159,9 @@ export function ProductFormDialog({
               </div>
             </div>
             <div>
-              <label className="block text-small font-medium text-flo-text mb-1">{t('products.fieldBarcode')}</label>
+              <label className="block text-small font-medium text-flo-text mb-1">
+                {t('products.fieldBarcode')}
+              </label>
               <input
                 type="text"
                 value={form.barcode}
@@ -179,7 +188,9 @@ export function ProductFormDialog({
                 />
               </div>
               <div>
-                <label className="block text-small font-medium text-flo-text mb-1">{t('products.fieldCostPrice')}</label>
+                <label className="block text-small font-medium text-flo-text mb-1">
+                  {t('products.fieldCostPrice')}
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -192,7 +203,9 @@ export function ProductFormDialog({
             </div>
             {loyaltyEnabled && (
               <div className="bg-flo-surface-muted p-4 rounded-flo-md space-y-2">
-                <label className="block text-small font-medium text-flo-text">{t('products.cashbackLabel')}</label>
+                <label className="block text-small font-medium text-flo-text">
+                  {t('products.cashbackLabel')}
+                </label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -214,7 +227,9 @@ export function ProductFormDialog({
               </div>
             )}
             <div>
-              <label className="block text-small font-medium text-flo-text mb-1">Tax rate group</label>
+              <label className="block text-small font-medium text-flo-text mb-1">
+                Tax rate group
+              </label>
               <select
                 value={form.tax_category_id}
                 onChange={(e) => onFormChange({ ...form, tax_category_id: e.target.value })}
@@ -234,14 +249,16 @@ export function ProductFormDialog({
               )}
               {taxCategories.length > 0 && (
                 <p className="text-xs text-flo-text-muted mt-1">
-                  The store default is selected automatically. Change this only when a product legally uses a different
-                  rate or is exempt.
+                  The store default is selected automatically. Change this only when a product
+                  legally uses a different rate or is exempt.
                 </p>
               )}
             </div>
             {form.tax_category_id ? (
               <div>
-                <label className="block text-small font-medium text-flo-text mb-1">Tax behavior</label>
+                <label className="block text-small font-medium text-flo-text mb-1">
+                  Tax behavior
+                </label>
                 <select
                   value={form.tax_behavior}
                   onChange={(e) => onFormChange({ ...form, tax_behavior: e.target.value })}
@@ -253,7 +270,8 @@ export function ProductFormDialog({
                   <option value="exempt">Exempt</option>
                 </select>
                 <p className="text-xs text-flo-text-muted mt-1">
-                  The rate is resolved from the active tax profile for this category, not entered manually.
+                  The rate is resolved from the active tax profile for this category, not entered
+                  manually.
                 </p>
               </div>
             ) : (
@@ -262,7 +280,9 @@ export function ProductFormDialog({
               </p>
             )}
             <div>
-              <label className="block text-small font-medium text-flo-text mb-2">{t('products.fieldTags')}</label>
+              <label className="block text-small font-medium text-flo-text mb-2">
+                {t('products.fieldTags')}
+              </label>
               {form.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 mb-2">
                   {form.tags.map((tag) => (
@@ -329,7 +349,9 @@ export function ProductFormDialog({
             </div>
             {addonsEnabled && addonGroups.length > 0 && (
               <div>
-                <label className="block text-small font-medium text-flo-text mb-2">{t('products.fieldAddonGroups')}</label>
+                <label className="block text-small font-medium text-flo-text mb-2">
+                  {t('products.fieldAddonGroups')}
+                </label>
                 <div className="space-y-2 max-h-40 overflow-y-auto border border-flo-border rounded-flo-md p-3">
                   {addonGroups.map((group) => {
                     const isChecked = form.addon_group_ids.includes(group.id);
@@ -350,7 +372,10 @@ export function ProductFormDialog({
                           }}
                           className="rounded border-flo-border text-flo-brand-600 focus:ring-flo-brand-500"
                         />
-                        <label htmlFor={`addon-group-${group.id}`} className="flex items-center gap-2 cursor-pointer select-none">
+                        <label
+                          htmlFor={`addon-group-${group.id}`}
+                          className="flex items-center gap-2 cursor-pointer select-none"
+                        >
                           <span className="text-small text-flo-text-secondary">{group.name}</span>
                           <span
                             className={`text-[10px] px-1.5 py-0.5 rounded ${group.is_required ? 'bg-red-100 text-red-700' : 'bg-flo-surface-muted text-flo-text-muted'}`}
@@ -372,7 +397,9 @@ export function ProductFormDialog({
                   onChange={(e) => onFormChange({ ...form, track_inventory: e.target.checked })}
                   className="rounded border-flo-border text-flo-brand-600 focus:ring-flo-brand-500"
                 />
-                <span className="text-small text-flo-text-secondary">{t('products.fieldTrackInventory')}</span>
+                <span className="text-small text-flo-text-secondary">
+                  {t('products.fieldTrackInventory')}
+                </span>
               </label>
               <label className="flex items-center gap-2">
                 <input
@@ -381,7 +408,9 @@ export function ProductFormDialog({
                   onChange={(e) => onFormChange({ ...form, is_active: e.target.checked })}
                   className="rounded border-flo-border text-flo-brand-600 focus:ring-flo-brand-500"
                 />
-                <span className="text-small text-flo-text-secondary">{t('products.fieldActive')}</span>
+                <span className="text-small text-flo-text-secondary">
+                  {t('products.fieldActive')}
+                </span>
               </label>
             </div>
             {!!form.track_inventory && (

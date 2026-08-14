@@ -233,7 +233,7 @@ function main(): void {
   console.log('   ✓ design tokens');
 
   const rootLayout = read('app/layout.tsx');
-  assert.ok(rootLayout.includes('OPERAVIA'), 'root metadata uses OPERAVIA');
+  assert.ok(rootLayout.includes('Operavia'), 'root metadata uses Operavia');
   assert.ok(!rootLayout.includes('Nexora'), 'root metadata no longer Nexora');
   assert.ok(!rootLayout.includes('FloCafe'), 'root metadata no longer FloCafe product name');
   // MenuActionHandler → MasterPinPrompt uses useTranslation; must sit inside I18nextProvider
@@ -249,11 +249,13 @@ function main(): void {
   );
 
   const manifest = fs.readFileSync(path.join(ROOT, 'frontend/public/manifest.json'), 'utf8');
-  assert.ok(manifest.includes('OPERAVIA'), 'manifest uses OPERAVIA');
+  assert.ok(manifest.includes('Operavia'), 'manifest uses Operavia');
   assert.ok(!manifest.includes('Nexora'), 'manifest no longer Nexora');
 
   const en = fs.readFileSync(path.join(FRONTEND, 'lib/i18n/en.json'), 'utf8');
-  assert.ok(en.includes('"common.brandName": "OPERAVIA"'), 'i18n brandName is OPERAVIA');
+  assert.ok(en.includes('"common.brandName": "Operavia"'), 'i18n brandName is Operavia');
+  assert.ok(en.includes('"settings.aboutOperavia"'), 'about key uses Operavia spelling');
+  assert.ok(!en.includes('"settings.aboutOpervia"'), 'misspelled aboutOpervia key removed');
   assert.ok(en.includes('"flo.nav.home"') || en.includes('"nav.home"'), 'home nav i18n key');
   assert.ok(
     en.includes('"flo.nav.reports"') || en.includes('"nav.reports"'),

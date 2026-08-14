@@ -1,4 +1,4 @@
-# Opervia Dependency Model
+# Operavia Dependency Model
 
 **Status:** TARGET rules; Phase 1 dependencies are mostly implicit in code
 **Modules:** [module-system.md](module-system.md) · [modular-architecture.md](modular-architecture.md)

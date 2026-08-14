@@ -1,5 +1,5 @@
 #!/bin/bash
-# OPERAVIA — standalone macOS uninstaller (also removes legacy Flo Cafe / Opervia.app)
+# OPERAVIA — standalone macOS uninstaller (also removes legacy Flo Cafe / Operavia.app)
 #
 # Removes the Flo Cafe app and its support files (preferences, caches, logs,
 # auto-update state). Your business data (SQLite database, backups, Master
@@ -19,7 +19,7 @@
 
 set -euo pipefail
 
-APP_NAMES=("OPERAVIA" "Opervia" "Flo Cafe")
+APP_NAMES=("OPERAVIA" "Operavia" "Opervia" "Flo Cafe")
 BUNDLE_ID="com.flo.desktop"
 PURGE_DATA=0
 DRY_RUN=0
@@ -122,7 +122,7 @@ remove_path "$HOME/Library/WebKit/$BUNDLE_ID"
 # under "$APP_NAME". Sweep both so stray data from either naming never
 # survives an uninstall.
 DATA_PATH="$HOME/Library/Application Support/flo-desktop"
-LEGACY_DATA_PATHS=("$HOME/Library/Application Support/Opervia" "$HOME/Library/Application Support/OPERAVIA" "$HOME/Library/Application Support/Flo Cafe")
+LEGACY_DATA_PATHS=("$HOME/Library/Application Support/Operavia" "$HOME/Library/Application Support/Opervia" "$HOME/Library/Application Support/OPERAVIA" "$HOME/Library/Application Support/Flo Cafe")
 step "Your business data"
 log "database, backups, and Master PIN live at:"
 log "  $DATA_PATH"

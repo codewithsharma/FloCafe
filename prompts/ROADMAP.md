@@ -1,4 +1,4 @@
-# Opervia — next 10 phases (4.6–4.15)
+# Operavia — next 10 phases (4.6–4.15)
 
 **Baseline:** Phase 4.5 complete — Retail exchange (`a42493a`) · schema **v75** · ADR-011 / ADR-012 accepted.
 

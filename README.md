@@ -1,6 +1,6 @@
 <div align="center">
-  <h1>Opervia</h1>
-  <p><strong>Modular business platform. Phase 1: Opervia Restaurant — free, open-source, offline-first POS for cafés, restaurants, and small kitchens.</strong></p>
+  <h1>Operavia</h1>
+  <p><strong>Modular business platform. Phase 1: Operavia Restaurant — free, open-source, offline-first POS for cafés, restaurants, and small kitchens.</strong></p>
   <p>
     <a href="https://flopos.com">Website</a> ·
     <a href="https://github.com/FreeOpenSourcePOS/FloCafe/releases">Download</a> ·
@@ -23,20 +23,20 @@
 </div>
 
 <p align="center">
-  <img src="docs/images/flo-cafe-pos.webp" alt="Opervia POS screen showing product selection and an active dine-in order" width="100%">
+  <img src="docs/images/flo-cafe-pos.webp" alt="Operavia POS screen showing product selection and an active dine-in order" width="100%">
 </p>
 
-Opervia runs on the business's own computer. Orders, customers, receipts, and backups stay in a local SQLite database, so the counter keeps working when the internet does not. Google Drive backup, WhatsApp bill delivery, and cloud-connected reporting are optional.
+Operavia runs on the business's own computer. Orders, customers, receipts, and backups stay in a local SQLite database, so the counter keeps working when the internet does not. Google Drive backup, WhatsApp bill delivery, and cloud-connected reporting are optional.
 
-If Opervia helps your cafe, restaurant, cloud kitchen, bakery, or food truck, please star the repository (GitHub: `FreeOpenSourcePOS/FloCafe`). GitHub stars help more operators find a free open-source POS instead of assuming every restaurant system must be a paid cloud subscription.
+If Operavia helps your cafe, restaurant, cloud kitchen, bakery, or food truck, please star the repository (GitHub: `FreeOpenSourcePOS/FloCafe`). GitHub stars help more operators find a free open-source POS instead of assuming every restaurant system must be a paid cloud subscription.
 
 **Best-fit searches:** open-source POS, free restaurant POS, cafe POS, kitchen display system, KDS, self-hosted restaurant POS, offline-first POS, thermal printer POS.
 
-## Get Opervia
+## Get Operavia
 
 Download the latest installer from [GitHub Releases](https://github.com/FreeOpenSourcePOS/FloCafe/releases), or use the app store for macOS and Windows.
 
-> **Naming note:** The product is **Opervia**. The GitHub repository, Linux package/`executableName` (`flocafe`), npm package (`flo-desktop`), and some store listings still use FloCafe/flo\* identifiers for upgrade continuity. Community links may still say FloPOS.
+> **Naming note:** The product is **Operavia**. The GitHub repository, Linux package/`executableName` (`flocafe`), npm package (`flo-desktop`), and some store listings still use FloCafe/flo\* identifiers for upgrade continuity. Community links may still say FloPOS.
 
 <p>
   <a href="https://apps.apple.com/in/app/flo-cafe/id6763136018">
@@ -82,7 +82,7 @@ For Linux package choices, updates, FUSE, printing, and tray support, see [Linux
 | Memory           | 4 GB RAM                                                          |
 | Storage          | 500 MB free space, plus room for local backups                    |
 
-Node.js is only required to develop Opervia, not to run a packaged release.
+Node.js is only required to develop Operavia, not to run a packaged release.
 
 <details>
 <summary>Uninstall a direct-download build</summary>
@@ -106,11 +106,11 @@ Both scripts ask whether to keep application data. Do not choose their data-purg
 
 </details>
 
-## Why Opervia
+## Why Operavia
 
-Opervia Restaurant combines counter service and table service in one desktop app. A kitchen display can receive live orders while receipt printers and kitchen tickets use the same local setup. There is no hosted account required for the core POS.
+Operavia Restaurant combines counter service and table service in one desktop app. A kitchen display can receive live orders while receipt printers and kitchen tickets use the same local setup. There is no hosted account required for the core POS.
 
-It is free software. Opervia has no tiers or paywalled features, and the code is available under the [MIT License](LICENSE). (Settings may show a subscription/plan façade — that is a stub, not billing.)
+It is free software. Operavia has no tiers or paywalled features, and the code is available under the [MIT License](LICENSE). (Settings may show a subscription/plan façade — that is a stub, not billing.)
 
 ## What it handles
 
@@ -130,13 +130,13 @@ A production **Retail** vertical composition is selectable via `ACTIVE_VERTICAL_
 
 ## Direction
 
-Opervia will remain local-first and free. Current work focuses on café pilot reliability (see `STRATEGY.md`), then modular depth. Public discussions and planned work live in [GitHub Issues](https://github.com/FreeOpenSourcePOS/FloCafe/issues).
+Operavia will remain local-first and free. Current work focuses on café pilot reliability (see `STRATEGY.md`), then modular depth. Public discussions and planned work live in [GitHub Issues](https://github.com/FreeOpenSourcePOS/FloCafe/issues).
 
 ## Data, updates, and recovery
 
 The database and backups live in the operating system's user-data directory, separate from the installed application. Updating or reinstalling through the same distribution channel does not remove them.
 
-Before a pending migration runs, Opervia creates a timestamped local backup. Migrations are additive and tracked with SQLite's `user_version` pragma (current schema **v75**). Use Settings → Database Tools → Backup before moving to another computer or switching distribution channels.
+Before a pending migration runs, Operavia creates a timestamped local backup. Migrations are additive and tracked with SQLite's `user_version` pragma (current schema **v75**). Use Settings → Database Tools → Backup before moving to another computer or switching distribution channels.
 
 If the app cannot start, do not delete the database first. Restore the latest backup from Settings → Database Tools, then [open an issue](https://github.com/FreeOpenSourcePOS/FloCafe/issues) with the app version, operating system, and logs.
 
@@ -145,11 +145,11 @@ If the app cannot start, do not delete the database first. Restore the latest ba
 ### Printers not printing
 
 1. Use Settings → Printers → **Test Print** first. As of 2.6.1 it shows the actual failure reason (offline, out of paper, cover open, a Windows driver error, a network timeout) instead of a generic message — read it, it usually tells you exactly what's wrong.
-2. **Network printers:** confirm the printer's IP address hasn't changed (check your router's DHCP lease list or set a static IP/DHCP reservation) and that it's on the same network as the machine running Opervia.
-3. **Windows USB printers, especially with the manufacturer's own driver installed:** Opervia sends raw ESC/POS bytes directly to the Windows print queue, bypassing the driver, which only works if the queue's _Print Processor_ is the default `winprint`/`RAW`. Manufacturer "official" driver packages (Epson APD, Star, etc.) are usually GDI drivers meant to render formatted pages, and can register their own print processor or reject/garble a raw byte stream. Two things to try, in order:
+2. **Network printers:** confirm the printer's IP address hasn't changed (check your router's DHCP lease list or set a static IP/DHCP reservation) and that it's on the same network as the machine running Operavia.
+3. **Windows USB printers, especially with the manufacturer's own driver installed:** Operavia sends raw ESC/POS bytes directly to the Windows print queue, bypassing the driver, which only works if the queue's _Print Processor_ is the default `winprint`/`RAW`. Manufacturer "official" driver packages (Epson APD, Star, etc.) are usually GDI drivers meant to render formatted pages, and can register their own print processor or reject/garble a raw byte stream. Two things to try, in order:
    - Right-click the printer in Windows → **Printer Properties → Advanced tab → Print Processor** → confirm it's `winprint` with datatype `RAW`.
-   - If that doesn't help, add/reinstall the printer using Windows' built-in **"Generic / Text Only"** driver, or the manufacturer's dedicated raw/ESC-POS mode if their installer offers one as an alternative to their main GDI driver — then re-select it in Opervia's printer settings, since renaming or reinstalling changes the exact queue name Opervia has stored.
-4. **macOS/Linux (CUPS) printers:** if the print queue is disabled (commonly after the printer was unplugged), re-enable it from the OS's printer settings and the next print will go through — Opervia detects and reports a disabled queue rather than silently failing.
+   - If that doesn't help, add/reinstall the printer using Windows' built-in **"Generic / Text Only"** driver, or the manufacturer's dedicated raw/ESC-POS mode if their installer offers one as an alternative to their main GDI driver — then re-select it in Operavia's printer settings, since renaming or reinstalling changes the exact queue name Operavia has stored.
+4. **macOS/Linux (CUPS) printers:** if the print queue is disabled (commonly after the printer was unplugged), re-enable it from the OS's printer settings and the next print will go through — Operavia detects and reports a disabled queue rather than silently failing.
 5. Still stuck? Open **Help → Open Logs Folder** (added in 2.6.1) and check `main.log` around the time of the failed print for a `[Printer]` line with the specific error, then [open an issue](https://github.com/FreeOpenSourcePOS/FloCafe/issues) with that line, your OS, printer make/model, and whether it's USB or network.
 
 ## Development

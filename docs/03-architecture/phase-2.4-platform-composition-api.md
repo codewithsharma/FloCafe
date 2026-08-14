@@ -16,19 +16,19 @@ This phase does **not** introduce module management UI, package extraction, or m
 
 ### `GET /api/platform/composition`
 
-| Aspect | Detail |
-|--------|--------|
-| Auth | Global JWT (`requireAuth` in `main/server.ts`) |
-| Authorization | `requireRole('owner', 'manager')` |
-| Body | None |
-| Mutations | None — read-only GET only |
+| Aspect        | Detail                                         |
+| ------------- | ---------------------------------------------- |
+| Auth          | Global JWT (`requireAuth` in `main/server.ts`) |
+| Authorization | `requireRole('owner', 'manager')`              |
+| Body          | None                                           |
+| Mutations     | None — read-only GET only                      |
 
 ### Response (minimal projection)
 
 ```json
 {
   "verticalId": "restaurant",
-  "verticalName": "Opervia Restaurant",
+  "verticalName": "Operavia Restaurant",
   "enabledModules": ["addons", "backup", "category", "..."],
   "diagnostics": {
     "valid": true
@@ -46,12 +46,12 @@ The endpoint calls `getPlatformCompositionResponse()`, which wraps `getCompositi
 
 ### Status codes
 
-| Scenario | Code |
-|----------|------|
-| Authenticated owner/manager | `200` |
-| Missing/invalid JWT | `401` |
+| Scenario                          | Code  |
+| --------------------------------- | ----- |
+| Authenticated owner/manager       | `200` |
+| Missing/invalid JWT               | `401` |
 | Authenticated cashier/waiter/chef | `403` |
-| Handler failure | `500` |
+| Handler failure                   | `500` |
 
 ## Security
 
@@ -84,12 +84,12 @@ The endpoint cannot modify module configuration, vertical definitions, feature f
 
 Settings tabs now use `isModuleEnabled(module, verticalId)` for visibility. Feature flags inside tabs are unchanged.
 
-| Tab | Module | Gate |
-|-----|--------|------|
-| Tax Config | `tax` | `isModuleEnabled('tax')` **and** owner/manager role |
-| Shift history | `shift` | `isModuleEnabled('shift')` **and** owner/manager role |
-| Kitchen Display | `kds` | `isModuleEnabled('kds')` |
-| Loyalty | `loyalty` | `isModuleEnabled('loyalty')` |
+| Tab             | Module    | Gate                                                  |
+| --------------- | --------- | ----------------------------------------------------- |
+| Tax Config      | `tax`     | `isModuleEnabled('tax')` **and** owner/manager role   |
+| Shift history   | `shift`   | `isModuleEnabled('shift')` **and** owner/manager role |
+| Kitchen Display | `kds`     | `isModuleEnabled('kds')`                              |
+| Loyalty         | `loyalty` | `isModuleEnabled('loyalty')`                          |
 
 **Not changed in this phase:**
 
@@ -97,7 +97,7 @@ Settings tabs now use `isModuleEnabled(module, verticalId)` for visibility. Feat
 - `isFeatureAvailable(module, flag)` continues to gate runtime routes (POS, KDS page, sidebar nav).
 - Restaurant-specific configuration (tables, server-app) keeps existing vertical/flag behavior.
 
-For Opervia Restaurant today, all four modules are enabled — **pilot UX is unchanged**.
+For Operavia Restaurant today, all four modules are enabled — **pilot UX is unchanged**.
 
 ## Frontend client
 
@@ -109,7 +109,7 @@ For Opervia Restaurant today, all four modules are enabled — **pilot UX is unc
 - Package extraction or npm workspaces
 - Multi-vertical tenant runtime selection
 - Dynamic vertical configuration / marketplace
-- Opervia Custom builder
+- Operavia Custom builder
 - Module management Settings screen
 - Database schema for modules or verticals
 

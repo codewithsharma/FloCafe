@@ -32,8 +32,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$AppNames = @('OPERAVIA','Opervia','Flo Cafe')
-$AppName = 'Opervia'
+$AppNames = @('OPERAVIA','Operavia','Opervia','Flo Cafe')
+$AppName = 'Operavia'
 
 function Write-Step($msg) { Write-Host "`n$msg" -ForegroundColor Cyan }
 function Write-Log($msg)  { Write-Host "  $msg" }

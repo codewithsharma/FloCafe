@@ -21,8 +21,9 @@ Parallel read-only agents:
 
 Human policy for this pass:
 
-- **User-visible brand:** `OPERAVIA`
-- **Electron `productName`:** remains `Opervia` (Application Support / installer path continuity; changing to `OPERAVIA` deferred as **UNSAFE** without dual-path migration)
+- **User-visible brand:** `OPERAVIA` (all caps) / `Operavia` (title case). Spelling is **Operavia**, not Opervia.
+- **Electron `productName`:** `Operavia`. Uninstallers/`kill-ports` still match legacy `Opervia` installs.
+- **Drive folder:** `Operavia Backups` (also finds legacy `Opervia Backups`).
 - **Frozen forever (or migration plan required):** `appId` `com.flo.desktop`, npm `name` `flo-desktop`, Linux `executableName` `flocafe`, `flo.db`, `flo-backup-*` (+ restore regex), `jwt-secret.enc`, `master-pin.enc`, `X-Flo-Terminal-Id` / `flo_terminal_id`, localStorage `flocafe:*`, mDNS host `flo` / `flo.local`, FloAdmin, RevFlo, FloCafe-Plugins URLs, `flopos.com` infrastructure URLs, telemetry `app: 'flocafe'`, vertical IDs, CSS `--flo-*` tokens, `tests/flo-*.test.ts` filenames
 
 ---
@@ -36,7 +37,7 @@ Human policy for this pass:
 | Receipt footer name                              | `Powered by OPERAVIA` (URL left `flopos.com`)                            |
 | Frontend titles / alts / i18n brand keys         | OPERAVIA                                                                 |
 | Manifest / root layout title                     | OPERAVIA                                                                 |
-| Uninstallers / kill-ports                        | Dual-target Opervia/OPERAVIA **and** legacy Flo Cafe                     |
+| Uninstallers / kill-ports                        | Dual-target Operavia/OPERAVIA **and** legacy Flo Cafe                    |
 | Living docs / AGENTS / LICENSE / issue templates | Current product identity → OPERAVIA                                      |
 | Printer / flo-ui-shell tests                     | Assert OPERAVIA; restore Nexora negative checks                          |
 
@@ -66,13 +67,13 @@ Human policy for this pass:
 | AppX `applicationId` / `identityName` FloCafe     | Yes            | Store identity                                |
 | publish.repo `FloCafe`                            | Yes            | electron-updater feed                         |
 | Nexora.app mentions in dry-run evidence           | Yes            | Historical TRAINING artifact observation      |
-| `productName: Opervia`                            | Yes (deferred) | Path continuity; display chrome uses OPERAVIA |
+| `productName: Operavia`                           | Yes (deferred) | Path continuity; display chrome uses OPERAVIA |
 
 ---
 
 ## 4. Unsafe / compatibility-sensitive (human decision required)
 
-1. Rename `productName` Opervia → OPERAVIA (Mac/Win Application Support split risk).
+1. Rename `productName` Operavia → OPERAVIA (Mac/Win Application Support split risk).
 2. Rename backup prefix to `operavia-backup-*` (breaks managed restore of existing café backups).
 3. Rename `flo.db` / userData folder.
 4. Rename Snap / AppImageHub `flocafe` artifacts.
@@ -92,7 +93,7 @@ Human policy for this pass:
 
 ## 6. Package metadata changes
 
-Display-only fields updated to OPERAVIA where applicable. Frozen: `name`, `appId`, `productName` (Opervia), `executableName`, AppX identity fields, publish.repo.
+Display-only fields updated to OPERAVIA where applicable. Frozen: `name`, `appId`, `productName` (Operavia), `executableName`, AppX identity fields, publish.repo.
 
 ---
 

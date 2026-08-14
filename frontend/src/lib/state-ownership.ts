@@ -1,5 +1,5 @@
 /**
- * Client vs server state boundaries (Opervia frontend).
+ * Client vs server state boundaries (Operavia frontend).
  *
  * Server/API state → TanStack Query (`@tanstack/react-query`)
  * Client/UI state  → Zustand (`frontend/src/store/*`)

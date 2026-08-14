@@ -1,4 +1,4 @@
-# Opervia Module System
+# Operavia Module System
 
 **Status:** Phase 2 **COMPLETE** (registry through capabilities, composition, Inventory/Tax boundaries). Full TARGET (fail-closed / packages / lifecycle) = **Phase 3**.
 **Code:** `main/modules/`
@@ -8,14 +8,14 @@
 
 ## Purpose
 
-Define what a **module** is on the Opervia platform so enablement and future extraction stay consistent.
+Define what a **module** is on the Operavia platform so enablement and future extraction stay consistent.
 
 ## CURRENT (Phase 2 complete)
 
 | Fact                    | Note                                                                                                 |
 | ----------------------- | ---------------------------------------------------------------------------------------------------- |
 | Module registry         | `main/modules/catalog.ts` + `registry.ts`                                                            |
-| Vertical definition     | Opervia Restaurant in `main/modules/verticals.ts`                                                    |
+| Vertical definition     | Operavia Restaurant in `main/modules/verticals.ts`                                                   |
 | Synthetic vertical      | `retail-test` in `fixtures/` + `SYNTHETIC_VERTICALS` only                                            |
 | Enablement API          | `isModuleEnabled`, `getEnabledModules`, `isFeatureAvailable`                                         |
 | Composition             | Snapshot + `GET /api/platform/composition` (owner/manager)                                           |
@@ -53,7 +53,7 @@ Phase 2 implements **Register** + declarative **Enable** (vertical list) + soft 
 
 ## Deferred (Phase 3)
 
-Package extraction · dynamic install · marketplace · fail-closed dep enforcement · multi-vertical runtime · Opervia Custom · production Retail/Grocery/Salon.
+Package extraction · dynamic install · marketplace · fail-closed dep enforcement · multi-vertical runtime · Operavia Custom · production Retail/Grocery/Salon.
 
 ## Related
 

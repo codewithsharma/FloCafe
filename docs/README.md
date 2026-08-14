@@ -1,8 +1,8 @@
-# Opervia Documentation
+# Operavia Documentation
 
-Evidence-based documentation for **Opervia** — a modular business platform. Phase 1 ships **Opervia Restaurant** (local-first Electron POS). The repo remains a FloCafe fork for open-source lineage.
+Evidence-based documentation for **Operavia** — a modular business platform. Phase 1 ships **Operavia Restaurant** (local-first Electron POS). The repo remains a FloCafe fork for open-source lineage.
 
-> Canonical brand: **Opervia**. Nexora POS is retired as an active product name. Historical audits under `15-project-management/` may still say Nexora/FloCafe.
+> Canonical brand: **Operavia**. Operavia POS is retired as an active product name. Historical audits under `15-project-management/` may still say Operavia/FloCafe.
 
 ## Start here (platform)
 
@@ -14,24 +14,24 @@ Evidence-based documentation for **Opervia** — a modular business platform. Ph
 | [00-product/principles.md](00-product/principles.md)                                     | Architecture principles 1–10     |
 | [00-product/vision.md](00-product/vision.md)                                             | CURRENT vs TARGET product vision |
 | [03-architecture/modular-architecture.md](03-architecture/modular-architecture.md)       | Lego / modular model             |
-| [03-architecture/architecture-gap-report.md](03-architecture/architecture-gap-report.md) | Phase 1 → Opervia gap (A–H)      |
+| [03-architecture/architecture-gap-report.md](03-architecture/architecture-gap-report.md) | Phase 1 → Operavia gap (A–H)     |
 | [14-decisions/ADR-010-opervia-platform.md](14-decisions/ADR-010-opervia-platform.md)     | Brand + modular vision ADR       |
 | [modules/README.md](modules/README.md)                                                   | Module index                     |
 
 ## Repository state
 
-| Item             | Value                                  |
-| ---------------- | -------------------------------------- |
-| Product brand    | Opervia (`package.json` `productName`) |
-| Phase 1 vertical | Opervia Restaurant                     |
-| Version          | 3.0.5 (`package.json`)                 |
-| Schema version   | 74 (`main/db.ts`)                      |
-| Origin           | `codewithsharma/FloCafe`               |
-| Upstream         | `FreeOpenSourcePOS/FloCafe`            |
+| Item             | Value                                   |
+| ---------------- | --------------------------------------- |
+| Product brand    | Operavia (`package.json` `productName`) |
+| Phase 1 vertical | Operavia Restaurant                     |
+| Version          | 3.0.5 (`package.json`)                  |
+| Schema version   | 74 (`main/db.ts`)                       |
+| Origin           | `codewithsharma/FloCafe`                |
+| Upstream         | `FreeOpenSourcePOS/FloCafe`             |
 
 ## What this documentation contains
 
-This `docs/` tree is the **Opervia documentation system**. It supplements (does not replace) existing FloCafe operational docs:
+This `docs/` tree is the **Operavia documentation system**. It supplements (does not replace) existing FloCafe operational docs:
 
 | Existing doc                   | Purpose                     |
 | ------------------------------ | --------------------------- |
@@ -44,28 +44,28 @@ This `docs/` tree is the **Opervia documentation system**. It supplements (does 
 
 ## Documentation map
 
-| Section       | Path                                             | Contents                                                                |
-| ------------- | ------------------------------------------------ | ----------------------------------------------------------------------- |
-| Product       | [00-product/](00-product/)                       | Vision, Opervia platform, verticals, principles, PRD, features, roadmap |
-| Requirements  | [01-requirements/](01-requirements/)             | Functional/non-functional requirements                                  |
-| Design        | [02-design/](02-design/)                         | UX, flows, design system                                                |
-| Architecture  | [03-architecture/](03-architecture/)             | System + modular / vertical architecture                                |
-| Modules       | [modules/](modules/)                             | Planned reusable module index                                           |
-| Technology    | [04-technology/](04-technology/)                 | Tech stack, dependencies, ADR summary                                   |
-| API           | [05-api/](05-api/)                               | Auth, authorization, error handling                                     |
-| Database      | [06-database/](06-database/)                     | Schema, migrations, data model                                          |
-| Security      | [07-security/](07-security/)                     | Threat model, permissions, audit findings                               |
-| Development   | [08-development/](08-development/)               | Setup, standards, git workflow                                          |
-| Testing       | [09-testing/](09-testing/)                       | Strategy, unit, integration, E2E                                        |
-| AI (optional) | [10-ai/](10-ai/)                                 | Future optional AI module                                               |
-| DevOps        | [11-devops/](11-devops/)                         | CI/CD, deployment, configuration                                        |
-| Observability | [12-observability/](12-observability/)           | Logging, metrics (gaps documented)                                      |
-| Operations    | [13-operations/](13-operations/)                 | Runbooks, backup, disaster recovery                                     |
-| Decisions     | [14-decisions/](14-decisions/)                   | Architecture Decision Records                                           |
-| Project mgmt  | [15-project-management/](15-project-management/) | Plans, RFCs, **historical audits** (preserve names)                     |
-| Release       | [16-release/](16-release/)                       | Checklists, production readiness                                        |
+| Section       | Path                                             | Contents                                                                 |
+| ------------- | ------------------------------------------------ | ------------------------------------------------------------------------ |
+| Product       | [00-product/](00-product/)                       | Vision, Operavia platform, verticals, principles, PRD, features, roadmap |
+| Requirements  | [01-requirements/](01-requirements/)             | Functional/non-functional requirements                                   |
+| Design        | [02-design/](02-design/)                         | UX, flows, design system                                                 |
+| Architecture  | [03-architecture/](03-architecture/)             | System + modular / vertical architecture                                 |
+| Modules       | [modules/](modules/)                             | Planned reusable module index                                            |
+| Technology    | [04-technology/](04-technology/)                 | Tech stack, dependencies, ADR summary                                    |
+| API           | [05-api/](05-api/)                               | Auth, authorization, error handling                                      |
+| Database      | [06-database/](06-database/)                     | Schema, migrations, data model                                           |
+| Security      | [07-security/](07-security/)                     | Threat model, permissions, audit findings                                |
+| Development   | [08-development/](08-development/)               | Setup, standards, git workflow                                           |
+| Testing       | [09-testing/](09-testing/)                       | Strategy, unit, integration, E2E                                         |
+| AI (optional) | [10-ai/](10-ai/)                                 | Future optional AI module                                                |
+| DevOps        | [11-devops/](11-devops/)                         | CI/CD, deployment, configuration                                         |
+| Observability | [12-observability/](12-observability/)           | Logging, metrics (gaps documented)                                       |
+| Operations    | [13-operations/](13-operations/)                 | Runbooks, backup, disaster recovery                                      |
+| Decisions     | [14-decisions/](14-decisions/)                   | Architecture Decision Records                                            |
+| Project mgmt  | [15-project-management/](15-project-management/) | Plans, RFCs, **historical audits** (preserve names)                      |
+| Release       | [16-release/](16-release/)                       | Checklists, production readiness                                         |
 
-## Current project state (Opervia Restaurant / Phase 1)
+## Current project state (Operavia Restaurant / Phase 1)
 
 **VERIFIED:** Electron 43 desktop POS with three LAN servers (ports 3001/3002/3003), SQLite WAL database, Next.js 16 static frontend, Express 5 API, WebSocket KDS, JWT auth with five roles, schema **v75**, extensive test suite.
 
@@ -73,16 +73,16 @@ This `docs/` tree is the **Opervia documentation system**. It supplements (does 
 
 **Architectural TARGET (not fully built):** multi-vertical composition, inventory ledger depth, package extraction. Lightweight module registry is **CURRENT** (Phase 2.1 + 2.2 consumers/diagnostics). See [architecture-gap-report.md](03-architecture/architecture-gap-report.md), [phase-2.1-module-registry.md](03-architecture/phase-2.1-module-registry.md), [phase-2.2-module-consumers.md](03-architecture/phase-2.2-module-consumers.md).
 
-## Target state (Opervia platform)
+## Target state (Operavia platform)
 
 Modular business platform evolving incrementally from Phase 1:
 
 - Preserve local-first Electron + SQLite architecture
 - Compose verticals from reusable modules (configuration over forking)
-- Extend Opervia Restaurant depth after pilots
+- Extend Operavia Restaurant depth after pilots
 - Introduce additional verticals without separate codebases
 - Keep AI optional and non-blocking
-- Do **not** build Opervia Custom until composition model is real
+- Do **not** build Operavia Custom until composition model is real
 
 See [vision.md](00-product/vision.md), [opervia-platform.md](00-product/opervia-platform.md), and [roadmap.md](00-product/roadmap.md).
 
@@ -113,14 +113,14 @@ See [vision.md](00-product/vision.md), [opervia-platform.md](00-product/opervia-
 
 Every document distinguishes:
 
-| Label                                    | Meaning                                                 |
-| ---------------------------------------- | ------------------------------------------------------- |
-| **CURRENT STATE**                        | Verified in codebase today (Opervia Restaurant Phase 1) |
-| **TARGET STATE**                         | Opervia modular platform planned evolution              |
-| **PLANNED / PROPOSED / NOT IMPLEMENTED** | Not in code — do not treat as shipped                   |
-| **VERIFIED**                             | Confirmed from source files                             |
-| **INFERRED**                             | Strongly implied, not explicitly documented             |
-| **UNKNOWN**                              | Cannot establish from repository                        |
+| Label                                    | Meaning                                                  |
+| ---------------------------------------- | -------------------------------------------------------- |
+| **CURRENT STATE**                        | Verified in codebase today (Operavia Restaurant Phase 1) |
+| **TARGET STATE**                         | Operavia modular platform planned evolution              |
+| **PLANNED / PROPOSED / NOT IMPLEMENTED** | Not in code — do not treat as shipped                    |
+| **VERIFIED**                             | Confirmed from source files                              |
+| **INFERRED**                             | Strongly implied, not explicitly documented              |
+| **UNKNOWN**                              | Cannot establish from repository                         |
 
 ### Source-of-truth rules
 
@@ -133,7 +133,7 @@ Every document distinguishes:
 ## Quick reference — key evidence files
 
 ```
-package.json              Version, productName (Opervia), build config
+package.json              Version, productName (Operavia), build config
 STRATEGY.md               Canonical strategy
 main/index.ts             Electron entry, startup sequence
 main/db.ts                Schema, migrations (v75), DB utilities

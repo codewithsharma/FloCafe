@@ -1,5 +1,5 @@
 /**
- * Opervia Restaurant vertical — declarative composition of Phase 1 modules.
+ * Operavia Restaurant vertical — declarative composition of Phase 1 modules.
  * Production Retail lives in retail-vertical.ts (Phase 3.3).
  */
 import type { ModuleId, VerticalDefinition } from './types';
@@ -9,7 +9,7 @@ import { OPERVIA_RETAIL_VERTICAL } from './retail-vertical';
 export const OPERVIA_RESTAURANT_VERTICAL_ID = 'restaurant';
 
 /**
- * Modules enabled for Opervia Restaurant (Phase 1 product).
+ * Modules enabled for Operavia Restaurant (Phase 1 product).
  * Shared commerce + restaurant-only stack.
  */
 export const OPERVIA_RESTAURANT_ENABLED_MODULES: readonly ModuleId[] = [

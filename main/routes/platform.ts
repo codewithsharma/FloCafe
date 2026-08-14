@@ -1,5 +1,5 @@
 /**
- * Read-only Opervia platform endpoints (Phase 2.4).
+ * Read-only Operavia platform endpoints (Phase 2.4).
  */
 import { Router, Request, Response } from 'express';
 import { requireRole } from '../middleware/security';

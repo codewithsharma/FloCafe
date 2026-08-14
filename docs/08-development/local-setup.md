@@ -9,7 +9,7 @@
 | `origin`   | your fork (e.g. codewithsharma/FloCafe) |
 | `upstream` | FreeOpenSourcePOS/FloCafe               |
 
-The GitHub repository name remains **FloCafe** for continuity. The product brand is **Opervia**.
+The GitHub repository name remains **FloCafe** for continuity. The product brand is **Operavia**.
 
 ## Default branch
 
@@ -27,7 +27,7 @@ The GitHub repository name remains **FloCafe** for continuity. The product brand
 | better-sqlite3 | ^13.0.3   | `package.json`                                              |
 | Schema version | **75**    | `main/db.ts` MIGRATIONS (`p2_8_inventory_movements_ledger`) |
 | App version    | 3.0.5     | `package.json`                                              |
-| Product name   | Opervia   | `package.json` `build.productName`                          |
+| Product name   | Operavia  | `package.json` `build.productName`                          |
 
 SQLite version is bundled with `better-sqlite3` (not separately pinned).
 
@@ -48,7 +48,7 @@ Internal package identifiers (do not rename): npm `flo-desktop`, Linux `executab
 | KDS        | 3002    | `KDS_PORT`        |
 | Server App | 3003    | `SERVER_APP_PORT` |
 
-If default ports are in use (e.g. Opervia app running), run `npm run clean` before tests.
+If default ports are in use (e.g. Operavia app running), run `npm run clean` before tests.
 
 ## Environment files
 

@@ -1,5 +1,5 @@
 /**
- * Opervia module registry public surface (Phase 2.1–3.3).
+ * Operavia module registry public surface (Phase 2.1–3.3).
  */
 export {
   MODULE_CATALOG,

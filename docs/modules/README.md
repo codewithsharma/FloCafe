@@ -1,16 +1,16 @@
-# Opervia Modules
+# Operavia Modules
 
 **Status:** Phase 2 foundation **COMPLETE** ([phase-2-final-exit-gate.md](../03-architecture/phase-2-final-exit-gate.md)). Phase 3.1–3.4 **done** ([phase-3.4-correctness-residuals.md](../03-architecture/phase-3.4-correctness-residuals.md)). Phase 3.5 optional.
 **Contract:** [module-system.md](../03-architecture/module-system.md)
 **Platform:** [opervia-platform.md](../00-product/opervia-platform.md)
 
-Modules are reusable business capabilities. Phase 2 ships a **lightweight registry** (`main/modules/`) that describes capabilities and the Opervia Restaurant vertical. Implementations remain colocated; formal packages are **Phase 3 TARGET**.
+Modules are reusable business capabilities. Phase 2 ships a **lightweight registry** (`main/modules/`) that describes capabilities and the Operavia Restaurant vertical. Implementations remain colocated; formal packages are **Phase 3 TARGET**.
 
 ## How to read this index
 
 | Label          | Meaning                                            |
 | -------------- | -------------------------------------------------- |
-| **CURRENT**    | Capability ships in Opervia Restaurant today       |
+| **CURRENT**    | Capability ships in Operavia Restaurant today      |
 | **REGISTERED** | Listed in `main/modules/catalog.ts`                |
 | **PLANNED**    | Boundary or depth not yet first-class              |
 | **TARGET**     | Full contract fields — see module-system / Phase 3 |
@@ -97,7 +97,7 @@ Modules are reusable business capabilities. Phase 2 ships a **lightweight regist
 26. Formal events bus for modules — **Phase 3**
 27. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — **Phase 3**
 
-**Do not** create Opervia Custom or extract every folder into packages yet.
+**Do not** create Operavia Custom or extract every folder into packages yet.
 
 ## Related architecture
 

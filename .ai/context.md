@@ -1,9 +1,10 @@
-# Opervia context
+# Operavia context
 
-**Product brand (canonical):** OPERAVIA — modular business platform; Phase 1 vertical = **OPERAVIA Restaurant**.
+**Product brand (canonical):** OPERAVIA (all caps) / **Operavia** (title case) — modular business platform; Phase 1 vertical = **OPERAVIA Restaurant**.
+**Spelling:** Title case is **Operavia**, not Opervia. Legacy `Opervia` path/process matchers remain in uninstallers and kill-ports.
 **Nexora POS / FloCafe:** retired as active product names (historical audits may still say Nexora/FloCafe; GitHub repo remains FloCafe).
 **Repo legacy:** FloCafe / Flo POS naming may linger in packaging IDs (`appId`, `flo-desktop`, `flocafe` executable) for upgrade continuity.
-**Electron `productName`:** `Opervia` (frozen for Application Support path continuity; UI chrome uses OPERAVIA).
+**Electron `productName`:** `Operavia`.
 **Modular vision:** ADR-010 + Phase 2 module registry (`main/modules/`) — Restaurant vertical declarative; no Phase 1 rewrite.
 **Canonical strategy:** `STRATEGY.md` (pilot KPI unchanged).
 **Branding audit:** `docs/05-production/operavia-branding-normalization-audit.md`.
@@ -20,8 +21,8 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 
 | Layer | State |
 |-------|--------|
-| **Opervia** | Canonical platform brand |
-| **Opervia Restaurant** | Active production vertical (default; unset `ACTIVE_VERTICAL_ID` → `restaurant`) |
+| **Operavia** | Canonical platform brand |
+| **Operavia Restaurant** | Active production vertical (default; unset `ACTIVE_VERTICAL_ID` → `restaurant`) |
 | **retail** | Production Retail vertical (`ACTIVE_VERTICAL_ID=retail`); companion KDS/Server App now module-gated (P0 isolation 2026-08-14). Store pilot still needs remaining P1s + ops. |
 | **retail-test** | Synthetic composition; selectable via env for validation only — not production Retail |
 | **Phase 2** | **CLOSED** — final exit + closeout gate `docs/03-architecture/phase-2-closeout-and-phase-3-gate.md` (also `phase-2-final-exit-gate.md`). **PASS WITH DOCUMENTED DEFERMENTS**. |
@@ -30,7 +31,7 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 
 Phase 2 delivered: registry → … → 2.14 Order → 2.15 Payment → 2.16 POS → 2.17 Restaurant isolation → 2.18 synthetic Retail → final exit → **closeout / Phase 3 gate**.
 
-## Active work — Opervia Restaurant v1.0 / pilot hardening
+## Active work — Operavia Restaurant v1.0 / pilot hardening
 
 **North-star KPI:** 3 cafés × 30 days × zero critical failures.
 

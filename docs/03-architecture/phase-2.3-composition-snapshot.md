@@ -1,4 +1,4 @@
-# Phase 2.3 — Opervia Composition Snapshot
+# Phase 2.3 — Operavia Composition Snapshot
 
 **Status:** IMPLEMENTED
 **Date:** 2026-08-13
@@ -14,7 +14,7 @@ Provide a **read-only, deterministic** view of what a vertical is composed of to
 Registry → Vertical Definition → Composition Snapshot
 ```
 
-The snapshot answers: *“What exactly is enabled for this vertical right now?”*
+The snapshot answers: _“What exactly is enabled for this vertical right now?”_
 
 It is **observability, not configuration**. It does not install, uninstall, or modify modules.
 
@@ -41,23 +41,23 @@ The snapshot describes capability composition; flags describe runtime enablement
 
 `getCompositionSnapshot(options?)` returns:
 
-| Section | Content |
-|---------|---------|
-| `schemaVersion` | `'2.3'` — snapshot contract version |
-| `vertical` | `id`, `name`, `version`, optional `description` |
-| `modules.enabled` | Sorted enabled module ids |
-| `modules.entries` | Per-module `{ id, name, version, kind, dependencies, featureFlags? }` |
-| `modules.counts` | Enabled/registered counts, `byKind`, enabled route prefix count |
-| `dependencies` | Reused from Phase 2.2 soft dependency report |
-| `registryIntegrity` | Reused from Phase 2.2 integrity report |
-| `diagnostics` | `{ valid, warnings[] }` — aggregated non-blocking warnings |
+| Section             | Content                                                               |
+| ------------------- | --------------------------------------------------------------------- |
+| `schemaVersion`     | `'2.3'` — snapshot contract version                                   |
+| `vertical`          | `id`, `name`, `version`, optional `description`                       |
+| `modules.enabled`   | Sorted enabled module ids                                             |
+| `modules.entries`   | Per-module `{ id, name, version, kind, dependencies, featureFlags? }` |
+| `modules.counts`    | Enabled/registered counts, `byKind`, enabled route prefix count       |
+| `dependencies`      | Reused from Phase 2.2 soft dependency report                          |
+| `registryIntegrity` | Reused from Phase 2.2 integrity report                                |
+| `diagnostics`       | `{ valid, warnings[] }` — aggregated non-blocking warnings            |
 
 ### Feature flags vs modules
 
-| Concept | Meaning |
-|---------|---------|
-| **Module** | Capability exists in the vertical composition |
-| **Feature flag** | Runtime setting further gates availability |
+| Concept          | Meaning                                       |
+| ---------------- | --------------------------------------------- |
+| **Module**       | Capability exists in the vertical composition |
+| **Feature flag** | Runtime setting further gates availability    |
 
 The snapshot lists `featureFlags` keys from catalog metadata only. It does **not** read settings from the database. Runtime availability remains `isFeatureAvailable(module, flag)` at call sites.
 
@@ -89,8 +89,8 @@ Warnings aggregate missing dependencies and registry integrity issues. **Never f
 Non-production boot logs (via `logCompositionSnapshotIfDev()` in `registerRoutes`):
 
 ```text
-[Opervia Composition]
-Vertical: Opervia Restaurant
+[Operavia Composition]
+Vertical: Operavia Restaurant
 Modules: 22
 Dependencies: valid
 Diagnostics: none
@@ -106,13 +106,13 @@ Rationale: the frontend already re-exports `main/modules` at build time; Restaur
 
 ## Restaurant composition (current)
 
-| Field | Value |
-|-------|-------|
-| Vertical id | `restaurant` |
-| Name | Opervia Restaurant |
-| Enabled modules | 22 (all catalog modules) |
-| Dependencies | `valid: true` |
-| Registry integrity | `valid: true` |
+| Field              | Value                    |
+| ------------------ | ------------------------ |
+| Vertical id        | `restaurant`             |
+| Name               | Operavia Restaurant      |
+| Enabled modules    | 22 (all catalog modules) |
+| Dependencies       | `valid: true`            |
+| Registry integrity | `valid: true`            |
 
 Modules: `core`, `customer`, `product`, `category`, `inventory`, `pos`, `order`, `payment`, `refund`, `tax`, `shift`, `staff`, `loyalty`, `reporting`, `printing`, `notification`, `backup`, `tables`, `kitchen`, `kds`, `menu`, `addons`.
 
@@ -138,7 +138,7 @@ Support tooling, admin diagnostics, and optional platform APIs can consume the s
 
 - Package extraction / dynamic loading / marketplace
 - Fail-closed dependency enforcement
-- Multi-vertical tenants / Opervia Custom
+- Multi-vertical tenants / Operavia Custom
 - Retail, Grocery, Salon, Pharmacy, Hospitality implementations
 - Route remounting from registry
 - Feature-flag removal

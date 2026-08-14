@@ -4,7 +4,7 @@
 
 ## CURRENT STATE
 
-Nexora POS / FloCafe operations are **on-premise** — the restaurant operator IS the operator.
+Operavia POS / FloCafe operations are **on-premise** — the restaurant operator IS the operator.
 
 ### Daily operations
 

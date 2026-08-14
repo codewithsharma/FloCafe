@@ -1,6 +1,6 @@
-# Opervia prompt pipeline
+# Operavia prompt pipeline
 
-This folder is the durable **development execution pipeline** for Opervia (repo: FloCafe).
+This folder is the durable **development execution pipeline** for Operavia (repo: FloCafe).
 
 It does **not** implement product features. It plans, authorizes, verifies, and sequences sub-phases after **Phase 4.5** (Retail exchange, commit `a42493a`).
 
@@ -193,7 +193,7 @@ Before each phase: `git status`. Record unrelated dirty files in `STATE.md`.
 
 **Never commit** with a phase:
 
-- Branding / Opervia rename leftovers
+- Branding / Operavia rename leftovers
 - Unrelated Retail working-tree changes
 - `audit/`
 - Generated files

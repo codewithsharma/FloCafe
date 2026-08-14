@@ -1,5 +1,5 @@
 /**
- * Centralized Opervia navigation configuration.
+ * Centralized Operavia navigation configuration.
  * Single source of truth for AppShell sidebar items.
  */
 import type { LucideIcon } from 'lucide-react';
@@ -45,7 +45,7 @@ export interface FloNavItem {
   businessTypes: string[] | null;
   section: FloNavSection;
   status: FloNavStatus;
-  /** Opervia module that must be enabled for the active vertical (Phase 2.1). */
+  /** Operavia module that must be enabled for the active vertical (Phase 2.1). */
   requiresModule?: ModuleId;
   /** Feature flag gates (all must pass when set) — still required on top of module enablement */
   requiresTables?: boolean;

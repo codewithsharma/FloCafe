@@ -7,7 +7,7 @@
 
 ## 1. What is a module?
 
-An Opervia module is a **named business capability** with a metadata contract in the registry. Implementations remain in the monolith (`main/routes`, `main/services`, `frontend/`).
+An Operavia module is a **named business capability** with a metadata contract in the registry. Implementations remain in the monolith (`main/routes`, `main/services`, `frontend/`).
 
 > Module metadata is not a runtime plugin system.
 

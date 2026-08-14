@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Pilot operations readiness (docs only)
+
+Closed software hardening verification at `0200cae`. Ops pack updated (runbook 1–16, staff training checklist, success criteria, readiness report). **No production code. No Phase 4.16. No push.** Live café remains blocked on human/physical gates (signed artifact, OPS-01, PIN escrow, backup policy, drills, sign-off). Verdict unchanged: Restaurant/Retail **PILOT READY WITH CONDITIONS**.
+
 ## 2026-08-14 — H1/H2/H3 human policies (Implemented)
 
 H1: cancel 409 when GROSS tender exists (`ORDER_HAS_SUCCESSFUL_TENDER`); refund owns money. H2: `daySalesSemantics` includes collectible-complete `partial`; no payment writes. H3: chef cancel requires manager PIN; KDS bump unchanged. ADR-014 stays Proposed. Schema v75. Doc: `post-p0-pilot-remediation.md`.
@@ -182,7 +186,7 @@ Phase 2 declared **COMPLETE** after CURRENT 2.14–2.18 seams. Decision **PASS W
 
 ## 2026-08-13 — Phase 2.18 Synthetic Retail validation (Accepted + Implemented)
 
-Strengthened `retail-test` as architecture-only composition: shared commerce modules without tables/kitchen/kds/menu/addons; production `VERTICALS` / `ACTIVE_VERTICAL_ID` remain restaurant; `business_type` still maps retail → restaurant. Tests: `synthetic-retail-composition`, `shared-module-vertical-neutrality`, **`synthetic-retail-sale`** (takeaway Product→Inventory→Order→Tax→Bill→Pay + historical snapshot + payment idempotency). Not production Opervia Retail. Doc: `phase-2.18-synthetic-retail-validation.md`.
+Strengthened `retail-test` as architecture-only composition: shared commerce modules without tables/kitchen/kds/menu/addons; production `VERTICALS` / `ACTIVE_VERTICAL_ID` remain restaurant; `business_type` still maps retail → restaurant. Tests: `synthetic-retail-composition`, `shared-module-vertical-neutrality`, **`synthetic-retail-sale`** (takeaway Product→Inventory→Order→Tax→Bill→Pay + historical snapshot + payment idempotency). Not production Operavia Retail. Doc: `phase-2.18-synthetic-retail-validation.md`.
 
 ## 2026-08-13 — Phase 2.16 POS orchestration boundary (Accepted + Implemented)
 
@@ -234,7 +238,7 @@ Extended `OperviaModule` / `ModuleDefinition` with required domain-level `capabi
 
 ## 2026-08-13 — Phase 2.5 Synthetic retail-test composition (Accepted + Implemented)
 
-Non-production `retail-test` / Opervia Retail Test fixture in `main/modules/fixtures/` + `SYNTHETIC_VERTICALS` lookup. Production `VERTICALS` and `ACTIVE_VERTICAL_ID` remain restaurant-only. Proves shared ModuleIds compose into two verticals without duplicating implementations; restaurant-only modules excluded from retail-test. Soft dependency validation only — fail-closed deferred. No `?verticalId=` on HTTP API. Settings: printing/notification/backup gated with `isModuleEnabled`. Tests: `module-vertical-composition.test.ts`. Docs: `phase-2.5-vertical-composition-validation.md`. Next: P2.6 fail-closed after pilot proof OR real Retail requirements.
+Non-production `retail-test` / Operavia Retail Test fixture in `main/modules/fixtures/` + `SYNTHETIC_VERTICALS` lookup. Production `VERTICALS` and `ACTIVE_VERTICAL_ID` remain restaurant-only. Proves shared ModuleIds compose into two verticals without duplicating implementations; restaurant-only modules excluded from retail-test. Soft dependency validation only — fail-closed deferred. No `?verticalId=` on HTTP API. Settings: printing/notification/backup gated with `isModuleEnabled`. Tests: `module-vertical-composition.test.ts`. Docs: `phase-2.5-vertical-composition-validation.md`. Next: P2.6 fail-closed after pilot proof OR real Retail requirements.
 
 ## 2026-08-13 — Phase 2.4 Composition read API + settings gates (Accepted + Implemented)
 
@@ -242,19 +246,19 @@ Minimal authenticated `GET /api/platform/composition` for owner/manager via exis
 
 ## 2026-08-13 — Phase 2.3 Composition snapshot (Accepted + Implemented)
 
-Read-only `getCompositionSnapshot()` in `main/modules/composition.ts` — orchestrates registry + Phase 2.2 diagnostics (no duplicate validation). Deterministic sorted output; dev-only `[Opervia Composition]` log. No HTTP endpoint, no settings UI, no schema change, no package extraction. Tests: `module-composition.test.ts`. Docs: `phase-2.3-composition-snapshot.md`. Next: P2.4 optional GET / settings gates.
+Read-only `getCompositionSnapshot()` in `main/modules/composition.ts` — orchestrates registry + Phase 2.2 diagnostics (no duplicate validation). Deterministic sorted output; dev-only `[Operavia Composition]` log. No HTTP endpoint, no settings UI, no schema change, no package extraction. Tests: `module-composition.test.ts`. Docs: `phase-2.3-composition-snapshot.md`. Next: P2.4 optional GET / settings gates.
 
 ## 2026-08-13 — Phase 2.2 Module consumers + soft diagnostics (Accepted + Implemented)
 
-Registry becomes a capability-discovery layer: broader nav/`isFeatureAvailable` consumers; Category-2 restaurant gates → modules (`tables`, `addons`, `kds`); soft `validateVerticalDependencies` + integrity + dev-only `[Opervia Modules]` log. No fail-closed deps, no route remount, no schema change, no package extraction. Tests: `module-diagnostics.test.ts`, extended flo-ui-shell/registry. Docs: `phase-2.2-module-consumers.md`. Next: P2.3 optional composition API / deeper settings gates.
+Registry becomes a capability-discovery layer: broader nav/`isFeatureAvailable` consumers; Category-2 restaurant gates → modules (`tables`, `addons`, `kds`); soft `validateVerticalDependencies` + integrity + dev-only `[Operavia Modules]` log. No fail-closed deps, no route remount, no schema change, no package extraction. Tests: `module-diagnostics.test.ts`, extended flo-ui-shell/registry. Docs: `phase-2.2-module-consumers.md`. Next: P2.3 optional composition API / deeper settings gates.
 
 ## 2026-08-13 — Phase 2.1 Module registry + Restaurant vertical (Accepted + Implemented)
 
-Lightweight metadata seam only: `main/modules/` catalog + Opervia Restaurant vertical definition + read-only `isModuleEnabled` / `getEnabledModules` / `isFeatureAvailable`. Nav tables/kitchen use `requiresModule` alongside existing flags/`businessTypes`. No package extraction, no route rewrite, no schema change, no dep enforcement. Tests: `tests/module-registry.test.ts`. Docs: `phase-2.1-module-registry.md`. Next: P2.2 broaden consumers.
+Lightweight metadata seam only: `main/modules/` catalog + Operavia Restaurant vertical definition + read-only `isModuleEnabled` / `getEnabledModules` / `isFeatureAvailable`. Nav tables/kitchen use `requiresModule` alongside existing flags/`businessTypes`. No package extraction, no route rewrite, no schema change, no dep enforcement. Tests: `tests/module-registry.test.ts`. Docs: `phase-2.1-module-registry.md`. Next: P2.2 broaden consumers.
 
-## 2026-08-13 — ADR-010 Opervia platform brand + modular vision (Accepted)
+## 2026-08-13 — ADR-010 Operavia platform brand + modular vision (Accepted)
 
-Opervia is canonical platform and product brand. Nexora POS retired as active name. Phase 1 product = Opervia Restaurant on shared codebase. Docs: `docs/00-product/opervia-platform.md`, `verticals.md`, `principles.md`; `docs/03-architecture/modular-architecture.md`, `module-system.md`, `vertical-architecture.md`, `dependency-model.md`, `architecture-gap-report.md`; `docs/modules/README.md`; ADR-010. Branding consolidation (same day): STRATEGY, vision, docs/README, `productName: Opervia`, UI i18n/manifest/layout, user-facing main strings. Historical `15-*` audits preserved. `appId` / linux `executableName` unchanged for upgrades. Next technical step when approved: lightweight module registry + vertical definition without package extraction. Opervia Custom / microservices / per-vertical repos deferred.
+Operavia is canonical platform and product brand. Operavia POS retired as active name. Phase 1 product = Operavia Restaurant on shared codebase. Docs: `docs/00-product/opervia-platform.md`, `verticals.md`, `principles.md`; `docs/03-architecture/modular-architecture.md`, `module-system.md`, `vertical-architecture.md`, `dependency-model.md`, `architecture-gap-report.md`; `docs/modules/README.md`; ADR-010. Branding consolidation (same day): STRATEGY, vision, docs/README, `productName: Operavia`, UI i18n/manifest/layout, user-facing main strings. Historical `15-*` audits preserved. `appId` / linux `executableName` unchanged for upgrades. Next technical step when approved: lightweight module registry + vertical definition without package extraction. Operavia Custom / microservices / per-vertical repos deferred.
 
 ## 2026-08-13 — P1.6 Pilot release readiness (Accepted — docs + verification)
 
@@ -366,14 +370,14 @@ CEO+CTO approved after YELLOW P0.2 audit. M6 refund architecture unchanged.
 See `docs/14-decisions/ADR-009-refund-model.md` (Accepted) and `docs/15-project-management/m6-refund-architecture.md` (APPROVED).
 Locked: always PIN; cash refunds only affect recon; card = record-only; no cashback clawback; print/UI deferred; method must match payment line; refundable from original collected − completed refunds.
 
-## 2026-08-12 — Nexora POS mandate (CEO + CTO)
+## 2026-08-12 — Operavia POS mandate (CEO + CTO)
 
-- **Current product name:** Nexora POS (local-first café POS). **Future platform:** Nexora RestaurantOS. Do not conflate.
+- **Current product name:** Operavia POS (local-first café POS). **Future platform:** Operavia RestaurantOS. Do not conflate.
 - **North-star KPI:** 3 cafés × 30 days × zero critical failures before RestaurantOS depth.
 - **Freeze until pilots:** AI, aggregators, multi-tenant SaaS, multi-location implementation, ERP inventory, payment terminals, Bluetooth print, microservices/K8s, architecture rewrites.
 - **Keep architecture:** Electron + SQLite per store + Express monolith + optional cloud that never blocks billing.
 - **Refactor rule:** improve service boundaries only when touching a domain (e.g. refunds → billing paths); no giant rewrite.
-- **Branding:** prefer Nexora / Nexora POS / Nexora RestaurantOS; no new product names; no mass rename without migration plan.
+- **Branding:** prefer Operavia / Operavia POS / Operavia RestaurantOS; no new product names; no mass rename without migration plan.
 - **Canonical docs:** `STRATEGY.md`; execution backlog in `.ai/tasks.md`.
 
 See `docs/14-decisions/ADR-007-shift-model.md` (per-terminal shift).

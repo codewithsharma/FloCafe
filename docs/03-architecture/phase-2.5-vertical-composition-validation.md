@@ -8,7 +8,7 @@
 
 ## 1. Purpose
 
-Prove the Opervia principle without building a production Retail product:
+Prove the Operavia principle without building a production Retail product:
 
 > **One reusable capability implementation can be composed into multiple verticals without duplicating the implementation.**
 
@@ -16,28 +16,28 @@ Phase 2.5 introduces a **synthetic** vertical composition used only for architec
 
 ## 2. Restaurant (production)
 
-| Field | Value |
-|-------|-------|
-| Id | `restaurant` |
-| Name | Opervia Restaurant |
-| Role | Only entry in production `VERTICALS` |
-| Active | `ACTIVE_VERTICAL_ID === 'restaurant'` |
+| Field   | Value                                                           |
+| ------- | --------------------------------------------------------------- |
+| Id      | `restaurant`                                                    |
+| Name    | Operavia Restaurant                                             |
+| Role    | Only entry in production `VERTICALS`                            |
+| Active  | `ACTIVE_VERTICAL_ID === 'restaurant'`                           |
 | Modules | All 22 catalog modules including tables/kitchen/kds/menu/addons |
 
 ## 3. Synthetic Retail Test
 
-| Field | Value |
-|-------|-------|
-| Id | `retail-test` |
-| Name | Opervia Retail Test |
-| Version | `0.0.0-test` |
-| Location | `main/modules/fixtures/retail-test-vertical.ts` |
-| Production `VERTICALS` | **Not included** |
-| Active vertical | **Never** |
+| Field                  | Value                                           |
+| ---------------------- | ----------------------------------------------- |
+| Id                     | `retail-test`                                   |
+| Name                   | Operavia Retail Test                            |
+| Version                | `0.0.0-test`                                    |
+| Location               | `main/modules/fixtures/retail-test-vertical.ts` |
+| Production `VERTICALS` | **Not included**                                |
+| Active vertical        | **Never**                                       |
 
 Lookup is opt-in via `SYNTHETIC_VERTICALS` inside `getVerticalDefinition(id)`.
 
-**Opervia Retail is NOT a production vertical yet.**
+**Operavia Retail is NOT a production vertical yet.**
 
 ## 4. Shared Modules
 
@@ -82,8 +82,8 @@ Soft diagnostics + CI assertions are enough for Phase 2.5.
 
 ## 8. Production Status
 
-> Opervia Restaurant behavior unchanged.
-> Opervia Retail is NOT production-enabled.
+> Operavia Restaurant behavior unchanged.
+> Operavia Retail is NOT production-enabled.
 > `GET /api/platform/composition` always reports the active restaurant composition.
 > `?verticalId=` is **not** supported (ignored if present).
 > `business_type` never maps to `retail-test`.
@@ -92,21 +92,21 @@ Soft diagnostics + CI assertions are enough for Phase 2.5.
 
 Additional Settings tabs now use `isModuleEnabled`:
 
-| Tab | Module |
-|-----|--------|
-| Printers | `printing` |
-| WhatsApp | `notification` |
-| Backup & Data | `backup` |
+| Tab           | Module         |
+| ------------- | -------------- |
+| Printers      | `printing`     |
+| WhatsApp      | `notification` |
+| Backup & Data | `backup`       |
 
 Feature flags and role gates inside tabs are unchanged. Google Drive, network mode, and security settings remain non-module surfaces.
 
 ## 10. business_type audit (summary)
 
-| Class | Examples |
-|-------|----------|
-| **KEEP** | Tenant `business_type` field; nav bridge via `verticalIdForBusinessType`; login display |
-| **CONVERTED** | Settings/nav capability checks already on `isModuleEnabled` |
-| **DEFER** | Type unions limited to `'restaurant'`; register default; future multi-vertical onboarding |
+| Class         | Examples                                                                                  |
+| ------------- | ----------------------------------------------------------------------------------------- |
+| **KEEP**      | Tenant `business_type` field; nav bridge via `verticalIdForBusinessType`; login display   |
+| **CONVERTED** | Settings/nav capability checks already on `isModuleEnabled`                               |
+| **DEFER**     | Type unions limited to `'restaurant'`; register default; future multi-vertical onboarding |
 
 ## 11. Future Path
 

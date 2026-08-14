@@ -4,7 +4,7 @@
 
 Status legend: **[BUILT]** usable · **[PARTIAL]** incomplete · **[STUB]** surface only · **[EXPERIMENTAL]** unstable · **[NOT BUILT]** absent · **[FROZEN]** deferred per `STRATEGY.md`
 
-Evidence paths reference the Opervia codebase (repo: FloCafe) as of schema **v75** (`main/db.ts` migration `p2_8_inventory_movements_ledger`). Default vertical: **restaurant**.
+Evidence paths reference the Operavia codebase (repo: FloCafe) as of schema **v75** (`main/db.ts` migration `p2_8_inventory_movements_ledger`). Default vertical: **restaurant**.
 
 ## POS & Orders
 

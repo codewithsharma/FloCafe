@@ -1,4 +1,4 @@
-# Opervia Platform
+# Operavia Platform
 
 **Status:** CURRENT product brand + TARGET modular platform vision
 **Decision:** [ADR-010](../14-decisions/ADR-010-opervia-platform.md) (Accepted 2026-08-13)
@@ -6,7 +6,7 @@
 
 ## Guiding statement
 
-> Opervia is a modular business platform designed to power multiple industry-specific products from a single shared codebase. Business capabilities are implemented as reusable modules, while vertical products are compositions of those modules configured for specific industries.
+> Operavia is a modular business platform designed to power multiple industry-specific products from a single shared codebase. Business capabilities are implemented as reusable modules, while vertical products are compositions of those modules configured for specific industries.
 
 ## Motto
 
@@ -14,15 +14,15 @@
 
 ## Branding
 
-| Name | Role |
-|------|------|
-| **Opervia** | Canonical platform **and** product brand |
-| **Opervia Restaurant** | CURRENT Phase 1 vertical (this codebase) |
-| Nexora POS | **Retired** as the active product name |
-| FloCafe | Repository / fork legacy name only |
-| Opervia Custom | Long-term composer vision — **do not build now** |
+| Name                    | Role                                             |
+| ----------------------- | ------------------------------------------------ |
+| **Operavia**            | Canonical platform **and** product brand         |
+| **Operavia Restaurant** | CURRENT Phase 1 vertical (this codebase)         |
+| Operavia POS            | **Retired** as the active product name           |
+| FloCafe                 | Repository / fork legacy name only               |
+| Operavia Custom         | Long-term composer vision — **do not build now** |
 
-Historical audits under `docs/15-project-management/` may still use Nexora / FloCafe / Flo POS. Do not rewrite those files to chase branding.
+Historical audits under `docs/15-project-management/` may still use Operavia / FloCafe / Flo POS. Do not rewrite those files to chase branding.
 
 ## Three-layer model
 
@@ -38,29 +38,29 @@ Historical audits under `docs/15-project-management/` may still use Nexora / Flo
 └─────────────────────────────────────────┘
 ```
 
-| Layer | Responsibility |
-|-------|----------------|
-| **Core** | Electron/Express/SQLite runtime, auth, settings shell, security middleware, migrations, backup primitives |
-| **Modules** | Reusable capabilities (orders, payments, tax, printing, …) with clear boundaries |
-| **Verticals** | Compositions of modules + config + nav + workflows for an industry |
+| Layer         | Responsibility                                                                                            |
+| ------------- | --------------------------------------------------------------------------------------------------------- |
+| **Core**      | Electron/Express/SQLite runtime, auth, settings shell, security middleware, migrations, backup primitives |
+| **Modules**   | Reusable capabilities (orders, payments, tax, printing, …) with clear boundaries                          |
+| **Verticals** | Compositions of modules + config + nav + workflows for an industry                                        |
 
 Details: [modular-architecture.md](../03-architecture/modular-architecture.md) · [module-system.md](../03-architecture/module-system.md) · [vertical-architecture.md](../03-architecture/vertical-architecture.md)
 
 ## Relationship to Phase 1
 
-Phase 1 **preserves** the existing architecture: Electron + Express + SQLite monolith shipping **Opervia Restaurant** capabilities (POS, KDS, tables, payments, shifts, and related café ops).
+Phase 1 **preserves** the existing architecture: Electron + Express + SQLite monolith shipping **Operavia Restaurant** capabilities (POS, KDS, tables, payments, shifts, and related café ops).
 
-| Vocabulary | Meaning |
-|------------|---------|
-| **CURRENT** | What ships today as Opervia Restaurant on the shared codebase |
-| **TARGET** | Explicit module registry, vertical definitions, formal contracts |
-| **PLANNED** | Future verticals and deeper module extraction |
+| Vocabulary  | Meaning                                                          |
+| ----------- | ---------------------------------------------------------------- |
+| **CURRENT** | What ships today as Operavia Restaurant on the shared codebase   |
+| **TARGET**  | Explicit module registry, vertical definitions, formal contracts |
+| **PLANNED** | Future verticals and deeper module extraction                    |
 
 This documentation describes the **modular vision**. It does **not** authorize rewriting Phase 1 into packages, microservices, or separate apps.
 
-## What Opervia Custom means
+## What Operavia Custom means
 
-**Opervia Custom** (PLANNED, long-term) is a composer that would let operators assemble modules into a bespoke vertical without forking the codebase.
+**Operavia Custom** (PLANNED, long-term) is a composer that would let operators assemble modules into a bespoke vertical without forking the codebase.
 
 **Do not build now.** No Custom UI, no marketplace, no arbitrary module picker in Phase 1. Restaurant remains the only CURRENT vertical.
 

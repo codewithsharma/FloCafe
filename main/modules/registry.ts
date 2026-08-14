@@ -1,5 +1,5 @@
 /**
- * Opervia module registry — read-only queries over catalog + active vertical.
+ * Operavia module registry — read-only queries over catalog + active vertical.
  * Phase 3.1: unknown vertical ids fail closed (no silent restaurant fallback).
  * Soft diagnostics remain for logging; remount uses assertFailClosedComposition.
  */

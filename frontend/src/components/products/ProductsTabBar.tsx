@@ -7,7 +7,7 @@ import type { ProductsTabType } from './types';
 export interface ProductsTabBarProps {
   activeTab: ProductsTabType;
   onTabChange: (tab: ProductsTabType) => void;
-  /** Additive product options — gated by Opervia `addons` module. */
+  /** Additive product options — gated by Operavia `addons` module. */
   addonsEnabled: boolean;
   labels: {
     products: string;

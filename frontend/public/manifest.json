@@ -1,7 +1,7 @@
 {
-  "name": "OPERAVIA",
-  "short_name": "OPERAVIA",
-  "description": "OPERAVIA Restaurant — point of sale, kitchen, and operations",
+  "name": "Operavia",
+  "short_name": "Operavia",
+  "description": "Operavia Restaurant — point of sale, kitchen, and operations",
   "start_url": "/pos",
   "display": "standalone",
   "background_color": "#F7F5F2",

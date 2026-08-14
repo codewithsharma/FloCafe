@@ -1,5 +1,5 @@
 /**
- * Shared Pino logger for Opervia Express / domain services.
+ * Shared Pino logger for Operavia Express / domain services.
  *
  * Development → pino-pretty (human-readable)
  * Production  → structured JSON

@@ -1,6 +1,6 @@
 # Goals and Objectives
 
-## CURRENT STATE goals (Opervia Restaurant — largely achieved)
+## CURRENT STATE goals (Operavia Restaurant — largely achieved)
 
 1. **Free open-source POS** — MIT license, no paywalled features (`LICENSE`)
 2. **Offline-first operation** — SQLite local DB (`README.md`)
@@ -9,12 +9,12 @@
 5. **Cross-platform desktop** — Windows, macOS, Linux (`electron-builder` config)
 6. **Shifts, cash recon, day close, refunds** — M4–M6 (built; pilot validation still open)
 
-## TARGET STATE goals (Opervia platform depth)
+## TARGET STATE goals (Operavia platform depth)
 
 ### P0 — Foundational
 
 - Preserve data safety across all schema changes
-- Maintain backward compatibility with existing Opervia/FloCafe databases
+- Maintain backward compatibility with existing Operavia/FloCafe databases
 - Keep product docs truthful (`feature-list.md`, `verticals.md`)
 
 ### P1 — Critical (pilot)

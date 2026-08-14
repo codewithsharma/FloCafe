@@ -1,5 +1,5 @@
 /**
- * Phase 2.1 — Opervia module registry + Restaurant vertical contracts.
+ * Phase 2.1 — Operavia module registry + Restaurant vertical contracts.
  *
  * Usage: npx ts-node --transpile-only -P tests/tsconfig.json tests/module-registry.test.ts
  */

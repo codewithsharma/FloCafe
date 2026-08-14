@@ -1,5 +1,5 @@
 /**
- * i18next foundation for Opervia.
+ * i18next foundation for Operavia.
  *
  * Namespaced locale files live under `src/locales/{lang}/`.
  * Dual-catalog period: legacy flat `lib/i18n/{en,es,pt}.json` (via `lib/i18n.ts`

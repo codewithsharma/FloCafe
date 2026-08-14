@@ -1,15 +1,15 @@
-# Opervia Platform Principles
+# Operavia Platform Principles
 
 **Status:** Accepted with [ADR-010](../14-decisions/ADR-010-opervia-platform.md)
 **Motto:** Build once. Reuse everywhere. Fix once. Benefit everywhere. Compose without duplication.
 
-These principles govern TARGET modular design. Phase 1 (Opervia Restaurant) remains a working monolith; principles guide incremental evolution, not a rewrite.
+These principles govern TARGET modular design. Phase 1 (Operavia Restaurant) remains a working monolith; principles guide incremental evolution, not a rewrite.
 
 ---
 
 ## 1. One Codebase
 
-Opervia is a single shared codebase. Industry products are verticals on that codebase, not separate repositories or forked apps per industry.
+Operavia is a single shared codebase. Industry products are verticals on that codebase, not separate repositories or forked apps per industry.
 
 ## 2. Reusable Modules
 
@@ -45,7 +45,7 @@ New modules and verticals can be added without rewriting Core. Extension points 
 
 ## 10. Backward Compatibility With Phase 1
 
-Preserve Phase 1 Opervia Restaurant behavior while moving toward modularity. No mass extraction, microservices split, or Custom builder in this phase. Composition becomes explicit first; behavior for Restaurant stays identical.
+Preserve Phase 1 Operavia Restaurant behavior while moving toward modularity. No mass extraction, microservices split, or Custom builder in this phase. Composition becomes explicit first; behavior for Restaurant stays identical.
 
 ---
 

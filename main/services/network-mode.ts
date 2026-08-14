@@ -24,7 +24,9 @@ export const DEFAULT_NETWORK_MODE: NetworkMode = 'localhost';
 export const NETWORK_MODES: readonly NetworkMode[] = ['localhost', 'kds_lan', 'lan'] as const;
 
 export function parseNetworkMode(raw: string | null | undefined): NetworkMode {
-  const value = String(raw ?? '').trim().toLowerCase();
+  const value = String(raw ?? '')
+    .trim()
+    .toLowerCase();
   if (value === 'localhost' || value === 'kds_lan' || value === 'lan') {
     return value;
   }
@@ -76,5 +78,5 @@ export function mdnsPrimaryPort(
 }
 
 export function networkModeRequiresRestartMessage(): string {
-  return 'Network mode changes apply after restarting Opervia.';
+  return 'Network mode changes apply after restarting Operavia.';
 }

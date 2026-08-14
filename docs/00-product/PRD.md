@@ -2,18 +2,18 @@
 
 ## Document status
 
-- **Opervia CURRENT STATE:** v3.0.5 (verified `package.json`); schema **v75**
+- **Operavia CURRENT STATE:** v3.0.5 (verified `package.json`); schema **v75**
 - **TARGET STATE:** Modular platform depth after pilots — see `vision.md`, `roadmap.md`, `STRATEGY.md`
 
 ## Executive summary
 
-Opervia Restaurant is a production-grade local-first café/restaurant POS (Electron + SQLite + Express). The modular registry and deploy/start verticals (`restaurant`, `retail`) extend that foundation without rewriting Phase 1.
+Operavia Restaurant is a production-grade local-first café/restaurant POS (Electron + SQLite + Express). The modular registry and deploy/start verticals (`restaurant`, `retail`) extend that foundation without rewriting Phase 1.
 
-## Current product (Opervia Restaurant)
+## Current product (Operavia Restaurant)
 
 Single-location, offline-first desktop POS with KDS, printing, CRM, loyalty, tax packs, shifts, day close, money refunds, and optional cloud/WhatsApp/Drive integrations. Evidence: `docs/00-product/feature-list.md`.
 
-**Also available:** Opervia Retail as `ACTIVE_VERTICAL_ID=retail` (shared commerce composition; partial retail UX).
+**Also available:** Operavia Retail as `ACTIVE_VERTICAL_ID=retail` (shared commerce composition; partial retail UX).
 
 ## Target product (platform depth)
 

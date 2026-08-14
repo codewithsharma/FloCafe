@@ -1,4 +1,4 @@
-# Phase 2.1 — Module Registry + Opervia Restaurant Vertical
+# Phase 2.1 — Module Registry + Operavia Restaurant Vertical
 
 **Status:** IMPLEMENTED (lightweight seam)
 **Date:** 2026-08-13
@@ -12,13 +12,13 @@
 
 Pure TypeScript catalog under `main/modules/` (no package extraction, no plugin host):
 
-| File | Role |
-|------|------|
-| `types.ts` | `OperviaModule`, `VerticalDefinition`, `ModuleId` |
-| `catalog.ts` | All known modules + metadata |
-| `verticals.ts` | Opervia Restaurant definition |
-| `registry.ts` | Read-only query API |
-| `index.ts` | Public exports |
+| File           | Role                                              |
+| -------------- | ------------------------------------------------- |
+| `types.ts`     | `OperviaModule`, `VerticalDefinition`, `ModuleId` |
+| `catalog.ts`   | All known modules + metadata                      |
+| `verticals.ts` | Operavia Restaurant definition                    |
+| `registry.ts`  | Read-only query API                               |
+| `index.ts`     | Public exports                                    |
 
 ### Module metadata (per module)
 
@@ -28,20 +28,20 @@ Pure TypeScript catalog under `main/modules/` (no package extraction, no plugin 
 ### Read-only API
 
 ```ts
-listModules()
-getModule(id)
-getActiveVerticalId()
-getVerticalDefinition()
-getEnabledModules()
-isModuleEnabled(id)
-isFeatureAvailable(id, featureFlagEnabled)  // module ∧ flag
-getModuleDependencies(id)                   // metadata only — not enforced
-getRouteModuleMap()                          // descriptive prefix → module
-verticalIdForBusinessType(businessType)
-getPlatformCompositionSummary()
+listModules();
+getModule(id);
+getActiveVerticalId();
+getVerticalDefinition();
+getEnabledModules();
+isModuleEnabled(id);
+isFeatureAvailable(id, featureFlagEnabled); // module ∧ flag
+getModuleDependencies(id); // metadata only — not enforced
+getRouteModuleMap(); // descriptive prefix → module
+verticalIdForBusinessType(businessType);
+getPlatformCompositionSummary();
 ```
 
-### Opervia Restaurant composition
+### Operavia Restaurant composition
 
 Enabled modules: `core`, `customer`, `product`, `category`, `inventory`, `pos`, `order`, `payment`, `refund`, `tax`, `shift`, `staff`, `loyalty`, `reporting`, `printing`, `notification`, `backup`, `tables`, `kitchen`, `kds`, `menu`, `addons`.
 
@@ -57,13 +57,13 @@ Feature available
 
 Examples:
 
-| Capability | Module | Flag / gate |
-|------------|--------|-------------|
-| KDS UI | `kds` | `kds_enabled` |
-| Tables UI | `tables` | `tables_required` |
-| Loyalty | `loyalty` | `loyalty_enabled` |
-| Shifts | `shift` | `shifts_enabled` |
-| Tax | `tax` | `taxes_enabled` |
+| Capability | Module    | Flag / gate       |
+| ---------- | --------- | ----------------- |
+| KDS UI     | `kds`     | `kds_enabled`     |
+| Tables UI  | `tables`  | `tables_required` |
+| Loyalty    | `loyalty` | `loyalty_enabled` |
+| Shifts     | `shift`   | `shifts_enabled`  |
+| Tax        | `tax`     | `taxes_enabled`   |
 
 Flags are **not** removed. Phase 1 semantics preserved.
 
@@ -86,7 +86,7 @@ Represented as metadata (e.g. `kds` → `order`, `kitchen`, `product`; `tables` 
 - Module lifecycle hooks / runtime loading
 - Full dependency resolver / fail-closed dep checks
 - Multi-vertical tenant configuration
-- Vertical builder / Opervia Custom
+- Vertical builder / Operavia Custom
 - Retail, Grocery, Salon (and other) verticals
 - Rewriting `db.ts` or Express route mounting
 - Removing `business_type` or wholesale flag migration

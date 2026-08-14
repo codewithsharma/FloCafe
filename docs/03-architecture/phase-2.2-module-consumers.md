@@ -32,15 +32,15 @@ The registry is currently an architectural source of truth and capability bounda
 
 ### Soft dependency diagnostics (`main/modules/diagnostics.ts`)
 
-| API | Role |
-|-----|------|
-| `validateVerticalDependencies(verticalId?)` | Direct deps of enabled modules ⊆ enabled set |
-| `validateEnabledSetDependencies(enabled)` | Same check for synthetic sets (tests/tooling) |
-| `validateRegistryIntegrity()` | Unique ids, deps/verticals reference catalog, optional cycles |
-| `detectDependencyCycles(adjacency)` | Small DFS helper |
-| `formatModuleDiagnosticsLog()` | `[Opervia Modules]` multi-line string |
-| `getModuleDiagnosticsSnapshot()` | Non-throwing report pair |
-| `logModuleDiagnosticsIfDev()` | Logs only when `NODE_ENV !== 'production'` |
+| API                                         | Role                                                          |
+| ------------------------------------------- | ------------------------------------------------------------- |
+| `validateVerticalDependencies(verticalId?)` | Direct deps of enabled modules ⊆ enabled set                  |
+| `validateEnabledSetDependencies(enabled)`   | Same check for synthetic sets (tests/tooling)                 |
+| `validateRegistryIntegrity()`               | Unique ids, deps/verticals reference catalog, optional cycles |
+| `detectDependencyCycles(adjacency)`         | Small DFS helper                                              |
+| `formatModuleDiagnosticsLog()`              | `[Operavia Modules]` multi-line string                        |
+| `getModuleDiagnosticsSnapshot()`            | Non-throwing report pair                                      |
+| `logModuleDiagnosticsIfDev()`               | Logs only when `NODE_ENV !== 'production'`                    |
 
 Hook: `registerRoutes` calls `logModuleDiagnosticsIfDev()` after composition summary. **Never throws. Never blocks startup. Never fail-closes mounts.**
 
@@ -59,23 +59,23 @@ Validates:
 Already existed in Phase 2.1. Phase 2.2 **adopts** it in navigation and selected UI gates:
 
 ```ts
-isFeatureAvailable(moduleId, featureFlagEnabled)
+isFeatureAvailable(moduleId, featureFlagEnabled);
 // ≡ isModuleEnabled(moduleId) ∧ featureFlagEnabled
 ```
 
-Flags are **not** removed. Semantics unchanged for Opervia Restaurant (all modules enabled ⇒ availability ≡ flag).
+Flags are **not** removed. Semantics unchanged for Operavia Restaurant (all modules enabled ⇒ availability ≡ flag).
 
 ### Module consumer expansion
 
-| Surface | Change |
-|---------|--------|
-| Navigation | `requiresModule` on pos, orders, customers, inventory, reports, operations, team, settings, whatsapp; tables/kitchen drop redundant `businessTypes`; flags via `isFeatureAvailable` |
-| Products / addons | `business_type === 'restaurant'` → `isModuleEnabled('addons')` |
-| POS tables | `isRestaurant` → `isModuleEnabled('tables')` |
-| Dashboard / reports | Tables tiles gated by `isModuleEnabled('tables')` |
-| KDS / orders | KDS flag wrapped with `isFeatureAvailable('kds', …)` |
-| Frontend barrel | Re-exports diagnostics APIs from `main/modules` (no duplicate catalog) |
-| Backend | Dev-only diagnostics log only — Express mounts unchanged |
+| Surface             | Change                                                                                                                                                                              |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Navigation          | `requiresModule` on pos, orders, customers, inventory, reports, operations, team, settings, whatsapp; tables/kitchen drop redundant `businessTypes`; flags via `isFeatureAvailable` |
+| Products / addons   | `business_type === 'restaurant'` → `isModuleEnabled('addons')`                                                                                                                      |
+| POS tables          | `isRestaurant` → `isModuleEnabled('tables')`                                                                                                                                        |
+| Dashboard / reports | Tables tiles gated by `isModuleEnabled('tables')`                                                                                                                                   |
+| KDS / orders        | KDS flag wrapped with `isFeatureAvailable('kds', …)`                                                                                                                                |
+| Frontend barrel     | Re-exports diagnostics APIs from `main/modules` (no duplicate catalog)                                                                                                              |
+| Backend             | Dev-only diagnostics log only — Express mounts unchanged                                                                                                                            |
 
 ## Feature availability rule (unchanged)
 
@@ -120,7 +120,7 @@ module enabled ∧ existing feature flag (when applicable) ⇒ feature available
 
 - Package extraction / dynamic loading / marketplace
 - Fail-closed dependency enforcement
-- Multi-vertical tenants / Opervia Custom / Retail / Grocery / Salon
+- Multi-vertical tenants / Operavia Custom / Retail / Grocery / Salon
 - `db.ts` rewrite / schema migrations / module tables
 - Express route remounting from registry
 - Feature-flag removal

@@ -1,22 +1,22 @@
-# Opervia Product Vision
+# Operavia Product Vision
 
 > **Canonical strategy:** [`STRATEGY.md`](../../STRATEGY.md) (updated 2026-08-13).
-> **Platform brand:** **Opervia**. **Nexora POS** is retired as an active product name.
-> **Do not blur:** Opervia Restaurant (CURRENT Phase 1) ≠ multi-vertical Opervia platform (TARGET).
+> **Platform brand:** **Operavia**. **Operavia POS** is retired as an active product name.
+> **Do not blur:** Operavia Restaurant (CURRENT Phase 1) ≠ multi-vertical Operavia platform (TARGET).
 
 ## Guiding statement
 
-> **Opervia is a modular business platform designed to power multiple industry-specific products from a single shared codebase. Business capabilities are implemented as reusable modules, while vertical products are compositions of those modules configured for specific industries.**
+> **Operavia is a modular business platform designed to power multiple industry-specific products from a single shared codebase. Business capabilities are implemented as reusable modules, while vertical products are compositions of those modules configured for specific industries.**
 
 **Motto:** Build once. Reuse everywhere. Fix once. Benefit everywhere. Compose without duplication.
 
 See [opervia-platform.md](opervia-platform.md) · [verticals.md](verticals.md) · [principles.md](principles.md) · [ADR-010](../14-decisions/ADR-010-opervia-platform.md).
 
-## CURRENT PRODUCT — Opervia Restaurant (Phase 1)
+## CURRENT PRODUCT — Operavia Restaurant (Phase 1)
 
-A **mature local-first café POS with KDS and operational management capabilities** — Electron desktop, SQLite, offline billing. Evidence: `package.json` (`productName: Opervia`), `main/index.ts`, schema **v75**, `STRATEGY.md`.
+A **mature local-first café POS with KDS and operational management capabilities** — Electron desktop, SQLite, offline billing. Evidence: `package.json` (`productName: Operavia`), `main/index.ts`, schema **v75**, `STRATEGY.md`.
 
-**Honest description (use this):** local-first, offline-capable restaurant and café POS (Opervia Restaurant vertical) designed to keep businesses operating when the internet is unavailable.
+**Honest description (use this):** local-first, offline-capable restaurant and café POS (Operavia Restaurant vertical) designed to keep businesses operating when the internet is unavailable.
 
 Core value today:
 
@@ -29,13 +29,13 @@ Core value today:
 - Optional cloud coordination (FloAdmin), Google Drive backup, WhatsApp bill delivery
 - English, Spanish, Brazilian Portuguese UI
 
-MIT / free core; no tiered feature gating in code. Packaging/UI brand consolidates to **Opervia**. Repo/fork identity may still say FloCafe.
+MIT / free core; no tiered feature gating in code. Packaging/UI brand consolidates to **Operavia**. Repo/fork identity may still say FloCafe.
 
-**Not current product:** finished multi-vertical platform, Opervia Custom composer, AI-powered POS, multi-location platform, multi-tenant SaaS, aggregator platform, ERP.
+**Not current product:** finished multi-vertical platform, Operavia Custom composer, AI-powered POS, multi-location platform, multi-tenant SaaS, aggregator platform, ERP.
 
-## FUTURE — Opervia modular platform
+## FUTURE — Operavia modular platform
 
-After pilot KPI (**3 cafés × 30 days × zero critical failures**), deepen modular verticals beyond Restaurant. **Opervia Retail** already exists as a deploy/start composition (`ACTIVE_VERTICAL_ID=retail`) with shared commerce modules — retail-native UX depth is still incomplete. Additional verticals (Grocery, Salon, Health & Beauty, Pharmacy, Hospitality, Custom) remain PLANNED.
+After pilot KPI (**3 cafés × 30 days × zero critical failures**), deepen modular verticals beyond Restaurant. **Operavia Retail** already exists as a deploy/start composition (`ACTIVE_VERTICAL_ID=retail`) with shared commerce modules — retail-native UX depth is still incomplete. Additional verticals (Grocery, Salon, Health & Beauty, Pharmacy, Hospitality, Custom) remain PLANNED.
 
 Planned Restaurant/platform depth (not fully built): recipes/BOM, procurement, multi-location (ADR-006 first), cloud ops, accounting, payment terminals, aggregators, advanced analytics, optional AI. (Append-only `inventory_movements` ledger + read API + owner/manager ledger UI at `/products/movements` exist at schema v75.)
 
@@ -47,19 +47,19 @@ Planned Restaurant/platform depth (not fully built): recipes/BOM, procurement, m
 4. **Single-tenant per install today → optional multi-location later** — no `locations` table; ADR-006 before code.
 5. **AI is P3 / optional** — core POS must function without AI; no AI until reliability is proven.
 6. **Data safety** — additive migrations; customer data survives upgrades (`AGENTS.md`).
-7. **Backward compatibility with Phase 1** — do not break Opervia Restaurant for the sake of architecture.
+7. **Backward compatibility with Phase 1** — do not break Operavia Restaurant for the sake of architecture.
 
 ### Branding map
 
 | Aspect              | CURRENT                                                            | TARGET                                             |
 | ------------------- | ------------------------------------------------------------------ | -------------------------------------------------- |
-| Brand               | **Opervia**                                                        | **Opervia** (unchanged)                            |
-| Product you install | **Opervia Restaurant** (default); Retail selectable via env        | Deeper retail UX + more verticals after pilots     |
+| Brand               | **Operavia**                                                       | **Operavia** (unchanged)                           |
+| Product you install | **Operavia Restaurant** (default); Retail selectable via env       | Deeper retail UX + more verticals after pilots     |
 | Scope               | Single-location POS + KDS + ops (shifts/cash/day close/refunds)    | Modular platform; multi-vertical composition       |
 | Architecture        | LAN servers, 1 SQLite DB, module registry + fail-closed remount    | Same core; optional package extraction later       |
 | Cloud               | Optional FloAdmin coordination                                     | Enhanced cloud ops (PLANNED; never blocks billing) |
 | Inventory           | Product stock + v75 movement ledger API + `/products/movements` UI | BOM + purchasing (PLANNED)                         |
-| Retired names       | Nexora POS, Flo POS (active use)                                   | Historical audits may retain old names             |
+| Retired names       | Operavia POS, Flo POS (active use)                                 | Historical audits may retain old names             |
 
 ## Evidence
 

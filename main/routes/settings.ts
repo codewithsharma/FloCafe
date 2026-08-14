@@ -1,6 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { getDatabase, now } from '../db';
-import { cloudSync, DEFAULT_CLOUD_SERVER_URL, normalizeCloudServerUrl } from '../services/cloud-sync';
+import {
+  cloudSync,
+  DEFAULT_CLOUD_SERVER_URL,
+  normalizeCloudServerUrl,
+} from '../services/cloud-sync';
 import { googleDrive } from '../services/google-drive';
 import { requireRole } from '../middleware/security';
 import { requireMasterPin } from '../middleware/master-pin';
@@ -34,10 +38,16 @@ function upsertSettings(db: ReturnType<typeof getDatabase>, entries: Record<stri
 function validBusinessLocation(timezone: unknown, currency: unknown, country: unknown): boolean {
   if (timezone !== undefined) {
     if (typeof timezone !== 'string' || timezone.length > 100) return false;
-    try { new Intl.DateTimeFormat('en-US', { timeZone: timezone }).format(); } catch { return false; }
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone: timezone }).format();
+    } catch {
+      return false;
+    }
   }
-  if (currency !== undefined && (typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency))) return false;
-  if (country !== undefined && (typeof country !== 'string' || !/^[A-Z]{2}$/.test(country))) return false;
+  if (currency !== undefined && (typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency)))
+    return false;
+  if (country !== undefined && (typeof country !== 'string' || !/^[A-Z]{2}$/.test(country)))
+    return false;
   return true;
 }
 
@@ -131,23 +141,45 @@ function taxShape(s: Record<string, string>) {
 
 // ── Specific routes (must come BEFORE /:key wildcard) ─────────────────────
 
-router.get('/business', requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'), (req: Request, res: Response) => {
-  try {
-    const s = getAllSettings(getDatabase());
-    res.json(businessShape(s));
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+router.get(
+  '/business',
+  requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'),
+  (req: Request, res: Response) => {
+    try {
+      const s = getAllSettings(getDatabase());
+      res.json(businessShape(s));
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 router.put('/business', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
-    const { business_name, timezone, currency, country, language,
-      tax_registration_number, state_code, business_address, business_phone, instagram_handle,
-      billing_type, tables_required, tax_registered,
-      bill_show_name, bill_show_address, bill_show_phone, bill_show_tax_id,
-      bill_show_tax_breakdown, bill_show_customer_name, bill_show_customer_phone, bill_show_table_number } = req.body;
+    const {
+      business_name,
+      timezone,
+      currency,
+      country,
+      language,
+      tax_registration_number,
+      state_code,
+      business_address,
+      business_phone,
+      instagram_handle,
+      billing_type,
+      tables_required,
+      tax_registered,
+      bill_show_name,
+      bill_show_address,
+      bill_show_phone,
+      bill_show_tax_id,
+      bill_show_tax_breakdown,
+      bill_show_customer_name,
+      bill_show_customer_phone,
+      bill_show_table_number,
+    } = req.body;
 
     if (!validBusinessLocation(timezone, currency, country)) {
       return res.status(400).json({ error: 'Invalid timezone, currency, or country' });
@@ -156,7 +188,10 @@ router.put('/business', requireRole('owner', 'manager'), (req: Request, res: Res
     const db = getDatabase();
     if (tax_registration_number) {
       const effectiveCountry = country || getAllSettings(db).country || 'IN';
-      const { valid, format } = validateTaxRegistrationNumber(effectiveCountry, tax_registration_number);
+      const { valid, format } = validateTaxRegistrationNumber(
+        effectiveCountry,
+        tax_registration_number,
+      );
       if (!valid && format) {
         return res.status(400).json({
           error: `Tax ID does not match the expected ${effectiveCountry} format: ${format.description}`,
@@ -165,30 +200,50 @@ router.put('/business', requireRole('owner', 'manager'), (req: Request, res: Res
       }
     }
     upsertSettings(db, {
-      business_name, timezone, currency, country, language,
-      tax_registration_number, state_code, business_address, business_phone, instagram_handle,
-      billing_type, tables_required, tax_registered,
-      bill_show_name, bill_show_address, bill_show_phone, bill_show_tax_id,
-      bill_show_tax_breakdown, bill_show_customer_name, bill_show_customer_phone, bill_show_table_number,
+      business_name,
+      timezone,
+      currency,
+      country,
+      language,
+      tax_registration_number,
+      state_code,
+      business_address,
+      business_phone,
+      instagram_handle,
+      billing_type,
+      tables_required,
+      tax_registered,
+      bill_show_name,
+      bill_show_address,
+      bill_show_phone,
+      bill_show_tax_id,
+      bill_show_tax_breakdown,
+      bill_show_customer_name,
+      bill_show_customer_phone,
+      bill_show_table_number,
     });
     cloudSync.refreshRegistrationProfile();
 
     res.json(businessShape(getAllSettings(db)));
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.get('/tax', requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'), (req: Request, res: Response) => {
-  try {
-    const s = getAllSettings(getDatabase());
-    res.json(taxShape(s));
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+router.get(
+  '/tax',
+  requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'),
+  (req: Request, res: Response) => {
+    try {
+      const s = getAllSettings(getDatabase());
+      res.json(taxShape(s));
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 router.put('/tax', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
@@ -201,7 +256,10 @@ router.put('/tax', requireRole('owner', 'manager'), (req: Request, res: Response
     const db = getDatabase();
     if (tax_registration_number) {
       const effectiveCountry = country || getAllSettings(db).country || 'IN';
-      const { valid, format } = validateTaxRegistrationNumber(effectiveCountry, tax_registration_number);
+      const { valid, format } = validateTaxRegistrationNumber(
+        effectiveCountry,
+        tax_registration_number,
+      );
       if (!valid && format) {
         return res.status(400).json({
           error: `Tax ID does not match the expected ${effectiveCountry} format: ${format.description}`,
@@ -209,27 +267,37 @@ router.put('/tax', requireRole('owner', 'manager'), (req: Request, res: Response
         });
       }
     }
-    upsertSettings(db, { tax_registered, tax_registration_number, state_code, tax_scheme, country });
+    upsertSettings(db, {
+      tax_registered,
+      tax_registration_number,
+      state_code,
+      tax_scheme,
+      country,
+    });
     cloudSync.refreshRegistrationProfile();
     res.json(taxShape(getAllSettings(db)));
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.get('/loyalty', requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'), (req: Request, res: Response) => {
-  try {
-    const s = getAllSettings(getDatabase());
-    res.json({
-      loyalty_enabled: s.loyalty_enabled === 'true' || s.loyalty_enabled === '1',
-      global_cashback_percent: parseFloat(s.global_cashback_percent || '0'),
-    });
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+router.get(
+  '/loyalty',
+  requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'),
+  (req: Request, res: Response) => {
+    try {
+      const s = getAllSettings(getDatabase());
+      res.json({
+        loyalty_enabled: s.loyalty_enabled === 'true' || s.loyalty_enabled === '1',
+        global_cashback_percent: parseFloat(s.global_cashback_percent || '0'),
+      });
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 router.put('/loyalty', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
@@ -237,8 +305,15 @@ router.put('/loyalty', requireRole('owner', 'manager'), (req: Request, res: Resp
 
     let finalGlobalCb: number | undefined = undefined;
     if (global_cashback_percent !== undefined) {
-      if (typeof global_cashback_percent !== 'number' || !Number.isFinite(global_cashback_percent) || global_cashback_percent < 0 || global_cashback_percent > 100) {
-        return res.status(400).json({ error: 'Global cashback percent must be a number between 0 and 100' });
+      if (
+        typeof global_cashback_percent !== 'number' ||
+        !Number.isFinite(global_cashback_percent) ||
+        global_cashback_percent < 0 ||
+        global_cashback_percent > 100
+      ) {
+        return res
+          .status(400)
+          .json({ error: 'Global cashback percent must be a number between 0 and 100' });
       }
       finalGlobalCb = global_cashback_percent;
     }
@@ -246,7 +321,7 @@ router.put('/loyalty', requireRole('owner', 'manager'), (req: Request, res: Resp
     const db = getDatabase();
     upsertSettings(db, {
       loyalty_enabled,
-      ...(finalGlobalCb !== undefined && { global_cashback_percent: String(finalGlobalCb) })
+      ...(finalGlobalCb !== undefined && { global_cashback_percent: String(finalGlobalCb) }),
     });
     const s = getAllSettings(db);
     res.json({
@@ -254,27 +329,32 @@ router.put('/loyalty', requireRole('owner', 'manager'), (req: Request, res: Resp
       global_cashback_percent: parseFloat(s.global_cashback_percent || '0'),
     });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // ─── Discount settings ──────────────────────────────────────────────────────
 
-router.get('/discount', requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'), (req: Request, res: Response) => {
-  try {
-    const s = getAllSettings(getDatabase());
-    res.json({
-      discount_max_percentage: parseFloat(s.discount_max_percentage || '25'),
-      discount_max_amount: parseFloat(s.discount_max_amount || '0'),
-      discount_mode: s.discount_mode || 'percentage',
-      discount_requires_approval: s.discount_requires_approval === 'true' || s.discount_requires_approval === '1',
-    });
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+router.get(
+  '/discount',
+  requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'),
+  (req: Request, res: Response) => {
+    try {
+      const s = getAllSettings(getDatabase());
+      res.json({
+        discount_max_percentage: parseFloat(s.discount_max_percentage || '25'),
+        discount_max_amount: parseFloat(s.discount_max_amount || '0'),
+        discount_mode: s.discount_mode || 'percentage',
+        discount_requires_approval:
+          s.discount_requires_approval === 'true' || s.discount_requires_approval === '1',
+      });
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 router.put('/discount', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
@@ -289,17 +369,23 @@ router.put('/discount', requireRole('owner', 'manager'), (req: Request, res: Res
     if (discount_max_percentage !== undefined) {
       const val = parseFloat(discount_max_percentage);
       if (isNaN(val) || val < 1 || val > 100) {
-        return res.status(400).json({ error: 'discount_max_percentage must be a number between 1 and 100' });
+        return res
+          .status(400)
+          .json({ error: 'discount_max_percentage must be a number between 1 and 100' });
       }
     }
     if (discount_max_amount !== undefined) {
       const val = parseFloat(discount_max_amount);
       if (isNaN(val) || val < 0 || val > 999999) {
-        return res.status(400).json({ error: 'discount_max_amount must be a number between 0 and 999999' });
+        return res
+          .status(400)
+          .json({ error: 'discount_max_amount must be a number between 0 and 999999' });
       }
     }
     if (discount_mode !== undefined && !['percentage', 'flat', 'both'].includes(discount_mode)) {
-      return res.status(400).json({ error: 'discount_mode must be "percentage", "flat", or "both"' });
+      return res
+        .status(400)
+        .json({ error: 'discount_mode must be "percentage", "flat", or "both"' });
     }
 
     const db = getDatabase();
@@ -307,18 +393,22 @@ router.put('/discount', requireRole('owner', 'manager'), (req: Request, res: Res
       discount_max_percentage,
       discount_max_amount,
       discount_mode,
-      discount_requires_approval: discount_requires_approval === true || discount_requires_approval === 'true' ? 'true' : 'false',
+      discount_requires_approval:
+        discount_requires_approval === true || discount_requires_approval === 'true'
+          ? 'true'
+          : 'false',
     });
     const s = getAllSettings(db);
     res.json({
       discount_max_percentage: parseFloat(s.discount_max_percentage || '25'),
       discount_max_amount: parseFloat(s.discount_max_amount || '0'),
       discount_mode: s.discount_mode || 'percentage',
-      discount_requires_approval: s.discount_requires_approval === 'true' || s.discount_requires_approval === '1',
+      discount_requires_approval:
+        s.discount_requires_approval === 'true' || s.discount_requires_approval === '1',
     });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -335,8 +425,8 @@ router.get('/kds', (_req: Request, res: Response) => {
       kds_default_view: s.kds_default_view === 'kanban' ? 'kanban' : 'tabs',
     });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -354,8 +444,8 @@ router.put('/kds', requireRole('owner', 'manager'), (req: Request, res: Response
       kds_default_view: s.kds_default_view === 'kanban' ? 'kanban' : 'tabs',
     });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -371,22 +461,31 @@ function orderNumberingShape(s: Record<string, string>) {
 
 const ORDER_NUMBER_PREFIX_PATTERN = /^[A-Za-z0-9_-]{0,12}$/;
 
-router.get('/order-numbering', requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'), (req: Request, res: Response) => {
-  try {
-    const s = getAllSettings(getDatabase());
-    res.json(orderNumberingShape(s));
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+router.get(
+  '/order-numbering',
+  requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'),
+  (req: Request, res: Response) => {
+    try {
+      const s = getAllSettings(getDatabase());
+      res.json(orderNumberingShape(s));
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 router.put('/order-numbering', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
     const { order_number_prefix, order_number_include_date, order_number_reset_daily } = req.body;
 
-    if (order_number_prefix !== undefined && !ORDER_NUMBER_PREFIX_PATTERN.test(order_number_prefix)) {
-      return res.status(400).json({ error: 'order_number_prefix must be up to 12 characters (letters, numbers, - or _)' });
+    if (
+      order_number_prefix !== undefined &&
+      !ORDER_NUMBER_PREFIX_PATTERN.test(order_number_prefix)
+    ) {
+      return res.status(400).json({
+        error: 'order_number_prefix must be up to 12 characters (letters, numbers, - or _)',
+      });
     }
 
     const db = getDatabase();
@@ -397,19 +496,22 @@ router.put('/order-numbering', requireRole('owner', 'manager'), (req: Request, r
     });
     res.json(orderNumberingShape(getAllSettings(db)));
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-function publicDeletionRequest(request: Record<string, unknown> | null): Record<string, unknown> | null {
+function publicDeletionRequest(
+  request: Record<string, unknown> | null,
+): Record<string, unknown> | null {
   if (!request) return null;
   const safe: Record<string, unknown> = {};
   const requestId = request.request_id ?? request.id;
   if (typeof requestId === 'string' && requestId) safe.id = requestId;
   if (typeof request.status === 'string') safe.status = request.status;
   if (typeof request.requested_at === 'string') safe.requested_at = request.requested_at;
-  if (typeof request.reviewed_at === 'string' || request.reviewed_at === null) safe.reviewed_at = request.reviewed_at;
+  if (typeof request.reviewed_at === 'string' || request.reviewed_at === null)
+    safe.reviewed_at = request.reviewed_at;
   if (typeof request.decision_note === 'string') safe.decision_note = request.decision_note;
   return safe;
 }
@@ -418,14 +520,19 @@ function publicEmailPreferences(data: Record<string, unknown>): Record<string, u
   return {
     email: typeof data.email === 'string' ? data.email : null,
     verified: data.verified === true,
-    verified_at: typeof data.verified_at === 'string' || data.verified_at === null ? data.verified_at : null,
-    verification_sent_at: typeof data.verification_sent_at === 'string' || data.verification_sent_at === null ? data.verification_sent_at : null,
+    verified_at:
+      typeof data.verified_at === 'string' || data.verified_at === null ? data.verified_at : null,
+    verification_sent_at:
+      typeof data.verification_sent_at === 'string' || data.verification_sent_at === null
+        ? data.verification_sent_at
+        : null,
     product_updates: data.product_updates === true,
     marketing: data.marketing === true,
   };
 }
 
-const CLOUD_ACCOUNT_UNAVAILABLE_ERROR = 'Cloud account services are unavailable while Cloud services are stopped or unregistered';
+const CLOUD_ACCOUNT_UNAVAILABLE_ERROR =
+  'Cloud account services are unavailable while Cloud services are stopped or unregistered';
 
 // ─── Cloud Sync settings (must come BEFORE /:key wildcard) ──────────────────
 
@@ -433,8 +540,8 @@ router.get('/cloud', requireRole('owner', 'manager'), (req: Request, res: Respon
   try {
     res.json(cloudSync.getStatus());
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -459,14 +566,21 @@ router.put('/cloud', requireRole('owner', 'manager'), (req: Request, res: Respon
     };
 
     if (cloud_server_url !== undefined) {
-      updates.cloud_server_url = normalizeCloudServerUrl(cloud_server_url || DEFAULT_CLOUD_SERVER_URL);
+      updates.cloud_server_url = normalizeCloudServerUrl(
+        cloud_server_url || DEFAULT_CLOUD_SERVER_URL,
+      );
     }
     if (cloud_api_key !== undefined && !isMaskedSecret(cloud_api_key)) {
       updates.cloud_api_key = String(cloud_api_key || '');
     }
-    const enablingCloud = [cloud_sync_enabled, cloud_orders_enabled, cloud_reports_enabled, cloud_command_polling_enabled]
-      .some((value) => bool01Flag(value) === '1');
-    const resumingStoppedCloud = cloudSync.getStatus().cloud_services_disabled_by_user && enablingCloud;
+    const enablingCloud = [
+      cloud_sync_enabled,
+      cloud_orders_enabled,
+      cloud_reports_enabled,
+      cloud_command_polling_enabled,
+    ].some((value) => bool01Flag(value) === '1');
+    const resumingStoppedCloud =
+      cloudSync.getStatus().cloud_services_disabled_by_user && enablingCloud;
     if (resumingStoppedCloud) {
       // Stop All disables every cloud feature. Re-enabling the Cloud Services
       // control is a resume action, not just a sync preference change.
@@ -477,7 +591,10 @@ router.put('/cloud', requireRole('owner', 'manager'), (req: Request, res: Respon
     }
     if (enablingCloud) updates.cloud_services_disabled_by_user = 'false';
     if (enablingCloud && cloudSync.getStatus().cloud_deletion_blocked) {
-      return res.status(409).json({ error: 'Cloud deletion is unresolved; retry or cancel it before re-enabling cloud services.' });
+      return res.status(409).json({
+        error:
+          'Cloud deletion is unresolved; retry or cancel it before re-enabling cloud services.',
+      });
     }
 
     upsertSettings(db, updates);
@@ -490,54 +607,74 @@ router.put('/cloud', requireRole('owner', 'manager'), (req: Request, res: Respon
   }
 });
 
-router.post('/cloud/register', requireRole('owner', 'manager'), async (req: Request, res: Response) => {
-  try {
-    const deletionRequest = await cloudSync.getDeletionRequestStatus({
-      allowRemote: cloudSync.isCloudAccountAvailable(),
-    });
-    if (deletionRequest?.status === 'pending') {
-      return res.status(409).json({ error: 'A cloud deletion request is pending review. Cancel it before re-enabling cloud services.' });
-    }
-    if (cloudSync.getStatus().cloud_services_disabled_by_user) {
-      return res.status(409).json({ error: CLOUD_ACCOUNT_UNAVAILABLE_ERROR });
-    }
-    if (req.body?.cloud_server_url !== undefined) {
-      upsertSettings(getDatabase(), {
-        cloud_server_url: normalizeCloudServerUrl(req.body.cloud_server_url || DEFAULT_CLOUD_SERVER_URL),
+router.post(
+  '/cloud/register',
+  requireRole('owner', 'manager'),
+  async (req: Request, res: Response) => {
+    try {
+      const deletionRequest = await cloudSync.getDeletionRequestStatus({
+        allowRemote: cloudSync.isCloudAccountAvailable(),
       });
+      if (deletionRequest?.status === 'pending') {
+        return res.status(409).json({
+          error:
+            'A cloud deletion request is pending review. Cancel it before re-enabling cloud services.',
+        });
+      }
+      if (cloudSync.getStatus().cloud_services_disabled_by_user) {
+        return res.status(409).json({ error: CLOUD_ACCOUNT_UNAVAILABLE_ERROR });
+      }
+      if (req.body?.cloud_server_url !== undefined) {
+        upsertSettings(getDatabase(), {
+          cloud_server_url: normalizeCloudServerUrl(
+            req.body.cloud_server_url || DEFAULT_CLOUD_SERVER_URL,
+          ),
+        });
+      }
+      if (cloudSync.getStatus().cloud_deletion_blocked) {
+        return res.status(409).json({
+          error:
+            'Cloud deletion is unresolved; retry or cancel it before re-enabling cloud services.',
+        });
+      }
+      // Registration sends contact metadata for FloAdmin support; it does not
+      // create a cloud owner account or grant authentication access.
+      await cloudSync.register();
+      upsertSettings(getDatabase(), {
+        cloud_sync_enabled: '1',
+        cloud_reports_enabled: '1',
+        cloud_command_polling_enabled: '1',
+        cloud_services_disabled_by_user: 'false',
+      });
+      cloudSync.reload();
+      res.json(cloudSync.getStatus());
+    } catch (error: any) {
+      console.error('[API] Cloud registration failed:', error);
+      res.status(502).json({ error: 'Cloud registration failed' });
     }
-    if (cloudSync.getStatus().cloud_deletion_blocked) {
-      return res.status(409).json({ error: 'Cloud deletion is unresolved; retry or cancel it before re-enabling cloud services.' });
-    }
-    // Registration sends contact metadata for FloAdmin support; it does not
-    // create a cloud owner account or grant authentication access.
-    await cloudSync.register();
-    upsertSettings(getDatabase(), {
-      cloud_sync_enabled: '1', cloud_reports_enabled: '1', cloud_command_polling_enabled: '1',
-      cloud_services_disabled_by_user: 'false',
-    });
-    cloudSync.reload();
-    res.json(cloudSync.getStatus());
-  } catch (error: any) {
-    console.error('[API] Cloud registration failed:', error);
-    res.status(502).json({ error: 'Cloud registration failed' });
-  }
-});
+  },
+);
 
-router.post('/cloud/test', requireRole('owner', 'manager'), async (_req: Request, res: Response) => {
-  try {
-    const result = await cloudSync.testConnection();
-    res.json(result);
-  } catch (error: any) {
-    console.error('[API] Cloud test failed:', error);
-    res.status(502).json({ error: 'Cloud test failed' });
-  }
-});
+router.post(
+  '/cloud/test',
+  requireRole('owner', 'manager'),
+  async (_req: Request, res: Response) => {
+    try {
+      const result = await cloudSync.testConnection();
+      res.json(result);
+    } catch (error: any) {
+      console.error('[API] Cloud test failed:', error);
+      res.status(502).json({ error: 'Cloud test failed' });
+    }
+  },
+);
 
 router.get('/cloud/account', requireRole('owner'), async (_req: Request, res: Response) => {
   try {
     const cloudAccountAvailable = cloudSync.isCloudAccountAvailable();
-    const deletionRequest = await cloudSync.getDeletionRequestStatus({ allowRemote: cloudAccountAvailable });
+    const deletionRequest = await cloudSync.getDeletionRequestStatus({
+      allowRemote: cloudAccountAvailable,
+    });
     const safeDeletionRequest = publicDeletionRequest(deletionRequest);
     if (deletionRequest?.status === 'approved' || !cloudSync.isCloudAccountAvailable()) {
       return res.json({
@@ -561,65 +698,93 @@ router.get('/cloud/account', requireRole('owner'), async (_req: Request, res: Re
   }
 });
 
-router.put('/cloud/account/preferences', requireRole('owner'), async (req: Request, res: Response) => {
-  if (!cloudSync.isCloudAccountAvailable()) {
-    return res.status(409).json({ error: CLOUD_ACCOUNT_UNAVAILABLE_ERROR });
-  }
-  try {
-    res.json(publicEmailPreferences(await cloudSync.updateEmailPreferences({
-      product_updates: req.body?.product_updates,
-      marketing: req.body?.marketing,
-    })));
-  } catch {
-    res.status(502).json({ error: 'Could not update email preferences' });
-  }
-});
+router.put(
+  '/cloud/account/preferences',
+  requireRole('owner'),
+  async (req: Request, res: Response) => {
+    if (!cloudSync.isCloudAccountAvailable()) {
+      return res.status(409).json({ error: CLOUD_ACCOUNT_UNAVAILABLE_ERROR });
+    }
+    try {
+      res.json(
+        publicEmailPreferences(
+          await cloudSync.updateEmailPreferences({
+            product_updates: req.body?.product_updates,
+            marketing: req.body?.marketing,
+          }),
+        ),
+      );
+    } catch {
+      res.status(502).json({ error: 'Could not update email preferences' });
+    }
+  },
+);
 
-router.post('/cloud/account/verification', requireRole('owner'), async (_req: Request, res: Response) => {
-  if (!cloudSync.isCloudAccountAvailable()) {
-    return res.status(409).json({ error: CLOUD_ACCOUNT_UNAVAILABLE_ERROR });
-  }
-  try {
-    res.json(publicEmailPreferences(await cloudSync.requestEmailVerification({ source: 'settings' })));
-  } catch {
-    res.status(502).json({ error: 'Could not send verification email' });
-  }
-});
+router.post(
+  '/cloud/account/verification',
+  requireRole('owner'),
+  async (_req: Request, res: Response) => {
+    if (!cloudSync.isCloudAccountAvailable()) {
+      return res.status(409).json({ error: CLOUD_ACCOUNT_UNAVAILABLE_ERROR });
+    }
+    try {
+      res.json(
+        publicEmailPreferences(await cloudSync.requestEmailVerification({ source: 'settings' })),
+      );
+    } catch {
+      res.status(502).json({ error: 'Could not send verification email' });
+    }
+  },
+);
 
-router.get('/cloud/delete-data/status', requireRole('owner'), async (_req: Request, res: Response) => {
-  try {
-    const deletionRequest = await cloudSync.getDeletionRequestStatus({ allowRemote: true });
-    res.json({
-      cloud_account_available: cloudSync.isCloudAccountAvailable(),
-      deletion_request: publicDeletionRequest(deletionRequest),
-    });
-  } catch {
-    res.status(502).json({ error: 'Could not refresh cloud deletion status' });
-  }
-});
+router.get(
+  '/cloud/delete-data/status',
+  requireRole('owner'),
+  async (_req: Request, res: Response) => {
+    try {
+      const deletionRequest = await cloudSync.getDeletionRequestStatus({ allowRemote: true });
+      res.json({
+        cloud_account_available: cloudSync.isCloudAccountAvailable(),
+        deletion_request: publicDeletionRequest(deletionRequest),
+      });
+    } catch {
+      res.status(502).json({ error: 'Could not refresh cloud deletion status' });
+    }
+  },
+);
 
 router.post('/cloud/stop-all', requireRole('owner'), async (_req: Request, res: Response) => {
   res.json(await cloudSync.stopAllCloudServices());
 });
 
-router.post('/cloud/delete-data', requireRole('owner'), requireMasterPin, async (req: Request, res: Response) => {
-  if (req.body?.confirmation !== 'DELETE CLOUD DATA') {
-    return res.status(400).json({ error: 'Type DELETE CLOUD DATA to confirm' });
-  }
-  try {
-    res.json(await cloudSync.deleteCloudData());
-  } catch {
-    res.status(502).json({ error: 'Cloud data deletion failed' });
-  }
-});
+router.post(
+  '/cloud/delete-data',
+  requireRole('owner'),
+  requireMasterPin,
+  async (req: Request, res: Response) => {
+    if (req.body?.confirmation !== 'DELETE CLOUD DATA') {
+      return res.status(400).json({ error: 'Type DELETE CLOUD DATA to confirm' });
+    }
+    try {
+      res.json(await cloudSync.deleteCloudData());
+    } catch {
+      res.status(502).json({ error: 'Cloud data deletion failed' });
+    }
+  },
+);
 
-router.post('/cloud/delete-data/cancel', requireRole('owner'), requireMasterPin, async (_req: Request, res: Response) => {
-  try {
-    res.json(await cloudSync.cancelDeletionRequest());
-  } catch {
-    res.status(502).json({ error: 'Could not cancel deletion request' });
-  }
-});
+router.post(
+  '/cloud/delete-data/cancel',
+  requireRole('owner'),
+  requireMasterPin,
+  async (_req: Request, res: Response) => {
+    try {
+      res.json(await cloudSync.cancelDeletionRequest());
+    } catch {
+      res.status(502).json({ error: 'Could not cancel deletion request' });
+    }
+  },
+);
 
 // ─── Google Drive backups (must come BEFORE /:key wildcard) ─────────────────
 // See #129. Off by default — connect/disconnect/backup-now are the only
@@ -630,8 +795,8 @@ router.get('/google-drive', requireRole('owner', 'manager'), (req: Request, res:
   try {
     res.json(googleDrive.getStatus());
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -655,45 +820,72 @@ router.post('/google-drive/connect', requireRole('owner'), async (_req: Request,
   }
 });
 
-router.post('/google-drive/disconnect', requireRole('owner'), async (_req: Request, res: Response) => {
-  try {
-    const status = await googleDrive.disconnect();
-    res.json(status);
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+router.post(
+  '/google-drive/disconnect',
+  requireRole('owner'),
+  async (_req: Request, res: Response) => {
+    try {
+      const status = await googleDrive.disconnect();
+      res.json(status);
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
-router.post('/google-drive/backup-now', requireRole('owner'), async (_req: Request, res: Response) => {
-  try {
-    const status = await googleDrive.backupNow();
-    res.json(status);
-  } catch (error: any) {
-    console.error('[API] Google Drive backup failed:', error);
-    res.status(502).json({ error: 'Google Drive backup failed' });
-  }
-});
+router.post(
+  '/google-drive/backup-now',
+  requireRole('owner'),
+  async (_req: Request, res: Response) => {
+    try {
+      const status = await googleDrive.backupNow();
+      res.json(status);
+    } catch (error: any) {
+      console.error('[API] Google Drive backup failed:', error);
+      res.status(502).json({ error: 'Google Drive backup failed' });
+    }
+  },
+);
 
 // ── Generic key-value routes (wildcard — must be last) ─────────────────────
 
 // Only non-sensitive keys may be updated via the wildcard route.
 // Sensitive keys (cloud_*, tax_registration_number, etc.) must use their explicit routes above.
 const ALLOWED_WILDCARD_KEYS = new Set([
-  'business_name', 'timezone', 'currency', 'country',
-  'state_code', 'business_address', 'business_phone',
-  'billing_type', 'tables_required', 'tax_registered', 'bill_show_name', 'bill_show_address',
-  'bill_show_phone', 'bill_show_tax_id', 'bill_show_tax_breakdown', 'bill_show_customer_name',
-  'bill_show_customer_phone', 'bill_show_table_number',
+  'business_name',
+  'timezone',
+  'currency',
+  'country',
+  'state_code',
+  'business_address',
+  'business_phone',
+  'billing_type',
+  'tables_required',
+  'tax_registered',
+  'bill_show_name',
+  'bill_show_address',
+  'bill_show_phone',
+  'bill_show_tax_id',
+  'bill_show_tax_breakdown',
+  'bill_show_customer_name',
+  'bill_show_customer_phone',
+  'bill_show_table_number',
   'tax_scheme',
   'taxes_enabled',
   'loyalty_enabled',
   'language',
   'kds_default_view',
-  'printer_method', 'paper_size', 'bill_template', 'bill_footer_message', 'printer_trim_decimals',
+  'printer_method',
+  'paper_size',
+  'bill_template',
+  'bill_footer_message',
+  'printer_trim_decimals',
   'telemetry_enabled',
   'diagnostics_consent',
-  'kds_enabled', 'server_app_enabled', 'kot_printing_enabled',
+  'kds_enabled',
+  'server_app_enabled',
+  'kot_printing_enabled',
   'split_checks_enabled',
   'network_mode',
   // M4 operational opt-in flags (owner/manager). Intentionally not setup-only —
@@ -706,37 +898,47 @@ function isAllowedWildcardKey(key: string): boolean {
   return ALLOWED_WILDCARD_KEYS.has(key) || /^tax_plugin_request:[A-Z]{2}$/.test(key);
 }
 
-router.get('/', requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'), (req: Request, res: Response) => {
-  try {
-    const s = getAllSettings(getDatabase());
-    res.json({ settings: publicSettingsShape(s) });
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+router.get(
+  '/',
+  requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'),
+  (req: Request, res: Response) => {
+    try {
+      const s = getAllSettings(getDatabase());
+      res.json({ settings: publicSettingsShape(s) });
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
-router.get('/:key', requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'), (req: Request, res: Response) => {
-  try {
-    if (SENSITIVE_SETTING_KEYS.has(req.params.key as string)) {
-      return res.status(403).json({ error: 'This setting is sensitive and cannot be read directly' });
-    }
-    const key = String(req.params.key);
-    const db = getDatabase();
-    const setting = db.prepare('SELECT * FROM settings WHERE key = ?').get(key);
-    if (!setting) {
-      const defaultValue = OPTIONAL_SETTING_DEFAULTS[key];
-      if (defaultValue !== undefined) {
-        return res.json({ setting: { key, value: defaultValue, updated_at: null } });
+router.get(
+  '/:key',
+  requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'),
+  (req: Request, res: Response) => {
+    try {
+      if (SENSITIVE_SETTING_KEYS.has(req.params.key as string)) {
+        return res
+          .status(403)
+          .json({ error: 'This setting is sensitive and cannot be read directly' });
       }
-      return res.status(404).json({ error: 'Setting not found' });
+      const key = String(req.params.key);
+      const db = getDatabase();
+      const setting = db.prepare('SELECT * FROM settings WHERE key = ?').get(key);
+      if (!setting) {
+        const defaultValue = OPTIONAL_SETTING_DEFAULTS[key];
+        if (defaultValue !== undefined) {
+          return res.json({ setting: { key, value: defaultValue, updated_at: null } });
+        }
+        return res.status(404).json({ error: 'Setting not found' });
+      }
+      res.json({ setting });
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-    res.json({ setting });
-  } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+  },
+);
 
 router.put('/:key', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
@@ -761,37 +963,45 @@ router.put('/:key', requireRole('owner', 'manager'), (req: Request, res: Respons
     }
 
     if (req.params.key === 'network_mode') {
-      const normalized = String(value ?? '').trim().toLowerCase();
+      const normalized = String(value ?? '')
+        .trim()
+        .toLowerCase();
       if (!['localhost', 'kds_lan', 'lan'].includes(normalized)) {
         return res.status(400).json({
           error: 'network_mode must be localhost, kds_lan, or lan',
           code: 'INVALID_NETWORK_MODE',
         });
       }
-      db.prepare(`
+      db.prepare(
+        `
         INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-      `).run(req.params.key, normalized, now());
+      `,
+      ).run(req.params.key, normalized, now());
       const setting = db.prepare('SELECT * FROM settings WHERE key = ?').get(req.params.key);
       return res.json({
         setting,
         restart_required: true,
-        message: 'Network mode changes apply after restarting Opervia.',
+        message: 'Network mode changes apply after restarting Operavia.',
       });
     }
 
     if (req.params.key === 'shifts_enabled' || req.params.key === 'require_open_shift_for_cash') {
-      const normalized = String(value ?? '').trim().toLowerCase();
+      const normalized = String(value ?? '')
+        .trim()
+        .toLowerCase();
       if (normalized !== 'true' && normalized !== 'false') {
         return res.status(400).json({
           error: `${req.params.key} must be true or false`,
           code: 'INVALID_BOOLEAN_SETTING',
         });
       }
-      db.prepare(`
+      db.prepare(
+        `
         INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-      `).run(req.params.key, normalized, now());
+      `,
+      ).run(req.params.key, normalized, now());
       const setting = db.prepare('SELECT * FROM settings WHERE key = ?').get(req.params.key);
       return res.json({ setting });
     }
@@ -806,10 +1016,12 @@ router.put('/:key', requireRole('owner', 'manager'), (req: Request, res: Respons
       recordDiagnosticsConsent(enabled);
       void cloudSync.setDiagnosticsConsent(enabled);
     } else {
-      db.prepare(`
+      db.prepare(
+        `
         INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-      `).run(req.params.key, value, now());
+      `,
+      ).run(req.params.key, value, now());
     }
 
     if (req.params.key === 'split_checks_enabled' && boolFlag(value) === 'true') {
@@ -819,8 +1031,8 @@ router.put('/:key', requireRole('owner', 'manager'), (req: Request, res: Respons
     const setting = db.prepare('SELECT * FROM settings WHERE key = ?').get(req.params.key);
     res.json({ setting });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

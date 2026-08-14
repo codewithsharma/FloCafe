@@ -11,7 +11,7 @@
 
 ## Executive summary
 
-Opervia’s catalog today is **one `products` row = one sellable identity = one stock bucket = one optional barcode**. There is **no variant table**, no parent/child product model, and no SKU matrix. Typed frontend `Product.variants` and `order_items.variant_selection` are **unused stubs** — not a partial implementation.
+Operavia’s catalog today is **one `products` row = one sellable identity = one stock bucket = one optional barcode**. There is **no variant table**, no parent/child product model, and no SKU matrix. Typed frontend `Product.variants` and `order_items.variant_selection` are **unused stubs** — not a partial implementation.
 
 **Sellable identity for money, inventory, refund restock, and exchange already works** if each size/color/SKU is its own `products` row: `order_items.product_id` survives the full lifecycle, and ADR-011 / ADR-012 remain valid.
 

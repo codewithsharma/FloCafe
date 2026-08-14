@@ -1,4 +1,4 @@
-# Opervia Architecture Gap Report
+# Operavia Architecture Gap Report
 
 **Date:** 2026-08-13 (baseline) · **Superseded for Phase 2 claims by:** [phase-2-exit-gate.md](phase-2-exit-gate.md) (2026-08-13 exit)
 **Scope:** Historical docs-only assessment of Phase 1 vs modular platform TARGET; updated summary below for post–Phase 2 readers
@@ -13,16 +13,16 @@ This report does **not** rewrite historical audits in `docs/15-project-managemen
 
 ## A. Current architecture (Phase 2 reality)
 
-| Aspect          | Reality                                                                                                                                                                                                |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Runtime         | Electron + Express + SQLite monolith                                                                                                                                                                   |
-| Schema          | `PRAGMA user_version` → **v75** (`inventory_movements` from Phase 2.8)                                                                                                                                 |
-| Routing         | Static `registerRoutes` (modules do not dynamically mount/unmount)                                                                                                                                     |
-| Features        | Settings feature flags + `isModuleEnabled` / `isFeatureAvailable`                                                                                                                                      |
-| Business type   | Locked to **restaurant**; `retail-test` synthetic only                                                                                                                                                 |
-| Tenancy         | Single-tenant per install                                                                                                                                                                              |
-| Module registry | **Yes** — `main/modules/` (22 modules, soft deps, capabilities)                                                                                                                                        |
-| Product shipped | **Opervia Restaurant** capabilities (POS, KDS, tables, payments, shifts, refunds, loyalty, printing, backup, …). Canonical brand **Opervia** (ADR-010); historical audits may still say Nexora/FloCafe |
+| Aspect          | Reality                                                                                                                                                                                                    |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Runtime         | Electron + Express + SQLite monolith                                                                                                                                                                       |
+| Schema          | `PRAGMA user_version` → **v75** (`inventory_movements` from Phase 2.8)                                                                                                                                     |
+| Routing         | Static `registerRoutes` (modules do not dynamically mount/unmount)                                                                                                                                         |
+| Features        | Settings feature flags + `isModuleEnabled` / `isFeatureAvailable`                                                                                                                                          |
+| Business type   | Locked to **restaurant**; `retail-test` synthetic only                                                                                                                                                     |
+| Tenancy         | Single-tenant per install                                                                                                                                                                                  |
+| Module registry | **Yes** — `main/modules/` (22 modules, soft deps, capabilities)                                                                                                                                            |
+| Product shipped | **Operavia Restaurant** capabilities (POS, KDS, tables, payments, shifts, refunds, loyalty, printing, backup, …). Canonical brand **Operavia** (ADR-010); historical audits may still say Operavia/FloCafe |
 
 Local-first offline billing remains mandatory. Cloud/optional services must not block core money paths ([`STRATEGY.md`](../../STRATEGY.md)).
 
@@ -138,15 +138,15 @@ See [verticals.md](../00-product/verticals.md). Not production-enabled.
 
 ## G. Naming
 
-| Name                   | Use                                                                                                               |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **Opervia**            | Canonical platform **and** product brand                                                                          |
-| **Opervia Restaurant** | CURRENT production vertical                                                                                       |
-| **Nexora POS**         | **Retired** as active product name                                                                                |
-| **FloCafe**            | Repo / fork legacy only                                                                                           |
-| **RestaurantOS**       | Interpret as Opervia Restaurant vertical depth / platform depth **after** pilots — not a separate current product |
-| **Flo POS**            | Legacy → Opervia                                                                                                  |
-| Historical audits      | **Preserve** old names in `docs/15-project-management/`; do not mass-rewrite                                      |
+| Name                    | Use                                                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Operavia**            | Canonical platform **and** product brand                                                                           |
+| **Operavia Restaurant** | CURRENT production vertical                                                                                        |
+| **Operavia POS**        | **Retired** as active product name                                                                                 |
+| **FloCafe**             | Repo / fork legacy only                                                                                            |
+| **RestaurantOS**        | Interpret as Operavia Restaurant vertical depth / platform depth **after** pilots — not a separate current product |
+| **Flo POS**             | Legacy → Operavia                                                                                                  |
+| Historical audits       | **Preserve** old names in `docs/15-project-management/`; do not mass-rewrite                                       |
 
 ---
 
@@ -160,14 +160,14 @@ See [verticals.md](../00-product/verticals.md). Not production-enabled.
 | ---------------------------------- | -------------------------------------------------------------- |
 | Follow exit-gate deferments        | Microservices                                                  |
 | Keep Restaurant behavior identical | Separate codebase per vertical                                 |
-| Pilot reliability first            | Opervia Custom builder                                         |
+| Pilot reliability first            | Operavia Custom builder                                        |
 |                                    | Mass folder moves / package extraction without Phase 3 kickoff |
 
 **Recommended NOT to do yet**
 
 - Microservices or Kubernetes
 - Separate apps/repos per vertical
-- Opervia Custom composer UI
+- Operavia Custom composer UI
 - Mass folder moves or “clean architecture” rewrites unrelated to pilot reliability
 
 ---

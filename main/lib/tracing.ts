@@ -1,5 +1,5 @@
 /**
- * OpenTelemetry foundation for Opervia domain boundaries.
+ * OpenTelemetry foundation for Operavia domain boundaries.
  *
  * Uses @opentelemetry/api only — no exporter/collector required.
  * Without a registered TracerProvider the API uses a no-op tracer,

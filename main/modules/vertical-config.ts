@@ -75,7 +75,7 @@ export function formatStartupCompositionDiagnostics(verticalId?: string): string
   const vertical = resolveKnownVertical(id);
   const modules = getEnabledModules(id);
   const lines: string[] = [
-    `[Opervia Startup Composition]`,
+    `[Operavia Startup Composition]`,
     `Active vertical: ${vertical.id} (${vertical.name})`,
     `Enabled modules:`,
   ];

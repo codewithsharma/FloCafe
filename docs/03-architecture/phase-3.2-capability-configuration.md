@@ -60,7 +60,7 @@ Unset ≠ empty. Empty is malformed and does **not** fall back to restaurant.
 | `restaurant`  | Production (`VERTICALS`)          | Default; café pilots                                    |
 | `retail-test` | Synthetic (`SYNTHETIC_VERTICALS`) | Composition validation only — **not** Production Retail |
 
-Production Opervia Retail remains **Phase 3.3**.
+Production Operavia Retail remains **Phase 3.3**.
 
 ## 5. Startup resolution
 

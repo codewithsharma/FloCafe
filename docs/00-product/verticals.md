@@ -1,6 +1,6 @@
 <!-- Last verified against codebase: 2026-08-14, schema v75 -->
 
-# Opervia Verticals
+# Operavia Verticals
 
 **Platform:** [opervia-platform.md](opervia-platform.md)
 **Architecture:** [vertical-architecture.md](../03-architecture/vertical-architecture.md)
@@ -21,7 +21,7 @@ A **vertical** is an industry product assembled from shared modules, configurati
 
 ## Restaurant — CURRENT (default)
 
-**Product name:** Opervia Restaurant  
+**Product name:** Operavia Restaurant  
 **Code id:** `restaurant`  
 **Default:** yes — when `ACTIVE_VERTICAL_ID` is **unset**  
 **Code:** `main/modules/verticals.ts` · Phase 2 CLOSED · Phase 3.1–3.4 complete for remount/composition
@@ -45,7 +45,7 @@ Restaurant-specific depth today includes tables, KDS/kitchen stations, KOT print
 
 ## Retail — CURRENT (production composition; partial UX)
 
-**Product name:** Opervia Retail  
+**Product name:** Operavia Retail  
 **Code id:** `retail`  
 **Select:** `ACTIVE_VERTICAL_ID=retail` (restart required)  
 **Code:** `main/modules/retail-vertical.ts` · shared modules: `main/modules/shared-commerce-modules.ts` · Phase 3.3 COMPLETE
@@ -112,7 +112,7 @@ Emphasis: property/front-desk extensions (future) composing Restaurant-like F&B 
 
 ## Custom — Long-term only
 
-**Opervia Custom** is a **composer**, not a vertical shipped today.
+**Operavia Custom** is a **composer**, not a vertical shipped today.
 
 - Operator selects modules + config to form a bespoke product
 - **Do not build now** — no Custom builder UI, marketplace, or arbitrary enablement matrix

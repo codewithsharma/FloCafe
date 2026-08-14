@@ -1,6 +1,6 @@
 # Google Drive backup integration — maintainer setup
 
-Opervia can optionally upload database backups to a store owner's own Google
+Operavia can optionally upload database backups to a store owner's own Google
 Drive on a schedule (see #129). This is **off by default** and requires two
 things before it works in a given build:
 
@@ -13,7 +13,7 @@ integration is not configured for this build"_ and the Connect button is
 disabled — the app never attempts to reach Google's APIs.
 
 This doc covers step 1: creating the OAuth client credentials in Google
-Cloud Console and wiring them into an Opervia build.
+Cloud Console and wiring them into an Operavia build.
 
 ## Why this can't be pre-provisioned
 
@@ -21,13 +21,13 @@ Google OAuth clients are tied to a Google Cloud project owned by a human
 Google account, and creating one requires clicking through the Cloud
 Console UI (and, for a public app, an OAuth consent screen review) — there's
 no way to script this or ship a working client ID/secret in the open-source
-repo itself. Each organization distributing an Opervia build needs to create
+repo itself. Each organization distributing an Operavia build needs to create
 its own client and supply it via environment variables at build/run time.
 
 ## 1. Create (or select) a Google Cloud project
 
 1. Go to [console.cloud.google.com](https://console.cloud.google.com/).
-2. Create a new project (or pick an existing one) — e.g. "Opervia POS".
+2. Create a new project (or pick an existing one) — e.g. "Operavia POS".
 
 ## 2. Enable the Google Drive API
 
@@ -40,12 +40,12 @@ its own client and supply it via environment variables at build/run time.
 2. Choose **External** (unless every store using this build is a Google
    Workspace user in your own organization, in which case **Internal** is
    fine and skips verification).
-3. Fill in the app name (e.g. "Opervia"), support email, and developer
+3. Fill in the app name (e.g. "Operavia"), support email, and developer
    contact email.
 4. Under **Scopes**, add:
    - `https://www.googleapis.com/auth/drive.file`
 
-   Do **not** add the broader `drive` or `drive.readonly` scopes — Opervia
+   Do **not** add the broader `drive` or `drive.readonly` scopes — Operavia
    only ever needs to see the backup files it creates itself.
 
 5. Add any test users you want to be able to connect while the app is in
@@ -61,17 +61,17 @@ its own client and supply it via environment variables at build/run time.
 1. Go to **APIs & Services > Credentials**.
 2. Click **Create Credentials > OAuth client ID**.
 3. Application type: **Desktop app** (this matches the loopback flow
-   Opervia uses — it opens the consent screen in the system browser and
+   Operavia uses — it opens the consent screen in the system browser and
    catches the redirect on a local `127.0.0.1` server on a random port, per
    Google's recommended flow for installed apps; no fixed redirect URI needs
    to be registered for this client type).
-4. Name it (e.g. "Opervia Desktop").
+4. Name it (e.g. "Operavia Desktop").
 5. Click **Create**. Copy the generated **Client ID** and **Client secret** —
    you won't be able to see the secret again after leaving this screen
    (you can always generate a new one from the Credentials page if you lose
    it).
 
-## 5. Wire the credentials into an Opervia build
+## 5. Wire the credentials into an Operavia build
 
 Set two environment variables wherever this build is built/run:
 
@@ -83,7 +83,7 @@ GOOGLE_DRIVE_CLIENT_SECRET=xxxxxxxx
 For local development, copy `.env.example` to `.env` and fill these in.
 For packaged builds (electron-builder), set them in the environment the
 build runs in (CI secrets, `.env` picked up by your build pipeline, etc.) —
-Opervia reads them from `process.env` at runtime, the same pattern already
+Operavia reads them from `process.env` at runtime, the same pattern already
 used for `JWT_SECRET`.
 
 Once both variables are set and the app is restarted, `Settings >
@@ -95,7 +95,7 @@ retention).
 
 ## Notes for reviewers / auditors
 
-- Scope is `drive.file` only — Opervia can only see/manage files it created
+- Scope is `drive.file` only — Operavia can only see/manage files it created
   through the API, not the user's whole Drive.
 - OAuth tokens are encrypted at rest via Electron's `safeStorage`
   (`main/services/google-drive.ts`), the same mechanism used for the Master
