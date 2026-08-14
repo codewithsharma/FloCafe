@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Phase 3.6F Cash Drawer Kick (Accepted + Implemented)
+
+Manual ESC/POS drawer pulse via existing `dispatchPrint` + default printer. `POST /api/printers/kick-drawer` (owner|manager|cashier). POS PrinterStatus deliberate action. No auto-kick on payment, no schema, no money-path. Doc: `docs/03-architecture/phase-3.6f-cash-drawer-kick.md`.
+
 ## 2026-08-14 — Phase 3.6E Inactive Customer Reactivation UX (Accepted + Implemented)
 
 Existing `customers.is_active` lifecycle. Owner/manager `GET /customers?include_inactive=true`; `POST /customers/:id/reactivate` flips flag only (auth matches soft-reactivate-by-phone). POS `/customers-search` stays active-only. No schema/loyalty/wallet/money-path changes. Doc: `docs/03-architecture/phase-3.6e-inactive-customer-ux.md`.

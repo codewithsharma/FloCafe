@@ -21,8 +21,10 @@ import {
   Unplug,
   ChevronDown,
   Settings,
+  Banknote,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -36,6 +38,8 @@ import { usePrinterStore, usePrinterStatusSync } from '@/hooks/usePrinter';
 import type { PrinterStatus } from '@/lib/printer/PrinterService';
 import toast from 'react-hot-toast';
 import { useI18n } from '@/hooks/useI18n';
+import api from '@/lib/api';
+import { useAuthStore } from '@/store/auth';
 
 const STATUS_CONFIG: Record<
   PrinterStatus,
@@ -67,12 +71,20 @@ export default function PrinterStatus() {
   usePrinterStatusSync();
 
   const {
-    status, deviceInfo, lastError,
-    connect, disconnect, clearError,
-    printMethod, hardwarePrinter,
+    status,
+    deviceInfo,
+    lastError,
+    connect,
+    disconnect,
+    clearError,
+    printMethod,
+    hardwarePrinter,
   } = usePrinterStore();
   const { t } = useI18n();
   const router = useRouter();
+  const role = useAuthStore((s) => s.currentTenant?.role);
+  const canKickDrawer = role === 'owner' || role === 'manager' || role === 'cashier';
+  const [kicking, setKicking] = useState(false);
 
   const effectiveStatus: PrinterStatus = hardwarePrinter ? 'connected' : status;
   const cfg = STATUS_CONFIG[effectiveStatus];
@@ -101,6 +113,22 @@ export default function PrinterStatus() {
     }
   };
 
+  const handleKickDrawer = async () => {
+    if (kicking) return;
+    setKicking(true);
+    try {
+      await api.post('/printers/kick-drawer');
+      toast.success(t('pos.cashDrawerOpened'));
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string; detail?: string } } };
+      toast.error(
+        error.response?.data?.error || error.response?.data?.detail || t('pos.cashDrawerFailed'),
+      );
+    } finally {
+      setKicking(false);
+    }
+  };
+
   const isConnected = !hardwarePrinter && status === 'connected';
   const isConnecting = status === 'connecting';
 
@@ -112,10 +140,7 @@ export default function PrinterStatus() {
           size="sm"
           className={`h-10 min-h-11 flex items-center gap-1.5 ${cfg.color} border-flo-border`}
         >
-          <Icon
-            size={16}
-            className={isConnecting ? 'animate-spin' : undefined}
-          />
+          <Icon size={16} className={isConnecting ? 'animate-spin' : undefined} />
           <span className="hidden sm:inline text-xs font-medium truncate max-w-[140px]">
             {hardwarePrinter ? hardwarePrinter.name : t(cfg.labelKey)}
           </span>
@@ -149,7 +174,10 @@ export default function PrinterStatus() {
             <p className="font-medium text-flo-text truncate">
               {deviceInfo.productName ?? t('pos.printerUnknownDevice')}
             </p>
-            <p>{deviceInfo.manufacturerName ?? `VID:${deviceInfo.vendorId.toString(16).toUpperCase()}`}</p>
+            <p>
+              {deviceInfo.manufacturerName ??
+                `VID:${deviceInfo.vendorId.toString(16).toUpperCase()}`}
+            </p>
           </div>
         )}
 
@@ -180,7 +208,7 @@ export default function PrinterStatus() {
                 className="text-sm cursor-pointer text-red-600 focus:text-red-600"
               >
                 <Unplug size={14} className="mr-2" />
-{t('pos.printerDisconnect')}
+                {t('pos.printerDisconnect')}
               </DropdownMenuItem>
             )}
           </>
@@ -191,6 +219,20 @@ export default function PrinterStatus() {
             {t('pos.printerBrowserMode')}
           </div>
         )}
+
+        {canKickDrawer ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleKickDrawer}
+              disabled={kicking}
+              className="text-sm cursor-pointer"
+            >
+              <Banknote size={14} className="mr-2" />
+              {kicking ? t('pos.cashDrawerOpening') : t('pos.openCashDrawer')}
+            </DropdownMenuItem>
+          </>
+        ) : null}
 
         <DropdownMenuSeparator />
 

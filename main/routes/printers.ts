@@ -18,6 +18,8 @@ import {
   escPosToText,
   printRefundReceipt,
   printDayCloseZ,
+  kickCashDrawer,
+  buildDrawerKick,
 } from '../printers/thermal';
 import { getSupportedPrinterProfiles, resolvePrinterProfile } from '../printers/profiles';
 import { requireRole } from '../middleware/security';
@@ -655,6 +657,51 @@ router.post(
       }
     } catch (error: any) {
       console.error('[Print Refund] Error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+// POST /api/printers/kick-drawer — ESC/POS cash drawer pulse (hardware only; no money-path)
+router.post(
+  '/kick-drawer',
+  requireRole('owner', 'manager', 'cashier'),
+  async (req: Request, res: Response) => {
+    try {
+      const pinRaw = (req.body || {}).pin;
+      let pin: 2 | 5 = 2;
+      if (pinRaw !== undefined && pinRaw !== null && pinRaw !== '') {
+        const n = Number(pinRaw);
+        if (n !== 2 && n !== 5) {
+          return res.status(400).json({ error: 'pin must be 2 or 5' });
+        }
+        pin = n as 2 | 5;
+      }
+
+      const db = getDatabase();
+      const printer = db.prepare('SELECT * FROM printers WHERE is_default = 1').get() as
+        { connection_type?: string } | undefined;
+      if (!printer) {
+        return res
+          .status(400)
+          .json({ error: 'No default printer configured. Add a printer in Settings.' });
+      }
+
+      if (printer.connection_type === 'webusb') {
+        const bytes = buildDrawerKick({ pin });
+        return res.json({ success: true, webusb: true, bytes: Array.from(bytes) });
+      }
+
+      const result = await kickCashDrawer({ pin, printer });
+      if (result.ok) {
+        return res.json({ success: true });
+      }
+      return res.status(502).json({
+        error: result.detail || 'Cash drawer kick failed. Check printer connection.',
+        detail: result.detail,
+      });
+    } catch (error: any) {
+      console.error('[Kick Drawer] Error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   },

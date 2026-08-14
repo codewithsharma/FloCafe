@@ -110,16 +110,16 @@ Restaurant vertical only (`ACTIVE_VERTICAL_ID=restaurant` or unset). Not mounted
 
 ## Printing
 
-| Feature                    | Status      | Evidence                                                      | Production readiness |
-| -------------------------- | ----------- | ------------------------------------------------------------- | -------------------- |
-| ESC/POS thermal — network  | [BUILT]     | `main/printers/thermal.ts` TCP 9100                           | High                 |
-| ESC/POS thermal — USB      | [BUILT]     | `main/printers/thermal.ts`                                    | High                 |
-| WebUSB printing (renderer) | [BUILT]     | `frontend/src/lib/printer/PrinterService.ts`                  | Medium               |
-| Browser print fallback     | [BUILT]     | `frontend/src/lib/printer/web-print.ts`                       | Medium               |
-| Bluetooth printing         | [NOT BUILT] | UI type stub only; DB CHECK excludes bluetooth; no print path | —                    |
-| Printer profiles (58/80mm) | [BUILT]     | `main/printers/profiles.ts`                                   | High                 |
-| Print audit log            | [BUILT]     | `print_logs` table                                            | High                 |
-| Cash drawer kick           | [NOT BUILT] | No drawer command in printer stack                            | —                    |
+| Feature                    | Status      | Evidence                                                          | Production readiness |
+| -------------------------- | ----------- | ----------------------------------------------------------------- | -------------------- |
+| ESC/POS thermal — network  | [BUILT]     | `main/printers/thermal.ts` TCP 9100                               | High                 |
+| ESC/POS thermal — USB      | [BUILT]     | `main/printers/thermal.ts`                                        | High                 |
+| WebUSB printing (renderer) | [BUILT]     | `frontend/src/lib/printer/PrinterService.ts`                      | Medium               |
+| Browser print fallback     | [BUILT]     | `frontend/src/lib/printer/web-print.ts`                           | Medium               |
+| Bluetooth printing         | [NOT BUILT] | UI type stub only; DB CHECK excludes bluetooth; no print path     | —                    |
+| Printer profiles (58/80mm) | [BUILT]     | `main/printers/profiles.ts`                                       | High                 |
+| Print audit log            | [BUILT]     | `print_logs` table                                                | High                 |
+| Cash drawer kick           | [BUILT]     | `POST /api/printers/kick-drawer` + POS PrinterStatus (Phase 3.6F) | High                 |
 
 Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webusb`.
 
@@ -151,17 +151,17 @@ Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webus
 
 ## Operations & Data
 
-| Feature                    | Status      | Evidence                                                                       | Production readiness |
-| -------------------------- | ----------- | ------------------------------------------------------------------------------ | -------------------- |
-| Backup / restore           | [BUILT]     | `main/routes/database.ts`, `database-tools.ts`                                 | High                 |
-| Offline recovery           | [BUILT]     | Backup/restore + pre-migration auto-backup + `/recovery` UI                    | High                 |
-| Schema health check        | [BUILT]     | `main/services/schema-health.ts`                                               | High                 |
-| Google Drive backup        | [BUILT]     | `main/services/google-drive.ts`                                                | Medium               |
-| Database initialize (wipe) | [BUILT]     | master PIN gated                                                               | High                 |
-| Shift management           | [BUILT]     | `main/routes/shifts.ts`, `main/services/shift.ts`, Settings `shifts_enabled`   | High                 |
-| Shift reconciliation       | [BUILT]     | Close/force-close + expected cash (incl. cash refunds)                         | High                 |
-| Cash drawer kick (ESC/POS) | [NOT BUILT] | P1.1 open — no drawer command in printer stack                                 | —                    |
-| Audit logging (general)    | [BUILT]     | `audit_logs` (v68+), `main/services/audit-log.ts`, `main/routes/audit-logs.ts` | High                 |
+| Feature                    | Status  | Evidence                                                                       | Production readiness |
+| -------------------------- | ------- | ------------------------------------------------------------------------------ | -------------------- |
+| Backup / restore           | [BUILT] | `main/routes/database.ts`, `database-tools.ts`                                 | High                 |
+| Offline recovery           | [BUILT] | Backup/restore + pre-migration auto-backup + `/recovery` UI                    | High                 |
+| Schema health check        | [BUILT] | `main/services/schema-health.ts`                                               | High                 |
+| Google Drive backup        | [BUILT] | `main/services/google-drive.ts`                                                | Medium               |
+| Database initialize (wipe) | [BUILT] | master PIN gated                                                               | High                 |
+| Shift management           | [BUILT] | `main/routes/shifts.ts`, `main/services/shift.ts`, Settings `shifts_enabled`   | High                 |
+| Shift reconciliation       | [BUILT] | Close/force-close + expected cash (incl. cash refunds)                         | High                 |
+| Cash drawer kick (ESC/POS) | [BUILT] | Phase 3.6F — `buildDrawerKick` / `kickCashDrawer` via default printer          | High                 |
+| Audit logging (general)    | [BUILT] | `audit_logs` (v68+), `main/services/audit-log.ts`, `main/routes/audit-logs.ts` | High                 |
 
 ## Integrations & Cloud
 

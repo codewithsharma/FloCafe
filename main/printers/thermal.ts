@@ -889,6 +889,41 @@ export async function printDayCloseZ(
   }
 }
 
+/**
+ * ESC/POS cash-drawer pulse: ESC p m t1 t2
+ * pin 2 → m=0, pin 5 → m=1. Pulse timings are standard 50ms / 500ms-ish defaults.
+ */
+export function buildDrawerKick(options?: { pin?: 2 | 5; t1?: number; t2?: number }): Buffer {
+  const pin = options?.pin === 5 ? 5 : 2;
+  const m = pin === 5 ? 0x01 : 0x00;
+  const t1 = Math.max(0, Math.min(255, options?.t1 ?? 0x19));
+  const t2 = Math.max(0, Math.min(255, options?.t2 ?? 0x78));
+  return Buffer.from([0x1b, 0x70, m, t1, t2]);
+}
+
+/** Hardware-only drawer kick via default printer. No money-path / DB side effects. */
+export async function kickCashDrawer(options?: {
+  pin?: 2 | 5;
+  printer?: any;
+}): Promise<DispatchResult & { webusbBytes?: Buffer }> {
+  try {
+    const printer = options?.printer || getPrinterConfig();
+    if (!printer) return { ok: false, detail: 'No printer configured' };
+    const data = buildDrawerKick({ pin: options?.pin });
+    if (printer.connection_type === 'webusb') {
+      return {
+        ok: false,
+        detail: 'WebUSB printers are handled in the browser, not by the desktop app',
+        webusbBytes: data,
+      };
+    }
+    return await dispatchPrint(printer, data);
+  } catch (error: any) {
+    console.error('[Printer] Cash drawer kick error:', error);
+    return { ok: false, detail: error?.message };
+  }
+}
+
 export async function printKOT(
   order: any,
   items: any[],

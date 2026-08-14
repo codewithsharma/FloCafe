@@ -50,7 +50,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 
 ## P1 — Pilot reliability
 
-- [ ] P1.1 Cash drawer kick (ESC/POS) + permissions + audit
+- [x] P1.1 Cash drawer kick (ESC/POS) + permissions — **COMPLETE** (Phase 3.6F; manual POS kick; no auto-on-pay)
 - [x] P1.2 Backup → destroy DB → restore → verify continuity — **implemented** (GREEN WITH CONDITIONS); REC-01 hardening closed
 - [ ] P1.3 Failure/recovery testing matrix (offline, printer, crash, power, duplicate pay/order, token expiry)
 - [x] P1.4 Critical E2E workflows for money paths — **packaged full-app QA 2026-08-13** (`full-app-qa-report.md`; READY WITH CONDITIONS)
@@ -101,6 +101,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Phase 3.6C** Manual Stock Adjustment UI — **COMPLETE** (`phase-3.6c-manual-stock-adjust-ui.md`). Reuses `POST /products/:id/stock`; no free-text reason (API contract).
 - [x] **Phase 3.6D** Day-Close Z Snapshot Print/Download — **COMPLETE** (`phase-3.6d-day-close-z-snapshot.md`). Cash Z from frozen summary; print best-effort.
 - [x] **Phase 3.6E** Soft-reactivate / inactive-customer UX — **COMPLETE** (`phase-3.6e-inactive-customer-ux.md`). Owner/manager show-inactive; `POST /:id/reactivate`; POS search unchanged.
+- [x] **Phase 3.6F** Cash drawer kick — **COMPLETE** (`phase-3.6f-cash-drawer-kick.md`). ESC/POS via default printer; POS PrinterStatus; no money-path.
 - [ ] **Phase 3.5** Remaining optional — packages/extraction, recipes/BOM, suppliers/PO (not authorized unless explicitly tasked). Tax cleanup stays deferred (3.5B).
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet
 - [ ] ADR-006 Multi-Location Architecture (design only; no code until approved)
