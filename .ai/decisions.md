@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Post-4.15 pilot-readiness audit (docs only)
+
+Audit of `modular-verticles` @ `5fee6df`, schema v75. **Restaurant: PILOT READY WITH CONDITIONS (78/100). Retail: NOT PILOT READY (57/100).** Product P0s are Retail-only (KDS `:3002` always up; Products admin addon fail-open). No money-path P0. No production code change. No Phase 4.16. Doc: `docs/05-production/post-phase-4.15-pilot-readiness-audit.md`. Human gates: signed artifact, OPS-01, PIN escrow, ADR-014 still Proposed.
+
 ## 2026-08-14 — Phase 4.15 Wastage stock (Implemented)
 
 Fourth `POST /products/:id/stock` action `wastage` decreases qty; ledger `reason=wastage`, `movement_type=adjustment`. Schema v75 CHECK unchanged. Doc: `phase-4.15-wastage-stock.md`.

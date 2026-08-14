@@ -2,6 +2,7 @@
 
 ## Production blockers (P0)
 
+- ⚠️ RISK: **Post-4.15 audit (2026-08-14)** — Restaurant **PILOT READY WITH CONDITIONS**; Retail **NOT PILOT READY**. Product P0s: KDS always binds `:3002` (`index.ts:698`); Products admin `isModuleEnabled('addons')` without `verticalId` can 404 catalog load. Doc: `docs/05-production/post-phase-4.15-pilot-readiness-audit.md`.
 - 🔒 SEC: **Final P0.6 audit GO WITH CONDITIONS** (score 78) — `p0.6-final-production-security-audit.md`. Electron A/B1/B2 closed. **FIN-01 CLOSED** (collectible = total − gross tender). **OPS-01:** guest Wi‑Fi + `kds_lan`/`lan` forbidden.
 - 🔒 SEC: LAN exposure is mode-gated (`network_mode`; default `localhost`). Cleartext HTTP/WS still applies on staff LAN when `kds_lan`/`lan` — guest Wi‑Fi unsupported; TLS deferred (**P1 accept with ops**).
 - 🔒 SEC: JWT in `safeStorage` (`jwt-secret.enc`). Residual: same-OS-user malware; Linux keyring (**P2**).
@@ -15,7 +16,7 @@
 
 ## Operational
 
-- ⚠️ RISK: **P1.5 DR PASS**; **P1.6 READY WITH CONDITIONS**; **full-app QA READY WITH CONDITIONS (82)** on TRAINING/QA artifact (`full-app-qa-report.md`). Remaining go-live blockers: production **signed/notarized** artifact, Master PIN escrow, OPS-01 on site, numeric backup policy **PENDING APPROVAL**, CEO/CTO/pilot sign-off, café training. Printer/new-machine JWT not café-verified.
+- ⚠️ RISK: **P1.5 DR PASS**; **P1.6 READY WITH CONDITIONS**; **post-4.15 supersedes P1.6 for vertical split** (Restaurant conditional go; Retail no-go). Remaining café go-live: production **signed/notarized** artifact, Master PIN escrow, OPS-01 on site, numeric backup policy **PENDING APPROVAL**, CEO/CTO/pilot sign-off, café training. Printer/new-machine JWT not café-verified. Cancel-after-pay restock is P1 (train or fix).
 - ⚠️ RISK: **QA-INV-TAGS-01** — fixed and verified on rebuilt TRAINING package (Inventory no longer crashes on double-encoded tags). Source + regression test still need commit into the release branch.
 - ⚠️ RISK: **QA-FIN01-OVERPAY-01** — **closed as false positive** (2026-08-13 pending-complete). Cash over-tender is intentional change; non-cash over remaining correctly 400.
 - ⚠️ RISK: **QA-FIN01-STATUS-01 (P2, display closed in 4.10)** — stored `payment_status`/`balance` may still be net-after-refund; Orders/Pay now use collectible outstanding. Do not “fix” by writing bill status. Rejection (`BILL_NO_OUTSTANDING_BALANCE`) must stay.

@@ -26,6 +26,8 @@
 - POS client identity: origin-scoped `localStorage` UUID (`flo_terminal_id`) sent as `X-Flo-Terminal-Id` on selected POS routes only. Not an auth credential.
 - LAN exposure: `settings.network_mode` = `localhost` | `kds_lan` | `lan` (default `localhost`). Bind hosts derived via `main/services/network-mode.ts`. Restart required.
 
+- **Pilot-readiness classification:** INTENTIONAL GAP vs ACCIDENTAL GAP vs PRODUCTION DEFECT. Frozen STRATEGY items are never P0. Unsigned artifacts and OPS-01 are human **conditions**, not product P0s. A vertical with a product P0 is **NOT PILOT READY**. Companion processes (`startKdsServer` / `startServerApp`) must be gated the same way HTTP remount is. Renderer `isModuleEnabled(id)` without composition `verticalId` is restaurant-fail-open.
+
 ## Mandate patterns (2026-08-12)
 
 - **Local-first / offline billing:** cloud and optional services must never block order create, pay, or kitchen fulfillment.
