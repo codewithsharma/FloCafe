@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Phase 4.6 Retail Product Variants (Discovery)
+
+Discovery: `docs/04-product/phase-4.6-retail-product-variants-discovery.md`. Catalog is 1 product = 1 stock bucket; no variant table; stubs unused. Sellable identity for ADR-011/012 already works if each SKU is a product row (Option A). True matrix/parent UX needs schema + policy. **Verdict: ADR REQUIRED** (propose ADR-013). **Implementation not started.**
+
 ## 2026-08-14 — Phase 4.5 Retail Exchange (Implemented)
 
 Composition per ADR-012: `main/lib/exchange-return-value.ts`, `main/lib/exchange-idempotency.ts`, `frontend/src/lib/exchange/coordinator.ts`, `ExchangeDialog` on Orders (retail-only). Leg order refund → replacement sale → optional restock. Schema v75 unchanged. Doc: `phase-4.5-retail-exchange.md`.

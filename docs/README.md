@@ -6,68 +6,68 @@ Evidence-based documentation for **Opervia** — a modular business platform. Ph
 
 ## Start here (platform)
 
-| Doc | Purpose |
-|-----|---------|
-| [`STRATEGY.md`](../STRATEGY.md) | CEO/CTO north star + pilot KPI |
-| [00-product/opervia-platform.md](00-product/opervia-platform.md) | Platform vision + 3-layer model |
-| [00-product/verticals.md](00-product/verticals.md) | Vertical compositions |
-| [00-product/principles.md](00-product/principles.md) | Architecture principles 1–10 |
-| [00-product/vision.md](00-product/vision.md) | CURRENT vs TARGET product vision |
-| [03-architecture/modular-architecture.md](03-architecture/modular-architecture.md) | Lego / modular model |
-| [03-architecture/architecture-gap-report.md](03-architecture/architecture-gap-report.md) | Phase 1 → Opervia gap (A–H) |
-| [14-decisions/ADR-010-opervia-platform.md](14-decisions/ADR-010-opervia-platform.md) | Brand + modular vision ADR |
-| [modules/README.md](modules/README.md) | Module index |
+| Doc                                                                                      | Purpose                          |
+| ---------------------------------------------------------------------------------------- | -------------------------------- |
+| [`STRATEGY.md`](../STRATEGY.md)                                                          | CEO/CTO north star + pilot KPI   |
+| [00-product/opervia-platform.md](00-product/opervia-platform.md)                         | Platform vision + 3-layer model  |
+| [00-product/verticals.md](00-product/verticals.md)                                       | Vertical compositions            |
+| [00-product/principles.md](00-product/principles.md)                                     | Architecture principles 1–10     |
+| [00-product/vision.md](00-product/vision.md)                                             | CURRENT vs TARGET product vision |
+| [03-architecture/modular-architecture.md](03-architecture/modular-architecture.md)       | Lego / modular model             |
+| [03-architecture/architecture-gap-report.md](03-architecture/architecture-gap-report.md) | Phase 1 → Opervia gap (A–H)      |
+| [14-decisions/ADR-010-opervia-platform.md](14-decisions/ADR-010-opervia-platform.md)     | Brand + modular vision ADR       |
+| [modules/README.md](modules/README.md)                                                   | Module index                     |
 
 ## Repository state
 
-| Item | Value |
-|------|-------|
-| Product brand | Opervia (`package.json` `productName`) |
-| Phase 1 vertical | Opervia Restaurant |
-| Version | 3.0.5 (`package.json`) |
-| Schema version | 74 (`main/db.ts`) |
-| Origin | `codewithsharma/FloCafe` |
-| Upstream | `FreeOpenSourcePOS/FloCafe` |
+| Item             | Value                                  |
+| ---------------- | -------------------------------------- |
+| Product brand    | Opervia (`package.json` `productName`) |
+| Phase 1 vertical | Opervia Restaurant                     |
+| Version          | 3.0.5 (`package.json`)                 |
+| Schema version   | 74 (`main/db.ts`)                      |
+| Origin           | `codewithsharma/FloCafe`               |
+| Upstream         | `FreeOpenSourcePOS/FloCafe`            |
 
 ## What this documentation contains
 
 This `docs/` tree is the **Opervia documentation system**. It supplements (does not replace) existing FloCafe operational docs:
 
-| Existing doc | Purpose |
-|--------------|---------|
-| `docs/API.md` | Legacy API reference |
-| `docs/tax-packs.md` | Tax pack authoring |
-| `docs/printers.md` | Printer setup |
-| `docs/linux.md` | Linux installation |
+| Existing doc                   | Purpose                     |
+| ------------------------------ | --------------------------- |
+| `docs/API.md`                  | Legacy API reference        |
+| `docs/tax-packs.md`            | Tax pack authoring          |
+| `docs/printers.md`             | Printer setup               |
+| `docs/linux.md`                | Linux installation          |
 | `docs/security-audit-2.7.0.md` | Security audit (historical) |
-| `docs/cloud-v2-plan.md` | Cloud integration plan |
+| `docs/cloud-v2-plan.md`        | Cloud integration plan      |
 
 ## Documentation map
 
-| Section | Path | Contents |
-|---------|------|----------|
-| Product | [00-product/](00-product/) | Vision, Opervia platform, verticals, principles, PRD, features, roadmap |
-| Requirements | [01-requirements/](01-requirements/) | Functional/non-functional requirements |
-| Design | [02-design/](02-design/) | UX, flows, design system |
-| Architecture | [03-architecture/](03-architecture/) | System + modular / vertical architecture |
-| Modules | [modules/](modules/) | Planned reusable module index |
-| Technology | [04-technology/](04-technology/) | Tech stack, dependencies, ADR summary |
-| API | [05-api/](05-api/) | Auth, authorization, error handling |
-| Database | [06-database/](06-database/) | Schema, migrations, data model |
-| Security | [07-security/](07-security/) | Threat model, permissions, audit findings |
-| Development | [08-development/](08-development/) | Setup, standards, git workflow |
-| Testing | [09-testing/](09-testing/) | Strategy, unit, integration, E2E |
-| AI (optional) | [10-ai/](10-ai/) | Future optional AI module |
-| DevOps | [11-devops/](11-devops/) | CI/CD, deployment, configuration |
-| Observability | [12-observability/](12-observability/) | Logging, metrics (gaps documented) |
-| Operations | [13-operations/](13-operations/) | Runbooks, backup, disaster recovery |
-| Decisions | [14-decisions/](14-decisions/) | Architecture Decision Records |
-| Project mgmt | [15-project-management/](15-project-management/) | Plans, RFCs, **historical audits** (preserve names) |
-| Release | [16-release/](16-release/) | Checklists, production readiness |
+| Section       | Path                                             | Contents                                                                |
+| ------------- | ------------------------------------------------ | ----------------------------------------------------------------------- |
+| Product       | [00-product/](00-product/)                       | Vision, Opervia platform, verticals, principles, PRD, features, roadmap |
+| Requirements  | [01-requirements/](01-requirements/)             | Functional/non-functional requirements                                  |
+| Design        | [02-design/](02-design/)                         | UX, flows, design system                                                |
+| Architecture  | [03-architecture/](03-architecture/)             | System + modular / vertical architecture                                |
+| Modules       | [modules/](modules/)                             | Planned reusable module index                                           |
+| Technology    | [04-technology/](04-technology/)                 | Tech stack, dependencies, ADR summary                                   |
+| API           | [05-api/](05-api/)                               | Auth, authorization, error handling                                     |
+| Database      | [06-database/](06-database/)                     | Schema, migrations, data model                                          |
+| Security      | [07-security/](07-security/)                     | Threat model, permissions, audit findings                               |
+| Development   | [08-development/](08-development/)               | Setup, standards, git workflow                                          |
+| Testing       | [09-testing/](09-testing/)                       | Strategy, unit, integration, E2E                                        |
+| AI (optional) | [10-ai/](10-ai/)                                 | Future optional AI module                                               |
+| DevOps        | [11-devops/](11-devops/)                         | CI/CD, deployment, configuration                                        |
+| Observability | [12-observability/](12-observability/)           | Logging, metrics (gaps documented)                                      |
+| Operations    | [13-operations/](13-operations/)                 | Runbooks, backup, disaster recovery                                     |
+| Decisions     | [14-decisions/](14-decisions/)                   | Architecture Decision Records                                           |
+| Project mgmt  | [15-project-management/](15-project-management/) | Plans, RFCs, **historical audits** (preserve names)                     |
+| Release       | [16-release/](16-release/)                       | Checklists, production readiness                                        |
 
 ## Current project state (Opervia Restaurant / Phase 1)
 
-**VERIFIED:** Electron 43 desktop POS with three LAN servers (ports 3001/3002/3003), SQLite WAL database, Next.js 16 static frontend, Express 5 API, WebSocket KDS, JWT auth with five roles, schema v74, extensive test suite.
+**VERIFIED:** Electron 43 desktop POS with three LAN servers (ports 3001/3002/3003), SQLite WAL database, Next.js 16 static frontend, Express 5 API, WebSocket KDS, JWT auth with five roles, schema **v75**, extensive test suite.
 
 **Strengths:** Offline-first, payment/tax/KDS coverage, cross-platform packaging, tax pack system, backup/restore, shifts/refunds/day-close.
 
@@ -89,12 +89,14 @@ See [vision.md](00-product/vision.md), [opervia-platform.md](00-product/opervia-
 ## How to use these docs
 
 ### For product managers
+
 1. [opervia-platform.md](00-product/opervia-platform.md) — platform vision
 2. [feature-list.md](00-product/feature-list.md) — what exists vs planned
 3. [roadmap.md](00-product/roadmap.md) — priorities
 4. [master-implementation-plan.md](15-project-management/master-implementation-plan.md) — execution plan
 
 ### For engineers
+
 1. [modular-architecture.md](03-architecture/modular-architecture.md) — TARGET modular model
 2. [architecture.md](03-architecture/architecture.md) — CURRENT system overview
 3. [tech-stack.md](04-technology/tech-stack.md) — verified versions
@@ -102,6 +104,7 @@ See [vision.md](00-product/vision.md), [opervia-platform.md](00-product/opervia-
 5. [test-strategy.md](09-testing/test-strategy.md) — verification approach
 
 ### For security review
+
 1. [security.md](07-security/security.md)
 2. [threat-model.md](07-security/threat-model.md)
 3. Existing audit: [security-audit-2.7.0.md](security-audit-2.7.0.md)
@@ -110,14 +113,14 @@ See [vision.md](00-product/vision.md), [opervia-platform.md](00-product/opervia-
 
 Every document distinguishes:
 
-| Label | Meaning |
-|-------|---------|
-| **CURRENT STATE** | Verified in codebase today (Opervia Restaurant Phase 1) |
-| **TARGET STATE** | Opervia modular platform planned evolution |
-| **PLANNED / PROPOSED / NOT IMPLEMENTED** | Not in code — do not treat as shipped |
-| **VERIFIED** | Confirmed from source files |
-| **INFERRED** | Strongly implied, not explicitly documented |
-| **UNKNOWN** | Cannot establish from repository |
+| Label                                    | Meaning                                                 |
+| ---------------------------------------- | ------------------------------------------------------- |
+| **CURRENT STATE**                        | Verified in codebase today (Opervia Restaurant Phase 1) |
+| **TARGET STATE**                         | Opervia modular platform planned evolution              |
+| **PLANNED / PROPOSED / NOT IMPLEMENTED** | Not in code — do not treat as shipped                   |
+| **VERIFIED**                             | Confirmed from source files                             |
+| **INFERRED**                             | Strongly implied, not explicitly documented             |
+| **UNKNOWN**                              | Cannot establish from repository                        |
 
 ### Source-of-truth rules
 
@@ -133,7 +136,7 @@ Every document distinguishes:
 package.json              Version, productName (Opervia), build config
 STRATEGY.md               Canonical strategy
 main/index.ts             Electron entry, startup sequence
-main/db.ts                Schema, migrations (v74), DB utilities
+main/db.ts                Schema, migrations (v75), DB utilities
 main/routes/index.ts      API route registry
 main/server.ts            Main API server (:3001)
 frontend/package.json     Frontend dependencies
@@ -147,6 +150,7 @@ AGENTS.md                 Agent/developer conventions
 ## Maintaining this documentation
 
 Update docs when:
+
 - Schema version increments (update `06-database/`)
 - New routes or features ship (update `00-product/feature-list.md`, `05-api/`)
 - Architecture changes (new ADR in `14-decisions/`)

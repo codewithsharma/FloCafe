@@ -1,34 +1,38 @@
 # Product Requirements Document
 
 ## Document status
-- **FloCafe CURRENT STATE:** v3.0.5 (verified `package.json`)
-- **RestaurantOS TARGET STATE:** Evolution plan — see `vision.md`, `roadmap.md`
+
+- **Opervia CURRENT STATE:** v3.0.5 (verified `package.json`); schema **v75**
+- **TARGET STATE:** Modular platform depth after pilots — see `vision.md`, `roadmap.md`, `STRATEGY.md`
 
 ## Executive summary
 
-RestaurantOS evolves the FloCafe fork into a production-grade restaurant operating platform. The existing Electron + SQLite + Express architecture remains the foundation.
+Opervia Restaurant is a production-grade local-first café/restaurant POS (Electron + SQLite + Express). The modular registry and deploy/start verticals (`restaurant`, `retail`) extend that foundation without rewriting Phase 1.
 
-## Current product (FloCafe)
+## Current product (Opervia Restaurant)
 
-Single-location, offline-first desktop POS with KDS, printing, CRM, loyalty, tax packs, and optional cloud/WhatsApp integrations. Evidence: `docs/00-product/feature-list.md`.
+Single-location, offline-first desktop POS with KDS, printing, CRM, loyalty, tax packs, shifts, day close, money refunds, and optional cloud/WhatsApp/Drive integrations. Evidence: `docs/00-product/feature-list.md`.
 
-## Target product (RestaurantOS)
+**Also available:** Opervia Retail as `ACTIVE_VERTICAL_ID=retail` (shared commerce composition; partial retail UX).
 
-Same local-first core plus: shift management, refunds, inventory ledger, audit logging, multi-location readiness, and integration surfaces — phased per `roadmap.md`.
+## Target product (platform depth)
 
-## Success metrics (TARGET)
+Same local-first core plus: inventory ledger UI, recipes/BOM, procurement, multi-location readiness (ADR-006), integration surfaces — phased per `STRATEGY.md`. Do not treat TARGET items as shipped.
 
-| Metric | Target |
-|--------|--------|
-| Order completion uptime | 99.9% during service hours |
-| Migration success rate | 100% on upgrade-path tests |
-| Payment integrity | Zero decimal drift (existing tests) |
-| Offline operation | Full POS without network |
+## Success metrics (TARGET / pilot)
 
-## Out of scope
+| Metric                  | Target                                     |
+| ----------------------- | ------------------------------------------ |
+| Pilot reliability       | 3 cafés × 30 days × zero critical failures |
+| Order completion uptime | 99.9% during service hours                 |
+| Migration success rate  | 100% on upgrade-path tests                 |
+| Payment integrity       | Zero decimal drift (existing tests)        |
+| Offline operation       | Full POS without network                   |
 
-Microservices, mandatory cloud, AI-dependent core flows.
+## Out of scope (now)
+
+Microservices, mandatory cloud, AI-dependent core flows, payment terminals, aggregators — see `STRATEGY.md` “Not working on.”
 
 ## Traceability
 
-Requirements → `01-requirements/` · Architecture → `03-architecture/` · Gaps → `15-project-management/implementation-plan.md`
+Requirements → `01-requirements/` · Architecture → `03-architecture/` · Feature truth → `feature-list.md` · Strategy → `STRATEGY.md`

@@ -14,11 +14,12 @@ See [opervia-platform.md](opervia-platform.md) · [verticals.md](verticals.md) �
 
 ## CURRENT PRODUCT — Opervia Restaurant (Phase 1)
 
-A **mature local-first café POS with KDS and operational management capabilities** — Electron desktop, SQLite, offline billing. Evidence: `package.json` (`productName: Opervia`), `main/index.ts`, schema v74, `STRATEGY.md`.
+A **mature local-first café POS with KDS and operational management capabilities** — Electron desktop, SQLite, offline billing. Evidence: `package.json` (`productName: Opervia`), `main/index.ts`, schema **v75**, `STRATEGY.md`.
 
 **Honest description (use this):** local-first, offline-capable restaurant and café POS (Opervia Restaurant vertical) designed to keep businesses operating when the internet is unavailable.
 
 Core value today:
+
 - Counter and table service on one machine
 - SQLite persistence with automatic migration and backup
 - Kitchen display (KDS), kitchen stations, KOT printing
@@ -34,9 +35,9 @@ MIT / free core; no tiered feature gating in code. Packaging/UI brand consolidat
 
 ## FUTURE — Opervia modular platform
 
-After pilot KPI (**3 cafés × 30 days × zero critical failures**), evolve the shared codebase into an explicit **Core + reusable modules + vertical compositions** model. Additional verticals (Retail, Grocery, Salon, Health & Beauty, Pharmacy, Hospitality, Custom) compose shared modules — they are **not** separate applications.
+After pilot KPI (**3 cafés × 30 days × zero critical failures**), deepen modular verticals beyond Restaurant. **Opervia Retail** already exists as a deploy/start composition (`ACTIVE_VERTICAL_ID=retail`) with shared commerce modules — retail-native UX depth is still incomplete. Additional verticals (Grocery, Salon, Health & Beauty, Pharmacy, Hospitality, Custom) remain PLANNED.
 
-Planned Restaurant depth (PLANNED — not built): inventory ledger, recipes/BOM, procurement, multi-location (ADR-006 first), cloud ops, accounting, payment terminals, aggregators, advanced analytics, optional AI.
+Planned Restaurant/platform depth (not fully built): recipes/BOM, procurement, multi-location (ADR-006 first), cloud ops, accounting, payment terminals, aggregators, advanced analytics, optional AI. (Append-only `inventory_movements` ledger + read API + owner/manager ledger UI at `/products/movements` exist at schema v75.)
 
 ### Guiding principles
 
@@ -50,20 +51,20 @@ Planned Restaurant depth (PLANNED — not built): inventory ledger, recipes/BOM,
 
 ### Branding map
 
-| Aspect | CURRENT | TARGET |
-|--------|---------|--------|
-| Brand | **Opervia** | **Opervia** (unchanged) |
-| Product you install | **Opervia Restaurant** | Same vertical + deeper modules; other verticals compose later |
-| Scope | Single-location POS + KDS + ops (shifts/cash/day close) | Modular platform; multi-vertical composition |
-| Architecture | LAN servers, 1 SQLite DB, static routes + settings flags | Same core; explicit module registry + vertical definitions |
-| Cloud | Optional FloAdmin coordination | Enhanced cloud ops (PLANNED; never blocks billing) |
-| Inventory | Product-level stock | Ledger + BOM + purchasing (PLANNED) |
-| Retired names | Nexora POS, Flo POS (active use) | Historical audits may retain old names |
+| Aspect              | CURRENT                                                            | TARGET                                             |
+| ------------------- | ------------------------------------------------------------------ | -------------------------------------------------- |
+| Brand               | **Opervia**                                                        | **Opervia** (unchanged)                            |
+| Product you install | **Opervia Restaurant** (default); Retail selectable via env        | Deeper retail UX + more verticals after pilots     |
+| Scope               | Single-location POS + KDS + ops (shifts/cash/day close/refunds)    | Modular platform; multi-vertical composition       |
+| Architecture        | LAN servers, 1 SQLite DB, module registry + fail-closed remount    | Same core; optional package extraction later       |
+| Cloud               | Optional FloAdmin coordination                                     | Enhanced cloud ops (PLANNED; never blocks billing) |
+| Inventory           | Product stock + v75 movement ledger API + `/products/movements` UI | BOM + purchasing (PLANNED)                         |
+| Retired names       | Nexora POS, Flo POS (active use)                                   | Historical audits may retain old names             |
 
 ## Evidence
 
 - Strategy: `STRATEGY.md`
 - Platform docs: `docs/00-product/opervia-platform.md`, gap report `docs/03-architecture/architecture-gap-report.md`
 - Execution backlog: `.ai/tasks.md`
-- Version: `package.json` `"version": "3.0.5"` · schema v74 in `main/db.ts`
+- Version: `package.json` `"version": "3.0.5"` · schema **v75** in `main/db.ts`
 - Fork: `origin` → `codewithsharma/FloCafe`, `upstream` → `FreeOpenSourcePOS/FloCafe`

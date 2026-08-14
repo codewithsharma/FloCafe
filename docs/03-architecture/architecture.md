@@ -8,7 +8,7 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Electron Main Process                         │
 │  main/index.ts                                                   │
-│  ├── initDatabase()          → flo.db (WAL, schema v66)         │
+│  ├── initDatabase()          → flo.db (WAL, schema v75)         │
 │  ├── startServer()           → :3001  API + static frontend     │
 │  ├── startKdsServer()        → :3002  KDS standalone            │
 │  ├── startServerApp()        → :3003  Waiter app                │
@@ -27,11 +27,11 @@
 
 ### Server responsibilities
 
-| Port | Module | Purpose | Auth |
-|------|--------|---------|------|
-| 3001 | `main/server.ts` | Full REST API, POS UI, KDS WebSocket | JWT (global except auth/health) |
-| 3002 | `main/kds-server.ts` | KDS UI + KDS REST + WS | chef/manager/owner |
-| 3003 | `main/server-app.ts` | Waiter UI, proxies to :3001 | waiter/manager/owner |
+| Port | Module               | Purpose                              | Auth                            |
+| ---- | -------------------- | ------------------------------------ | ------------------------------- |
+| 3001 | `main/server.ts`     | Full REST API, POS UI, KDS WebSocket | JWT (global except auth/health) |
+| 3002 | `main/kds-server.ts` | KDS UI + KDS REST + WS               | chef/manager/owner              |
+| 3003 | `main/server-app.ts` | Waiter UI, proxies to :3001          | waiter/manager/owner            |
 
 **Evidence:** `main/index.ts`, `AGENTS.md`, `README.md`
 
@@ -39,18 +39,18 @@
 
 - **SQLite** via `better-sqlite3` (sync API)
 - **Location:** OS userData dir when packaged; repo-adjacent in dev
-- **Migrations:** inline in `main/db.ts`, `PRAGMA user_version` 1→66
+- **Migrations:** inline in `main/db.ts`, `PRAGMA user_version` 1→75
 - **Maintenance lock:** 503 during backup/restore/initialize
 
 ### Communication patterns
 
-| Pattern | Usage |
-|---------|-------|
-| REST `/api/*` | All CRUD and business operations |
-| WebSocket `/kds` | Kitchen order realtime updates |
-| IPC (`main/ipc.ts`) | DB tools, settings, updates (desktop) |
-| mDNS | `flo.local` advertisement (`bonjour-service`) |
-| Cloud outbox | Durable HTTPS events to FloAdmin |
+| Pattern             | Usage                                         |
+| ------------------- | --------------------------------------------- |
+| REST `/api/*`       | All CRUD and business operations              |
+| WebSocket `/kds`    | Kitchen order realtime updates                |
+| IPC (`main/ipc.ts`) | DB tools, settings, updates (desktop)         |
+| mDNS                | `flo.local` advertisement (`bonjour-service`) |
+| Cloud outbox        | Durable HTTPS events to FloAdmin              |
 
 ### Module boundaries (actual)
 
@@ -78,12 +78,12 @@ Do **not** introduce microservices, Kubernetes, or message brokers unless operat
 
 ## Architectural constraints
 
-| Constraint | Reason |
-|------------|--------|
-| Offline-first | Restaurant network reliability |
-| Single SQLite writer | better-sqlite3 sync model; WAL supports concurrent readers |
+| Constraint             | Reason                                                          |
+| ---------------------- | --------------------------------------------------------------- |
+| Offline-first          | Restaurant network reliability                                  |
+| Single SQLite writer   | better-sqlite3 sync model; WAL supports concurrent readers      |
 | Static frontend export | Electron loads `frontend/out` without Node server in production |
-| LAN binding 0.0.0.0 | KDS/tablet access on local network |
+| LAN binding 0.0.0.0    | KDS/tablet access on local network                              |
 
 ## Evidence files
 

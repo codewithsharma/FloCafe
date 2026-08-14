@@ -23,18 +23,20 @@
 </div>
 
 <p align="center">
-  <img src="docs/images/flo-cafe-pos.webp" alt="FloCafe POS screen showing product selection and an active dine-in order" width="100%">
+  <img src="docs/images/flo-cafe-pos.webp" alt="Opervia POS screen showing product selection and an active dine-in order" width="100%">
 </p>
 
-FloCafe runs on the business's own computer. Orders, customers, receipts, and backups stay in a local SQLite database, so the counter keeps working when the internet does not. Google Drive backup, WhatsApp bill delivery, and cloud-connected reporting are optional.
+Opervia runs on the business's own computer. Orders, customers, receipts, and backups stay in a local SQLite database, so the counter keeps working when the internet does not. Google Drive backup, WhatsApp bill delivery, and cloud-connected reporting are optional.
 
-If FloCafe helps your cafe, restaurant, cloud kitchen, bakery, or food truck, please star the repository. GitHub stars help more operators find a free open-source POS instead of assuming every restaurant system must be a paid cloud subscription.
+If Opervia helps your cafe, restaurant, cloud kitchen, bakery, or food truck, please star the repository (GitHub: `FreeOpenSourcePOS/FloCafe`). GitHub stars help more operators find a free open-source POS instead of assuming every restaurant system must be a paid cloud subscription.
 
 **Best-fit searches:** open-source POS, free restaurant POS, cafe POS, kitchen display system, KDS, self-hosted restaurant POS, offline-first POS, thermal printer POS.
 
-## Get FloCafe
+## Get Opervia
 
 Download the latest installer from [GitHub Releases](https://github.com/FreeOpenSourcePOS/FloCafe/releases), or use the app store for macOS and Windows.
+
+> **Naming note:** The product is **Opervia**. The GitHub repository, Linux package/`executableName` (`flocafe`), npm package (`flo-desktop`), and some store listings still use FloCafe/flo\* identifiers for upgrade continuity. Community links may still say FloPOS.
 
 <p>
   <a href="https://apps.apple.com/in/app/flo-cafe/id6763136018">
@@ -74,13 +76,13 @@ For Linux package choices, updates, FUSE, printing, and tray support, see [Linux
 
 ### System requirements
 
-| Requirement | Minimum |
-| --- | --- |
+| Requirement      | Minimum                                                           |
+| ---------------- | ----------------------------------------------------------------- |
 | Operating system | Windows 10+, macOS 12+, or a current supported Linux distribution |
-| Memory | 4 GB RAM |
-| Storage | 500 MB free space, plus room for local backups |
+| Memory           | 4 GB RAM                                                          |
+| Storage          | 500 MB free space, plus room for local backups                    |
 
-Node.js is only required to develop FloCafe, not to run a packaged release.
+Node.js is only required to develop Opervia, not to run a packaged release.
 
 <details>
 <summary>Uninstall a direct-download build</summary>
@@ -104,34 +106,37 @@ Both scripts ask whether to keep application data. Do not choose their data-purg
 
 </details>
 
-## Why FloCafe
+## Why Opervia
 
-FloCafe combines counter service and table service in one desktop app. A kitchen display can receive live orders while receipt printers and kitchen tickets use the same local setup. There is no hosted account required for the core POS.
+Opervia Restaurant combines counter service and table service in one desktop app. A kitchen display can receive live orders while receipt printers and kitchen tickets use the same local setup. There is no hosted account required for the core POS.
 
-It is free software. FloCafe has no tiers or paywalled features, and the code is available under the [MIT License](LICENSE).
+It is free software. Opervia has no tiers or paywalled features, and the code is available under the [MIT License](LICENSE). (Settings may show a subscription/plan façade — that is a stub, not billing.)
 
 ## What it handles
 
 - Counter, dine-in, takeaway, and delivery orders
 - Tables, held orders, modifiers, add-ons, discounts, and loyalty points
-- ESC/POS receipt printing over USB, network, and Bluetooth
+- ESC/POS receipt printing over USB, network, and WebUSB (Bluetooth printing is not built)
 - Kitchen display, kitchen stations, and kitchen order tickets
+- Shifts, cash reconciliation, day close, and money refunds
 - Product images, barcode lookup, and CSV menu import/export
 - Customer records, staff roles, sales reporting, and receipt history
 - Configurable tax packs and local overrides
-- English, Spanish, and Brazilian Portuguese
+- English, Spanish, and Brazilian Portuguese (i18n catalogs still migrating)
 
 Backups and restores are built in. Optional [Google Drive backup](docs/google-drive-setup.md) stores backup copies in the owner’s Drive. WhatsApp bill delivery can be enabled for businesses that use a paired phone.
 
+A production **Retail** vertical composition is selectable via `ACTIVE_VERTICAL_ID=retail` (shared commerce modules; no tables/KDS). Café pilots should leave this unset. See [verticals](docs/00-product/verticals.md).
+
 ## Direction
 
-FloCafe will remain local-first and free. Current work focuses on making the desktop POS easier to operate, expanding tax and country support, improving inventory and loyalty workflows, and allowing companion devices to work with the existing local install. Public discussions and planned work live in [GitHub Issues](https://github.com/FreeOpenSourcePOS/FloCafe/issues).
+Opervia will remain local-first and free. Current work focuses on café pilot reliability (see `STRATEGY.md`), then modular depth. Public discussions and planned work live in [GitHub Issues](https://github.com/FreeOpenSourcePOS/FloCafe/issues).
 
 ## Data, updates, and recovery
 
 The database and backups live in the operating system's user-data directory, separate from the installed application. Updating or reinstalling through the same distribution channel does not remove them.
 
-Before a pending migration runs, FloCafe creates a timestamped local backup. Migrations are additive and tracked with SQLite's `user_version` pragma. Use Settings → Database Tools → Backup before moving to another computer or switching distribution channels.
+Before a pending migration runs, Opervia creates a timestamped local backup. Migrations are additive and tracked with SQLite's `user_version` pragma (current schema **v75**). Use Settings → Database Tools → Backup before moving to another computer or switching distribution channels.
 
 If the app cannot start, do not delete the database first. Restore the latest backup from Settings → Database Tools, then [open an issue](https://github.com/FreeOpenSourcePOS/FloCafe/issues) with the app version, operating system, and logs.
 
@@ -140,11 +145,11 @@ If the app cannot start, do not delete the database first. Restore the latest ba
 ### Printers not printing
 
 1. Use Settings → Printers → **Test Print** first. As of 2.6.1 it shows the actual failure reason (offline, out of paper, cover open, a Windows driver error, a network timeout) instead of a generic message — read it, it usually tells you exactly what's wrong.
-2. **Network printers:** confirm the printer's IP address hasn't changed (check your router's DHCP lease list or set a static IP/DHCP reservation) and that it's on the same network as the machine running FloCafe.
-3. **Windows USB printers, especially with the manufacturer's own driver installed:** FloCafe sends raw ESC/POS bytes directly to the Windows print queue, bypassing the driver, which only works if the queue's *Print Processor* is the default `winprint`/`RAW`. Manufacturer "official" driver packages (Epson APD, Star, etc.) are usually GDI drivers meant to render formatted pages, and can register their own print processor or reject/garble a raw byte stream. Two things to try, in order:
+2. **Network printers:** confirm the printer's IP address hasn't changed (check your router's DHCP lease list or set a static IP/DHCP reservation) and that it's on the same network as the machine running Opervia.
+3. **Windows USB printers, especially with the manufacturer's own driver installed:** Opervia sends raw ESC/POS bytes directly to the Windows print queue, bypassing the driver, which only works if the queue's _Print Processor_ is the default `winprint`/`RAW`. Manufacturer "official" driver packages (Epson APD, Star, etc.) are usually GDI drivers meant to render formatted pages, and can register their own print processor or reject/garble a raw byte stream. Two things to try, in order:
    - Right-click the printer in Windows → **Printer Properties → Advanced tab → Print Processor** → confirm it's `winprint` with datatype `RAW`.
-   - If that doesn't help, add/reinstall the printer using Windows' built-in **"Generic / Text Only"** driver, or the manufacturer's dedicated raw/ESC-POS mode if their installer offers one as an alternative to their main GDI driver — then re-select it in FloCafe's printer settings, since renaming or reinstalling changes the exact queue name FloCafe has stored.
-4. **macOS/Linux (CUPS) printers:** if the print queue is disabled (commonly after the printer was unplugged), re-enable it from the OS's printer settings and the next print will go through — FloCafe detects and reports a disabled queue rather than silently failing.
+   - If that doesn't help, add/reinstall the printer using Windows' built-in **"Generic / Text Only"** driver, or the manufacturer's dedicated raw/ESC-POS mode if their installer offers one as an alternative to their main GDI driver — then re-select it in Opervia's printer settings, since renaming or reinstalling changes the exact queue name Opervia has stored.
+4. **macOS/Linux (CUPS) printers:** if the print queue is disabled (commonly after the printer was unplugged), re-enable it from the OS's printer settings and the next print will go through — Opervia detects and reports a disabled queue rather than silently failing.
 5. Still stuck? Open **Help → Open Logs Folder** (added in 2.6.1) and check `main.log` around the time of the failed print for a `[Printer]` line with the specific error, then [open an issue](https://github.com/FreeOpenSourcePOS/FloCafe/issues) with that line, your OS, printer make/model, and whether it's USB or network.
 
 ## Development
@@ -183,14 +188,14 @@ Next.js renderer
 └── React UI and Zustand client state
 ```
 
-| Layer | Technology |
-| --- | --- |
-| Desktop runtime | Electron |
-| Backend | Express and TypeScript |
-| Frontend | Next.js, React, Tailwind CSS, and shadcn/ui |
-| Database | SQLite via better-sqlite3 in WAL mode |
-| Realtime | WebSocket |
-| Printing | ESC/POS via node-thermal-printer |
+| Layer           | Technology                                  |
+| --------------- | ------------------------------------------- |
+| Desktop runtime | Electron                                    |
+| Backend         | Express and TypeScript                      |
+| Frontend        | Next.js, React, Tailwind CSS, and shadcn/ui |
+| Database        | SQLite via better-sqlite3 in WAL mode       |
+| Realtime        | WebSocket                                   |
+| Printing        | ESC/POS via node-thermal-printer            |
 
 ```text
 main/          Electron process, Express servers, SQLite, printing, and services

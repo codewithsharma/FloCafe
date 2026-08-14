@@ -1,40 +1,37 @@
 # Problem Statement
 
-## CURRENT STATE — Problems FloCafe addresses today
+## CURRENT STATE — Problems Opervia Restaurant addresses today
 
-**VERIFIED** from `README.md` and product positioning:
+**VERIFIED** from `README.md`, `STRATEGY.md`, and product positioning:
 
-1. **Cloud POS lock-in and per-seat fees** — FloCafe runs on the operator's hardware with no hosted account required for core POS.
+1. **Cloud POS lock-in and per-seat fees** — Opervia runs on the operator's hardware with no hosted account required for core POS.
 2. **Internet dependency** — Local SQLite + offline-first design keeps the counter operational during outages.
 3. **Small venue complexity** — Combines counter, dine-in, takeaway, delivery order types with tables, KDS, and thermal printing in one app.
 4. **Tax compliance fragmentation** — Country tax rules ship as signed versioned packs (`docs/tax-packs.md`), not hard-coded per release.
 
 ## CURRENT STATE — Limitations operators still face
 
-**VERIFIED** from codebase analysis:
+**VERIFIED** from codebase analysis (2026-08-14, schema v75):
 
-| Limitation | Evidence |
-|------------|----------|
-| Single location only | No `locations` or `terminals` tables in `main/db.ts` |
-| No shift/cash drawer management | No shift tables or routes; grep finds no shift workflow |
-| Basic inventory | `products.track_inventory`, `stock_quantity` only — no recipes, suppliers, POs |
-| No dedicated refund workflow | Voids/cancellations exist; no payment reversal/refund entity |
-| LAN traffic unencrypted | `docs/security-audit-2.7.0.md` SEC-01 |
-| No multi-device sync beyond KDS/Server App | Three servers share one DB on one machine |
-| Cloud is coordination, not source of truth | `main/services/cloud-sync.ts` outbox pattern |
+| Limitation                                 | Evidence                                                                                     |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| Single location only                       | No multi-location schema; ADR-006 frozen until pilots                                        |
+| Cash drawer hardware kick missing          | P1.1 — no ESC/POS drawer command in printer stack                                            |
+| Inventory depth limited                    | Stock + v75 `inventory_movements` API + `/products/movements` UI; no recipes, suppliers, POs |
+| Refund receipt print deferred              | Money refunds built (`refund.ts`); print path deferred                                       |
+| LAN traffic unencrypted when exposed       | `network_mode` kds_lan/lan; OPS-01 no guest Wi‑Fi; TLS deferred                              |
+| No multi-device sync beyond LAN clients    | Companions hit host API; one SQLite writer host                                              |
+| Cloud is coordination, not source of truth | `main/services/cloud-sync.ts` outbox pattern (non-blocking)                                  |
 
-## TARGET STATE — RestaurantOS problem scope
+**No longer accurate (do not repeat):** “no shift workflow,” “no refund entity” — both are built (M4–M6).
 
-RestaurantOS should solve, in priority order:
+## TARGET STATE — Platform problem scope
+
+After pilot KPI, Opervia should additionally address, in priority order:
 
 1. **Operational reliability** — production-grade error handling, observability, and recovery for 12+ hour service days.
-2. **Inventory intelligence** — move from product stock counts to ingredient-level control (PLANNED).
-3. **Multi-location readiness** — franchise/chain operators need centralized config with local execution (PLANNED).
-4. **Integration surface** — accounting, delivery aggregators, payment terminals (PLANNED).
-5. **Audit and compliance** — stronger audit trails for financial and staff actions (PARTIAL today via `print_logs`, `tax_config_audit`).
+2. **Deeper inventory / procurement** — ledger UI, recipes/BOM, suppliers (Phase 3.5+).
+3. **Multi-location** — only after ADR-006.
+4. **Additional verticals** — Retail composition exists; retail UX depth and other verticals remain incomplete/planned.
 
-## OUT OF SCOPE (for now)
-
-- Replacing SQLite with PostgreSQL for single-terminal installs
-- Mandatory cloud subscription
-- AI-dependent core workflows
+See [`vision.md`](vision.md) · [`verticals.md`](verticals.md) · [`STRATEGY.md`](../../STRATEGY.md).

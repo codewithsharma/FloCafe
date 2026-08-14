@@ -1,6 +1,6 @@
-# Contributing to FloCafe
+# Contributing to Opervia
 
-FloCafe accepts code, tests, documentation, translations, and bug reports. Start with an [open issue](https://github.com/FreeOpenSourcePOS/FloCafe/issues) so you do not duplicate work or build against a direction the project is not taking. For a substantial feature, discuss the approach in an issue before writing code.
+Opervia (GitHub repository: FloCafe) accepts code, tests, documentation, translations, and bug reports. Start with an [open issue](https://github.com/FreeOpenSourcePOS/FloCafe/issues) so you do not duplicate work or build against a direction the project is not taking. For a substantial feature, discuss the approach in an issue before writing code.
 
 All contributors must follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-`npm run dev` clears FloCafe's local development ports, builds the frontend and backend, then starts Electron. For faster backend work without Electron:
+`npm run dev` clears Opervia's local development ports, builds the frontend and backend, then starts Electron. For faster backend work without Electron:
 
 ```sh
 node dev-server.js

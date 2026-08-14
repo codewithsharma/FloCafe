@@ -15,7 +15,7 @@ last_updated: 2026-08-13
 
 **Phase 1 vertical (CURRENT):** **Opervia Restaurant** — local-first Electron café/restaurant POS (formerly branded Nexora POS / Flo POS). Nexora is **retired** as an active product name.
 
-**Future verticals (PLANNED):** Retail, Grocery, Salon, Health & Beauty, Pharmacy, Hospitality, Custom. See [`docs/00-product/verticals.md`](docs/00-product/verticals.md).
+**Future verticals (PLANNED):** Grocery, Salon, Health & Beauty, Pharmacy, Hospitality, Custom. **Retail** is a production-selectable composition (`ACTIVE_VERTICAL_ID=retail`) with partial UX — see [`docs/00-product/verticals.md`](docs/00-product/verticals.md).
 
 **Architecture vision:** [`docs/00-product/opervia-platform.md`](docs/00-product/opervia-platform.md) · ADR-010 · gap report in `docs/03-architecture/architecture-gap-report.md`.
 **Do not** rewrite Phase 1 into packages/microservices before pilot reliability is proven.
