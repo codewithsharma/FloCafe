@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Phase 4.11 Inventory valuation (Implemented)
+
+Read-only `GET /api/reports/inventory-valuation`: catalog `cost` × `stock_quantity` for tracked products. UI `/products/valuation`. Not WAC/FIFO. Schema v75. Doc: `phase-4.11-inventory-valuation.md`.
+
 ## 2026-08-14 — Phase 4.10 FIN-01 collectible display (Implemented)
 
 Display-only. `frontend/src/lib/bill-collectible.ts` derives collectible = total − gross `payment_details` tender. Orders Checkout + PaymentModal remaining due use collectible, not net `bill.balance`. No `UPDATE bills`. Schema v75. Doc: `phase-4.10-fin01-outstanding-display.md`.

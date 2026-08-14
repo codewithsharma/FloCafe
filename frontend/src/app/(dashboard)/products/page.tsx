@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import { Plus, FileSpreadsheet, History, AlertTriangle } from 'lucide-react';
+import { Plus, FileSpreadsheet, History, AlertTriangle, CircleDollarSign } from 'lucide-react';
 import type { Product, Category, AddonGroup } from '@/lib/types';
 import {
   ProductsTabBar,
@@ -638,6 +638,11 @@ export default function ProductsPage() {
                 <Button variant="outline" asChild>
                   <Link href="/products/low-stock">
                     <AlertTriangle size={16} className="mr-1" /> {t('lowStock.title')}
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/products/valuation">
+                    <CircleDollarSign size={16} className="mr-1" /> {t('inventoryValuation.title')}
                   </Link>
                 </Button>
                 <Button variant="outline" asChild>

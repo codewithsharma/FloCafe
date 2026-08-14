@@ -268,5 +268,6 @@ export function getRouteTitleKey(pathname: string): string {
   if (path === '/addon-groups') return 'flo.nav.inventory';
   if (path === '/products/movements') return 'inventoryMovements.title';
   if (path === '/products/low-stock') return 'lowStock.title';
+  if (path === '/products/valuation') return 'inventoryValuation.title';
   return 'flo.nav.home';
 }

@@ -20,6 +20,30 @@ import {
   validateBillsCsvDateRange,
 } from '../services/bills-csv-export';
 
+function money2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+function catalogValuationLine(row: {
+  id: string;
+  sku: string | null;
+  name: string;
+  stock_quantity: number | null;
+  cost: number | null;
+}) {
+  const unitCost = Number(row.cost) || 0;
+  const onHandQty = Number(row.stock_quantity) || 0;
+  return {
+    product_id: row.id,
+    sku: row.sku || '',
+    name: row.name,
+    on_hand_qty: onHandQty,
+    unit_cost: unitCost,
+    extended_cost: money2(unitCost * onHandQty),
+    zero_cost: unitCost === 0,
+  };
+}
+
 const router = Router();
 
 const DAY_CLOSE_ROLES = ['owner', 'manager'] as const;
@@ -773,6 +797,46 @@ router.get('/insights', requireRole('owner', 'manager'), (req: Request, res: Res
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+router.get(
+  '/inventory-valuation',
+  requireRole('owner', 'manager'),
+  (_req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const rows = db
+        .prepare(
+          `SELECT id, sku, name, stock_quantity, cost
+           FROM products
+           WHERE deleted_at IS NULL AND track_inventory = 1
+           ORDER BY name COLLATE NOCASE, id`,
+        )
+        .all() as Array<{
+        id: string;
+        sku: string | null;
+        name: string;
+        stock_quantity: number | null;
+        cost: number | null;
+      }>;
+      const lines = rows.map(catalogValuationLine);
+      const totals = {
+        on_hand_qty: money2(lines.reduce((sum, line) => sum + line.on_hand_qty, 0)),
+        extended_cost: money2(lines.reduce((sum, line) => sum + line.extended_cost, 0)),
+        line_count: lines.length,
+        zero_cost_count: lines.filter((line) => line.zero_cost).length,
+      };
+      res.json({
+        currency: String(getSettingValue('currency') || 'INR').toUpperCase(),
+        as_of: new Date().toISOString(),
+        lines,
+        totals,
+      });
+    } catch (error: unknown) {
+      console.error('[API] Inventory valuation failed:', error);
+      res.status(500).json({ error: 'Internal error' });
+    }
+  },
+);
 
 router.get('/export/bills.csv', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {

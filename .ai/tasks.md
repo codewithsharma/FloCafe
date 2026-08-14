@@ -119,7 +119,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Phase 4.8** Reports multi-day range picker — start/end dates; 93-day client cap; `npm run test:phase-4.8`
 - [x] **Phase 4.9** Customer deactivate — `POST /api/customers/:id/deactivate`; owner/manager; `npm run test:phase-4.9`
 - [x] **Phase 4.10** FIN-01 collectible outstanding display (`docs/04-product/phase-4.10-fin01-outstanding-display.md`; `npm run test:phase-4.10`)
-- [ ] **Phase 4.11** Inventory on-hand valuation report (`prompts/phases/phase-4.11.md`)
+- [x] **Phase 4.11** Inventory on-hand valuation report (`docs/04-product/phase-4.11-inventory-valuation.md`; `npm run test:phase-4.11`)
 - [ ] **Phase 4.12** Retail POS fulfillment-type honesty (`prompts/phases/phase-4.12.md`)
 - [ ] **Phase 4.13** Table merge discovery (`prompts/phases/phase-4.13.md`)
 - [ ] **Phase 4.14** Service charge ADR (`prompts/phases/phase-4.14.md`)

@@ -5,6 +5,7 @@
 - [phase-4.8.md](phase-4.8.md) — Reports multi-day range picker
 - [phase-4.9.md](phase-4.9.md) — Customer deactivate lifecycle
 - [phase-4.10.md](phase-4.10.md) — FIN-01 collectible outstanding display
+- [phase-4.11.md](phase-4.11.md) — Inventory on-hand valuation report
 
 When a phase in `prompts/phases/` is genuinely complete (all gates in that prompt’s Completion Criteria), either:
 

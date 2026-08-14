@@ -1,9 +1,9 @@
 # ACTIVE PHASE
 
-Phase: 4.11
+Phase: 4.12
 
 Prompt:
-prompts/phases/phase-4.11.md
+prompts/phases/phase-4.12.md
 
 Status:
 ACTIVE
