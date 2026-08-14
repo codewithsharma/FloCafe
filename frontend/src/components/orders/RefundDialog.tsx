@@ -10,6 +10,12 @@ import {
 } from '@/components/ui/dialog';
 import { useI18n } from '@/hooks/useI18n';
 
+export interface RefundRestockLineOption {
+  orderItemId: string;
+  productName: string;
+  maxQuantity: number;
+}
+
 export interface RefundDialogState {
   billId: number;
   orderNumber?: string;
@@ -17,6 +23,12 @@ export interface RefundDialogState {
   overridePin: string;
   reason: string;
   amount: string;
+  /** Retail-only: offer optional restock after money refund. */
+  restockEnabled?: boolean;
+  restockLines?: RefundRestockLineOption[];
+  restockChecked?: boolean;
+  restockOrderItemId?: string;
+  restockQuantity?: string;
 }
 
 export interface RefundDialogProps {
@@ -26,6 +38,11 @@ export interface RefundDialogProps {
   onChange: (state: RefundDialogState) => void;
   onConfirm: () => void;
   refunding: boolean;
+}
+
+function selectedLine(state: RefundDialogState): RefundRestockLineOption | undefined {
+  const lines = state.restockLines ?? [];
+  return lines.find((line) => line.orderItemId === state.restockOrderItemId) ?? lines[0];
 }
 
 export function RefundDialog({
@@ -40,7 +57,18 @@ export function RefundDialog({
 
   if (!state) return null;
 
-  const canConfirm = Boolean(state.reason.trim() && state.overridePin);
+  const showRestock = Boolean(state.restockEnabled && (state.restockLines?.length ?? 0) > 0);
+  const line = showRestock ? selectedLine(state) : undefined;
+  const restockQty = Number(state.restockQuantity);
+  const restockQtyOk =
+    !state.restockChecked ||
+    (line != null &&
+      Number.isFinite(restockQty) &&
+      restockQty > 0 &&
+      restockQty <= line.maxQuantity &&
+      Boolean(state.restockOrderItemId));
+
+  const canConfirm = Boolean(state.reason.trim() && state.overridePin && restockQtyOk);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -55,7 +83,10 @@ export function RefundDialog({
 
         <div className="space-y-4">
           <div>
-            <label htmlFor="refundReason" className="block text-small font-medium text-flo-text mb-1">
+            <label
+              htmlFor="refundReason"
+              className="block text-small font-medium text-flo-text mb-1"
+            >
               {t('orders.refundReason')}
             </label>
             <input
@@ -69,7 +100,10 @@ export function RefundDialog({
           </div>
 
           <div>
-            <label htmlFor="refundAmount" className="block text-small font-medium text-flo-text mb-1">
+            <label
+              htmlFor="refundAmount"
+              className="block text-small font-medium text-flo-text mb-1"
+            >
               {t('orders.refundAmount')}
             </label>
             <input
@@ -83,8 +117,90 @@ export function RefundDialog({
             />
           </div>
 
+          {showRestock && line ? (
+            <div className="space-y-3 rounded-flo-md border border-flo-border p-3">
+              <label className="flex items-start gap-2 text-small text-flo-text">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={Boolean(state.restockChecked)}
+                  onChange={(e) =>
+                    onChange({
+                      ...state,
+                      restockChecked: e.target.checked,
+                      restockOrderItemId: state.restockOrderItemId || line.orderItemId,
+                      restockQuantity:
+                        state.restockQuantity || String(Math.min(1, line.maxQuantity)),
+                    })
+                  }
+                />
+                <span>{t('orders.restockReturnedItem')}</span>
+              </label>
+
+              {state.restockChecked ? (
+                <>
+                  <div>
+                    <label
+                      htmlFor="refundRestockItem"
+                      className="block text-small font-medium text-flo-text mb-1"
+                    >
+                      {t('orders.restockItem')}
+                    </label>
+                    <select
+                      id="refundRestockItem"
+                      value={state.restockOrderItemId || line.orderItemId}
+                      onChange={(e) => {
+                        const next = (state.restockLines ?? []).find(
+                          (l) => l.orderItemId === e.target.value,
+                        );
+                        onChange({
+                          ...state,
+                          restockOrderItemId: e.target.value,
+                          restockQuantity: next
+                            ? String(Math.min(Number(state.restockQuantity) || 1, next.maxQuantity))
+                            : state.restockQuantity,
+                        });
+                      }}
+                      className="w-full px-3 py-2 min-h-11 border border-flo-border rounded-flo-md text-small text-flo-text focus:outline-none focus:ring-2 focus:ring-flo-brand-500"
+                    >
+                      {(state.restockLines ?? []).map((opt) => (
+                        <option key={opt.orderItemId} value={opt.orderItemId}>
+                          {opt.productName} (max {opt.maxQuantity})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="refundRestockQty"
+                      className="block text-small font-medium text-flo-text mb-1"
+                    >
+                      {t('orders.restockQuantity')}
+                    </label>
+                    <input
+                      id="refundRestockQty"
+                      type="number"
+                      min={1}
+                      max={line.maxQuantity}
+                      step={1}
+                      value={state.restockQuantity ?? '1'}
+                      onChange={(e) => onChange({ ...state, restockQuantity: e.target.value })}
+                      className="w-full px-3 py-2 min-h-11 border border-flo-border rounded-flo-md text-small text-flo-text focus:outline-none focus:ring-2 focus:ring-flo-brand-500"
+                    />
+                    <p className="mt-1 text-xs text-flo-text-secondary">
+                      {t('orders.restockQuantityHint', { max: String(line.maxQuantity) })}
+                    </p>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+
           <div>
-            <label htmlFor="refundOverridePin" className="block text-small font-medium text-flo-text mb-1">
+            <label
+              htmlFor="refundOverridePin"
+              className="block text-small font-medium text-flo-text mb-1"
+            >
               {t('orders.overridePinLabel')}
             </label>
             <input

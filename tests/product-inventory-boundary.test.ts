@@ -190,7 +190,10 @@ async function main() {
     // ── Refund policy unchanged ───────────────────────────────────────
     console.log('\n10. Refund still does not restock');
     const refundSrc = fs.readFileSync(path.join(__dirname, '../main/services/refund.ts'), 'utf8');
-    assert(refundSrc.includes('No inventory restock'), 'refund no restock');
+    assert(
+      refundSrc.includes('No inventory restock') || refundSrc.includes('does not restock'),
+      'refund no restock on money path',
+    );
 
     // ── Sale still works on a fresh product ───────────────────────────
     console.log('\n11. Sale still records sale movement');

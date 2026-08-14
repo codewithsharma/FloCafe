@@ -1,11 +1,12 @@
 /**
  * M6 — Bill payment refunds (money-critical).
  *
- * Known limitations (MVP):
+ * Known limitations (MVP money path):
  * - Card refunds are financial records only — no payment gateway reversal/chargeback.
  * - Earned loyalty cashback is not clawed back on refund.
  * - Refund receipt printing is best-effort outside this service (separate print API).
- * - No inventory restock or order reopen.
+ * - createBillRefund does not restock or reopen orders (ADR-009). No inventory restock on the money path.
+ * - Optional merchandise restock is a separate API (ADR-011 / refund-restock.ts).
  */
 
 import { getDatabase, now, parseRowJson, verifyPin, withTxn } from '../db';

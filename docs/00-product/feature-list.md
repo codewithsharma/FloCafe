@@ -105,7 +105,7 @@ Restaurant vertical only (`ACTIVE_VERTICAL_ID=restaurant` or unset). Not mounted
 | Service charge (configurable amount)  | [NOT BUILT] | Tax infra exists; order create hardcodes `service_charge: 0`                                                                         | —                    |
 | Tips                                  | [NOT BUILT] | No tip columns or workflow found                                                                                                     | —                    |
 | Refunds (money)                       | [BUILT]     | `main/routes/refunds.ts`, `main/services/refund.ts`, M6 + FIN-01; receipt print 3.6A + WebUSB parity 3.6G (`/printers/print-refund`) | High                 |
-| Returns / merchandise restock         | [PARTIAL]   | Money refund exists; refunds do **not** restock inventory by design today                                                            | Medium               |
+| Returns / merchandise restock         | [BUILT]     | Phase 4.2 / ADR-011: optional `POST /api/refunds/:id/restock` (explicit item+qty); Retail UI; Restaurant money-only                  | Medium               |
 | Payment terminal / Stripe integration | [FROZEN]    | Manual cash/card/wallet tenders only (`payment-tender.ts`); STRATEGY freeze                                                          | —                    |
 | SaaS subscription / seat billing      | [STUB]      | Settings shows tenant `plan`/`status` façade; no Stripe/billing engine                                                               | —                    |
 
@@ -166,18 +166,18 @@ Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webus
 
 ## Integrations & Cloud
 
-| Feature                        | Status      | Evidence                                                                                                                | Production readiness |
-| ------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| FloAdmin cloud sync            | [BUILT]     | `main/services/cloud-sync.ts`                                                                                           | Medium               |
-| WhatsApp bill delivery         | [BUILT]     | `main/services/whatsapp.ts`                                                                                             | Medium — Baileys RC  |
-| RevFlo mobile pairing          | [BUILT]     | `POST /api/mobile/pairing-code`                                                                                         | Medium               |
-| Server App (waiter :3003)      | [BUILT]     | `main/server-app.ts`                                                                                                    | Medium               |
-| Device management (mobile/KDS) | [PARTIAL]   | RevFlo pairing, KDS station assignment                                                                                  | Medium               |
-| Online ordering                | [NOT BUILT] | —                                                                                                                       | —                    |
-| Delivery aggregator APIs       | [FROZEN]    | Swiggy/Zomato/ONDC — STRATEGY freeze                                                                                    | —                    |
-| Accounting integrations        | [NOT BUILT] | —                                                                                                                       | —                    |
-| Retail vertical (composition)  | [PARTIAL]   | Composition selectable; Phase 4.1 floor usability (settings/tables/search). Still missing returns/restock, PO, variants | Medium               |
-| Modular platform registry      | [BUILT]     | `main/modules/` Phase 2 CLOSED; Phase 3.1–3.4 composition/remount                                                       | High                 |
+| Feature                        | Status      | Evidence                                                                                                                    | Production readiness |
+| ------------------------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| FloAdmin cloud sync            | [BUILT]     | `main/services/cloud-sync.ts`                                                                                               | Medium               |
+| WhatsApp bill delivery         | [BUILT]     | `main/services/whatsapp.ts`                                                                                                 | Medium — Baileys RC  |
+| RevFlo mobile pairing          | [BUILT]     | `POST /api/mobile/pairing-code`                                                                                             | Medium               |
+| Server App (waiter :3003)      | [BUILT]     | `main/server-app.ts`                                                                                                        | Medium               |
+| Device management (mobile/KDS) | [PARTIAL]   | RevFlo pairing, KDS station assignment                                                                                      | Medium               |
+| Online ordering                | [NOT BUILT] | —                                                                                                                           | —                    |
+| Delivery aggregator APIs       | [FROZEN]    | Swiggy/Zomato/ONDC — STRATEGY freeze                                                                                        | —                    |
+| Accounting integrations        | [NOT BUILT] | —                                                                                                                           | —                    |
+| Retail vertical (composition)  | [PARTIAL]   | Composition selectable; Phase 4.1 floor usability; Phase 4.2 optional refund restock. Still missing PO, variants, exchanges | Medium               |
+| Modular platform registry      | [BUILT]     | `main/modules/` Phase 2 CLOSED; Phase 3.1–3.4 composition/remount                                                           | High                 |
 
 ## Multi-location & Sync
 

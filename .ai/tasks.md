@@ -105,7 +105,8 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Phase 3.6G** WebUSB refund print parity — **COMPLETE** (`phase-3.6g-webusb-refund-print.md`). Server formats + client WebUSB send; network/USB path intact.
 - [x] **Phase 4 product completion discovery** — **COMPLETE** (`docs/04-product/phase-4-product-completion-discovery.md`). Verdict A → 4.1 Retail floor usability.
 - [x] **Phase 4.1** Retail floor usability — **COMPLETE** (`docs/04-product/phase-4.1-retail-floor-usability.md`). Settings tables gate; `/tables` fail-closed; POS name/SKU/barcode + scan feedback; schema v75.
-- [ ] **Phase 4.2** Merchandise return + optional restock (policy ADR first; money+inventory) — not authorized yet.
+- [x] **Phase 4.2 discovery** — **COMPLETE** (`docs/04-product/phase-4.2-retail-returns-restock-discovery.md`; `ADR-011` Accepted).
+- [x] **Phase 4.2 implementation** — Optional Retail refund restock (`docs/04-product/phase-4.2-retail-returns-restock.md`; `npm run test:phase-4.2`).
 - [ ] **Phase 4.3** Accounting export (CSV) — after authorized.
 - [ ] **Phase 3.5** Remaining optional — packages/extraction, recipes/BOM, suppliers/PO (not authorized unless explicitly tasked). Tax cleanup stays deferred (3.5B).
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet

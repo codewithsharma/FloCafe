@@ -162,12 +162,19 @@ async function main() {
 
     // Silence unused var from step 1
     void orderId;
-    // 8. Refund does not restock — document via refund service header + stock unchanged after money path if available
-    console.log('\n8. Refund policy: no inventory restock (service contract)');
+    // 8. Money refund does not restock — optional restock is a separate API (ADR-011)
+    console.log('\n8. Refund policy: money path does not restock (service contract)');
     const refundSrc = fs.readFileSync(path.join(__dirname, '../main/services/refund.ts'), 'utf8');
-    assert(refundSrc.includes('No inventory restock'), 'refund.ts documents no restock');
+    assert(
+      refundSrc.includes('does not restock') || refundSrc.includes('No inventory restock'),
+      'refund.ts documents money path does not restock',
+    );
     assert(!refundSrc.includes('restoreTrackedStock'), 'refund does not call inventory restore');
     assert(!refundSrc.includes('stock_quantity'), 'refund does not mutate stock_quantity');
+    assert(
+      !refundSrc.includes('restockTrackedForRefund'),
+      'createBillRefund does not call restockTrackedForRefund',
+    );
 
     const { failed } = getResults();
     if (failed > 0) {

@@ -34,6 +34,7 @@ import { auditLogRoutes } from './audit-logs';
 import { platformRoutes } from './platform';
 import { shiftRoutes } from './shifts';
 import { refundRoutes } from './refunds';
+import { refundRestockRoutes } from './refund-restock';
 import { getDatabase, getSettingValue, getCachedPairingCode, setCachedPairingCode } from '../db';
 import {
   assertFailClosedComposition,
@@ -110,6 +111,7 @@ export function registerRoutes(app: Express, options: RegisterRoutesOptions = {}
   mount('/api/bills', billRoutes, 'payment');
   mount('/api/bills', refundRoutes, 'refund');
   mount('/api/refunds', refundRoutes, 'refund');
+  mount('/api/refunds', refundRestockRoutes, 'refund');
   mount('/api/payment-methods', paymentMethodRoutes, 'payment');
   mount('/api/customers', customerRoutes, 'customer');
   mount('/api/staff', staffRoutes, 'staff');

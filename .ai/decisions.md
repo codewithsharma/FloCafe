@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-08-14 — Phase 4.2 Retail Returns & Restock (Accepted + Implemented)
+
+ADR-011 Accepted: optional restock after money refund for `retail` / `retail-test` only; explicit `order_item_id` + `quantity`; T2 separate txn; L2 ledger `adjustment` + `reference_type=refund`; schema v75 unchanged. Implementation: `POST /api/refunds/:id/restock`, InventoryService `restockTrackedForRefund`, Retail Orders UI checkbox. Docs: `phase-4.2-retail-returns-restock.md`. Restaurant remains money-only.
+
+## 2026-08-14 — Phase 4.2 Retail Returns & Restock (Discovery — ADR REQUIRED)
+
+Discovery: `docs/04-product/phase-4.2-retail-returns-restock-discovery.md`. Superseded by Accepted ADR-011 above.
+
 ## 2026-08-14 — Phase 4.1 Retail Floor Usability (Accepted + Implemented)
 
 Gate Restaurant floor chrome via existing `isModuleEnabled('tables')` / `isFeatureAvailable` + platform `verticalId` (no second vertical detector). `/tables` fail-closed like `/kds`. POS shared helpers: name/SKU/barcode filter + exact scan match; success/unknown toasts. Minimal API: `?search=` also LIKE barcode. Schema v75. Money/inventory unchanged. Doc: `docs/04-product/phase-4.1-retail-floor-usability.md`. Do not auto-start 4.2.

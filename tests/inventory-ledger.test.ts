@@ -245,7 +245,10 @@ async function main() {
     // ── Refund policy unchanged ─────────────────────────────────────────
     console.log('\n8. Refund still does not restock / write ledger');
     const refundSrc = fs.readFileSync(path.join(__dirname, '../main/services/refund.ts'), 'utf8');
-    assert(refundSrc.includes('No inventory restock'), 'refund documents no restock');
+    assert(
+      refundSrc.includes('No inventory restock') || refundSrc.includes('does not restock'),
+      'refund documents no restock on money path',
+    );
     assert(!refundSrc.includes('recordMovement'), 'refund does not record movements');
     assert(!refundSrc.includes('inventory_movements'), 'refund does not touch ledger');
 

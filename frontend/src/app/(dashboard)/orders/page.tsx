@@ -23,6 +23,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { useWhatsAppReady } from '@/hooks/useWhatsAppReady';
 import { PageHeader, LoadingState, EmptyState } from '@/components/flo';
 import { isFeatureAvailable, isModuleEnabled } from '@/lib/modules';
+import { usePlatformComposition } from '@/hooks/usePlatformComposition';
 import {
   OrdersFilterBar,
   OrderCard,
@@ -44,8 +45,12 @@ import {
   createRefundIdempotencyKey,
   extractRefundErrorMessage,
   postBillRefund,
+  postRefundRestock,
 } from '@/lib/refunds';
 import { printLatestRefundReceiptForBill, printRefundReceipt } from '@/lib/refund-receipt-print';
+
+const BLOCKED_RESTOCK_STATUSES = new Set(['voided', 'void_adjustment', 'cancelled']);
+const RESTOCK_VERTICALS = new Set(['retail', 'retail-test']);
 
 type FilterType = 'all' | 'active' | 'unpaid' | 'held';
 
@@ -58,6 +63,8 @@ const tabLabelKey: Record<FilterType, string> = {
 
 export default function OrdersPage() {
   const { currentTenant, user } = useAuthStore();
+  const { data: composition } = usePlatformComposition(!!currentTenant);
+  const restockVerticalEnabled = RESTOCK_VERTICALS.has(String(composition?.verticalId ?? ''));
   const { printBill } = usePrinterStore();
   const heldOrdersStore = useHeldOrdersStore();
   const router = useRouter();
@@ -590,8 +597,27 @@ export default function OrdersPage() {
       toast.success(t('orders.refundSuccess'));
       const billId = refundModal.billId;
       const refundId = result.refund?.id;
+      const wantRestock =
+        Boolean(refundModal.restockChecked) &&
+        Boolean(refundModal.restockOrderItemId) &&
+        restockVerticalEnabled;
+      const restockQty = Number(refundModal.restockQuantity);
+      const restockOrderItemId = refundModal.restockOrderItemId;
       setRefundModal(null);
       fetchOrders();
+
+      if (wantRestock && refundId && restockOrderItemId) {
+        try {
+          await postRefundRestock(
+            refundId,
+            { order_item_id: restockOrderItemId, quantity: restockQty },
+            { idempotencyKey: createRefundIdempotencyKey() },
+          );
+          toast.success(t('orders.restockSuccess'));
+        } catch (restockErr: unknown) {
+          toast.error(extractRefundErrorMessage(restockErr) || t('orders.restockFailed'));
+        }
+      }
 
       // Best-effort print — must never imply refund failure
       if (refundId) {
@@ -1032,6 +1058,18 @@ export default function OrdersPage() {
               onPrintRefund={() => order.bill && void handlePrintRefundReceipt(order.bill.id)}
               onRefund={() => {
                 if (!order.bill) return;
+                const restockLines = (order.items ?? [])
+                  .filter(
+                    (item) =>
+                      !BLOCKED_RESTOCK_STATUSES.has(String(item.status)) &&
+                      Number(item.quantity) > 0,
+                  )
+                  .map((item) => ({
+                    orderItemId: String(item.id),
+                    productName: item.product_name,
+                    maxQuantity: Number(item.quantity),
+                  }));
+                const first = restockLines[0];
                 setRefundModal({
                   billId: order.bill.id,
                   orderNumber: order.order_number,
@@ -1039,6 +1077,11 @@ export default function OrdersPage() {
                   overridePin: '',
                   reason: '',
                   amount: '',
+                  restockEnabled: restockVerticalEnabled,
+                  restockLines,
+                  restockChecked: false,
+                  restockOrderItemId: first?.orderItemId,
+                  restockQuantity: first ? '1' : '',
                 });
               }}
             />

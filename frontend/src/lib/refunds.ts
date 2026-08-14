@@ -3,6 +3,9 @@
  *
  * Thin wrapper around POST /bills/:id/refund. Terminal id is attached via api
  * interceptor (terminal-id.ts). Idempotency-Key is required by the backend.
+ *
+ * Phase 4.2 — Optional restock: POST /refunds/:id/restock (ADR-011). Separate
+ * from money refund; Retail / retail-test only.
  */
 import axios from 'axios';
 import api from './api';
@@ -50,6 +53,33 @@ export async function postBillRefund(
     headers: { 'Idempotency-Key': options.idempotencyKey },
   });
   return data as BillRefundResult;
+}
+
+export interface RefundRestockInput {
+  order_item_id: string | number;
+  quantity: number;
+}
+
+export interface RefundRestockResult {
+  restock: {
+    refund_id: string;
+    order_item_id: string;
+    product_id: string;
+    quantity: number;
+    stock_after: number;
+  };
+}
+
+/** Typed wrapper for POST /refunds/:id/restock (ADR-011). */
+export async function postRefundRestock(
+  refundId: string | number,
+  body: RefundRestockInput,
+  options: PostBillRefundOptions,
+): Promise<RefundRestockResult> {
+  const { data } = await api.post(`/refunds/${refundId}/restock`, body, {
+    headers: { 'Idempotency-Key': options.idempotencyKey },
+  });
+  return data as RefundRestockResult;
 }
 
 /**

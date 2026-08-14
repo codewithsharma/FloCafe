@@ -6,7 +6,8 @@
  * and bounded movement history reads (listInventoryMovements / HTTP GET).
  *
  * Does NOT own: product metadata (name/price/category), sales, payments, orders,
- * refunds (refunds intentionally do not restock — no refund ledger rows).
+ * refund money path (createBillRefund). Phase 4.2 optional restock is Inventory-owned
+ * via restockTrackedForRefund (adjustment + reference_type=refund) after money commits.
  *
  * Dual representation:
  *   products.stock_quantity     = current-state cache (runtime reads OK)
@@ -237,6 +238,59 @@ export function restoreTrackedStock(
     reason: ref?.reason ?? null,
     createdAt: updatedAt,
   });
+}
+
+/**
+ * Phase 4.2 — Refund restock (ADR-011 L2).
+ * movement_type=adjustment, reference_type=refund, reference_id=refund.id.
+ * Callers MUST be inside withTxn with money already committed separately.
+ */
+export function restockTrackedForRefund(
+  db: any,
+  product: StockTrackedProduct,
+  quantity: number,
+  args: { refundId: string | number; orderItemId: string | number },
+): { stockAfter: number; quantityDelta: number } {
+  if (!isTracking(product)) {
+    throw new InventoryServiceError(400, 'Product does not track inventory');
+  }
+  if (typeof quantity !== 'number' || !Number.isFinite(quantity) || quantity <= 0) {
+    throw new InventoryServiceError(400, 'Restock quantity must be a positive number');
+  }
+
+  const updatedAt = now();
+  db.prepare(
+    'UPDATE products SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
+  ).run(quantity, updatedAt, product.id);
+  const stockAfter = readStockAfter(db, product.id);
+  recordMovement(db, {
+    productId: product.id,
+    quantityDelta: quantity,
+    movementType: 'adjustment',
+    stockAfter,
+    referenceType: 'refund',
+    referenceId: args.refundId,
+    reason: `refund_restock:order_item:${args.orderItemId}`,
+    createdAt: updatedAt,
+  });
+  return { stockAfter, quantityDelta: quantity };
+}
+
+/** Sum prior refund_restock deltas for an order line (all refunds). */
+export function sumRefundRestockedQtyForOrderItem(db: any, orderItemId: string | number): number {
+  const reason = `refund_restock:order_item:${orderItemId}`;
+  const row = db
+    .prepare(
+      `
+    SELECT COALESCE(SUM(quantity_delta), 0) AS total
+    FROM inventory_movements
+    WHERE movement_type = 'adjustment'
+      AND reference_type = 'refund'
+      AND reason = ?
+  `,
+    )
+    .get(reason) as { total: number } | undefined;
+  return Number(row?.total ?? 0);
 }
 
 /**
