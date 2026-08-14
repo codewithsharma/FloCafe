@@ -26,15 +26,15 @@ Modules are reusable business capabilities. Phase 2 ships a **lightweight regist
 
 ## Catalog & people
 
-| Module                  | Status                                                          | Phase 1 mapping                                                                    |
-| ----------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| Staff (`staff`)         | CURRENT · REGISTERED                                            | Users, roles, PIN                                                                  |
-| Customer (`customer`)   | CURRENT · REGISTERED                                            | Customer CRM                                                                       |
-| Product (`product`)     | CURRENT · REGISTERED                                            | Products API/UI                                                                    |
-| Category (`category`)   | CURRENT · REGISTERED                                            | Categories                                                                         |
-| Menu (`menu`)           | CURRENT · REGISTERED (Restaurant)                               | Menu CSV / catalog presentation                                                    |
-| Addons (`addons`)       | CURRENT · REGISTERED (Restaurant)                               | Addon-groups / modifiers                                                           |
-| Inventory (`inventory`) | CURRENT (stock writes + ledger v75+ + history API) · REGISTERED | Writes via Inventory; history `GET /api/inventory/movements`; UI PLANNED (Phase 3) |
+| Module                  | Status                                                                      | Phase 1 mapping                                                                                     |
+| ----------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Staff (`staff`)         | CURRENT · REGISTERED                                                        | Users, roles, PIN                                                                                   |
+| Customer (`customer`)   | CURRENT · REGISTERED                                                        | Customer CRM                                                                                        |
+| Product (`product`)     | CURRENT · REGISTERED                                                        | Products API/UI                                                                                     |
+| Category (`category`)   | CURRENT · REGISTERED                                                        | Categories                                                                                          |
+| Menu (`menu`)           | CURRENT · REGISTERED (Restaurant)                                           | Menu CSV / catalog presentation                                                                     |
+| Addons (`addons`)       | CURRENT · REGISTERED (Restaurant)                                           | Addon-groups / modifiers                                                                            |
+| Inventory (`inventory`) | CURRENT (stock writes + ledger v75+ + history API + ledger UI) · REGISTERED | Writes via Inventory; history `GET /api/inventory/movements`; UI `/products/movements` (Phase 3.5A) |
 
 ## Commerce
 

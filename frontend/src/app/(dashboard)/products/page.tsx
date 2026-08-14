@@ -6,7 +6,8 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
-import { Plus, FileSpreadsheet } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, FileSpreadsheet, History } from 'lucide-react';
 import type { Product, Category, AddonGroup } from '@/lib/types';
 import {
   ProductsTabBar,
@@ -586,6 +587,13 @@ export default function ProductsPage() {
       {activeTab === 'products' && (
         <>
           <div className="flex justify-end gap-2 mb-4">
+            {isOwnerOrManager && isModuleEnabled('inventory') && (
+              <Button variant="outline" asChild>
+                <Link href="/products/movements">
+                  <History size={16} className="mr-1" /> {t('inventoryMovements.title')}
+                </Link>
+              </Button>
+            )}
             {isOwnerOrManager && taxCategories.length > 0 && (
               <Button
                 variant="outline"

@@ -137,17 +137,17 @@ Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webus
 
 ## Inventory & Supply Chain
 
-| Feature                          | Status      | Evidence                                                                                                 | Production readiness |
-| -------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------- | -------------------- |
-| Product stock decrement on order | [BUILT]     | `main/services/inventory.ts` via order path                                                              | Medium               |
-| Manual stock adjustment          | [BUILT]     | `POST /api/products/:id/stock` → Inventory service                                                       | Medium               |
-| Low stock filter                 | [BUILT]     | `?low_stock=true` on products                                                                            | Medium               |
-| Inventory adjustment API         | [BUILT]     | `POST /api/products/:id/stock`                                                                           | Medium               |
-| Stock movement ledger            | [PARTIAL]   | Schema v75 `inventory_movements` + `GET /api/inventory/movements`; **no ledger UI**; no pre-v75 backfill | Medium               |
-| Recipes / BOM                    | [FROZEN]    | STRATEGY / Phase 3.5 — not in code                                                                       | —                    |
-| Suppliers / purchasing           | [FROZEN]    | STRATEGY / Phase 3.5 — not in code                                                                       | —                    |
-| Stock transfers                  | [NOT BUILT] | —                                                                                                        | —                    |
-| Wastage tracking                 | [NOT BUILT] | —                                                                                                        | —                    |
+| Feature                          | Status      | Evidence                                                                                                                           | Production readiness |
+| -------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| Product stock decrement on order | [BUILT]     | `main/services/inventory.ts` via order path                                                                                        | Medium               |
+| Manual stock adjustment          | [BUILT]     | `POST /api/products/:id/stock` → Inventory service                                                                                 | Medium               |
+| Low stock filter                 | [BUILT]     | `?low_stock=true` on products                                                                                                      | Medium               |
+| Inventory adjustment API         | [BUILT]     | `POST /api/products/:id/stock`                                                                                                     | Medium               |
+| Stock movement ledger            | [BUILT]     | Schema v75 `inventory_movements` + `GET /api/inventory/movements` + owner/manager UI at `/products/movements`; no pre-v75 backfill | Medium               |
+| Recipes / BOM                    | [FROZEN]    | STRATEGY / Phase 3.5 — not in code                                                                                                 | —                    |
+| Suppliers / purchasing           | [FROZEN]    | STRATEGY / Phase 3.5 — not in code                                                                                                 | —                    |
+| Stock transfers                  | [NOT BUILT] | —                                                                                                                                  | —                    |
+| Wastage tracking                 | [NOT BUILT] | —                                                                                                                                  | —                    |
 
 ## Operations & Data
 

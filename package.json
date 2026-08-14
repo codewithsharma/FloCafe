@@ -155,6 +155,7 @@
     "test:product-tax-boundary": "node tests/run-electron-node-test.cjs tests/product-tax-boundary.test.ts",
     "test:inventory-movement-read": "node tests/run-electron-node-test.cjs tests/inventory-movement-read.test.ts",
     "test:inventory-movements-api": "node tests/run-electron-node-test.cjs tests/inventory-movements-api.test.ts",
+    "test:inventory-ledger-ui": "node tests/run-electron-node-test.cjs tests/inventory-ledger-ui.test.ts",
     "test:tax-boundary": "node tests/run-electron-node-test.cjs tests/tax-boundary.test.ts",
     "test:tax-route-boundary": "node tests/run-electron-node-test.cjs tests/tax-route-boundary.test.ts",
     "test:tax-snapshot-contract": "node tests/run-electron-node-test.cjs tests/tax-snapshot-contract.test.ts",

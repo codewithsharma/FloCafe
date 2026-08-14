@@ -21,7 +21,7 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 | **retail** | Production Retail vertical; selectable via `ACTIVE_VERTICAL_ID=retail` (shared commerce modules; no tables/kitchen/kds) |
 | **retail-test** | Synthetic composition; selectable via env for validation only — not production Retail |
 | **Phase 2** | **CLOSED** — final exit + closeout gate `docs/03-architecture/phase-2-closeout-and-phase-3-gate.md` (also `phase-2-final-exit-gate.md`). **PASS WITH DOCUMENTED DEFERMENTS**. |
-| **Phase 3** | **3.1–3.4 COMPLETE**; **3.5 not started**. Deploy/start: `ACTIVE_VERTICAL_ID` env (unset→`restaurant`; empty/unknown fail-closed); `retail` = production Retail; `retail-test` = synthetic validation only. |
+| **Phase 3** | **3.1–3.4 COMPLETE**; **3.5A Inventory Ledger UI COMPLETE**; remaining 3.5 options not started. Deploy/start: `ACTIVE_VERTICAL_ID` env (unset→`restaurant`; empty/unknown fail-closed); `retail` = production Retail; `retail-test` = synthetic validation only. |
 
 Phase 2 delivered: registry → … → 2.14 Order → 2.15 Payment → 2.16 POS → 2.17 Restaurant isolation → 2.18 synthetic Retail → final exit → **closeout / Phase 3 gate**.
 
@@ -69,6 +69,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-## Next step
-
-**Phase 3.1–3.4 COMPLETE** (committed). Prefer pilot P0/P1 reliability. Human gates still block go-live: signed/notarized artifact, Master PIN escrow, OPS-01 on-site, backup policy approval, CEO/CTO sign-off. **Phase 3.5** optional only when explicitly tasked.
+**Phase 3.1–3.4 COMPLETE**; **3.5A Inventory Ledger UI COMPLETE**. Prefer pilot P0/P1 reliability. Human gates still block go-live: signed/notarized artifact, Master PIN escrow, OPS-01 on-site, backup policy approval, CEO/CTO sign-off. Remaining **Phase 3.5** options optional only when explicitly tasked.

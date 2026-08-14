@@ -31,11 +31,11 @@ Global JWT `requireAuth` (no public access).
 
 ## 6. Request parameters
 
-| Param | Required | Notes |
-| --- | --- | --- |
-| `product_id` | yes | Active product (`deleted_at IS NULL`) |
-| `limit` | no | Default 100, clamp 1–500 |
-| `before_id` | no | Keyset: `id < before_id` |
+| Param        | Required | Notes                                 |
+| ------------ | -------- | ------------------------------------- |
+| `product_id` | yes      | Active product (`deleted_at IS NULL`) |
+| `limit`      | no       | Default 100, clamp 1–500              |
+| `before_id`  | no       | Keyset: `id < before_id`              |
 
 ## 7. Response contract
 
@@ -90,7 +90,7 @@ No table/KOT/KDS/waiter/kitchen concepts. Shared module; retail-test vertical in
 
 ## 15. Future UI consumers
 
-API unused by frontend in 2.12. Intended later: Inventory UI, support diagnostics, reporting.
+**Phase 3.5A:** owner/manager UI at `/products/movements` consumes this API (display-only; no stock recalculation). Further reporting/diagnostics consumers remain optional.
 
 ## 16. Reconciliation relationship
 

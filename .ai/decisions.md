@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Phase 3.5A Inventory Ledger UI (Accepted + Implemented)
+
+Owner/manager UI at `/products/movements` reuses existing `GET /api/inventory/movements` (`listInventoryMovements`). No schema change; no stock recalculation; shared `inventory` module (Restaurant + Retail). Out of scope: suppliers/PO, recipes/BOM, tax cleanup, service/package extraction. Doc: `docs/03-architecture/phase-3.5a-inventory-ledger-ui.md`.
+
 ## 2026-08-14 — Phase 3.4 Correctness Residuals (Accepted + Implemented)
 
 Scope **B** delivered: process-locked vertical unchanged; `notifyKdsUpdate`/`notifyOrderUpdated` gated with `isModuleEnabled('kds')`; held-orders table UPDATEs gated with `isModuleEnabled('tables')`; cancel restore skips `voided`/`void_adjustment` (stock stays 8); `assertStockAvailable` → `InventoryServiceError(400)`. No ALS, no schema change. Doc: `phase-3.4-correctness-residuals.md`. Plan: `docs/superpowers/plans/2026-08-14-phase-3.4-correctness-residuals.md`.

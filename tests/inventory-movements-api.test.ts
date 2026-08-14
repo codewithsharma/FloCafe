@@ -88,7 +88,11 @@ async function main() {
     const invPath = path.join(__dirname, '../main/routes/inventory.ts');
     assert(fs.existsSync(invPath), 'inventory.ts exists');
     const indexSrc = fs.readFileSync(path.join(__dirname, '../main/routes/index.ts'), 'utf8');
-    assert(/app\.use\(\s*['"]\/api\/inventory['"]/.test(indexSrc), 'index mounts inventory');
+    assert(
+      /app\.use\(\s*['"]\/api\/inventory['"]/.test(indexSrc) ||
+        /mount\(\s*['"]\/api\/inventory['"]/.test(indexSrc),
+      'index mounts inventory',
+    );
     assert(!/app\.get\(\s*['"]\/api\/inventory\/movements['"]/.test(indexSrc), 'no inline handler');
 
     console.log('\n2. Owner can read');
