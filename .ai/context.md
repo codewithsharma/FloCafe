@@ -69,4 +69,6 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 3.1–3.4 COMPLETE**. Prefer pilot P0/P1 reliability. **Phase 3.5** optional depth only when explicitly tasked.
+## Next step
+
+**Phase 3.1–3.4 COMPLETE** (committed). Prefer pilot P0/P1 reliability. Human gates still block go-live: signed/notarized artifact, Master PIN escrow, OPS-01 on-site, backup policy approval, CEO/CTO sign-off. **Phase 3.5** optional only when explicitly tasked.
