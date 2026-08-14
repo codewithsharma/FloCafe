@@ -1,8 +1,16 @@
 # Decisions
 
+## 2026-08-14 — Phase 4.7 Restaurant 86 (Implemented)
+
+No ADR. Reuses `products.is_active`. Adapter `POST /api/products/:id/availability` (owner/manager, Zod, audit `product.availability`). Restaurant POS overflow 86 + restore strip; Retail POS has no 86 chrome. Stock unchanged. Schema v75. Tests: `npm run test:phase-4.7`. Doc: `docs/04-product/phase-4.7-menu-86.md`.
+
+## 2026-08-14 — ADR-013 Retail product variants / SKU identity (Accepted)
+
+`docs/14-decisions/ADR-013-retail-product-variants-sku-identity.md`. **Status: Accepted** (human gate). Identity LOCK: Option A (each sellable variant = `products` row). Software SKU matrix **deferred** (not authorized). ADR-011/012 remain valid. Schema v75. No 4.6 implementation slice. Phase 4.6 CLOSED as ADR-only; Phase 4.7 activated.
+
 ## 2026-08-14 — ADR-013 Retail product variants / SKU identity (Proposed)
 
-Drafted `docs/14-decisions/ADR-013-retail-product-variants-sku-identity.md`. **Status: Proposed — human Accept required.** Identity LOCK: Option A (each sellable variant = `products` row). Software SKU matrix **deferred** (not authorized). ADR-011/012 remain valid. Schema v75. Production code unchanged. Pipeline: `STATUS=ADR_REQUIRED`; do not activate 4.7; do not implement matrix.
+Superseded by Accept above. Drafted the same day; human Accept closed the gate.
 
 ## 2026-08-14 — Prompt pipeline + Phase 4.6–4.15 roadmap (Accepted — orchestration only)
 

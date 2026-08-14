@@ -113,9 +113,9 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Phase 4.5 implementation** — Retail exchange coordinator + UI (`docs/04-product/phase-4.5-retail-exchange.md`; `npm run test:phase-4.5`).
 - [x] **Phase 4.6 discovery** — Retail product variants / SKU matrix (`docs/04-product/phase-4.6-retail-product-variants-discovery.md`). Verdict: **ADR REQUIRED** — Option A identity safe; matrix UX needs ADR-013.
 - [x] **Prompt pipeline** — `prompts/` orchestrator + roadmap 4.6–4.15 (2026-08-14). Production code unchanged. Schema v75. Execute only the phase in `prompts/ACTIVE.md`.
-- [x] **Phase 4.6 / ADR-013 draft** — `docs/14-decisions/ADR-013-retail-product-variants-sku-identity.md` — **Proposed**; waiting human Accept. **No matrix implementation.**
-- [ ] **Phase 4.6 / ADR-013 Accept** — human gate. Until Accept: pipeline `ADR_REQUIRED`; do not start 4.7.
-- [ ] **Phase 4.7** Restaurant 86 workflow (`prompts/phases/phase-4.7.md`)
+- [x] **Phase 4.6 / ADR-013 draft** — `docs/14-decisions/ADR-013-retail-product-variants-sku-identity.md` — drafted Proposed.
+- [x] **Phase 4.6 / ADR-013 Accept** — human gate 2026-08-14. Identity lock; no matrix; no 4.6 implementation slice. Phase 4.6 COMPLETE (ADR-only).
+- [x] **Phase 4.7** Restaurant 86 workflow — `POST /api/products/:id/availability`; Restaurant POS 86; schema v75; `npm run test:phase-4.7`
 - [ ] **Phase 4.8** Reports multi-day range picker (`prompts/phases/phase-4.8.md`)
 - [ ] **Phase 4.9** Customer deactivate (`prompts/phases/phase-4.9.md`)
 - [ ] **Phase 4.10** FIN-01 collectible outstanding display (`prompts/phases/phase-4.10.md`)

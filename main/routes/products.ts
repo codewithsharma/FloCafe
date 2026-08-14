@@ -20,6 +20,8 @@ import {
   LOW_STOCK_SQL_FRAGMENT,
 } from '../services/inventory';
 import { stockAdjustBodySchema } from '../validation/inventory';
+import { productAvailabilityBodySchema } from '../validation/products';
+import { logAuditEvent } from '../services/audit-log';
 import * as crypto from 'crypto';
 import * as dns from 'dns';
 import * as https from 'https';
@@ -909,6 +911,46 @@ router.delete('/:id', requireRole('owner', 'manager'), (req: Request, res: Respo
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+router.post(
+  '/:id/availability',
+  requireRole('owner', 'manager'),
+  validateBody(productAvailabilityBodySchema),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const productId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const { is_active } = req.body as { is_active: boolean };
+
+      const existing = db
+        .prepare('SELECT id FROM products WHERE id = ? AND deleted_at IS NULL')
+        .get(productId);
+      if (!existing) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      withTxn(() => {
+        db.prepare(
+          'UPDATE products SET is_active = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
+        ).run(is_active ? 1 : 0, now(), productId);
+        logAuditEvent({
+          actorUserId: (req as any).user?.userId ?? null,
+          action: 'product.availability',
+          entityType: 'product',
+          entityId: productId,
+          result: 'success',
+          metadata: { is_active },
+        });
+      });
+
+      const product = db.prepare('SELECT * FROM products WHERE id = ?').get(productId);
+      res.json({ product });
+    } catch (error: any) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 router.post(
   '/:id/stock',

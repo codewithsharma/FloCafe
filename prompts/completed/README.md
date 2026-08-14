@@ -1,6 +1,7 @@
 # Completed phase prompts
 
-Empty at pipeline creation.
+- [phase-4.6.md](phase-4.6.md) — ADR-013 Accepted (identity lock; no matrix implementation)
+- [phase-4.7.md](phase-4.7.md) — Restaurant 86 availability workflow
 
 When a phase in `prompts/phases/` is genuinely complete (all gates in that prompt’s Completion Criteria), either:
 

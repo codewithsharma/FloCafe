@@ -1,16 +1,15 @@
 # ACTIVE PHASE
 
-Phase: 4.6
+Phase: 4.7
 
 Prompt:
-prompts/phases/phase-4.6.md
+prompts/phases/phase-4.7.md
 
 Status:
-ADR_REQUIRED
+COMPLETE
 
-ADR:
-docs/14-decisions/ADR-013-retail-product-variants-sku-identity.md
+STOP.
 
-Do not start any other phase.
+Do not activate Phase 4.8 or any later phase.
 Do not implement a variants matrix.
-Await human Accept of ADR-013.
+Await a human gate before starting the next phase.

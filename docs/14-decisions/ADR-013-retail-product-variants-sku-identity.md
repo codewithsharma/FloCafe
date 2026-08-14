@@ -1,8 +1,9 @@
 # ADR-013: Retail product variants / SKU identity
 
-**Status:** Proposed — awaiting human Accept  
+**Status:** Accepted  
 **Date:** 2026-08-14  
-**Deciders:** Product + CTO (human gate — **not self-accepted**)  
+**Accepted:** 2026-08-14 (human gate)  
+**Deciders:** Product + CTO (human Accept — identity lock only; no matrix implementation)  
 **Supersedes:** n/a  
 **Amends:** none — **confirms** [ADR-011](ADR-011-refund-restock-policy.md) and [ADR-012](ADR-012-retail-exchange-policy.md) remain valid under Option A  
 **Related:** [phase-4.6 discovery](../04-product/phase-4.6-retail-product-variants-discovery.md), [feature-list.md](../00-product/feature-list.md)
@@ -37,7 +38,7 @@ This ADR defines **policy**. It does **not** authorize schema, APIs, or UI.
 
 ---
 
-## 3. Decision (Proposed)
+## 3. Decision (Accepted)
 
 ### 3.1 Sellable identity — Option A (LOCK)
 

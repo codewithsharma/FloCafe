@@ -45,6 +45,7 @@ import { isFeatureAvailable, isModuleEnabled } from '@/lib/modules';
 import { placePostpaidOrder, placePrepaidOrder } from '@/lib/pos/checkout-coordinator';
 import { usePlatformComposition } from '@/hooks/usePlatformComposition';
 import { findProductByScanCode } from '@/lib/pos/product-search';
+import { canShowRestaurantEightySix, isProductInactive } from '@/lib/pos/eighty-six';
 
 const PREPAID_ATTEMPT_STORAGE_KEY = 'flo.prepaid.checkout.attempt';
 const POSTPAID_ATTEMPT_STORAGE_KEY = 'flo.postpaid.order.attempt';
@@ -73,6 +74,7 @@ export default function POSPage() {
   const verticalId = composition?.verticalId;
   const tablesModuleEnabled = isModuleEnabled('tables', verticalId);
   const addonsModuleEnabled = isModuleEnabled('addons', verticalId);
+  const restaurant86Enabled = canShowRestaurantEightySix(verticalId, currentTenant?.role);
   const cart = useCartStore();
   const heldOrders = useHeldOrdersStore();
   const {
@@ -93,6 +95,7 @@ export default function POSPage() {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [eightySixed, setEightySixed] = useState<Product[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [search, setSearch] = useState('');
@@ -322,6 +325,13 @@ export default function POSPage() {
         setCategories((catRes.data.categories as Category[]) || []);
         setProducts((prodRes.data.products as Product[]) || []);
 
+        if (restaurant86Enabled) {
+          const allRes = await api.get('/products');
+          setEightySixed(((allRes.data.products as Product[]) || []).filter(isProductInactive));
+        } else {
+          setEightySixed([]);
+        }
+
         if (tableRes) {
           setTables((tableRes.data.tables as Table[]) || []);
         } else {
@@ -338,7 +348,38 @@ export default function POSPage() {
     };
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tablesModuleEnabled, setBillingType, setTablesRequired, setKotPrintingEnabled]);
+  }, [
+    tablesModuleEnabled,
+    restaurant86Enabled,
+    setBillingType,
+    setTablesRequired,
+    setKotPrintingEnabled,
+  ]);
+
+  const refreshPosCatalog = async () => {
+    const prodRes = await api.get('/products?active=1');
+    setProducts((prodRes.data.products as Product[]) || []);
+    if (restaurant86Enabled) {
+      const allRes = await api.get('/products');
+      setEightySixed(((allRes.data.products as Product[]) || []).filter(isProductInactive));
+    } else {
+      setEightySixed([]);
+    }
+  };
+
+  const setProductAvailability = async (product: Product, isActive: boolean) => {
+    try {
+      await api.post(`/products/${product.id}/availability`, { is_active: isActive });
+      toast.success(
+        isActive
+          ? t('pos.unEightySixSuccess', { name: product.name })
+          : t('pos.eightySixSuccess', { name: product.name }),
+      );
+      await refreshPosCatalog();
+    } catch {
+      toast.error(isActive ? t('pos.unEightySixFailed') : t('pos.eightySixFailed'));
+    }
+  };
 
   const handleProductClick = (product: Product) => {
     // Addon modal (qty/notes/modifiers) only when addons module is enabled.
@@ -1031,17 +1072,42 @@ export default function POSPage() {
       <PosWorkspace
         toolbar={<PosTopbar tables={tables} onShowTablePicker={() => setShowTablePicker(true)} />}
         workspace={
-          <ProductGrid
-            categories={categories}
-            products={products}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-            search={search}
-            setSearch={setSearch}
-            currency={currency}
-            onProductClick={handleProductClick}
-            sidebarOpen={leftSidebarOpen}
-          />
+          <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
+            {restaurant86Enabled && eightySixed.length > 0 && (
+              <div
+                data-testid="pos-86-restore-strip"
+                className="shrink-0 border-b border-flo-border bg-flo-surface px-3 py-2 flex flex-wrap items-center gap-2"
+              >
+                <span className="text-xs font-medium text-flo-text-secondary">
+                  {t('pos.eightySixed')}
+                </span>
+                {eightySixed.map((product) => (
+                  <button
+                    key={product.id}
+                    type="button"
+                    data-testid="pos-product-un86"
+                    className="min-h-11 px-3 rounded-flo-md border border-flo-border text-sm text-flo-text hover:border-flo-brand-500"
+                    onClick={() => setProductAvailability(product, true)}
+                  >
+                    {t('pos.unEightySix')} · {product.name}
+                  </button>
+                ))}
+              </div>
+            )}
+            <ProductGrid
+              categories={categories}
+              products={products}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              search={search}
+              setSearch={setSearch}
+              currency={currency}
+              onProductClick={handleProductClick}
+              sidebarOpen={leftSidebarOpen}
+              showEightySix={restaurant86Enabled}
+              onEightySix={(product) => setProductAvailability(product, false)}
+            />
+          </div>
         }
         orderPanel={<CartPanel {...cartPanelProps} />}
         mobileOrder={

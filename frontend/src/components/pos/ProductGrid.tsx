@@ -1,6 +1,12 @@
 'use client';
 
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { MoreVertical, Search, SlidersHorizontal } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type { Category, Product } from '@/lib/types';
 import { useCartStore } from '@/store/cart';
 import { usePosSettingsStore } from '@/store/pos-settings';
@@ -155,6 +161,8 @@ interface Props {
   currency: string;
   onProductClick: (product: Product) => void;
   sidebarOpen?: boolean;
+  showEightySix?: boolean;
+  onEightySix?: (product: Product) => void;
 }
 
 export default function ProductGrid({
@@ -166,6 +174,8 @@ export default function ProductGrid({
   setSearch,
   onProductClick,
   sidebarOpen = true,
+  showEightySix = false,
+  onEightySix,
 }: Props) {
   const cart = useCartStore();
   const { showProductImages } = usePosSettingsStore();
@@ -278,79 +288,109 @@ export default function ProductGrid({
               product.stock_quantity <= (product.low_stock_threshold || 0);
 
             return (
-              <button
+              <div
                 key={product.id}
-                type="button"
                 data-testid="pos-product-card"
-                onClick={() => onProductClick(product)}
-                disabled={outOfStock}
                 className={cn(
-                  'relative min-h-[88px] rounded-flo-lg p-3 border text-left transition-colors',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500 focus-visible:ring-offset-2',
+                  'relative min-h-[88px] rounded-flo-lg border',
                   outOfStock
-                    ? 'border-flo-border bg-flo-surface-muted opacity-60 cursor-not-allowed'
+                    ? 'border-flo-border bg-flo-surface-muted opacity-60'
                     : 'border-flo-border bg-flo-surface hover:border-flo-brand-500 hover:bg-flo-brand-50/30',
                 )}
               >
-                {outOfStock && (
-                  <StatusBadge variant="danger" className="absolute top-2 left-2 z-10">
-                    {t('pos.outOfStock')}
-                  </StatusBadge>
-                )}
-                {lowStock && (
-                  <StatusBadge variant="warning" className="absolute top-2 left-2 z-10">
-                    {t('pos.lowStock')}
-                  </StatusBadge>
-                )}
-                {inCartQty > 0 && (
-                  <span className="absolute top-0 right-0 min-w-6 h-6 px-1 rounded-bl-flo-lg rounded-tr-flo-lg bg-flo-brand-600 text-white text-xs flex items-center justify-center font-bold tabular-nums">
-                    {inCartQty}
-                  </span>
-                )}
+                <button
+                  type="button"
+                  onClick={() => onProductClick(product)}
+                  disabled={outOfStock}
+                  className={cn(
+                    'w-full h-full p-3 text-left transition-colors rounded-flo-lg',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500 focus-visible:ring-offset-2',
+                    outOfStock ? 'cursor-not-allowed' : '',
+                  )}
+                >
+                  {outOfStock && (
+                    <StatusBadge variant="danger" className="absolute top-2 left-2 z-10">
+                      {t('pos.outOfStock')}
+                    </StatusBadge>
+                  )}
+                  {lowStock && (
+                    <StatusBadge variant="warning" className="absolute top-2 left-2 z-10">
+                      {t('pos.lowStock')}
+                    </StatusBadge>
+                  )}
+                  {inCartQty > 0 && (
+                    <span className="absolute top-0 right-0 min-w-6 h-6 px-1 rounded-bl-flo-lg rounded-tr-flo-lg bg-flo-brand-600 text-white text-xs flex items-center justify-center font-bold tabular-nums">
+                      {inCartQty}
+                    </span>
+                  )}
 
-                {showProductImages && (
-                  <div className="w-full aspect-square rounded-flo-md mb-2 relative overflow-hidden">
-                    <div
-                      className="absolute inset-0 flex items-center justify-center"
-                      style={{ backgroundColor: nameToColor(product.name) }}
-                    >
-                      <span className="text-2xl font-bold text-white/80">
-                        {product.name.substring(0, 2).toUpperCase()}
-                      </span>
+                  {showProductImages && (
+                    <div className="w-full aspect-square rounded-flo-md mb-2 relative overflow-hidden">
+                      <div
+                        className="absolute inset-0 flex items-center justify-center"
+                        style={{ backgroundColor: nameToColor(product.name) }}
+                      >
+                        <span className="text-2xl font-bold text-white/80">
+                          {product.name.substring(0, 2).toUpperCase()}
+                        </span>
+                      </div>
+                      {product.has_image && (
+                        <img
+                          src={`${api.defaults.baseURL}/products/${product.id}/image?t=${product.updated_at ? parseDbTimestamp(product.updated_at).getTime() : 0}`}
+                          alt=""
+                          className="absolute inset-0 w-full h-full object-cover rounded-flo-md"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      )}
+                      {product.tags && product.tags.length > 0 && (
+                        <span className="absolute bottom-1.5 right-1.5 z-10">
+                          <TagBadge tag={product.tags[0]} />
+                        </span>
+                      )}
                     </div>
-                    {product.has_image && (
-                      <img
-                        src={`${api.defaults.baseURL}/products/${product.id}/image?t=${product.updated_at ? parseDbTimestamp(product.updated_at).getTime() : 0}`}
-                        alt=""
-                        className="absolute inset-0 w-full h-full object-cover rounded-flo-md"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                    )}
-                    {product.tags && product.tags.length > 0 && (
-                      <span className="absolute bottom-1.5 right-1.5 z-10">
-                        <TagBadge tag={product.tags[0]} />
-                      </span>
-                    )}
-                  </div>
-                )}
+                  )}
 
-                <h3 className="text-body font-medium text-flo-text line-clamp-2 leading-snug text-left">
-                  {product.name}
-                </h3>
-                <div className="flex items-center justify-between mt-1.5 gap-1">
-                  <p className="text-numeric text-flo-brand-700">{fmt(Number(product.price))}</p>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {!showProductImages && product.tags && product.tags.length > 0 && (
-                      <TagBadge tag={product.tags[0]} />
-                    )}
-                    {product.addon_groups && product.addon_groups.length > 0 && (
-                      <SlidersHorizontal size={14} className="text-flo-text-muted" aria-hidden />
-                    )}
+                  <h3 className="text-body font-medium text-flo-text line-clamp-2 leading-snug text-left">
+                    {product.name}
+                  </h3>
+                  <div className="flex items-center justify-between mt-1.5 gap-1">
+                    <p className="text-numeric text-flo-brand-700">{fmt(Number(product.price))}</p>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {!showProductImages && product.tags && product.tags.length > 0 && (
+                        <TagBadge tag={product.tags[0]} />
+                      )}
+                      {product.addon_groups && product.addon_groups.length > 0 && (
+                        <SlidersHorizontal size={14} className="text-flo-text-muted" aria-hidden />
+                      )}
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+                {showEightySix && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        data-testid="pos-product-86"
+                        aria-label={t('pos.eightySix')}
+                        className="absolute bottom-1 right-1 z-20 min-h-11 min-w-11 flex items-center justify-center rounded-flo-md text-flo-text-muted hover:bg-flo-bg hover:text-flo-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <MoreVertical size={16} aria-hidden />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="border-flo-border bg-flo-surface">
+                      <DropdownMenuItem
+                        className="cursor-pointer"
+                        onSelect={() => onEightySix?.(product)}
+                      >
+                        {t('pos.eightySix')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
             );
           })}
         </div>

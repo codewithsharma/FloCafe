@@ -2,7 +2,9 @@
 
 ## Status
 
-ADR_REQUIRED
+COMPLETE (ADR-only — Accepted 2026-08-14)
+
+Human Accept of ADR-013 locked Option A identity. **No** SKU matrix / parent-child / `Product.variants` implementation was authorized. Phase 4.6 is closed as an ADR/architecture decision phase. Do not create a 4.6 implementation slice.
 
 ## Objective
 
