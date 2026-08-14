@@ -17,6 +17,8 @@ import {
   prepareReceipt,
   escPosToText,
   printRefundReceipt,
+  buildRefundReceiptBytes,
+  formatRefundReceipt,
   printDayCloseZ,
   kickCashDrawer,
   buildDrawerKick,
@@ -640,6 +642,25 @@ router.post(
         timezone: settings.timezone || undefined,
         trim_decimals: settings.printer_trim_decimals === 'true',
       };
+
+      // WebUSB: format on server, send bytes to browser (same handoff as test/kick-drawer).
+      if ((printer as { connection_type?: string }).connection_type === 'webusb') {
+        const { data, warnings } = buildRefundReceiptBytes(
+          refund,
+          bill,
+          business,
+          Boolean(useUnicode),
+          printer,
+        );
+        return res.json({
+          success: true,
+          webusb: true,
+          bytes: Array.from(data),
+          refundId: refund.id,
+          billId: bill.id,
+          warnings: warnings || [],
+        });
+      }
 
       const result = await printRefundReceipt(refund, bill, business, Boolean(useUnicode));
       if (result.ok) {

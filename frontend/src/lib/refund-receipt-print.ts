@@ -1,8 +1,9 @@
 /**
- * Refund receipt printing client (Phase 3.6A).
- * Hardware print is separate from refund accounting — failures must not reverse money.
+ * Refund receipt printing client (Phase 3.6A + 3.6G WebUSB parity).
+ * Hardware/WebUSB print is separate from refund accounting — failures must not reverse money.
  */
 import api from './api';
+import { printerService } from './printer/PrinterService';
 
 export interface RefundPrintResult {
   printed: boolean;
@@ -10,21 +11,58 @@ export interface RefundPrintResult {
   error?: string;
 }
 
+type PrintRefundResponse = {
+  success?: boolean;
+  webusb?: boolean;
+  bytes?: number[];
+  refundId?: number;
+  billId?: number;
+};
+
 /**
- * Print refund proof via default printer, then audit-log print_type=refund.
+ * Print refund proof via default printer (server network/USB) or WebUSB handoff,
+ * then audit-log print_type=refund on success.
  */
 export async function printRefundReceipt(
   refundId: number,
   billId: number,
 ): Promise<RefundPrintResult> {
+  let printResponse: PrintRefundResponse;
   try {
-    await api.post('/printers/print-refund', { refundId });
+    const { data } = await api.post<PrintRefundResponse>('/printers/print-refund', { refundId });
+    printResponse = data || {};
   } catch (err: unknown) {
     const message =
       (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
       (err as Error)?.message ||
       'Refund receipt print failed';
     return { printed: false, audited: false, error: message };
+  }
+
+  if (printResponse.webusb === true) {
+    if (!Array.isArray(printResponse.bytes) || printResponse.bytes.length === 0) {
+      return {
+        printed: false,
+        audited: false,
+        error: 'WebUSB refund print returned no bytes',
+      };
+    }
+    if (!printerService.isConnected) {
+      return {
+        printed: false,
+        audited: false,
+        error: 'Connect the WebUSB printer from the POS toolbar, then retry',
+      };
+    }
+    try {
+      await printerService.print(Uint8Array.from(printResponse.bytes));
+    } catch (err: unknown) {
+      return {
+        printed: false,
+        audited: false,
+        error: err instanceof Error ? err.message : 'WebUSB refund print failed',
+      };
+    }
   }
 
   try {

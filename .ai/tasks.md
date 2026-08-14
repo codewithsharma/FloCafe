@@ -102,6 +102,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Phase 3.6D** Day-Close Z Snapshot Print/Download — **COMPLETE** (`phase-3.6d-day-close-z-snapshot.md`). Cash Z from frozen summary; print best-effort.
 - [x] **Phase 3.6E** Soft-reactivate / inactive-customer UX — **COMPLETE** (`phase-3.6e-inactive-customer-ux.md`). Owner/manager show-inactive; `POST /:id/reactivate`; POS search unchanged.
 - [x] **Phase 3.6F** Cash drawer kick — **COMPLETE** (`phase-3.6f-cash-drawer-kick.md`). ESC/POS via default printer; POS PrinterStatus; no money-path.
+- [x] **Phase 3.6G** WebUSB refund print parity — **COMPLETE** (`phase-3.6g-webusb-refund-print.md`). Server formats + client WebUSB send; network/USB path intact.
 - [ ] **Phase 3.5** Remaining optional — packages/extraction, recipes/BOM, suppliers/PO (not authorized unless explicitly tasked). Tax cleanup stays deferred (3.5B).
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet
 - [ ] ADR-006 Multi-Location Architecture (design only; no code until approved)

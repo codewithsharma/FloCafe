@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Phase 3.6G WebUSB Refund Print Parity (Accepted + Implemented)
+
+Reuse existing WebUSB `printerService` + server `formatRefundReceipt` / `buildRefundReceiptBytes`. When default printer is `webusb`, `POST /printers/print-refund` returns `{ webusb: true, bytes }`; client sends via WebUSB. Network/USB server dispatch unchanged. Money path unchanged. Doc: `docs/03-architecture/phase-3.6g-webusb-refund-print.md`.
+
 ## 2026-08-14 — Phase 3.6F Cash Drawer Kick (Accepted + Implemented)
 
 Manual ESC/POS drawer pulse via existing `dispatchPrint` + default printer. `POST /api/printers/kick-drawer` (owner|manager|cashier). POS PrinterStatus deliberate action. No auto-kick on payment, no schema, no money-path. Doc: `docs/03-architecture/phase-3.6f-cash-drawer-kick.md`.

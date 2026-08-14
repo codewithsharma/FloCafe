@@ -88,25 +88,25 @@ Restaurant vertical only (`ACTIVE_VERTICAL_ID=restaurant` or unset). Not mounted
 
 ## Payments & Billing
 
-| Feature                               | Status      | Evidence                                                                                                                           | Production readiness |
-| ------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| Bill generation                       | [BUILT]     | `main/routes/bills.ts`                                                                                                             | High                 |
-| Split payments                        | [BUILT]     | `POST /api/bills/:id/payments`                                                                                                     | High                 |
-| Partial payments                      | [BUILT]     | `payment_status = 'partial'`, `paid_amount`, `balance` in `bills.ts`                                                               | High                 |
-| Payment methods catalog               | [BUILT]     | `payment_methods`, merge support                                                                                                   | High                 |
-| Payment idempotency                   | [BUILT]     | `payment_idempotency`, v49+ migrations                                                                                             | High                 |
-| Transaction reference tracking        | [BUILT]     | `payment_transaction_refs`                                                                                                         | High                 |
-| Payment reconciliation (shift-level)  | [BUILT]     | `main/services/shift.ts` close/recon + day-close cash − cash refunds                                                               | High                 |
-| Discounts (order & item level)        | [BUILT]     | discount integration tests                                                                                                         | High                 |
-| Comps (complimentary)                 | [PARTIAL]   | Discounts with reason; void/cancel paths — no dedicated comp type                                                                  | Medium               |
-| Taxes (pack-based engine)             | [BUILT]     | `main/services/tax-engine.ts`                                                                                                      | High                 |
-| Packaging & delivery charges          | [BUILT]     | `orders.packaging_charge`, `delivery_charge`                                                                                       | High                 |
-| Service charge (configurable amount)  | [NOT BUILT] | Tax infra exists; order create hardcodes `service_charge: 0`                                                                       | —                    |
-| Tips                                  | [NOT BUILT] | No tip columns or workflow found                                                                                                   | —                    |
-| Refunds (money)                       | [BUILT]     | `main/routes/refunds.ts`, `main/services/refund.ts`, M6 + FIN-01 tests; refund receipt print Phase 3.6A (`/printers/print-refund`) | High                 |
-| Returns / merchandise restock         | [PARTIAL]   | Money refund exists; refunds do **not** restock inventory by design today                                                          | Medium               |
-| Payment terminal / Stripe integration | [FROZEN]    | Manual cash/card/wallet tenders only (`payment-tender.ts`); STRATEGY freeze                                                        | —                    |
-| SaaS subscription / seat billing      | [STUB]      | Settings shows tenant `plan`/`status` façade; no Stripe/billing engine                                                             | —                    |
+| Feature                               | Status      | Evidence                                                                                                                             | Production readiness |
+| ------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
+| Bill generation                       | [BUILT]     | `main/routes/bills.ts`                                                                                                               | High                 |
+| Split payments                        | [BUILT]     | `POST /api/bills/:id/payments`                                                                                                       | High                 |
+| Partial payments                      | [BUILT]     | `payment_status = 'partial'`, `paid_amount`, `balance` in `bills.ts`                                                                 | High                 |
+| Payment methods catalog               | [BUILT]     | `payment_methods`, merge support                                                                                                     | High                 |
+| Payment idempotency                   | [BUILT]     | `payment_idempotency`, v49+ migrations                                                                                               | High                 |
+| Transaction reference tracking        | [BUILT]     | `payment_transaction_refs`                                                                                                           | High                 |
+| Payment reconciliation (shift-level)  | [BUILT]     | `main/services/shift.ts` close/recon + day-close cash − cash refunds                                                                 | High                 |
+| Discounts (order & item level)        | [BUILT]     | discount integration tests                                                                                                           | High                 |
+| Comps (complimentary)                 | [PARTIAL]   | Discounts with reason; void/cancel paths — no dedicated comp type                                                                    | Medium               |
+| Taxes (pack-based engine)             | [BUILT]     | `main/services/tax-engine.ts`                                                                                                        | High                 |
+| Packaging & delivery charges          | [BUILT]     | `orders.packaging_charge`, `delivery_charge`                                                                                         | High                 |
+| Service charge (configurable amount)  | [NOT BUILT] | Tax infra exists; order create hardcodes `service_charge: 0`                                                                         | —                    |
+| Tips                                  | [NOT BUILT] | No tip columns or workflow found                                                                                                     | —                    |
+| Refunds (money)                       | [BUILT]     | `main/routes/refunds.ts`, `main/services/refund.ts`, M6 + FIN-01; receipt print 3.6A + WebUSB parity 3.6G (`/printers/print-refund`) | High                 |
+| Returns / merchandise restock         | [PARTIAL]   | Money refund exists; refunds do **not** restock inventory by design today                                                            | Medium               |
+| Payment terminal / Stripe integration | [FROZEN]    | Manual cash/card/wallet tenders only (`payment-tender.ts`); STRATEGY freeze                                                          | —                    |
+| SaaS subscription / seat billing      | [STUB]      | Settings shows tenant `plan`/`status` façade; no Stripe/billing engine                                                               | —                    |
 
 ## Printing
 
@@ -114,7 +114,7 @@ Restaurant vertical only (`ACTIVE_VERTICAL_ID=restaurant` or unset). Not mounted
 | -------------------------- | ----------- | ----------------------------------------------------------------- | -------------------- |
 | ESC/POS thermal — network  | [BUILT]     | `main/printers/thermal.ts` TCP 9100                               | High                 |
 | ESC/POS thermal — USB      | [BUILT]     | `main/printers/thermal.ts`                                        | High                 |
-| WebUSB printing (renderer) | [BUILT]     | `frontend/src/lib/printer/PrinterService.ts`                      | Medium               |
+| WebUSB printing (renderer) | [BUILT]     | `PrinterService.ts`; bills + refund parity (Phase 3.6G)           | Medium               |
 | Browser print fallback     | [BUILT]     | `frontend/src/lib/printer/web-print.ts`                           | Medium               |
 | Bluetooth printing         | [NOT BUILT] | UI type stub only; DB CHECK excludes bluetooth; no print path     | —                    |
 | Printer profiles (58/80mm) | [BUILT]     | `main/printers/profiles.ts`                                       | High                 |

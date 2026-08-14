@@ -729,6 +729,35 @@ export function formatRefundReceipt(
   return buildEscPos(lines, useUnicode, { cutMode }, warnings);
 }
 
+/**
+ * Format refund ESC/POS bytes for a printer without dispatching (WebUSB handoff).
+ */
+export function buildRefundReceiptBytes(
+  refund: Parameters<typeof formatRefundReceipt>[0],
+  bill: Parameters<typeof formatRefundReceipt>[1],
+  business?: Parameters<typeof formatRefundReceipt>[2],
+  useUnicode: boolean = false,
+  targetPrinter?: any,
+): { data: Buffer; warnings: PrintWarning[] } {
+  const printer = targetPrinter || getPrinterConfig();
+  if (!printer) {
+    throw Object.assign(new Error('No printer configured'), { statusCode: 400 });
+  }
+  const profile = resolvePrinterProfile(printer);
+  const columns = getColumnsForPrinter(printer, profile);
+  const warnings: PrintWarning[] = [];
+  const data = formatRefundReceipt(
+    refund,
+    bill,
+    business,
+    columns,
+    useUnicode,
+    profile.cutMode,
+    warnings,
+  );
+  return { data, warnings };
+}
+
 export async function printRefundReceipt(
   refund: Parameters<typeof formatRefundReceipt>[0],
   bill: Parameters<typeof formatRefundReceipt>[1],
@@ -738,18 +767,7 @@ export async function printRefundReceipt(
   try {
     const printer = getPrinterConfig();
     if (!printer) return { ok: false, detail: 'No printer configured' };
-    const profile = resolvePrinterProfile(printer);
-    const columns = getColumnsForPrinter(printer, profile);
-    const warnings: PrintWarning[] = [];
-    const data = formatRefundReceipt(
-      refund,
-      bill,
-      business,
-      columns,
-      useUnicode,
-      profile.cutMode,
-      warnings,
-    );
+    const { data, warnings } = buildRefundReceiptBytes(refund, bill, business, useUnicode, printer);
     const dispatch = await dispatchPrint(printer, data);
     return warnings.length > 0 ? { ...dispatch, warnings } : dispatch;
   } catch (error: any) {
