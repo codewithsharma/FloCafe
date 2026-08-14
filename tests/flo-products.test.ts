@@ -35,30 +35,69 @@ function main(): void {
   assert.ok(productsPage.includes('handleBulkTaxAssign'), 'bulk tax assign preserved');
   assert.ok(productsPage.includes('/menu-csv/import/'), 'CSV import preserved');
   assert.ok(productsPage.includes('isOwnerOrManager'), 'role gate preserved');
-  assert.ok(productsPage.includes("isModuleEnabled('addons')") || productsPage.includes('isModuleEnabled("addons")'), 'addons module gate on products page');
+  assert.ok(
+    productsPage.includes("isModuleEnabled('addons')") ||
+      productsPage.includes('isModuleEnabled("addons")'),
+    'addons module gate on products page',
+  );
   assert.ok(productsPage.includes('addonsEnabled'), 'addonsEnabled prop wiring preserved');
   assert.ok(productsPage.includes('parseProductsTab'), 'tab URL param support');
-  assert.ok(!productsPage.includes('bg-white rounded-xl border border-gray-100'), 'legacy table card pattern removed from page');
-  assert.ok(!productsPage.includes('fixed inset-0 bg-black/50'), 'legacy modal overlay removed from page');
-  assert.ok(!productsPage.includes('bg-white rounded-xl shadow-xl'), 'legacy modal panel removed from page');
+  assert.ok(
+    !productsPage.includes('bg-white rounded-xl border border-gray-100'),
+    'legacy table card pattern removed from page',
+  );
+  assert.ok(
+    !productsPage.includes('fixed inset-0 bg-black/50'),
+    'legacy modal overlay removed from page',
+  );
+  assert.ok(
+    !productsPage.includes('bg-white rounded-xl shadow-xl'),
+    'legacy modal panel removed from page',
+  );
   assert.ok(productsPage.includes('ProductFormDialog'), 'products page uses ProductFormDialog');
   assert.ok(productsPage.includes('CategoryFormDialog'), 'products page uses CategoryFormDialog');
   assert.ok(productsPage.includes('AddonGroupDialog'), 'products page uses AddonGroupDialog');
   assert.ok(productsPage.includes('CsvImportDialog'), 'products page uses CsvImportDialog');
   assert.ok(productsPage.includes('BulkTaxDialog'), 'products page uses BulkTaxDialog');
-  assert.ok(productsPage.includes('CategoryDeleteDialog'), 'products page uses CategoryDeleteDialog');
+  assert.ok(
+    productsPage.includes('StockAdjustmentDialog'),
+    'products page uses StockAdjustmentDialog',
+  );
+  assert.ok(productsPage.includes('postProductStockAdjust'), 'products page posts stock adjust');
+  assert.ok(
+    productsPage.includes('CategoryDeleteDialog'),
+    'products page uses CategoryDeleteDialog',
+  );
   console.log('   ✓ products page orchestration preserved');
 
   const addonRedirect = read('app/(dashboard)/addon-groups/page.tsx');
-  assert.ok(addonRedirect.includes("router.replace('/products?tab=addons')"), 'addon-groups redirects to products addons tab');
+  assert.ok(
+    addonRedirect.includes("router.replace('/products?tab=addons')"),
+    'addon-groups redirects to products addons tab',
+  );
   assert.ok(addonRedirect.includes('LoadingState'), 'addon-groups redirect uses LoadingState');
   console.log('   ✓ addon-groups redirect');
 
-  assert.ok(fs.existsSync(path.join(FRONTEND, 'components/products/ProductsTabBar.tsx')), 'ProductsTabBar exists');
-  assert.ok(fs.existsSync(path.join(FRONTEND, 'components/products/ProductsTable.tsx')), 'ProductsTable exists');
-  assert.ok(fs.existsSync(path.join(FRONTEND, 'components/products/CategoriesTable.tsx')), 'CategoriesTable exists');
-  assert.ok(fs.existsSync(path.join(FRONTEND, 'components/products/AddonGroupsTable.tsx')), 'AddonGroupsTable exists');
-  assert.ok(fs.existsSync(path.join(FRONTEND, 'components/products/ProductFormDialog.tsx')), 'ProductFormDialog exists');
+  assert.ok(
+    fs.existsSync(path.join(FRONTEND, 'components/products/ProductsTabBar.tsx')),
+    'ProductsTabBar exists',
+  );
+  assert.ok(
+    fs.existsSync(path.join(FRONTEND, 'components/products/ProductsTable.tsx')),
+    'ProductsTable exists',
+  );
+  assert.ok(
+    fs.existsSync(path.join(FRONTEND, 'components/products/CategoriesTable.tsx')),
+    'CategoriesTable exists',
+  );
+  assert.ok(
+    fs.existsSync(path.join(FRONTEND, 'components/products/AddonGroupsTable.tsx')),
+    'AddonGroupsTable exists',
+  );
+  assert.ok(
+    fs.existsSync(path.join(FRONTEND, 'components/products/ProductFormDialog.tsx')),
+    'ProductFormDialog exists',
+  );
   console.log('   ✓ products components exist');
 
   const productDialog = read('components/products/ProductFormDialog.tsx');
@@ -77,7 +116,11 @@ function main(): void {
   assert.ok(productsTable.includes('StatusBadge'), 'ProductsTable uses StatusBadge');
   assert.ok(productsTable.includes('EmptyState'), 'ProductsTable uses EmptyState');
   assert.ok(productsTable.includes('activeStatusVariant'), 'ProductsTable active/inactive badge');
-  assert.ok(!productsTable.includes('bg-white rounded-xl border border-gray-100'), 'legacy card removed from ProductsTable');
+  assert.ok(productsTable.includes('onAdjustStock'), 'ProductsTable stock adjust affordance');
+  assert.ok(
+    !productsTable.includes('bg-white rounded-xl border border-gray-100'),
+    'legacy card removed from ProductsTable',
+  );
   console.log('   ✓ ProductsTable flo styling');
 
   const categoriesTable = read('components/products/CategoriesTable.tsx');
@@ -91,7 +134,10 @@ function main(): void {
 
   const pkg = fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8');
   assert.ok(pkg.includes('test:flo-products'), 'test:flo-products npm script');
-  assert.ok(pkg.includes('npm run test:flo-products'), 'test:flo-products wired into test:security');
+  assert.ok(
+    pkg.includes('npm run test:flo-products'),
+    'test:flo-products wired into test:security',
+  );
   console.log('   ✓ npm scripts wired');
 
   console.log('='.repeat(60));

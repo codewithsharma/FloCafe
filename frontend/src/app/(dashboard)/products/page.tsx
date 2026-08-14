@@ -20,6 +20,7 @@ import {
   AddonGroupDialog,
   CsvImportDialog,
   BulkTaxDialog,
+  StockAdjustmentDialog,
   parseProductsTab,
   type ProductsTabType,
 } from '@/components/products';
@@ -30,6 +31,12 @@ import { useConfirm } from '@/hooks/use-confirm';
 import { useI18n } from '@/hooks/useI18n';
 import { useTranslation } from 'react-i18next';
 import { isModuleEnabled } from '@/lib/modules';
+import {
+  canSubmitStockAdjust,
+  parseStockAdjustQuantity,
+  postProductStockAdjust,
+  type StockAdjustAction,
+} from '@/lib/stock-adjust';
 
 export default function ProductsPage() {
   const { t } = useI18n();
@@ -47,6 +54,10 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [stockAdjustProduct, setStockAdjustProduct] = useState<Product | null>(null);
+  const [stockAdjustAction, setStockAdjustAction] = useState<StockAdjustAction>('increase');
+  const [stockAdjustQuantity, setStockAdjustQuantity] = useState('');
+  const [stockAdjusting, setStockAdjusting] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const { confirm, ConfirmDialog } = useConfirm();
   const [editingAddonGroup, setEditingAddonGroup] = useState<AddonGroup | null>(null);
@@ -312,6 +323,41 @@ export default function ProductsPage() {
       image_url: product.has_image ? 'EXISTING' : null,
     });
     setShowForm(true);
+  };
+
+  const openStockAdjust = (product: Product) => {
+    if (!isOwnerOrManager || !product.track_inventory) return;
+    setStockAdjustProduct(product);
+    setStockAdjustAction('increase');
+    setStockAdjustQuantity('');
+  };
+
+  const handleStockAdjust = async () => {
+    if (!stockAdjustProduct || !canSubmitStockAdjust(stockAdjustAction, stockAdjustQuantity))
+      return;
+    const quantity = parseStockAdjustQuantity(stockAdjustQuantity);
+    if (quantity === null) {
+      toast.error(t('stockAdjust.invalidQuantity'));
+      return;
+    }
+    setStockAdjusting(true);
+    try {
+      await postProductStockAdjust(stockAdjustProduct.id, {
+        action: stockAdjustAction,
+        quantity,
+      });
+      toast.success(t('stockAdjust.success'));
+      setStockAdjustProduct(null);
+      setStockAdjustQuantity('');
+      await fetchData();
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+        t('stockAdjust.failed');
+      toast.error(message);
+    } finally {
+      setStockAdjusting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -625,6 +671,24 @@ export default function ProductsPage() {
             t={t}
             onEdit={openEdit}
             onDelete={handleDelete}
+            onAdjustStock={isOwnerOrManager ? openStockAdjust : undefined}
+          />
+
+          <StockAdjustmentDialog
+            open={stockAdjustProduct !== null}
+            onOpenChange={(open) => {
+              if (!open && !stockAdjusting) {
+                setStockAdjustProduct(null);
+                setStockAdjustQuantity('');
+              }
+            }}
+            product={stockAdjustProduct}
+            action={stockAdjustAction}
+            onActionChange={setStockAdjustAction}
+            quantity={stockAdjustQuantity}
+            onQuantityChange={setStockAdjustQuantity}
+            onConfirm={() => void handleStockAdjust()}
+            submitting={stockAdjusting}
           />
 
           <ProductFormDialog

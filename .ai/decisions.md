@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Phase 3.6C Manual Stock Adjustment UI (Accepted + Implemented)
+
+Products table row action + dialog calls existing `POST /products/:id/stock` (`action` + `quantity`). No free-text reason (API has none; ledger reason = action). No schema change. Shared product/inventory modules (Restaurant + Retail). Doc: `docs/03-architecture/phase-3.6c-manual-stock-adjust-ui.md`.
+
 ## 2026-08-14 — Phase 3.6B Reports Gross / Refunds / Net Sales UI (Accepted + Implemented)
 
 Display-only: Home + Reports bind existing `grossSales` / `refunds` / `netSales` from `daily-stats` and `summary` APIs. No backend money-path changes; no schema change. Doc: `docs/03-architecture/phase-3.6b-reports-gross-refunds-net-ui.md`.
