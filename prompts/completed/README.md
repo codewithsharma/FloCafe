@@ -7,6 +7,7 @@
 - [phase-4.10.md](phase-4.10.md) — FIN-01 collectible outstanding display
 - [phase-4.11.md](phase-4.11.md) — Inventory on-hand valuation report
 - [phase-4.12.md](phase-4.12.md) — Retail POS fulfillment-type honesty
+- [phase-4.13.md](phase-4.13.md) — Restaurant table merge discovery
 
 When a phase in `prompts/phases/` is genuinely complete (all gates in that prompt’s Completion Criteria), either:
 
