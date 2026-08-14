@@ -25,7 +25,7 @@
 - ⚠️ RISK (ops): Café pilots must keep `ACTIVE_VERTICAL_ID` unset or `restaurant`. Accidental `=retail` selects production Retail (wrong for café); `=retail-test` selects synthetic composition.
 - ⚠️ RISK: Brand consolidation to **Opervia** (ADR-010) — living docs/STRATEGY/`productName`/UI i18n updated; historical `15-*` audits still say Nexora/FloCafe; `appId`/`executableName` remain flo\* for upgrade continuity; Drive folder is `Opervia Backups` (old `Nexora Backups` not auto-migrated).
 - ⚠️ RISK: Phase 2.6 capabilities are metadata only — any future consumer must not treat `CapabilityId` as authorization (roles/`requireRole` remain authoritative).
-- ⚠️ RISK: Soft module registry — **Phase 3.1–3.4 CLOSED** (fail-closed remount; deploy/start vertical; production `retail`; soft-gate/correctness residuals closed). Residual polish: order create may still log “Internal error” for typed 400 stock rejects (cosmetic).
+- ⚠️ RISK: Soft module registry — **Phase 3.1–3.4 CLOSED** (fail-closed remount; deploy/start vertical; production `retail`; soft-gate/correctness residuals closed).
 - ⚠️ RISK: Dual i18n catalogs during migration — i18next namespaces + legacy flat `lib/i18n/*.json`; migrate gradually; avoid key drift.
 - ⚠️ RISK: Helmet CSP still allows `'unsafe-inline'` for Next static export (Phase C CSP hardening deferred).
 - ⚠️ RISK: Void + full-order cancel stock over-restore — **CLOSED in Phase 3.4** (skip `voided` / `void_adjustment` on restore; expect stock 8).
