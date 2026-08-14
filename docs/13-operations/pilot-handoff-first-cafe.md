@@ -1,25 +1,25 @@
 # First supervised café — pilot handoff (P1.6)
 
-**Product:** Opervia Restaurant v3.0.5  
+**Product:** Operavia Restaurant v3.0.5  
 **Scope:** Exactly **one** supervised café. Not mass rollout. Not Retail.  
 **Authorization status:** **PILOT READY — HUMAN GATES PENDING** (see [`pilot-signoff.md`](./pilot-signoff.md)).  
 **Do not install a live café until all applicable sign-off gates are PASS (or written CEO/CTO waiver).**
 
-Related: [`pilot-runbook.md`](./pilot-runbook.md) · [`incident-response.md`](./incident-response.md) · [`backup-restore.md`](./backup-restore.md) · [`p1.6-cto-release-control-decision.md`](../15-project-management/p1.6-cto-release-control-decision.md)
+Related: [`pilot-runbook.md`](./pilot-runbook.md) · [`pilot-staff-training-checklist.md`](./pilot-staff-training-checklist.md) · [`pilot-success-criteria.md`](./pilot-success-criteria.md) · [`incident-response.md`](./incident-response.md) · [`backup-restore.md`](./backup-restore.md) · [`pilot-operations-readiness-report.md`](../05-production/pilot-operations-readiness-report.md) · [`p1.6-cto-release-control-decision.md`](../15-project-management/p1.6-cto-release-control-decision.md)
 
 ---
 
 ## 1. Artifact to install
 
-| Item                    | Value                                                                                                                            |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Version                 | **3.0.5**                                                                                                                        |
-| Brand / vertical        | **Opervia Restaurant**                                                                                                           |
-| Required artifact class | **Signed + notarized PILOT/PRODUCTION** Mac (or platform chosen for the café)                                                    |
-| Forbidden               | Local `release/mac-arm64/Nexora.app` (or any build) with **Signature=adhoc**                                                     |
-| How to obtain           | CI `.github/workflows/release.yml` with secrets populated, **or** local `npm run build:mac` with Developer ID + Apple notary env |
-| Secrets required (Mac)  | `MAC_CERTS` / `CSC_LINK`, `MAC_CERTS_PASSWORD` / `CSC_KEY_PASSWORD`, `APPLE_API_KEY`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`     |
-| Verify before install   | `codesign -dv --verbose=4 <App>` → **not** adhoc; `spctl --assess`; stapler/notarization checks per release workflow             |
+| Item                    | Value                                                                                                                             |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Version                 | **Bump past 3.0.5** before RC (tag `3.0.5` is `241d6ca`, **not** engineering baseline `0200cae`)                                  |
+| Brand / vertical        | **Operavia Restaurant**                                                                                                           |
+| Required artifact class | **Signed + notarized PILOT/PRODUCTION** Mac (or platform chosen for the café)                                                     |
+| Forbidden               | Local `release/mac-arm64/Nexora.app` / `Operavia.app` (or any build) with **Signature=adhoc**; do not retag `3.0.5` for this HEAD |
+| How to obtain           | CI `.github/workflows/release.yml` with secrets populated, **or** local `npm run build:mac` with Developer ID + Apple notary env  |
+| Secrets required (Mac)  | `MAC_CERTS` / `CSC_LINK`, `MAC_CERTS_PASSWORD` / `CSC_KEY_PASSWORD`, `APPLE_API_KEY`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`      |
+| Verify before install   | `codesign -dv --verbose=4 <App>` → **not** adhoc; `spctl --assess`; stapler/notarization checks per release workflow              |
 
 **Current engineering machine (2026-08-14):** 0 codesign identities; signing env UNSET → **cannot** produce pilot artifact here.
 
@@ -93,7 +93,7 @@ Until then: **no live service day.**
 
 ## 7. First-day verification
 
-Use `pilot-runbook.md` FIRST INSTALL + first service checks. Minimum:
+Use `pilot-runbook.md` §1–§16 + first service checks. Minimum:
 
 - [ ] Fresh install of **signed** artifact on café machine
 - [ ] Vertical = Restaurant

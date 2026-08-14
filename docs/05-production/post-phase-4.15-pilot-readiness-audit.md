@@ -4,7 +4,7 @@
 **Branch:** `modular-verticles`  
 **HEAD at audit start:** `5fee6df` (`feat: add inventory wastage stock action`)  
 **Schema:** v75  
-**Product:** Opervia (repo: FloCafe / `flo-desktop` 3.0.5)  
+**Product:** Operavia (repo: FloCafe / `flo-desktop` 3.0.5)  
 **Scope:** Phases 3.x and 4.1–4.15 are complete. This is an **audit**, not a feature phase. **Phase 4.16 was not created.**  
 **Working tree before audit:** clean. Production code was **not** modified.
 
@@ -21,7 +21,7 @@
 | **Restaurant** | **PILOT READY WITH CONDITIONS** |
 | **Retail**     | **NOT PILOT READY**             |
 
-Overall platform label for a mixed “Opervia is production-ready” claim: **NOT PILOT READY** — because Retail is not. For the north-star KPI (**3 cafés × 30 days × zero critical failures**), evaluate **Restaurant only**.
+Overall platform label for a mixed “Operavia is production-ready” claim: **NOT PILOT READY** — because Retail is not. For the north-star KPI (**3 cafés × 30 days × zero critical failures**), evaluate **Restaurant only**.
 
 **Restaurant.** Takeaway billing, FIN-01 collectible outstanding, refunds, shifts, day close, and main-API composition are good enough for a **controlled café pilot**. There is **no product P0** on the money path, restore of a missing/empty database, or RBAC bypass. Remaining items are P1 product defects plus **human/ops gates** (signed artifact, PIN escrow, OPS-01, printer on the café machine, training/sign-off). Treat the first café as **takeaway-first**; billed table merge is intentionally unimplemented (Phase 4.13 discovery).
 
