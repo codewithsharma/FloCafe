@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Phase 3.5B Legacy Tax Column Cleanup (DEFERRED)
+
+Discovery: `phase-3.5b-legacy-tax-cleanup-discovery.md` (candidates `products.tax_type` / `products.tax_rate` only; not authoritative; snapshots/FIN-01/REAL→cents out of scope). Human decision: **DEFER until pilot evidence**. Schema remains **v75**. Columns remain. API writers/readers unchanged. No migration. No Mode B. No DROP. Future choice (not made now): Mode B (code-only stop-return/stop-write) **or** DROP (separate ADR + migration + consumer review). **No implementation.**
+
 ## 2026-08-14 — Phase 3.5A Inventory Ledger UI (Accepted + Implemented)
 
 Owner/manager UI at `/products/movements` reuses existing `GET /api/inventory/movements` (`listInventoryMovements`). No schema change; no stock recalculation; shared `inventory` module (Restaurant + Retail). Out of scope: suppliers/PO, recipes/BOM, tax cleanup, service/package extraction. Doc: `docs/03-architecture/phase-3.5a-inventory-ledger-ui.md`.

@@ -95,7 +95,8 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Phase 3.3** Production Retail vertical (2026-08-13) — `retail` in `VERTICALS`; shared commerce modules; fail-closed remount; minimal frontend composition; no schema; `phase-3.3-production-retail.md`
 - [x] **Phase 3.4** Correctness residuals — **COMPLETE** (`phase-3.4-correctness-residuals.md`). KDS notify internal soft-gate; held-orders `tables` gate; void×cancel restock (stock→8); stock-reject HTTP 400; no ALS.
 - [x] **Phase 3.5A** Inventory Ledger UI — **COMPLETE** (`phase-3.5a-inventory-ledger-ui.md`). Reuses `GET /api/inventory/movements`; page `/products/movements`; no schema change.
-- [ ] **Phase 3.5** Remaining optional — legacy tax columns, packages/extraction, recipes/BOM, suppliers/PO (not authorized unless explicitly tasked)
+- [x] **Phase 3.5B** Legacy tax column cleanup — **DEFERRED** pending pilot evidence and later architectural/API decision (`phase-3.5b-legacy-tax-cleanup-discovery.md`). Schema v75; `tax_type`/`tax_rate` remain; no Mode B, DROP, or migration.
+- [ ] **Phase 3.5** Remaining optional — packages/extraction, recipes/BOM, suppliers/PO (not authorized unless explicitly tasked). Tax cleanup stays deferred (3.5B).
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet
 - [ ] ADR-006 Multi-Location Architecture (design only; no code until approved)
 - [ ] Analytics/accounting export

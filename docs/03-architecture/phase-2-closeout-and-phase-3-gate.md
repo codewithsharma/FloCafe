@@ -63,12 +63,12 @@ These narrow deferred polish; they do **not** change the PASS decision or enable
 | POS page → coordinator further extract                                | **Polish**                                        | Documented CURRENT DEBT; not a gate blocker                       |
 | Dual i18n catalog unification                                         | **Polish**                                        | Incremental; English fallback safe                                |
 | OTel exporter/collector                                               | **Future**                                        | API foundation enough offline                                     |
-| Legacy `tax_type`/`tax_rate` column cleanup                           | **Phase 3 work** (late)                           | Forced none/0; remove after consumer proof                        |
+| Legacy `tax_type`/`tax_rate` column cleanup                           | **DEFERRED** (Phase 3.5B; pending pilot evidence) | Forced none/0; remain on v75; Mode B vs DROP not chosen           |
 | Further `bills.ts` extract (generate/split/print)                     | **Polish**                                        | Tender already extracted                                          |
 | Event bus for table/KDS side effects                                  | **Future**                                        | Soft-gates sufficient until remount                               |
 | Package extraction / npm workspaces                                   | **Future**                                        | After contracts stabilize in production use                       |
 | `db.ts` split                                                         | **Future**                                        | Monolith acceptable until extraction                              |
-| Inventory ledger UI                                                   | **Phase 3 work** (optional product)               | Read API exists (2.12)                                            |
+| Inventory ledger UI                                                   | **COMPLETE** (Phase 3.5A)                         | `/products/movements` over `GET /api/inventory/movements`         |
 | Recipes/BOM, suppliers/PO                                             | **Future**                                        | Explicitly after ledger + pilots                                  |
 | Microservices / K8s / Kafka / plugin frameworks                       | **Not worth**                                     | Violates platform mandate                                         |
 
@@ -164,11 +164,12 @@ Rationale: Production Retail without fail-closed remount would ship “Restauran
 
 ### Phase 3.5 — Platform depth (optional / later)
 
-|                  |                                                                                                                                                     |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Objective**    | Inventory ledger UI; legacy tax column cleanup; further service extracts; package extraction only if extraction readiness + product need demand it. |
-| **Depends on**   | Stable 3.1–3.4 + pilot evidence                                                                                                                     |
-| **NOT included** | Microservices, Nest, Prisma, Redis, K8s, Kafka, Temporal, plugin frameworks without evidence                                                        |
+|                  |                                                                                                                                                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Objective**    | Inventory ledger UI; legacy tax column cleanup; further service extracts; package extraction only if extraction readiness + product need demand it.                                                          |
+| **Depends on**   | Stable 3.1–3.4 + pilot evidence                                                                                                                                                                              |
+| **NOT included** | Microservices, Nest, Prisma, Redis, K8s, Kafka, Temporal, plugin frameworks without evidence                                                                                                                 |
+| **Status**       | **3.5A COMPLETE** (ledger UI). **3.5B DEFERRED** pending pilot evidence — [phase-3.5b-legacy-tax-cleanup-discovery.md](phase-3.5b-legacy-tax-cleanup-discovery.md). Remaining extracts/packages not started. |
 
 ---
 

@@ -21,7 +21,8 @@
 - ⚠️ RISK: Upgrades seed `network_mode=localhost`. Existing LAN KDS/POS/waiter setups need Settings → `kds_lan` or `lan` + restart before tablets reconnect.
 - ⚠️ RISK: Electron renderer `flo_terminal_id` and host `settings.terminal_id` may differ. POS requests send the client id; header-less `openShift` still uses the host id.
 - ⚠️ RISK: Lost `terminal_id` (cleared localStorage) orphans an open shift; managers must force-close.
-- ⚠️ RISK: Doc drift — some older architecture pages may still cite pre-v75 schema; Phase 2–3 truth is **closeout gate + `.ai/`** (Phase 2 CLOSED; Phase 3.1–3.4 COMPLETE; 3.5+ optional).
+- ⚠️ RISK: Doc drift — some older architecture pages may still cite pre-v75 schema; Phase 2–3 truth is **closeout gate + `.ai/`** (Phase 2 CLOSED; Phase 3.1–3.4 COMPLETE; 3.5A COMPLETE; 3.5B DEFERRED pending pilot).
+- 🔴 DEBT: Legacy `products.tax_type` / `tax_rate` remain on schema v75 (forced none/0; not authoritative). **Phase 3.5B DEFERRED** until pilot evidence; Mode B vs DROP not chosen. See `phase-3.5b-legacy-tax-cleanup-discovery.md`.
 - ⚠️ RISK (ops): Café pilots must keep `ACTIVE_VERTICAL_ID` unset or `restaurant`. Accidental `=retail` selects production Retail (wrong for café); `=retail-test` selects synthetic composition.
 - ⚠️ RISK: Brand consolidation to **Opervia** (ADR-010) — living docs/STRATEGY/`productName`/UI i18n updated; historical `15-*` audits still say Nexora/FloCafe; `appId`/`executableName` remain flo\* for upgrade continuity; Drive folder is `Opervia Backups` (old `Nexora Backups` not auto-migrated).
 - ⚠️ RISK: Phase 2.6 capabilities are metadata only — any future consumer must not treat `CapabilityId` as authorization (roles/`requireRole` remain authoritative).
