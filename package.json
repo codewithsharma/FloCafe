@@ -66,6 +66,7 @@
     "test:phase-4.5": "node tests/run-electron-node-test.cjs tests/phase-4.5-retail-exchange.test.ts",
     "test:phase-4.7": "node tests/run-electron-node-test.cjs tests/phase-4.7-menu-86.test.ts",
     "test:phase-4.8": "node tests/run-electron-node-test.cjs tests/phase-4.8-reports-date-range.test.ts",
+    "test:phase-4.9": "node tests/run-electron-node-test.cjs tests/phase-4.9-customer-deactivate.test.ts",
     "test:capability-config": "node tests/run-electron-node-test.cjs tests/capability-config.test.ts",
     "test:fail-closed-remount": "node tests/run-electron-node-test.cjs tests/fail-closed-remount.test.ts",
     "test:module-registry": "ts-node --transpile-only -P tests/tsconfig.json tests/module-registry.test.ts && npm run test:module-diagnostics && npm run test:module-composition && npm run test:module-vertical-composition && npm run test:module-contract && npm run test:platform-composition-api && npm run test:flo-settings-module-gating && npm run test:fail-closed-remount && npm run test:capability-config",

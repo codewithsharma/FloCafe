@@ -437,6 +437,30 @@ router.post(
   },
 );
 
+router.post('/:id/deactivate', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id) as
+      { id: string; is_active: number } | undefined;
+    if (!customer) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+    if (Number(customer.is_active) === 0) {
+      return res.status(400).json({ error: 'Already inactive' });
+    }
+
+    db.prepare('UPDATE customers SET is_active = 0, updated_at = ? WHERE id = ?').run(
+      now(),
+      req.params.id,
+    );
+    const updated = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
+    res.json({ customer: parseCustomer(updated) });
+  } catch (error: any) {
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Customers are never deletable — not even soft-deleted — by design: every
 // row is permanently referenced by orders/bills/loyalty_ledger with no FK,
 // and losing a customer's history/loyalty standing is worse than a stale

@@ -9,6 +9,7 @@ import {
   AlertCircle,
   Wallet,
   RotateCcw,
+  UserMinus,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Panel, EmptyState, MoneyDisplay, StatusBadge } from '@/components/flo';
@@ -62,6 +63,8 @@ export interface CustomersTableProps {
   onShowInactiveChange?: (value: boolean) => void;
   onReactivate?: (customer: Customer) => void;
   reactivatingId?: string | number | null;
+  onDeactivate?: (customer: Customer) => void;
+  deactivatingId?: string | number | null;
 }
 
 function formatPhone(c: Customer): string {
@@ -99,6 +102,8 @@ export function CustomersTable({
   onShowInactiveChange,
   onReactivate,
   reactivatingId = null,
+  onDeactivate,
+  deactivatingId = null,
 }: CustomersTableProps) {
   const { t } = useI18n();
 
@@ -198,7 +203,9 @@ export function CustomersTable({
                 <tbody className="divide-y divide-flo-border">
                   {customers.map((c) => {
                     const active = isCustomerActive(c);
-                    const busy = reactivatingId != null && String(reactivatingId) === String(c.id);
+                    const busy =
+                      (reactivatingId != null && String(reactivatingId) === String(c.id)) ||
+                      (deactivatingId != null && String(deactivatingId) === String(c.id));
                     return (
                       <tr key={c.id} className={cn('hover:bg-flo-bg/80', !active && 'opacity-60')}>
                         <td className="p-4">
@@ -249,6 +256,19 @@ export function CustomersTable({
                         </td>
                         <td className="p-4 text-center">
                           <div className="inline-flex items-center justify-center gap-1">
+                            {active && onDeactivate ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="min-h-11 min-w-11 text-flo-danger"
+                                disabled={busy}
+                                onClick={() => onDeactivate(c)}
+                                aria-label={t('customer.deactivate')}
+                                title={t('customer.deactivate')}
+                              >
+                                <UserMinus size={14} aria-hidden />
+                              </Button>
+                            ) : null}
                             {!active && onReactivate ? (
                               <Button
                                 variant="ghost"

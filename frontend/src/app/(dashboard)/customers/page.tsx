@@ -114,6 +114,24 @@ export default function CustomersPage() {
     setShowForm(true);
   };
 
+  const handleDeactivate = async (c: Customer) => {
+    setReactivatingId(c.id);
+    try {
+      await api.post(`/customers/${c.id}/deactivate`);
+      toast.success(t('customer.deactivated'));
+      setRefreshKey((k) => k + 1);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string; message?: string } } };
+      toast.error(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          t('customer.deactivateFailed'),
+      );
+    } finally {
+      setReactivatingId(null);
+    }
+  };
+
   const handleReactivate = async (c: Customer) => {
     setReactivatingId(c.id);
     try {
@@ -215,6 +233,8 @@ export default function CustomersPage() {
           onShowInactiveChange={setShowInactive}
           onReactivate={handleReactivate}
           reactivatingId={reactivatingId}
+          onDeactivate={canShowInactive ? handleDeactivate : undefined}
+          deactivatingId={reactivatingId}
         />
       )}
 
