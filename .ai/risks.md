@@ -8,7 +8,7 @@
 - 🔒 SEC: CSP `'unsafe-inline'` + JWT in `localStorage` — XSS→API (**P1 / Phase C**). Stolen owner/manager JWT also authorizes Drive backup-now and B2 restart.
 - 🔒 SEC: Drive `backup-now` is owner JWT without Master PIN (**P1 DRV-01**).
 - ⚠️ RISK: Money `REAL` residual (P0.3 docs-only); cancel-after-pay / discount-on-settled gaps (**P1**). Refund receipt print: Phase 3.6A + WebUSB parity 3.6G COMPLETE.
-- ⚠️ RISK: **Retail product gap** — Phase 4.1–4.5 closed; **4.6 variants discovery: ADR required**. Remaining: PO/receiving, variants (pending ADR-013).
+- ⚠️ RISK: **Retail product gap** — Phase 4.1–4.5 closed; **ADR-013 Proposed** (human Accept). Matrix not authorized. PO/receiving STRATEGY-frozen.
 - ⚠️ RISK: **Retail variants (4.6)** — parent+options stock ambiguity forbidden; unused `variant_selection` must not become identity; barcode lacks DB UNIQUE.
 - ⚠️ RISK: Financial audit still sparse on discounts, PIN overrides, DB import/export, Master PIN ops.
 - ⚠️ RISK: Order cancel after pay still lacks refund interaction (P1).

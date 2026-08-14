@@ -168,18 +168,18 @@ Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webus
 
 ## Integrations & Cloud
 
-| Feature                        | Status      | Evidence                                                                                                                    | Production readiness |
-| ------------------------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| FloAdmin cloud sync            | [BUILT]     | `main/services/cloud-sync.ts`                                                                                               | Medium               |
-| WhatsApp bill delivery         | [BUILT]     | `main/services/whatsapp.ts`                                                                                                 | Medium — Baileys RC  |
-| RevFlo mobile pairing          | [BUILT]     | `POST /api/mobile/pairing-code`                                                                                             | Medium               |
-| Server App (waiter :3003)      | [BUILT]     | `main/server-app.ts`                                                                                                        | Medium               |
-| Device management (mobile/KDS) | [PARTIAL]   | RevFlo pairing, KDS station assignment                                                                                      | Medium               |
-| Online ordering                | [NOT BUILT] | —                                                                                                                           | —                    |
-| Delivery aggregator APIs       | [FROZEN]    | Swiggy/Zomato/ONDC — STRATEGY freeze                                                                                        | —                    |
-| Accounting integrations        | [NOT BUILT] | —                                                                                                                           | —                    |
-| Retail vertical (composition)  | [PARTIAL]   | Composition selectable; Phase 4.1–4.5 (floor, restock, low-stock, accounting CSV, **exchange**). Still missing PO, variants | Medium               |
-| Modular platform registry      | [BUILT]     | `main/modules/` Phase 2 CLOSED; Phase 3.1–3.4 composition/remount                                                           | High                 |
+| Feature                        | Status      | Evidence                                                                                                                                                                                     | Production readiness |
+| ------------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| FloAdmin cloud sync            | [BUILT]     | `main/services/cloud-sync.ts`                                                                                                                                                                | Medium               |
+| WhatsApp bill delivery         | [BUILT]     | `main/services/whatsapp.ts`                                                                                                                                                                  | Medium — Baileys RC  |
+| RevFlo mobile pairing          | [BUILT]     | `POST /api/mobile/pairing-code`                                                                                                                                                              | Medium               |
+| Server App (waiter :3003)      | [BUILT]     | `main/server-app.ts`                                                                                                                                                                         | Medium               |
+| Device management (mobile/KDS) | [PARTIAL]   | RevFlo pairing, KDS station assignment                                                                                                                                                       | Medium               |
+| Online ordering                | [NOT BUILT] | —                                                                                                                                                                                            | —                    |
+| Delivery aggregator APIs       | [FROZEN]    | Swiggy/Zomato/ONDC — STRATEGY freeze                                                                                                                                                         | —                    |
+| Accounting integrations        | [NOT BUILT] | —                                                                                                                                                                                            | —                    |
+| Retail vertical (composition)  | [PARTIAL]   | Composition selectable; Phase 4.1–4.5 (floor, restock, low-stock, accounting CSV, **exchange**). Variants: **ADR-013 Proposed** (identity = product row; matrix not built). PO still missing | Medium               |
+| Modular platform registry      | [BUILT]     | `main/modules/` Phase 2 CLOSED; Phase 3.1–3.4 composition/remount                                                                                                                            | High                 |
 
 ## Multi-location & Sync
 

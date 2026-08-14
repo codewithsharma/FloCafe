@@ -2,15 +2,17 @@
 
 ```text
 CURRENT_PHASE=4.6
-STATUS=ACTIVE
+STATUS=ADR_REQUIRED
 CURRENT_PROMPT=prompts/phases/phase-4.6.md
 LAST_COMPLETED=4.5
 LAST_COMMIT=a42493a
+HEAD_AT_PIPELINE=4c91553
 NEXT_PHASE=4.7
 SCHEMA=v75
 PRODUCTION_CODE=UNCHANGED
 PIPELINE_CREATED=2026-08-14
-LAST_VERIFICATION=pipeline-create-only (no phase implementation)
+LAST_VERIFICATION=2026-08-14 ADR-013 drafted Proposed; docs-only git diff; human Accept pending
+ADR=docs/14-decisions/ADR-013-retail-product-variants-sku-identity.md
 ```
 
 ## Completed phases (engineering, not this folder)
@@ -32,35 +34,33 @@ Historical implementation lives in `docs/`, not `prompts/completed/` yet.
 
 ## Blocked phases
 
-_None._ `prompts/blocked/` is empty.
+| Phase   | File                           | Reason                                            |
+| ------- | ------------------------------ | ------------------------------------------------- |
+| **4.6** | `prompts/blocked/phase-4.6.md` | **ADR_REQUIRED** — ADR-013 Proposed; human Accept |
 
 ## ADR requirements
 
-| Phase | ADR                                                                      |
-| ----- | ------------------------------------------------------------------------ |
-| 4.6   | **ADR-013** (this phase) — variants / SKU identity                       |
-| 4.10  | ADR only if bill **writes** are proposed (default: display-only, no ADR) |
-| 4.13  | Discovery; ADR if merging billed checks                                  |
-| 4.14  | **Service charge** ADR (money path)                                      |
-| 4.15  | ADR only if `inventory_movements` CHECK must change                      |
+| Phase | ADR                                                                                        |
+| ----- | ------------------------------------------------------------------------------------------ |
+| 4.6   | **ADR-013 Proposed** — `docs/14-decisions/ADR-013-retail-product-variants-sku-identity.md` |
+| 4.10  | ADR only if bill **writes** are proposed (default: display-only, no ADR)                   |
+| 4.13  | Discovery; ADR if merging billed checks                                                    |
+| 4.14  | **Service charge** ADR (money path)                                                        |
+| 4.15  | ADR only if `inventory_movements` CHECK must change                                        |
 
-## Unrelated working tree (do not commit with this pipeline or with any phase)
+## Unrelated working tree (do not commit with Phase 4.6)
 
-Recorded at pipeline creation. `git status` was dirty **ahead of** `prompts/` creation.
+Do **not** mix into the ADR-013 commit:
 
-**Do not** include in a prompts-only commit or in Phase 4.6–4.15 commits:
-
-- Branding / docs drift: `README.md`, `STRATEGY.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `docs/00-product/*`, `docs/README.md`, `docs/google-drive-setup.md`, `docs/01-requirements/acceptance-criteria.md`, `docs/16-release/production-readiness.md`
-- Architecture/docs WIP: `docs/03-architecture/architecture.md`, `architecture-gap-report.md`, untracked `phase-3.3-production-retail.md`, `phase-3.5-scope-discovery.md`, `phase-3.5c-service-extraction-discovery.md`, `docs/00-product/DOC-TRUTH-AUDIT.md`
-- Untracked discovery already used as evidence (commit separately if desired): `docs/04-product/phase-4.6-retail-product-variants-discovery.md`
-- Retail/module working tree: `main/modules/*`, `main/routes/platform.ts`, `frontend/src/lib/modules.ts`, `frontend/src/store/cart.ts`, POS/shell files, related tests (`production-retail.test.ts`, composition tests, etc.)
-- `audit/`
-- Pre-existing `.ai/*` drift (update `.ai` **only** with pipeline/phase-relevant lines when executing a phase)
+- `prompts/phases/phase-4.11.md` … `phase-4.15.md` (pipeline leftovers)
+- `prompts/ROADMAP.md` if the only change is the 4.14 service-charge column note
+- Branding, audit, generated files, `.env`, credentials
+- Any `main/` or `frontend/` file (none expected)
 
 ## Blockers
 
-_None for pipeline creation._
+**ADR-013 human Accept.** Do not auto-activate 4.7. Do not implement variants.
 
 ## Auto-advance rule
 
-Do not set `CURRENT_PHASE=4.7` until Phase 4.6 completion criteria in `prompts/phases/phase-4.6.md` are met **or** a human overrides `ACTIVE.md` after recording the reason here.
+`STATUS=ADR_REQUIRED` → **STOP**. Human may later Accept ADR-013 and authorize 4.7, or override `ACTIVE.md` in the open.

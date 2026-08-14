@@ -112,8 +112,19 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Phase 4.5 discovery** — Retail exchange workflow (`docs/04-product/phase-4.5-retail-exchange-discovery.md`). Verdict: **ADR REQUIRED** → **ADR-012 ACCEPTED**.
 - [x] **Phase 4.5 implementation** — Retail exchange coordinator + UI (`docs/04-product/phase-4.5-retail-exchange.md`; `npm run test:phase-4.5`).
 - [x] **Phase 4.6 discovery** — Retail product variants / SKU matrix (`docs/04-product/phase-4.6-retail-product-variants-discovery.md`). Verdict: **ADR REQUIRED** — Option A identity safe; matrix UX needs ADR-013.
-- [ ] **ADR-013** — Retail product variants / SKU identity — **not started**.
-- [ ] **Phase 4.6 implementation** — blocked pending ADR.
+- [x] **Prompt pipeline** — `prompts/` orchestrator + roadmap 4.6–4.15 (2026-08-14). Production code unchanged. Schema v75. Execute only the phase in `prompts/ACTIVE.md`.
+- [x] **Phase 4.6 / ADR-013 draft** — `docs/14-decisions/ADR-013-retail-product-variants-sku-identity.md` — **Proposed**; waiting human Accept. **No matrix implementation.**
+- [ ] **Phase 4.6 / ADR-013 Accept** — human gate. Until Accept: pipeline `ADR_REQUIRED`; do not start 4.7.
+- [ ] **Phase 4.7** Restaurant 86 workflow (`prompts/phases/phase-4.7.md`)
+- [ ] **Phase 4.8** Reports multi-day range picker (`prompts/phases/phase-4.8.md`)
+- [ ] **Phase 4.9** Customer deactivate (`prompts/phases/phase-4.9.md`)
+- [ ] **Phase 4.10** FIN-01 collectible outstanding display (`prompts/phases/phase-4.10.md`)
+- [ ] **Phase 4.11** Inventory on-hand valuation report (`prompts/phases/phase-4.11.md`)
+- [ ] **Phase 4.12** Retail POS fulfillment-type honesty (`prompts/phases/phase-4.12.md`)
+- [ ] **Phase 4.13** Table merge discovery (`prompts/phases/phase-4.13.md`)
+- [ ] **Phase 4.14** Service charge ADR (`prompts/phases/phase-4.14.md`)
+- [ ] **Phase 4.15** Wastage stock decrease (`prompts/phases/phase-4.15.md`)
+- [ ] **Phase 4.6 matrix implementation** — not in this 10; blocked until ADR-013 Accepted with an implementation slice.
 - [ ] **Phase 3.5** Remaining optional — packages/extraction, recipes/BOM, suppliers/PO (not authorized unless explicitly tasked). Tax cleanup stays deferred (3.5B).
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet
 - [ ] ADR-006 Multi-Location Architecture (design only; no code until approved)

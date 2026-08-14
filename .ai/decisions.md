@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-08-14 — ADR-013 Retail product variants / SKU identity (Proposed)
+
+Drafted `docs/14-decisions/ADR-013-retail-product-variants-sku-identity.md`. **Status: Proposed — human Accept required.** Identity LOCK: Option A (each sellable variant = `products` row). Software SKU matrix **deferred** (not authorized). ADR-011/012 remain valid. Schema v75. Production code unchanged. Pipeline: `STATUS=ADR_REQUIRED`; do not activate 4.7; do not implement matrix.
+
+## 2026-08-14 — Prompt pipeline + Phase 4.6–4.15 roadmap (Accepted — orchestration only)
+
+Created `prompts/` execution system. Next 10 phases selected from repo evidence (not frozen STRATEGY items). **ACTIVE = 4.6 ADR-013** (variants identity paper; no matrix implementation). Production code unchanged; schema v75. Auto-advance only after each phase’s completion gates. See `prompts/ROADMAP.md`.
+
 ## 2026-08-14 — Phase 4.6 Retail Product Variants (Discovery)
 
 Discovery: `docs/04-product/phase-4.6-retail-product-variants-discovery.md`. Catalog is 1 product = 1 stock bucket; no variant table; stubs unused. Sellable identity for ADR-011/012 already works if each SKU is a product row (Option A). True matrix/parent UX needs schema + policy. **Verdict: ADR REQUIRED** (propose ADR-013). **Implementation not started.**

@@ -5,7 +5,7 @@
 **Baseline:** Phase 4.5 (`a42493a`) · schema **v75**  
 **Production code:** None (discovery only)
 
-**Related:** [phase-4-product-completion-discovery.md](phase-4-product-completion-discovery.md) · [phase-4.1-retail-floor-usability.md](phase-4.1-retail-floor-usability.md) · [ADR-011](../14-decisions/ADR-011-refund-restock-policy.md) · [ADR-012](../14-decisions/ADR-012-retail-exchange-policy.md) · [feature-list.md](../00-product/feature-list.md)
+**Related:** [ADR-013](../14-decisions/ADR-013-retail-product-variants-sku-identity.md) (**Proposed** — human Accept required) · [phase-4-product-completion-discovery.md](phase-4-product-completion-discovery.md) · [phase-4.1-retail-floor-usability.md](phase-4.1-retail-floor-usability.md) · [ADR-011](../14-decisions/ADR-011-refund-restock-policy.md) · [ADR-012](../14-decisions/ADR-012-retail-exchange-policy.md) · [feature-list.md](../00-product/feature-list.md)
 
 ---
 
@@ -479,8 +479,10 @@ Phase 4.6 implementation may be declared COMPLETE only if:
    - Barcode/SKU uniqueness
    - Restaurant visibility
    - Migration stance for existing products
-2. Do **not** start implementation until ADR is Accepted.
+2. Do **not** start implementation until ADR is Accepted **and** an implementation slice is explicitly authorized.
 3. Do **not** reopen 3.5B / 3.5C / REAL→cents / P1.6.
+
+**ADR-013 drafted 2026-08-14:** [ADR-013-retail-product-variants-sku-identity.md](../14-decisions/ADR-013-retail-product-variants-sku-identity.md) — **Proposed**. Identity = Option A. Matrix software **deferred**. Production code unchanged.
 
 ---
 
