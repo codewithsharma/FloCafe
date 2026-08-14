@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Phase 4.12 Retail fulfillment types (Implemented)
+
+Retail POS hides café delivery when `tables` is off; leftover delivery coerces to takeaway. Restaurant types unchanged. Schema v75. Doc: `phase-4.12-retail-fulfillment-types.md`.
+
 ## 2026-08-14 — Phase 4.11 Inventory valuation (Implemented)
 
 Read-only `GET /api/reports/inventory-valuation`: catalog `cost` × `stock_quantity` for tracked products. UI `/products/valuation`. Not WAC/FIFO. Schema v75. Doc: `phase-4.11-inventory-valuation.md`.

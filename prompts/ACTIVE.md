@@ -1,9 +1,9 @@
 # ACTIVE PHASE
 
-Phase: 4.12
+Phase: 4.13
 
 Prompt:
-prompts/phases/phase-4.12.md
+prompts/phases/phase-4.13.md
 
 Status:
 ACTIVE
@@ -11,3 +11,4 @@ ACTIVE
 Execute this phase only until it completes, then auto-advance.
 Do not implement a variants matrix.
 Honor ADR / schema / money STOP conditions.
+Do not implement table merge.

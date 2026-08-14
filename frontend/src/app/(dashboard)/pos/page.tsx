@@ -289,7 +289,7 @@ export default function POSPage() {
 
   useEffect(() => {
     // Retail / no-tables: default to takeaway so POS does not require table selection.
-    if (composition && !tablesModuleEnabled && cart.orderType === 'dine_in') {
+    if (composition && !tablesModuleEnabled && cart.orderType !== 'takeaway') {
       cart.setOrderType('takeaway');
       cart.setTableId(null);
     }

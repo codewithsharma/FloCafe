@@ -106,7 +106,7 @@ export default function CartPanel({
       <div className="shrink-0 p-3 md:p-4 border-b border-flo-border space-y-2">
         <div className="flex gap-1 bg-flo-surface-muted rounded-flo-md p-1">
           {(['dine_in', 'takeaway', 'delivery'] as const)
-            .filter((type) => tablesModuleEnabled || type !== 'dine_in')
+            .filter((type) => tablesModuleEnabled || type === 'takeaway')
             .map((type) => {
               const Icon = orderTypeIcons[type];
               const label =

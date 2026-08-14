@@ -56,7 +56,7 @@ Restaurant-specific depth today includes tables, KDS/kitchen stations, KOT print
 
 **Excludes:** `tables`, `kitchen`, `kds`, `menu`, `addons`.
 
-**Honest gap:** This is a **production-selectable composition**, not a finished retail product. Retail-native UX (barcode-first checkout depth, suppliers/PO, retail floor workflows) is **not** implemented. Do not market as a full retail ERP.
+**Honest gap:** This is a **production-selectable composition**, not a finished retail product. POS checkout is **takeaway (counter) only** — café dine-in and delivery chrome are hidden (Phase 4.12). Retail-native UX (barcode-first checkout depth, suppliers/PO) is **not** implemented. Do not market as a full retail ERP.
 
 ---
 

@@ -11,7 +11,7 @@ Evidence paths reference the Opervia codebase (repo: FloCafe) as of schema **v75
 | Feature                                   | Status  | Evidence                                                                                          | Production readiness               |
 | ----------------------------------------- | ------- | ------------------------------------------------------------------------------------------------- | ---------------------------------- |
 | POS product grid & cart                   | [BUILT] | `frontend/src/app/(dashboard)/pos/page.tsx`, `frontend/src/store/cart.ts`                         | High — E2E layout tests            |
-| Order types (dine-in, takeaway, delivery) | [BUILT] | `frontend/src/lib/order-types.ts`, `orders.type` column                                           | High                               |
+| Order types (dine-in, takeaway, delivery) | [BUILT] | `frontend/src/lib/order-types.ts`, `orders.type` column; Retail POS takeaway-only (Phase 4.12)    | High                               |
 | Order lifecycle                           | [BUILT] | `main/routes/orders.ts`                                                                           | High — integration tests           |
 | Held orders (table carts)                 | [BUILT] | `main/routes/held-orders.ts`, `held_orders` table                                                 | High — `tests/held-orders.test.ts` |
 | Order notes validation                    | [BUILT] | `tests/order-notes-validation.test.ts`                                                            | High                               |
