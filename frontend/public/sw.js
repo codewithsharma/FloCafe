@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nexora-v1';
+const CACHE_NAME = 'OPERAVIA-v1';
 const PRECACHE_URLS = [
   '/dashboard',
   '/pos',

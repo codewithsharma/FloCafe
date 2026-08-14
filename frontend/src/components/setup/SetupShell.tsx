@@ -12,14 +12,7 @@ interface SetupShellProps {
   footer?: React.ReactNode;
 }
 
-export function SetupShell({
-  step,
-  title,
-  tagline,
-  t,
-  children,
-  footer,
-}: SetupShellProps) {
+export function SetupShell({ step, title, tagline, t, children, footer }: SetupShellProps) {
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-flo-bg">
       <div
@@ -42,19 +35,11 @@ export function SetupShell({
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-xl flex-col justify-center px-4 py-8 sm:px-6 sm:py-10">
         <header className="mb-5 text-center sm:mb-6">
-          <img
-            src="/logo.png"
-            alt="Flo POS"
-            width={88}
-            height={58}
-            className="mx-auto mb-4"
-          />
+          <img src="/logo.png" alt="OPERAVIA" width={88} height={58} className="mx-auto mb-4" />
           <h1 className="text-[1.75rem] font-semibold tracking-tight text-flo-text sm:text-[2rem]">
             {title}
           </h1>
-          <p className="mx-auto mt-1.5 max-w-md text-small text-flo-text-secondary">
-            {tagline}
-          </p>
+          <p className="mx-auto mt-1.5 max-w-md text-small text-flo-text-secondary">{tagline}</p>
         </header>
 
         <div className="mb-4">
@@ -64,9 +49,7 @@ export function SetupShell({
         <section className="rounded-flo-xl border border-flo-border/80 bg-flo-surface/95 shadow-[0_12px_40px_rgba(41,37,36,0.06)] backdrop-blur-sm">
           <div className="px-4 py-5 sm:px-6 sm:py-6">{children}</div>
           {footer ? (
-            <div className="border-t border-flo-border px-4 py-4 sm:px-6">
-              {footer}
-            </div>
+            <div className="border-t border-flo-border px-4 py-4 sm:px-6">{footer}</div>
           ) : null}
         </section>
       </div>

@@ -48,9 +48,8 @@ export default function RecoveryPage() {
           DATABASE RECOVERY REQUIRED
         </h1>
         <p className="text-sm leading-relaxed text-flo-text-secondary">
-          This installation already contains café data, but the operational database is missing
-          or unusable. Your business data has <strong>not</strong> been initialized as a new
-          database.
+          This installation already contains café data, but the operational database is missing or
+          unusable. Your business data has <strong>not</strong> been initialized as a new database.
         </p>
         <p className="text-sm font-medium text-red-700 dark:text-red-400">
           STOP. Do not complete first-time setup. Do not take payments. Restore the correct backup.
@@ -66,7 +65,7 @@ export default function RecoveryPage() {
             Restore Backup
           </button>
           <a
-            href="https://nexorapos.com/support"
+            href="https://flopos.com/support"
             target="_blank"
             rel="noreferrer"
             className="rounded-md border border-flo-border px-4 py-2.5 text-sm font-medium text-flo-text hover:bg-flo-surface"

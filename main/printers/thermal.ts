@@ -105,7 +105,7 @@ function extractPlatformErrorCode(detail?: string): number | undefined {
 const isMasBuild =
   process.env.MAS_BUILD === '1' || (process as NodeJS.Process & { mas?: boolean }).mas === true;
 
-const RECEIPT_BRANDING_NAME = 'Powered by FloPOS';
+const RECEIPT_BRANDING_NAME = 'Powered by OPERAVIA';
 const RECEIPT_BRANDING_URL = 'https://flopos.com';
 
 export interface PrinterInfo {
@@ -2350,7 +2350,7 @@ public static class FloRawPrinter {
             EnsureReady(hPrinter);
 
             DOCINFO docInfo = new DOCINFO();
-            docInfo.pDocName = "Nexora Receipt";
+            docInfo.pDocName = "OPERAVIA Receipt";
             docInfo.pDataType = "RAW";
 
             uint jobId = StartDocPrinter(hPrinter, 1, docInfo);

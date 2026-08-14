@@ -24,7 +24,7 @@ function main(): void {
   assert.equal(snapshot.schemaVersion, '2.3');
   assert.equal(snapshot.vertical.id, 'restaurant');
   assert.equal(snapshot.vertical.id, OPERVIA_RESTAURANT_VERTICAL_ID);
-  assert.equal(snapshot.vertical.name, 'Opervia Restaurant');
+  assert.equal(snapshot.vertical.name, 'OPERAVIA Restaurant');
   assert.equal(snapshot.vertical.version, '1.0.0');
   console.log('   ✓ restaurant vertical identity');
 
@@ -99,7 +99,7 @@ function main(): void {
 
   const apiProjection = getPlatformCompositionResponse();
   assert.equal(apiProjection.verticalId, 'restaurant');
-  assert.equal(apiProjection.verticalName, 'Opervia Restaurant');
+  assert.equal(apiProjection.verticalName, 'OPERAVIA Restaurant');
   assert.deepEqual([...apiProjection.enabledModules], sortedEnabled);
   assert.equal(apiProjection.diagnostics.valid, true);
   assert.ok(!('schemaVersion' in apiProjection));

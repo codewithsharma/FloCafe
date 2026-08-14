@@ -1,6 +1,6 @@
 name: Bug Report
 description: Report a bug or unexpected behavior
-labels: ["bug"]
+labels: ['bug']
 body:
   - type: markdown
     attributes:
@@ -58,9 +58,9 @@ body:
   - type: input
     id: version
     attributes:
-      label: FloCafe version
-      description: "Find this in the app menu: FloCafe > About"
-      placeholder: "e.g. 1.7.2"
+      label: OPERAVIA version
+      description: 'Find this in the app menu: OPERAVIA > About'
+      placeholder: 'e.g. 1.7.2'
     validations:
       required: true
 

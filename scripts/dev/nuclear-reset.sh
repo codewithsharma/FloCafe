@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$ROOT_DIR"
 
 if [ ! -f "$ROOT_DIR/package.json" ]; then
-  echo "Error: nuclear-reset.sh must run from a FloCafe checkout." >&2
+  echo "Error: nuclear-reset.sh must run from an OPERAVIA (FloCafe) checkout." >&2
   exit 1
 fi
 
@@ -54,7 +54,7 @@ if [ "$CONFIRMED" = "false" ]; then
 fi
 
 echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}    FloCafe - Development Reset         ${NC}"
+echo -e "${BLUE}    OPERAVIA - Development Reset         ${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 

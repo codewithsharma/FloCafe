@@ -112,7 +112,7 @@ async function main() {
       const res = await request(app).get('/api/platform/composition').set(auth);
       assertEqual(res.status, 200, `${label} status`);
       assertEqual(res.body.verticalId, 'restaurant', `${label} verticalId`);
-      assertEqual(res.body.verticalName, 'Opervia Restaurant', `${label} verticalName`);
+      assertEqual(res.body.verticalName, 'OPERAVIA Restaurant', `${label} verticalName`);
       nodeAssert.equal(res.body.diagnostics.valid, true, `${label} diagnostics.valid`);
       nodeAssert.ok(Array.isArray(res.body.enabledModules), `${label} enabledModules array`);
       assertEqual(

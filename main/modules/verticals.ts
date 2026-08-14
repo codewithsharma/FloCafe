@@ -23,7 +23,7 @@ export const OPERVIA_RESTAURANT_ENABLED_MODULES: readonly ModuleId[] = [
 
 export const OPERVIA_RESTAURANT_VERTICAL: VerticalDefinition = {
   id: OPERVIA_RESTAURANT_VERTICAL_ID,
-  name: 'Opervia Restaurant',
+  name: 'OPERAVIA Restaurant',
   version: '1.0.0',
   enabledModules: [...OPERVIA_RESTAURANT_ENABLED_MODULES],
   description:

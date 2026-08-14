@@ -1044,7 +1044,7 @@ export default function POSPage() {
                     try {
                       const response = await api.post('/support-ticket', {
                         ...supportError.payload,
-                        subject: 'Flo POS printing problem',
+                        subject: 'OPERAVIA printing problem',
                         correlation_id: crypto.randomUUID(),
                         client_ticket_id: clientTicketId,
                       });

@@ -183,7 +183,7 @@ export default function FloSidebar() {
             <SidebarMenuButton size="lg" asChild tooltip={t('common.brandName')}>
               <Link href={homeHref} onClick={closeMobile}>
                 <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-md bg-flo-brand-600 text-white font-semibold">
-                  F
+                  O
                 </div>
                 <div className="flex flex-col gap-0.5 min-w-0 leading-none">
                   <span className="font-semibold truncate">{t('common.brandName')}</span>

@@ -1,6 +1,6 @@
-# FloCafe agent guide
+# OPERAVIA agent guide
 
-FloCafe is an Electron desktop POS. `main/` contains the Electron process, Express API, SQLite access, printing, and services. `frontend/` is a statically exported Next.js and React application. `tests/` contains backend, integration, and release checks.
+OPERAVIA is an Electron desktop POS (repository legacy name: FloCafe). `main/` contains the Electron process, Express API, SQLite access, printing, and services. `frontend/` is a statically exported Next.js and React application. `tests/` contains backend, integration, and release checks.
 
 ## Runtime and layout
 
@@ -46,12 +46,12 @@ For database, import/export, authentication, printing, or release changes, ident
 
 Choose checks that cover the change:
 
-| Change | Minimum verification |
-| --- | --- |
-| Documentation | Link check and `git diff --check` |
-| Frontend | `npm run lint` and `npm run build:frontend` |
-| Main process or API | `npm run lint`, `npm run build`, and focused tests |
-| Database migration | Fresh and upgrade-path tests; verify backup and restore when relevant |
-| Release or cross-platform packaging | Full test suite and target platform builds |
+| Change                              | Minimum verification                                                  |
+| ----------------------------------- | --------------------------------------------------------------------- |
+| Documentation                       | Link check and `git diff --check`                                     |
+| Frontend                            | `npm run lint` and `npm run build:frontend`                           |
+| Main process or API                 | `npm run lint`, `npm run build`, and focused tests                    |
+| Database migration                  | Fresh and upgrade-path tests; verify backup and restore when relevant |
+| Release or cross-platform packaging | Full test suite and target platform builds                            |
 
 Run `npm test` for a full validation request, before a release, or when the change crosses several subsystems. Add focused suites not included by `npm test` when they cover the changed behavior.

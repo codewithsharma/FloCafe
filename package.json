@@ -1,7 +1,7 @@
 {
   "name": "flo-desktop",
   "version": "3.0.5",
-  "description": "Opervia — modular business platform. Opervia Restaurant: free, open-source, offline-first POS with KDS, SQLite, and thermal printer support.",
+  "description": "OPERAVIA — modular business platform. OPERAVIA Restaurant: free, open-source, offline-first POS with KDS, SQLite, and thermal printer support.",
   "engines": {
     "node": ">=22.12.0"
   },
@@ -212,7 +212,7 @@
     "prepare": "husky"
   },
   "author": {
-    "name": "Nexora",
+    "name": "OPERAVIA",
     "email": "support@flo.local"
   },
   "homepage": "https://flopos.com",
@@ -328,7 +328,7 @@
       "publisherDisplayName": "Codify Apps Private Limited",
       "identityName": "CodifyAppsPrivateLimited.FloCafe",
       "publisher": "CN=34AFD24D-EC88-44B8-B309-08BB8A6BB5F7",
-      "displayName": "Nexora",
+      "displayName": "OPERAVIA",
       "languages": [
         "en-US"
       ]
@@ -385,7 +385,7 @@
     },
     "linux": {
       "synopsis": "Self-hosted Point of Sale for cafes and restaurants",
-      "description": "Flo is a free, open-source point-of-sale system for cafes, restaurants, and small kitchens. Local-first, offline-capable, no cloud lock-in, no per-seat fees.",
+      "description": "OPERAVIA is a free, open-source point-of-sale system for cafes, restaurants, and small kitchens. Local-first, offline-capable, no cloud lock-in, no per-seat fees.",
       "target": [
         {
           "target": "AppImage",
@@ -432,7 +432,7 @@
       ],
       "desktop": {
         "entry": {
-          "Name": "Nexora",
+          "Name": "OPERAVIA",
           "Comment": "Free, open-source POS for cafes and restaurants",
           "GenericName": "Point of Sale",
           "Keywords": "pos;point of sale;restaurant;cafe;billing;invoice;",

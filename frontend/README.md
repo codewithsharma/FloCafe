@@ -1,12 +1,13 @@
-# FloUI
+# OPERAVIA UI
 
-**Frontend for FloCafe POS** — a Next.js 16 + React 19 application with Tailwind CSS v4 and shadcn/ui components.
+**Frontend for OPERAVIA POS** — a Next.js 16 + React 19 application with Tailwind CSS v4 and shadcn/ui components.
 
-FloUI is the user interface for the FloCafe point-of-sale system. It runs as a static export inside Electron and communicates with the local Express backend (`:3001`) and KDS server (`:3002`).
+This is the user interface for the OPERAVIA point-of-sale system. It runs as a static export inside Electron and communicates with the local Express backend (`:3001`) and KDS server (`:3002`).
 
 ## Features
 
 ### Orders Page
+
 - **Bill-style order cards** with status tracking, items, and totals
 - **Filter bar** — search by order number, filter by table, type, or status
 - **Print receipt** — confirmation modal with print logging
@@ -19,6 +20,7 @@ FloUI is the user interface for the FloCafe point-of-sale system. It runs as a s
 - **Cross-device held orders sync** — resume and manage suspended orders seamlessly
 
 ### Kitchen Display System (KDS)
+
 - Real-time order updates via WebSocket
 - Dynamic IP detection for easy pairing via VPN/Mesh networks (Tailscale, ZeroTier, etc.)
 - **"NEW" badge** for items added after initial order
@@ -26,6 +28,7 @@ FloUI is the user interface for the FloCafe point-of-sale system. It runs as a s
 - Status progression: pending → preparing → ready → served
 
 ### Other Pages
+
 - **POS** — Fast order entry with product search and cart
 - **Menu** — Product catalog management
 - **Tables** — Table status and management
@@ -35,16 +38,16 @@ FloUI is the user interface for the FloCafe point-of-sale system. It runs as a s
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 16 (App Router) |
-| UI | React 19 |
-| State | Zustand |
-| Styling | Tailwind CSS v4 |
-| Components | shadcn/ui |
-| Icons | Lucide React |
-| API Client | Axios |
-| Notifications | React Hot Toast |
+| Layer         | Technology              |
+| ------------- | ----------------------- |
+| Framework     | Next.js 16 (App Router) |
+| UI            | React 19                |
+| State         | Zustand                 |
+| Styling       | Tailwind CSS v4         |
+| Components    | shadcn/ui               |
+| Icons         | Lucide React            |
+| API Client    | Axios                   |
+| Notifications | React Hot Toast         |
 
 ## Development Setup
 
@@ -60,12 +63,12 @@ Open [http://localhost:3000](http://localhost:3000) to view the app.
 
 ### Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
+| Command         | Description              |
+| --------------- | ------------------------ |
+| `npm run dev`   | Start development server |
+| `npm run build` | Build for production     |
+| `npm run start` | Start production server  |
+| `npm run lint`  | Run ESLint               |
 
 ## Project Structure
 
@@ -105,7 +108,7 @@ src/
 
 ## API Communication
 
-FloUI communicates with the FloCafe backend via Axios:
+The UI communicates with the OPERAVIA backend via Axios:
 
 ```typescript
 import api from '@/lib/api';
@@ -129,9 +132,9 @@ Uses Zustand for global state:
 - **held-orders.ts** — Suspended/held orders
 - **pos-settings.ts** — POS configuration from backend
 
-## Integration with FloCafe
+## Integration with OPERAVIA
 
-FloUI is included directly in the FloCafe repo:
+This frontend is included directly in the OPERAVIA (FloCafe) repo:
 
 ```bash
 npm run build:frontend  # Builds static export to frontend/out/
@@ -149,4 +152,4 @@ The static export is served by the Electron main process.
 
 ## License
 
-MIT License — see [FloCafe License](https://github.com/FreeOpenSourcePOS/FloCafe/blob/main/license_instructions.md)
+MIT License — see [OPERAVIA / FloCafe License](https://github.com/FreeOpenSourcePOS/FloCafe/blob/main/license_instructions.md)

@@ -1,11 +1,11 @@
 name: Restaurant Workflow Feedback
-description: Share how FloCafe fits or misses a real cafe, restaurant, kitchen, or food truck workflow
-labels: ["workflow-feedback"]
+description: Share how OPERAVIA fits or misses a real cafe, restaurant, kitchen, or food truck workflow
+labels: ['workflow-feedback']
 body:
   - type: markdown
     attributes:
       value: |
-        Real operator feedback helps FloCafe improve faster than generic feature requests. Describe the actual service flow you tried or need.
+        Real operator feedback helps OPERAVIA improve faster than generic feature requests. Describe the actual service flow you tried or need.
 
   - type: dropdown
     id: business_type
@@ -28,14 +28,14 @@ body:
     attributes:
       label: Workflow
       description: What were staff trying to do?
-      placeholder: "Example: Take a dine-in order, send drinks to bar station, send food to kitchen, split payment, print final receipt."
+      placeholder: 'Example: Take a dine-in order, send drinks to bar station, send food to kitchen, split payment, print final receipt.'
     validations:
       required: true
 
   - type: textarea
     id: current_result
     attributes:
-      label: What happened in FloCafe?
+      label: What happened in OPERAVIA?
       description: What worked, what was confusing, and what blocked the workflow?
     validations:
       required: true
@@ -52,5 +52,4 @@ body:
     id: environment
     attributes:
       label: Setup details
-      description: Include operating system, FloCafe version, printer type, payment flow, tax region, and number of terminals if relevant.
-
+      description: Include operating system, OPERAVIA version, printer type, payment flow, tax region, and number of terminals if relevant.

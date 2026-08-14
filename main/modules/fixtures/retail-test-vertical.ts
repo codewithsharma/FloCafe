@@ -1,7 +1,7 @@
 /**
  * Phase 2.5 / 2.18 — synthetic non-production Retail Test vertical.
  *
- * Architecture validation only. NOT Opervia Retail.
+ * Architecture validation only. NOT OPERAVIA Retail.
  * Production Retail is `retail` in VERTICALS (Phase 3.3).
  * May still be selected via ACTIVE_VERTICAL_ID=retail-test for synthetic checks.
  */
@@ -17,7 +17,7 @@ export const OPERVIA_RETAIL_TEST_ENABLED_MODULES = OPERVIA_SHARED_COMMERCE_MODUL
 
 export const OPERVIA_RETAIL_TEST_VERTICAL: VerticalDefinition = {
   id: OPERVIA_RETAIL_TEST_VERTICAL_ID,
-  name: 'Opervia Retail Test',
+  name: 'OPERAVIA Retail Test',
   version: '0.0.0-test',
   enabledModules: [...OPERVIA_RETAIL_TEST_ENABLED_MODULES],
   description:

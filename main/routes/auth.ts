@@ -1063,7 +1063,9 @@ router.post(
       }
 
       if (!VALID_BUSINESS_TYPES.has(normalizedBusinessType)) {
-        return res.status(400).json({ error: 'Nexora setup only supports restaurant businesses' });
+        return res
+          .status(400)
+          .json({ error: 'OPERAVIA setup only supports restaurant businesses' });
       }
 
       if (!VALID_SETUP_PROFILES.has(normalizedSetupProfile)) {

@@ -7,23 +7,17 @@ import { KdsHtmlLang } from '@/components/kds/KdsHtmlLang';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Flo POS KDS - Kitchen Display',
+  title: 'OPERAVIA KDS - Kitchen Display',
   description: 'Kitchen Display System',
 };
 
-export default function KdsStandaloneLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function KdsStandaloneLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
       <body className={`${inter.className} h-full bg-flo-bg text-flo-text`}>
         <KdsHtmlLang />
         <Toaster position="top-right" />
-        <div className="h-full flex flex-col border-flo-border p-4">
-          {children}
-        </div>
+        <div className="h-full flex flex-col border-flo-border p-4">{children}</div>
       </body>
     </html>
   );

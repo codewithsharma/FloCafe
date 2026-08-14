@@ -13,7 +13,7 @@ last_updated: 2026-08-13
 
 **Motto:** Build once. Reuse everywhere. Fix once. Benefit everywhere. Compose without duplication.
 
-**Phase 1 vertical (CURRENT):** **Opervia Restaurant** — local-first Electron café/restaurant POS (formerly branded Nexora POS / Flo POS). Nexora is **retired** as an active product name.
+**Phase 1 vertical (CURRENT):** **OPERAVIA Restaurant** — local-first Electron café/restaurant POS (formerly branded Opervia POS / Flo POS / FloCafe). Those names are **retired** as an active product name.
 
 **Future verticals (PLANNED):** Grocery, Salon, Health & Beauty, Pharmacy, Hospitality, Custom. **Retail** is a production-selectable composition (`ACTIVE_VERTICAL_ID=retail`) with partial UX — see [`docs/00-product/verticals.md`](docs/00-product/verticals.md).
 
@@ -81,7 +81,7 @@ _Why it serves the approach:_ Avoids building impressive surfaces on untrusted m
 - Bluetooth printing, payment terminals, microservices, Kubernetes, architecture rewrites
 - Building Opervia Custom or additional verticals before Restaurant pilot success
 - Describing Phase 1 as a finished multi-vertical platform or as “RestaurantOS” product you install today
-- Keeping **Nexora** as an active product name (retired; historical audits may still say Nexora)
+- Keeping **Opervia** as an active product name (retired; historical audits may still say Opervia)
 
 ## Marketing
 

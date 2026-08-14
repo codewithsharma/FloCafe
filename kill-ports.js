@@ -23,16 +23,15 @@ const isWindows = os.platform() === 'win32';
 const isMac = os.platform() === 'darwin';
 const isLinux = os.platform() === 'linux';
 
-// ── Identity: how to recognize a Flo Desktop process ────────────────────────
-// These patterns match the process command line on all platforms.
-// In dev: `electron .` with app.name = 'flo-desktop'
-// Packaged:
-//   - Linux: executableName "flocafe" (snap/AppImage/deb binary path)
-//   - Mac/Windows: productName "Flo Cafe"
+// Packaged process identity patterns (legacy Flo Cafe + current OPERAVIA / Opervia productName)
 const FLO_PATTERNS = [
   /(?:^|[\s\\/])flocafe(?:\.exe)?(?:$|\s)/i,
   /(?:^|[\s\\/])Flo[\s_\-]*Cafe(?:\.exe)?(?:$|\s)/i,
   /(?:^|[\s\\/])Flo Cafe\.app(?:[\\/]Contents[\\/]MacOS[\\/]Flo Cafe)?(?:$|\s)/i,
+  /(?:^|[\s\\/])Opervia(?:\.exe)?(?:$|\s)/i,
+  /(?:^|[\s\\/])OPERAVIA(?:\.exe)?(?:$|\s)/i,
+  /(?:^|[\s\\/])Opervia\.app(?:[\\/]Contents[\\/]MacOS[\\/]Opervia)?(?:$|\s)/i,
+  /(?:^|[\s\\/])OPERAVIA\.app(?:[\\/]Contents[\\/]MacOS[\\/]OPERAVIA)?(?:$|\s)/i,
   /(?:^|\s)com\.flo\.desktop(?:\.\S*)?(?:$|\s)/i,
   /(?:^|\s)flo[_\-]?pos(?:-service)?(?:\.exe)?(?:$|\s)/i,
   /(?:^|\s)electron(?:\s+\S+)*\s+--appName=flo[_\-]?desktop(?:$|\s)/i,

@@ -1,10 +1,12 @@
 # Opervia context
 
-**Product brand (canonical):** Opervia — modular business platform; Phase 1 vertical = **Opervia Restaurant**.
-**Nexora POS:** retired as active product name (historical audits may still say Nexora).
-**Repo legacy:** FloCafe / Flo POS naming may linger in code/docs until branding consolidation.
+**Product brand (canonical):** OPERAVIA — modular business platform; Phase 1 vertical = **OPERAVIA Restaurant**.
+**Nexora POS / FloCafe:** retired as active product names (historical audits may still say Nexora/FloCafe; GitHub repo remains FloCafe).
+**Repo legacy:** FloCafe / Flo POS naming may linger in packaging IDs (`appId`, `flo-desktop`, `flocafe` executable) for upgrade continuity.
+**Electron `productName`:** `Opervia` (frozen for Application Support path continuity; UI chrome uses OPERAVIA).
 **Modular vision:** ADR-010 + Phase 2 module registry (`main/modules/`) — Restaurant vertical declarative; no Phase 1 rewrite.
 **Canonical strategy:** `STRATEGY.md` (pilot KPI unchanged).
+**Branding audit:** `docs/05-production/operavia-branding-normalization-audit.md`.
 
 Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v75**) + statically exported Next.js (`frontend/`).
 
@@ -72,8 +74,10 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**H1/H2/H3 CLOSED.** Do not invent 4.16. Do not auto-start the next feature.
+**First café dry run (2026-08-14): NO-GO.** Signing unavailable (0 identities; CSC_*/APPLE_* UNSET). No café access. Sheet: `docs/05-production/first-cafe-dry-run-result.md`.
 
-- **Ops:** signed artifact, OPS-01, PIN escrow, backup numbers, printer+KDS café drill, training/sign-off.
-- **Optional next software (not auto-started):** P1-06 unopenable DB → recovery UI; P1-05 discount-on-settled; P1-12 Drive PIN.
-- ADR-014 remains **Proposed** (no wiring). Schema v75.
+Do not invent 4.16. Do not auto-start features. Do not push. Do not fake signing.
+
+- **Human/RELEASE:** isolate RC (branding dirty-tree decision), bump past 3.0.5, sign+notarize.
+- **Human/OPS on site:** Phases 2–10 on the dry-run result sheet.
+- ADR-014 remains **Proposed**. Schema v75. Baseline `0200cae`.

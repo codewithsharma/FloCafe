@@ -3,7 +3,13 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import { Bonjour } from 'bonjour-service';
-import { initDatabase, closeDatabase, SchemaVersionMismatchError, DatabaseRecoveryRequiredError, isDatabaseOpen } from './db';
+import {
+  initDatabase,
+  closeDatabase,
+  SchemaVersionMismatchError,
+  DatabaseRecoveryRequiredError,
+  isDatabaseOpen,
+} from './db';
 import { startServer, stopServer, getLocalIP, isServerRunning, getServerPort } from './server';
 import { cloudSync } from './services/cloud-sync';
 import { telemetry, sendEvent as sendTelemetryEvent } from './services/telemetry';
@@ -12,7 +18,10 @@ import { startKdsServer, stopKdsServer, getKdsPort, isKdsServerRunning } from '.
 import { startServerApp, stopServerApp, getServerAppPort, isServerAppRunning } from './server-app';
 import { initPrinter, printReceipt, printKOT } from './printers/thermal';
 import { registerIpcHandlers } from './ipc';
-import { initFromDb as initWhatsAppFromDb, shutdown as shutdownWhatsApp } from './services/whatsapp';
+import {
+  initFromDb as initWhatsAppFromDb,
+  shutdown as shutdownWhatsApp,
+} from './services/whatsapp';
 import {
   getNetworkMode,
   isLanKdsEnabled,
@@ -56,15 +65,13 @@ if (process.platform === 'win32') {
 // Mac App Store builds: Electron sets process.mas = true inside the MAS sandbox.
 // MAS_BUILD=1 is the build-time fallback (dev/CI).
 const isMasBuild =
-  process.env.MAS_BUILD === '1' ||
-  (process as NodeJS.Process & { mas?: boolean }).mas === true;
+  process.env.MAS_BUILD === '1' || (process as NodeJS.Process & { mas?: boolean }).mas === true;
 
 // Microsoft Store (MSIX) builds: Electron has no process.msix equivalent.
 // MSIX apps are always installed under C:\Program Files\WindowsApps\ so
 // checking the executable path is the most reliable runtime detection.
 const isMsixBuild =
-  process.platform === 'win32' &&
-  process.execPath.toLowerCase().includes('windowsapps');
+  process.platform === 'win32' && process.execPath.toLowerCase().includes('windowsapps');
 
 // Either store build: skip third-party auto-updater entirely.
 const isStoreBuild = isMasBuild || isMsixBuild;
@@ -101,7 +108,7 @@ function setupAutoUpdater(): void {
       status: 'available',
       version: info.version,
       releaseDate: info.releaseDate,
-      releaseNotes: info.releaseNotes
+      releaseNotes: info.releaseNotes,
     });
   });
 
@@ -112,9 +119,9 @@ function setupAutoUpdater(): void {
 
   autoUpdater.on('download-progress', (progress) => {
     console.log(`[Update] Download progress: ${progress.percent.toFixed(1)}%`);
-    mainWindow?.webContents.send('update-status', { 
+    mainWindow?.webContents.send('update-status', {
       status: 'downloading',
-      percent: progress.percent 
+      percent: progress.percent,
     });
   });
 
@@ -126,7 +133,7 @@ function setupAutoUpdater(): void {
     updateDownloadedVersion = info.version ?? null;
     mainWindow?.webContents.send('update-status', {
       status: 'ready-to-install',
-      version: info.version
+      version: info.version,
     });
   });
 
@@ -235,7 +242,7 @@ function createWindow(initialPath: string = '/'): void {
     height: 900,
     minWidth: 1024,
     minHeight: 768,
-    title: 'Nexora',
+    title: 'OPERAVIA',
     webPreferences: getPrimaryRendererWebPreferences(path.join(__dirname, 'preload.js')),
     show: false,
   });
@@ -268,7 +275,7 @@ function createWindow(initialPath: string = '/'): void {
         overrideBrowserWindowOptions: {
           width: 1280,
           height: 800,
-          title: 'Nexora - Kitchen Display',
+          title: 'OPERAVIA - Kitchen Display',
           webPreferences: {
             contextIsolation: true,
             nodeIntegration: false,
@@ -278,7 +285,9 @@ function createWindow(initialPath: string = '/'): void {
       };
     }
     if (isSafeExternalUrl(url)) {
-      shell.openExternal(url).catch((err) => console.warn('[Flo] Failed to open external URL:', err?.message || err));
+      shell
+        .openExternal(url)
+        .catch((err) => console.warn('[Flo] Failed to open external URL:', err?.message || err));
     } else {
       console.warn('[Flo] Blocked unsafe external URL scheme:', url);
     }
@@ -315,19 +324,21 @@ function createWindow(initialPath: string = '/'): void {
   mainWindow.webContents.on('render-process-gone', (event, details) => {
     log.error('[Window] Renderer process gone:', details.reason);
     console.error('[Window] Renderer process gone:', details.reason);
-    
+
     if (details.reason !== 'clean-exit') {
-      dialog.showMessageBox({
-        type: 'error',
-        title: 'App Crashed',
-        message: 'The app crashed and will restart.',
-        detail: `Reason: ${details.reason}`,
-        buttons: ['OK'],
-      }).then(() => {
-        mainWindow?.destroy();
-        mainWindow = null;
-        createWindow();
-      });
+      dialog
+        .showMessageBox({
+          type: 'error',
+          title: 'App Crashed',
+          message: 'The app crashed and will restart.',
+          detail: `Reason: ${details.reason}`,
+          buttons: ['OK'],
+        })
+        .then(() => {
+          mainWindow?.destroy();
+          mainWindow = null;
+          createWindow();
+        });
     }
   });
 
@@ -401,7 +412,7 @@ function createTray(): void {
         },
       ]);
 
-      tray.setToolTip('Nexora');
+      tray.setToolTip('OPERAVIA');
       tray.setContextMenu(linuxMenu);
       // Single-click also shows the window on Linux (no double-click standard).
       tray.on('click', () => {
@@ -429,12 +440,18 @@ function createTray(): void {
     tray = new Tray(icon.resize({ width: 16, height: 16 }));
 
     const contextMenu = Menu.buildFromTemplate([
-      { label: 'Open Flo', click: () => mainWindow?.show() },
+      { label: 'Open OPERAVIA', click: () => mainWindow?.show() },
       { type: 'separator' },
-      { label: 'Quit', click: () => { isQuitting = true; app.quit(); } },
+      {
+        label: 'Quit',
+        click: () => {
+          isQuitting = true;
+          app.quit();
+        },
+      },
     ]);
 
-    tray.setToolTip('Flo');
+    tray.setToolTip('OPERAVIA');
     tray.setContextMenu(contextMenu);
     tray.on('double-click', () => mainWindow?.show());
   } catch {
@@ -461,7 +478,7 @@ function startMdns(): void {
       name: 'Flo',
       type: 'http',
       port: primaryPort,
-      host: 'flo',   // resolves as flo.local on the LAN
+      host: 'flo', // resolves as flo.local on the LAN
       txt: {
         version: app.getVersion(),
         network_mode: mode,
@@ -474,12 +491,18 @@ function startMdns(): void {
       },
     });
     const ip = getLocalIP();
-    console.log(`[mDNS] Advertising flo.local:${primaryPort} (mode=${mode}, IP fallback: http://${ip}:${primaryPort})`);
+    console.log(
+      `[mDNS] Advertising flo.local:${primaryPort} (mode=${mode}, IP fallback: http://${ip}:${primaryPort})`,
+    );
     if (isLanKdsEnabled(mode)) {
-      console.log(`[mDNS] KDS available at http://flo.local:${getKdsPort()}  (IP fallback: http://${ip}:${getKdsPort()})`);
+      console.log(
+        `[mDNS] KDS available at http://flo.local:${getKdsPort()}  (IP fallback: http://${ip}:${getKdsPort()})`,
+      );
     }
     if (isLanServerAppEnabled(mode)) {
-      console.log(`[mDNS] Server App available at http://flo.local:${getServerAppPort()}  (IP fallback: http://${ip}:${getServerAppPort()})`);
+      console.log(
+        `[mDNS] Server App available at http://flo.local:${getServerAppPort()}  (IP fallback: http://${ip}:${getServerAppPort()})`,
+      );
     }
   } catch (err) {
     console.warn('[mDNS] Could not start Bonjour:', err);
@@ -495,34 +518,66 @@ function stopMdns(): void {
 
 function createMenu(): void {
   const template: Electron.MenuItemConstructorOptions[] = [
-    ...(process.platform === 'darwin' ? [{
-      label: app.getName(),
-      submenu: [
-        { label: `About ${app.getName()}`, click: () => showAbout() },
-        { type: 'separator' as const },
-        { role: 'services' as const },
-        { type: 'separator' as const },
-        { role: 'hide' as const },
-        { role: 'hideOthers' as const },
-        { role: 'unhide' as const },
-        { type: 'separator' as const },
-        { label: 'Quit', accelerator: 'Cmd+Q', click: () => { isQuitting = true; app.quit(); } },
-      ],
-    }] : []),
+    ...(process.platform === 'darwin'
+      ? [
+          {
+            label: app.getName(),
+            submenu: [
+              { label: `About ${app.getName()}`, click: () => showAbout() },
+              { type: 'separator' as const },
+              { role: 'services' as const },
+              { type: 'separator' as const },
+              { role: 'hide' as const },
+              { role: 'hideOthers' as const },
+              { role: 'unhide' as const },
+              { type: 'separator' as const },
+              {
+                label: 'Quit',
+                accelerator: 'Cmd+Q',
+                click: () => {
+                  isQuitting = true;
+                  app.quit();
+                },
+              },
+            ],
+          },
+        ]
+      : []),
     {
       label: 'File',
       submenu: [
-        { label: 'New Order', accelerator: 'CmdOrCtrl+N', click: () => mainWindow?.webContents.send('new-order') },
-        { label: 'Quick Search', accelerator: 'CmdOrCtrl+K', click: () => mainWindow?.webContents.send('quick-search') },
+        {
+          label: 'New Order',
+          accelerator: 'CmdOrCtrl+N',
+          click: () => mainWindow?.webContents.send('new-order'),
+        },
+        {
+          label: 'Quick Search',
+          accelerator: 'CmdOrCtrl+K',
+          click: () => mainWindow?.webContents.send('quick-search'),
+        },
         { type: 'separator' },
         { label: 'Backup Database', click: () => mainWindow?.webContents.send('backup-database') },
         { label: 'Restore Backup', click: () => mainWindow?.webContents.send('restore-backup') },
         { type: 'separator' },
-        { label: 'Database Health Check', click: () => mainWindow?.webContents.send('menu-db-health-check') },
-        { label: 'Initialize Database', click: () => mainWindow?.webContents.send('menu-db-initialize') },
+        {
+          label: 'Database Health Check',
+          click: () => mainWindow?.webContents.send('menu-db-health-check'),
+        },
+        {
+          label: 'Initialize Database',
+          click: () => mainWindow?.webContents.send('menu-db-initialize'),
+        },
         { label: 'Master PIN…', click: () => mainWindow?.webContents.send('menu-master-pin') },
         { type: 'separator' },
-        { label: 'Exit', accelerator: process.platform === 'darwin' ? undefined : 'CmdOrCtrl+Q', click: () => { isQuitting = true; app.quit(); } },
+        {
+          label: 'Exit',
+          accelerator: process.platform === 'darwin' ? undefined : 'CmdOrCtrl+Q',
+          click: () => {
+            isQuitting = true;
+            app.quit();
+          },
+        },
       ],
     },
     {
@@ -534,13 +589,17 @@ function createMenu(): void {
         { role: 'cut' },
         { role: 'copy' },
         { role: 'paste' },
-        { role: 'selectAll' }
+        { role: 'selectAll' },
       ],
     },
     {
       label: 'Orders',
       submenu: [
-        { label: 'View All Orders', accelerator: 'CmdOrCtrl+O', click: () => mainWindow?.webContents.send('view-orders') },
+        {
+          label: 'View All Orders',
+          accelerator: 'CmdOrCtrl+O',
+          click: () => mainWindow?.webContents.send('view-orders'),
+        },
       ],
     },
     {
@@ -555,33 +614,46 @@ function createMenu(): void {
     {
       label: 'Settings',
       submenu: [
-        { label: 'Business Settings', click: () => mainWindow?.webContents.send('settings-business') },
+        {
+          label: 'Business Settings',
+          click: () => mainWindow?.webContents.send('settings-business'),
+        },
         { label: 'Tax Settings', click: () => mainWindow?.webContents.send('settings-tax') },
         { label: 'Printer Setup', click: () => mainWindow?.webContents.send('settings-printer') },
-        { label: 'Kitchen Stations', click: () => mainWindow?.webContents.send('settings-kitchen') },
+        {
+          label: 'Kitchen Stations',
+          click: () => mainWindow?.webContents.send('settings-kitchen'),
+        },
       ],
     },
     {
       label: 'Window',
       submenu: [
-        { label: 'Nexora', click: () => { mainWindow?.show(); mainWindow?.focus(); } },
+        {
+          label: 'OPERAVIA',
+          click: () => {
+            mainWindow?.show();
+            mainWindow?.focus();
+          },
+        },
         { type: 'separator' },
         { role: 'minimize' },
-        ...(process.platform === 'darwin' ? [
-          { role: 'zoom' as const },
-          { type: 'separator' as const },
-          { role: 'front' as const },
-        ] : []),
+        ...(process.platform === 'darwin'
+          ? [{ role: 'zoom' as const }, { type: 'separator' as const }, { role: 'front' as const }]
+          : []),
       ],
     },
     {
       label: 'Help',
       submenu: [
-        ...(process.platform !== 'darwin' ? [{ label: 'About Flo', click: () => showAbout() }] : []),
-        ...(isStoreBuild
-          ? []
-          : [{ label: 'Check for Updates', click: () => checkForUpdates() }]),
-        { label: 'Open Logs Folder', click: () => shell.showItemInFolder(log.transports.file.getFile().path) },
+        ...(process.platform !== 'darwin'
+          ? [{ label: 'About OPERAVIA', click: () => showAbout() }]
+          : []),
+        ...(isStoreBuild ? [] : [{ label: 'Check for Updates', click: () => checkForUpdates() }]),
+        {
+          label: 'Open Logs Folder',
+          click: () => shell.showItemInFolder(log.transports.file.getFile().path),
+        },
       ],
     },
   ];
@@ -590,8 +662,16 @@ function createMenu(): void {
     template.push({
       label: 'Developer',
       submenu: [
-        { label: 'Toggle DevTools', accelerator: 'F12', click: () => mainWindow?.webContents.toggleDevTools() },
-        { label: 'Reload', accelerator: 'CmdOrCtrl+R', click: () => mainWindow?.webContents.reload() },
+        {
+          label: 'Toggle DevTools',
+          accelerator: 'F12',
+          click: () => mainWindow?.webContents.toggleDevTools(),
+        },
+        {
+          label: 'Reload',
+          accelerator: 'CmdOrCtrl+R',
+          click: () => mainWindow?.webContents.reload(),
+        },
       ],
     });
   }
@@ -606,8 +686,8 @@ function showAbout(): void {
   const serverAppPort = getServerAppPort();
   dialog.showMessageBox({
     type: 'info',
-    title: 'About Nexora',
-    message: 'Nexora',
+    title: 'About OPERAVIA',
+    message: 'OPERAVIA',
     detail: [
       `Version: ${app.getVersion()}`,
       `Electron: ${process.versions.electron}`,
@@ -713,9 +793,11 @@ async function initialize(): Promise<void> {
     registerIpcHandlers();
 
     ipcMain.handle('get-update-status', () => ({
-      status: updateDownloaded ? 'ready-to-install' as const
-        : updateAvailable ? 'available' as const
-        : 'up-to-date' as const,
+      status: updateDownloaded
+        ? ('ready-to-install' as const)
+        : updateAvailable
+          ? ('available' as const)
+          : ('up-to-date' as const),
       info: { version: app.getVersion() },
     }));
 
@@ -773,7 +855,7 @@ async function initialize(): Promise<void> {
     console.log('[Flo] Ready!');
   } catch (error) {
     console.error('[Flo] Initialization error:', error);
-    dialog.showErrorBox('Initialization Error', `Failed to start Flo: ${error}`);
+    dialog.showErrorBox('Initialization Error', `Failed to start OPERAVIA: ${error}`);
 
     // Best-effort: report the fatal startup failure so support can see which
     // installs are stuck on a stale build without waiting for a user to
@@ -821,20 +903,60 @@ function runCleanup(): void {
 
   // Destroy tray to prevent ghost icons on X11/GNOME/KDE
   if (tray) {
-    try { tray.destroy(); } catch (e) { console.error('[Flo] tray.destroy error:', e); }
+    try {
+      tray.destroy();
+    } catch (e) {
+      console.error('[Flo] tray.destroy error:', e);
+    }
     tray = null;
   }
 
   // Tear down services — each wrapped so one failure doesn't block others
-  try { cloudSync.stop(); } catch (e) { console.error('[Flo] cloudSync.stop error:', e); }
-  try { telemetry.stop(); } catch (e) { console.error('[Flo] telemetry.stop error:', e); }
-  try { googleDrive.stop(); } catch (e) { console.error('[Flo] googleDrive.stop error:', e); }
-  try { shutdownWhatsApp(); } catch (e) { console.error('[Flo] shutdownWhatsApp error:', e); }
-  try { stopMdns(); } catch (e) { console.error('[Flo] stopMdns error:', e); }
-  try { stopServerApp(); } catch (e) { console.error('[Flo] stopServerApp error:', e); }
-  try { stopKdsServer(); } catch (e) { console.error('[Flo] stopKdsServer error:', e); }
-  try { stopServer(); } catch (e) { console.error('[Flo] stopServer error:', e); }
-  try { closeDatabase(); } catch (e) { console.error('[Flo] closeDatabase error:', e); }
+  try {
+    cloudSync.stop();
+  } catch (e) {
+    console.error('[Flo] cloudSync.stop error:', e);
+  }
+  try {
+    telemetry.stop();
+  } catch (e) {
+    console.error('[Flo] telemetry.stop error:', e);
+  }
+  try {
+    googleDrive.stop();
+  } catch (e) {
+    console.error('[Flo] googleDrive.stop error:', e);
+  }
+  try {
+    shutdownWhatsApp();
+  } catch (e) {
+    console.error('[Flo] shutdownWhatsApp error:', e);
+  }
+  try {
+    stopMdns();
+  } catch (e) {
+    console.error('[Flo] stopMdns error:', e);
+  }
+  try {
+    stopServerApp();
+  } catch (e) {
+    console.error('[Flo] stopServerApp error:', e);
+  }
+  try {
+    stopKdsServer();
+  } catch (e) {
+    console.error('[Flo] stopKdsServer error:', e);
+  }
+  try {
+    stopServer();
+  } catch (e) {
+    console.error('[Flo] stopServer error:', e);
+  }
+  try {
+    closeDatabase();
+  } catch (e) {
+    console.error('[Flo] closeDatabase error:', e);
+  }
 
   console.log('[Flo] Goodbye!');
 }

@@ -1,6 +1,6 @@
 name: Feature Request
 description: Suggest a new feature or improvement
-labels: ["enhancement"]
+labels: ['enhancement']
 body:
   - type: markdown
     attributes:
@@ -33,7 +33,7 @@ body:
     id: area
     attributes:
       label: Area
-      description: Which part of FloCafe does this affect?
+      description: Which part of OPERAVIA does this affect?
       options:
         - POS / Checkout
         - Table Management

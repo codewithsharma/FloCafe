@@ -4576,7 +4576,7 @@ export default function SettingsPage() {
                       onClick={async () => {
                         if (
                           !(await confirm(
-                            'Stop all Nexora cloud services, identified diagnostics, and future anonymous telemetry on this device? Local POS data will remain available.',
+                            'Stop all OPERAVIA cloud services, identified diagnostics, and future anonymous telemetry on this device? Local POS data will remain available.',
                           ))
                         )
                           return;
@@ -5952,7 +5952,7 @@ export default function SettingsPage() {
                                 cloudStatus.cloud_deletion_status !== 'processing' &&
                                 'Cloud services remain stopped until the deletion request is resolved.'}
                               {cloudStatus.cloud_registration_status === 'deleted' &&
-                                'Cloud data has been deleted from Nexora servers. Cloud services cannot be re-enabled on this installation.'}
+                                'Cloud data has been deleted from OPERAVIA servers. Cloud services cannot be re-enabled on this installation.'}
                               {cloudStatus.cloud_registration_status === 'unregistered' &&
                                 t('settings.registrationRegisterHelp')}
                             </p>

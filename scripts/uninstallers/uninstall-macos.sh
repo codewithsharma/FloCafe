@@ -1,5 +1,5 @@
 #!/bin/bash
-# Flo Cafe — standalone macOS uninstaller
+# OPERAVIA — standalone macOS uninstaller (also removes legacy Flo Cafe / Opervia.app)
 #
 # Removes the Flo Cafe app and its support files (preferences, caches, logs,
 # auto-update state). Your business data (SQLite database, backups, Master
@@ -19,7 +19,7 @@
 
 set -euo pipefail
 
-APP_NAME="Flo Cafe"
+APP_NAMES=("OPERAVIA" "Opervia" "Flo Cafe")
 BUNDLE_ID="com.flo.desktop"
 PURGE_DATA=0
 DRY_RUN=0
@@ -74,36 +74,36 @@ remove_path() {
   fi
 }
 
-step "Flo Cafe uninstaller (macOS)"
+step "OPERAVIA uninstaller (macOS)"
 if [ "$DRY_RUN" -eq 1 ]; then log "(dry run — nothing will actually be deleted)"; fi
 
-step "Quitting Flo Cafe if it's running…"
-if pgrep -x "$APP_NAME" >/dev/null 2>&1; then
-  run osascript -e "tell application \"$APP_NAME\" to quit" || true
-  sleep 1
-  run pkill -x "$APP_NAME" 2>/dev/null || true
-  # Wait for it to actually exit so the SQLite db/log files below aren't
-  # still locked when we try to delete them a moment later.
-  for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do
-    pgrep -x "$APP_NAME" >/dev/null 2>&1 || break
-    sleep 0.5
-  done
+step "Quitting OPERAVIA / legacy apps if running…"
+for APP_NAME in "${APP_NAMES[@]}"; do
   if pgrep -x "$APP_NAME" >/dev/null 2>&1; then
-    log "could not confirm that $APP_NAME quit; locked files may remain"
-  else
-    log "quit $APP_NAME"
+    run osascript -e "tell application \"$APP_NAME\" to quit" || true
+    sleep 1
+    run pkill -x "$APP_NAME" 2>/dev/null || true
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+      pgrep -x "$APP_NAME" >/dev/null 2>&1 || break
+      sleep 0.5
+    done
+    if pgrep -x "$APP_NAME" >/dev/null 2>&1; then
+      log "could not confirm that $APP_NAME quit; locked files may remain"
+    else
+      log "quit $APP_NAME"
+    fi
   fi
-else
-  log "not running"
-fi
+done
 
 step "Removing the app bundle…"
 FOUND_APP=0
-for app_dir in "/Applications/$APP_NAME.app" "$HOME/Applications/$APP_NAME.app"; do
-  if [ -d "$app_dir" ]; then
-    FOUND_APP=1
-    remove_path "$app_dir"
-  fi
+for APP_NAME in "${APP_NAMES[@]}"; do
+  for app_dir in "/Applications/$APP_NAME.app" "$HOME/Applications/$APP_NAME.app"; do
+    if [ -d "$app_dir" ]; then
+      FOUND_APP=1
+      remove_path "$app_dir"
+    fi
+  done
 done
 if [ "$FOUND_APP" -eq 0 ]; then log "no app bundle found in /Applications or ~/Applications"; fi
 
@@ -111,7 +111,7 @@ step "Removing support files (preferences, caches, logs, auto-update state)…"
 remove_path "$HOME/Library/Preferences/$BUNDLE_ID.plist"
 remove_path "$HOME/Library/Caches/$BUNDLE_ID"
 remove_path "$HOME/Library/Caches/$BUNDLE_ID.ShipIt"
-remove_path "$HOME/Library/Logs/$APP_NAME"
+for APP_NAME in "${APP_NAMES[@]}"; do remove_path "$HOME/Library/Logs/$APP_NAME"; done
 remove_path "$HOME/Library/Saved Application State/$BUNDLE_ID.savedState"
 remove_path "$HOME/Library/HTTPStorages/$BUNDLE_ID"
 remove_path "$HOME/Library/WebKit/$BUNDLE_ID"
@@ -122,7 +122,7 @@ remove_path "$HOME/Library/WebKit/$BUNDLE_ID"
 # under "$APP_NAME". Sweep both so stray data from either naming never
 # survives an uninstall.
 DATA_PATH="$HOME/Library/Application Support/flo-desktop"
-LEGACY_DATA_PATH="$HOME/Library/Application Support/$APP_NAME"
+LEGACY_DATA_PATHS=("$HOME/Library/Application Support/Opervia" "$HOME/Library/Application Support/OPERAVIA" "$HOME/Library/Application Support/Flo Cafe")
 step "Your business data"
 log "database, backups, and Master PIN live at:"
 log "  $DATA_PATH"
@@ -144,7 +144,7 @@ fi
 if [ "$PURGE_DATA" -eq 1 ]; then
   step "Removing your business data…"
   remove_path "$DATA_PATH"
-  remove_path "$LEGACY_DATA_PATH"
+  for LEGACY_DATA_PATH in "${LEGACY_DATA_PATHS[@]}"; do remove_path "$LEGACY_DATA_PATH"; done
 else
   log "keeping your data"
 fi

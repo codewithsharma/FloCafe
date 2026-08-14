@@ -212,7 +212,7 @@ export function OrderCard({
               onClick={onWhatsApp}
               disabled={sendingWa}
               className="p-1.5 rounded-flo-md bg-flo-success hover:opacity-90 text-white transition-colors disabled:opacity-70 min-h-11 min-w-11 inline-flex items-center justify-center"
-              title={isWhatsAppReady ? 'Send via Flo' : t('common.shareViaWhatsApp')}
+              title={isWhatsAppReady ? 'Send via OPERAVIA' : t('common.shareViaWhatsApp')}
             >
               {sendingWa ? (
                 <Loader2 className="size-4 animate-spin" />

@@ -63,11 +63,13 @@ export function taxPackSha256(value: string): string {
 function trustedReleaseDownloadUrl(value: string): boolean {
   try {
     const url = new URL(value);
-    return url.protocol === 'https:'
-      && url.hostname === 'github.com'
-      && !url.username
-      && !url.password
-      && url.pathname.startsWith(RELEASE_DOWNLOAD_PATH_PREFIX);
+    return (
+      url.protocol === 'https:' &&
+      url.hostname === 'github.com' &&
+      !url.username &&
+      !url.password &&
+      url.pathname.startsWith(RELEASE_DOWNLOAD_PATH_PREFIX)
+    );
   } catch {
     return false;
   }
@@ -76,23 +78,38 @@ function trustedReleaseDownloadUrl(value: string): boolean {
 function validCatalogEntry(value: unknown): value is TaxPackCatalogEntry {
   if (!value || typeof value !== 'object') return false;
   const entry = value as Record<string, unknown>;
-  return typeof entry.id === 'string' && /^[a-z0-9][a-z0-9-]*$/.test(entry.id)
-    && typeof entry.publisher === 'string' && entry.publisher.length > 0
-    && typeof entry.country === 'string' && /^([A-Z]{2}|\*)$/.test(entry.country)
-    && typeof entry.jurisdiction === 'string' && entry.jurisdiction.length > 0
-    && typeof entry.version === 'string' && /^\d+\.\d+\.\d+$/.test(entry.version)
-    && typeof entry.publishedAt === 'string' && Number.isFinite(Date.parse(entry.publishedAt))
-    && typeof entry.minFloVersion === 'string' && /^\d+\.\d+\.\d+(?:[-+].*)?$/.test(entry.minFloVersion)
-    && typeof entry.digest === 'string' && /^[a-f0-9]{64}$/.test(entry.digest)
-    && typeof entry.downloadUrl === 'string' && trustedReleaseDownloadUrl(entry.downloadUrl)
-    && typeof entry.signatureUrl === 'string' && trustedReleaseDownloadUrl(entry.signatureUrl);
+  return (
+    typeof entry.id === 'string' &&
+    /^[a-z0-9][a-z0-9-]*$/.test(entry.id) &&
+    typeof entry.publisher === 'string' &&
+    entry.publisher.length > 0 &&
+    typeof entry.country === 'string' &&
+    /^([A-Z]{2}|\*)$/.test(entry.country) &&
+    typeof entry.jurisdiction === 'string' &&
+    entry.jurisdiction.length > 0 &&
+    typeof entry.version === 'string' &&
+    /^\d+\.\d+\.\d+$/.test(entry.version) &&
+    typeof entry.publishedAt === 'string' &&
+    Number.isFinite(Date.parse(entry.publishedAt)) &&
+    typeof entry.minFloVersion === 'string' &&
+    /^\d+\.\d+\.\d+(?:[-+].*)?$/.test(entry.minFloVersion) &&
+    typeof entry.digest === 'string' &&
+    /^[a-f0-9]{64}$/.test(entry.digest) &&
+    typeof entry.downloadUrl === 'string' &&
+    trustedReleaseDownloadUrl(entry.downloadUrl) &&
+    typeof entry.signatureUrl === 'string' &&
+    trustedReleaseDownloadUrl(entry.signatureUrl)
+  );
 }
 
 export function parseTaxPackCatalog(value: unknown): TaxPackCatalog {
   if (!value || typeof value !== 'object') throw new Error('Tax pack catalog is not an object');
   const catalog = value as Record<string, unknown>;
   if (catalog.schemaVersion !== 1) throw new Error('Unsupported tax pack catalog schema');
-  if (typeof catalog.generatedAt !== 'string' || !Number.isFinite(Date.parse(catalog.generatedAt))) {
+  if (
+    typeof catalog.generatedAt !== 'string' ||
+    !Number.isFinite(Date.parse(catalog.generatedAt))
+  ) {
     throw new Error('Tax pack catalog generatedAt is invalid');
   }
   if (!Array.isArray(catalog.packs) || !catalog.packs.every(validCatalogEntry)) {
@@ -113,7 +130,7 @@ async function fetchText(
 ): Promise<string> {
   const response = await fetchImpl(url, {
     headers: {
-      'User-Agent': 'Nexora-Tax-Pack-Manager',
+      'User-Agent': 'OPERAVIA-Tax-Pack-Manager',
       Accept: 'application/json',
       ...headers,
     },
@@ -147,17 +164,22 @@ export async function fetchRemoteTaxPackCatalog(
     if (!Array.isArray(releases)) throw new Error('GitHub Releases response is invalid');
 
     for (const release of releases) {
-      if (release.draft === true
-        || typeof release.tag_name !== 'string'
-        || !/^tax-pack-[a-z0-9][a-z0-9-]*-v\d+\.\d+\.\d+$/.test(release.tag_name)
-        || !Array.isArray(release.assets)) {
+      if (
+        release.draft === true ||
+        typeof release.tag_name !== 'string' ||
+        !/^tax-pack-[a-z0-9][a-z0-9-]*-v\d+\.\d+\.\d+$/.test(release.tag_name) ||
+        !Array.isArray(release.assets)
+      ) {
         continue;
       }
       const catalogAsset = (release.assets as GitHubReleaseAsset[]).find(
         (asset) => asset.name === 'catalog.json' && typeof asset.browser_download_url === 'string',
       );
-      if (!catalogAsset || typeof catalogAsset.browser_download_url !== 'string'
-        || !trustedReleaseDownloadUrl(catalogAsset.browser_download_url)) {
+      if (
+        !catalogAsset ||
+        typeof catalogAsset.browser_download_url !== 'string' ||
+        !trustedReleaseDownloadUrl(catalogAsset.browser_download_url)
+      ) {
         continue;
       }
       const catalogJson = await fetchText(
@@ -229,13 +251,15 @@ export async function downloadAndVerifyTaxPack(
   } catch {
     throw new Error('Tax pack JSON is invalid');
   }
-  if (pack.id !== entry.id
-    || pack.version !== entry.version
-    || pack.publisher !== entry.publisher
-    || pack.country !== entry.country
-    || pack.jurisdiction !== entry.jurisdiction
-    || pack.publishedAt !== entry.publishedAt
-    || pack.minFloVersion !== entry.minFloVersion) {
+  if (
+    pack.id !== entry.id ||
+    pack.version !== entry.version ||
+    pack.publisher !== entry.publisher ||
+    pack.country !== entry.country ||
+    pack.jurisdiction !== entry.jurisdiction ||
+    pack.publishedAt !== entry.publishedAt ||
+    pack.minFloVersion !== entry.minFloVersion
+  ) {
     throw new Error('Tax pack identity does not match the signed catalog entry');
   }
   if (pack.publisher === 'local') {

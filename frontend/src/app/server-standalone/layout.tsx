@@ -6,15 +6,11 @@ import { Toaster } from 'react-hot-toast';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Flo POS Server App',
-  description: 'Tableside ordering for Flo POS',
+  title: 'OPERAVIA Server App',
+  description: 'Tableside ordering for OPERAVIA',
 };
 
-export default function ServerStandaloneLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function ServerStandaloneLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full">
       <body className={`${inter.className} h-full bg-flo-bg text-flo-text`}>

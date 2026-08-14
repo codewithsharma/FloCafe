@@ -32,7 +32,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$AppName = 'Flo Cafe'
+$AppNames = @('OPERAVIA','Opervia','Flo Cafe')
+$AppName = 'Opervia'
 
 function Write-Step($msg) { Write-Host "`n$msg" -ForegroundColor Cyan }
 function Write-Log($msg)  { Write-Host "  $msg" }
@@ -60,26 +61,30 @@ function Invoke-Removal($path, $description) {
   return $true
 }
 
-Write-Step "Flo Cafe uninstaller (Windows)"
+Write-Step "OPERAVIA uninstaller (Windows)"
 if ($DryRun) { Write-Log "(dry run -- nothing will actually be deleted)" }
 
 # ── Quit the app if it's running ─────────────────────────────────────────
-Write-Step "Closing Flo Cafe if it's running..."
-$proc = Get-Process -Name "Flo Cafe" -ErrorAction SilentlyContinue
-if ($proc) {
-  if (-not $DryRun) {
-    $proc | Stop-Process -Force -ErrorAction SilentlyContinue
-    # Wait for it to actually exit so the SQLite db/log files below aren't
-    # still locked when we try to delete them a moment later.
-    $proc | Wait-Process -Timeout 10 -ErrorAction SilentlyContinue
-    if (Get-Process -Name "Flo Cafe" -ErrorAction SilentlyContinue) {
-      Write-Warn "Flo Cafe is still running; some files may remain locked."
+Write-Step "Closing OPERAVIA / legacy apps if running..."
+$anyRunning = $false
+foreach ($n in $AppNames) {
+  $proc = Get-Process -Name $n -ErrorAction SilentlyContinue
+  if ($proc) {
+    $anyRunning = $true
+    if (-not $DryRun) {
+      $proc | Stop-Process -Force -ErrorAction SilentlyContinue
+      $proc | Wait-Process -Timeout 10 -ErrorAction SilentlyContinue
+      if (Get-Process -Name $n -ErrorAction SilentlyContinue) {
+        Write-Warn "$n is still running; some files may remain locked."
+      } else {
+        Write-Log "closed $n"
+      }
+    } else {
+      Write-Log "[dry-run] would close $n"
     }
   }
-  if ($DryRun) { Write-Log "[dry-run] would close running instance" } else { Write-Log "closed running instance" }
-} else {
-  Write-Log "not running"
 }
+if (-not $anyRunning) { Write-Log "not running" }
 
 # ── Look up the registry uninstall entry (covers both per-user and ──────
 # ── per-machine installs) and prefer running the app's own uninstaller ──
@@ -95,7 +100,7 @@ try {
 } catch {
   Write-Warn "Could not read one or more uninstall registry locations: $($_.Exception.Message)"
 }
-$entry = $entries | Where-Object { $_.DisplayName -eq $AppName } | Select-Object -First 1
+$entry = $entries | Where-Object { $AppNames -contains $_.DisplayName } | Select-Object -First 1
 
 $installLocation = $null
 if ($entry) {
@@ -147,6 +152,7 @@ $candidatePaths = New-Object System.Collections.Generic.List[string]
 # Never recursively delete an arbitrary registry-supplied path. The app's own
 # uninstaller handles custom install locations; fallback cleanup is restricted
 # to the known Flo install roots below.
+foreach ($n in $AppNames) { $candidatePaths.Add("$env:LOCALAPPDATA\Programs\$n") }
 $candidatePaths.Add("$env:LOCALAPPDATA\Programs\$AppName")
 $candidatePaths.Add("$env:LOCALAPPDATA\Programs\flo-desktop")
 if ($env:ProgramFiles) { $candidatePaths.Add("$env:ProgramFiles\$AppName") }

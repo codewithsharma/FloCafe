@@ -18,13 +18,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Opervia',
+  title: 'OPERAVIA',
   description: 'Restaurant operating system — point of sale, kitchen, and operations',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Opervia',
+    title: 'OPERAVIA',
   },
   icons: {
     icon: [

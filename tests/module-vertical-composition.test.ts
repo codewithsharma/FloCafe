@@ -57,7 +57,7 @@ function main(): void {
   // ── Restaurant composition ──────────────────────────────────────────────
   const restaurant = getCompositionSnapshot({ verticalId: 'restaurant' });
   assert.equal(restaurant.vertical.id, 'restaurant');
-  assert.equal(restaurant.vertical.name, 'Opervia Restaurant');
+  assert.equal(restaurant.vertical.name, 'OPERAVIA Restaurant');
   assert.deepEqual([...restaurant.modules.enabled], [...OPERVIA_RESTAURANT_ENABLED_MODULES].sort());
   for (const id of RESTAURANT_ONLY) {
     assert.ok(restaurant.modules.enabled.includes(id), `restaurant has ${id}`);
@@ -68,10 +68,10 @@ function main(): void {
 
   // ── Synthetic retail-test composition ───────────────────────────────────
   assert.equal(OPERVIA_RETAIL_TEST_VERTICAL_ID, 'retail-test');
-  assert.equal(OPERVIA_RETAIL_TEST_VERTICAL.name, 'Opervia Retail Test');
+  assert.equal(OPERVIA_RETAIL_TEST_VERTICAL.name, 'OPERAVIA Retail Test');
   const retail = getCompositionSnapshot({ verticalId: OPERVIA_RETAIL_TEST_VERTICAL_ID });
   assert.equal(retail.vertical.id, 'retail-test');
-  assert.equal(retail.vertical.name, 'Opervia Retail Test');
+  assert.equal(retail.vertical.name, 'OPERAVIA Retail Test');
   assert.deepEqual([...retail.modules.enabled], [...OPERVIA_RETAIL_TEST_ENABLED_MODULES].sort());
   for (const id of RESTAURANT_ONLY) {
     assert.ok(!retail.modules.enabled.includes(id), `retail-test excludes ${id}`);
@@ -155,7 +155,7 @@ function main(): void {
   assert.equal(getVerticalDefinition().id, 'restaurant');
   const apiDefault = getPlatformCompositionResponse();
   assert.equal(apiDefault.verticalId, 'restaurant');
-  assert.equal(apiDefault.verticalName, 'Opervia Restaurant');
+  assert.equal(apiDefault.verticalName, 'OPERAVIA Restaurant');
   assert.ok(apiDefault.enabledModules.includes('kds'));
   console.log(
     '   ✓ business_type retail→retail; retail-test stays off synthetic; API default restaurant',

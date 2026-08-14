@@ -62,20 +62,16 @@ export function AuthShell({
 
         {(title || subtitle || icon) && (
           <header className="mb-6 text-center">
-            {icon ? <div className="mb-3 flex justify-center">{icon}</div> : (
-              <img
-                src="/logo.png"
-                alt="Opervia"
-                width={88}
-                height={58}
-                className="mx-auto mb-4"
-              />
+            {icon ? (
+              <div className="mb-3 flex justify-center">{icon}</div>
+            ) : (
+              <img src="/logo.png" alt="OPERAVIA" width={88} height={58} className="mx-auto mb-4" />
             )}
-            {title ? (
-              <h1 className="text-h1 text-flo-text">{title}</h1>
-            ) : null}
+            {title ? <h1 className="text-h1 text-flo-text">{title}</h1> : null}
             {subtitle ? (
-              <p className="mx-auto mt-1.5 max-w-md text-body text-flo-text-secondary">{subtitle}</p>
+              <p className="mx-auto mt-1.5 max-w-md text-body text-flo-text-secondary">
+                {subtitle}
+              </p>
             ) : null}
           </header>
         )}
