@@ -31,6 +31,7 @@ import { useConfirm } from '@/hooks/use-confirm';
 import { useI18n } from '@/hooks/useI18n';
 import { useTranslation } from 'react-i18next';
 import { isModuleEnabled } from '@/lib/modules';
+import { usePlatformComposition } from '@/hooks/usePlatformComposition';
 import {
   canSubmitStockAdjust,
   parseStockAdjustQuantity,
@@ -43,6 +44,9 @@ export default function ProductsPage() {
   const { t: tProducts } = useTranslation('products');
   const searchParams = useSearchParams();
   const { currentTenant } = useAuthStore();
+  const { data: composition, isLoading: compositionLoading } =
+    usePlatformComposition(!!currentTenant);
+  const verticalId = composition?.verticalId;
   const [activeTab, setActiveTab] = useState<ProductsTabType>(
     () => parseProductsTab(searchParams?.get('tab')) ?? 'products',
   );
@@ -128,39 +132,41 @@ export default function ProductsPage() {
     getCountryByCode(currentTenant?.country ?? 'IN')?.locale,
   );
   const fmt = useFormatCurrency();
-  const addonsEnabled = isModuleEnabled('addons');
+  const addonsEnabled = isModuleEnabled('addons', verticalId);
   const isOwnerOrManager = currentTenant?.role === 'owner' || currentTenant?.role === 'manager';
 
   const fetchData = async () => {
     try {
-      const requests: Promise<{ data: Record<string, unknown> }>[] = [
-        api.get('/products'),
-        api.get('/categories'),
-      ];
-      if (addonsEnabled) requests.push(api.get('/addon-groups'));
-      const [prodRes, catRes, agRes] = await Promise.all(requests);
+      const [prodRes, catRes] = await Promise.all([api.get('/products'), api.get('/categories')]);
       setProducts((prodRes.data.products as Product[]) || []);
       setCategories((catRes.data.categories as Category[]) || []);
-      if (agRes) setAddonGroups((agRes.data.addon_groups as AddonGroup[]) || []);
     } catch {
       toast.error(t('products.failedToLoad'));
     } finally {
       setLoading(false);
     }
+    if (addonsEnabled) {
+      try {
+        const agRes = await api.get('/addon-groups');
+        setAddonGroups((agRes.data.addon_groups as AddonGroup[]) || []);
+      } catch {
+        setAddonGroups([]);
+      }
+    } else {
+      setAddonGroups([]);
+    }
   };
 
   useEffect(() => {
+    if (compositionLoading) return;
     const controller = new AbortController();
-    const requests: Promise<{ data: Record<string, unknown> }>[] = [
+    Promise.all([
       api.get('/products', { signal: controller.signal }),
       api.get('/categories', { signal: controller.signal }),
-    ];
-    if (addonsEnabled) requests.push(api.get('/addon-groups', { signal: controller.signal }));
-    Promise.all(requests)
-      .then(([prodRes, catRes, agRes]) => {
+    ])
+      .then(([prodRes, catRes]) => {
         setProducts((prodRes.data.products as Product[]) || []);
         setCategories((catRes.data.categories as Category[]) || []);
-        if (agRes) setAddonGroups((agRes.data.addon_groups as AddonGroup[]) || []);
       })
       .catch((err: unknown) => {
         if (!(err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError')))
@@ -169,6 +175,20 @@ export default function ProductsPage() {
       .finally(() => {
         setLoading(false);
       });
+    if (addonsEnabled) {
+      api
+        .get('/addon-groups', { signal: controller.signal })
+        .then((agRes) => {
+          setAddonGroups((agRes.data.addon_groups as AddonGroup[]) || []);
+        })
+        .catch((err: unknown) => {
+          if (!(
+            err instanceof Error &&
+            (err.name === 'CanceledError' || err.name === 'AbortError')
+          ))
+            setAddonGroups([]);
+        });
+    }
     api
       .get('/tax/categories', { signal: controller.signal })
       .then((res) => {
@@ -196,8 +216,7 @@ export default function ProductsPage() {
       })
       .catch(() => {});
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [addonsEnabled, compositionLoading, t]);
 
   const openCsvModal = (type: 'categories' | 'products' | 'addons') => {
     setCsvType(type);
@@ -633,7 +652,7 @@ export default function ProductsPage() {
       {activeTab === 'products' && (
         <>
           <div className="flex justify-end gap-2 mb-4">
-            {isOwnerOrManager && isModuleEnabled('inventory') && (
+            {isOwnerOrManager && isModuleEnabled('inventory', verticalId) && (
               <>
                 <Button variant="outline" asChild>
                   <Link href="/products/low-stock">

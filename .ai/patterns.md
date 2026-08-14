@@ -28,6 +28,9 @@
 
 - **Pilot-readiness classification:** INTENTIONAL GAP vs ACCIDENTAL GAP vs PRODUCTION DEFECT. Frozen STRATEGY items are never P0. Unsigned artifacts and OPS-01 are human **conditions**, not product P0s. A vertical with a product P0 is **NOT PILOT READY**. Companion processes (`startKdsServer` / `startServerApp`) must be gated the same way HTTP remount is. Renderer `isModuleEnabled(id)` without composition `verticalId` is restaurant-fail-open.
 
+- **Companion process gating:** HTTP remount 404 is not enough. `startKdsServer` / `startServerApp` must no-op (`Promise.resolve`) when the owning module is off for the committed vertical. Do not gate start on settings flags (`kds_enabled` / `server_app_enabled`).
+- **Renderer module checks:** always pass `composition.verticalId` into `isModuleEnabled` / `isFeatureAvailable` (POS/Tables pattern). Never put restaurant-only HTTP in the same `Promise.all` as core catalog/commerce fetches.
+
 ## Mandate patterns (2026-08-12)
 
 - **Local-first / offline billing:** cloud and optional services must never block order create, pay, or kitchen fulfillment.

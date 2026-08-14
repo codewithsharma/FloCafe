@@ -38,6 +38,25 @@ function main(): void {
   assert.ok(ordersPage.includes('handleVoidItem'), 'handleVoidItem preserved');
   assert.ok(ordersPage.includes('handlePaymentComplete'), 'handlePaymentComplete preserved');
   assert.ok(ordersPage.includes('OrdersFilterBar'), 'orders page uses OrdersFilterBar');
+  assert.ok(
+    ordersPage.includes('usePlatformComposition'),
+    'orders page uses platform composition',
+  );
+  assert.match(
+    ordersPage,
+    /isFeatureAvailable\(\s*['"]kds['"]\s*,[^)]*verticalId/,
+    'orders KDS gate passes composition verticalId',
+  );
+  assert.match(
+    ordersPage,
+    /isModuleEnabled\(\s*['"]tables['"]\s*,/,
+    'orders tables gate passes composition verticalId',
+  );
+  assert.match(
+    ordersPage,
+    /if\s*\(\s*kdsEnabled[\s\S]{0,160}connectWS/,
+    'orders KDS WebSocket is not opened when kds module is off',
+  );
   assert.ok(ordersPage.includes('OrderCard'), 'orders page uses OrderCard');
   assert.ok(ordersPage.includes('HeldOrderCard'), 'orders page uses HeldOrderCard');
   assert.ok(

@@ -2,7 +2,7 @@
 
 ## Production blockers (P0)
 
-- ⚠️ RISK: **Post-4.15 audit (2026-08-14)** — Restaurant **PILOT READY WITH CONDITIONS**; Retail **NOT PILOT READY**. Product P0s: KDS always binds `:3002` (`index.ts:698`); Products admin `isModuleEnabled('addons')` without `verticalId` can 404 catalog load. Doc: `docs/05-production/post-phase-4.15-pilot-readiness-audit.md`.
+- ⚠️ RISK: **Post-4.15 audit (2026-08-14)** — Restaurant **PILOT READY WITH CONDITIONS**. Retail product P0s (KDS `:3002` always up; Products addon fail-open) **CLOSED** in `docs/05-production/retail-isolation-p0-remediation.md`. Residual: renderer still restaurant-falls-back if `GET /platform/composition` fails (`verticalId` undefined).
 - 🔒 SEC: **Final P0.6 audit GO WITH CONDITIONS** (score 78) — `p0.6-final-production-security-audit.md`. Electron A/B1/B2 closed. **FIN-01 CLOSED** (collectible = total − gross tender). **OPS-01:** guest Wi‑Fi + `kds_lan`/`lan` forbidden.
 - 🔒 SEC: LAN exposure is mode-gated (`network_mode`; default `localhost`). Cleartext HTTP/WS still applies on staff LAN when `kds_lan`/`lan` — guest Wi‑Fi unsupported; TLS deferred (**P1 accept with ops**).
 - 🔒 SEC: JWT in `safeStorage` (`jwt-secret.enc`). Residual: same-OS-user malware; Linux keyring (**P2**).

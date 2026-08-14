@@ -7,10 +7,22 @@ import * as fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { databaseMaintenanceMiddleware, getDatabase, isServerAppEnabled } from './db';
 import { getJWTSecret } from './routes/auth';
-import { authRateLimit, corsOptions, isTokenRevoked, isTokenStale, rateLimit, revokeToken } from './middleware/security';
+import {
+  authRateLimit,
+  corsOptions,
+  isTokenRevoked,
+  isTokenStale,
+  rateLimit,
+  revokeToken,
+} from './middleware/security';
 import { getServerPort } from './server';
-import { getDefaultServerAppPort, getServerAppPort as getActiveServerAppPort, setServerAppPort } from './server-app-state';
+import {
+  getDefaultServerAppPort,
+  getServerAppPort as getActiveServerAppPort,
+  setServerAppPort,
+} from './server-app-state';
 import { getNetworkMode, resolveListenHost, type ListenHost } from './services/network-mode';
+import { isModuleEnabled } from './modules';
 
 let serverApp: http.Server | null = null;
 const SERVER_APP_PORT = getDefaultServerAppPort();
@@ -24,7 +36,9 @@ type ServerAppUser = {
 };
 
 function normalizeEmail(email: unknown): string {
-  return String(email || '').trim().toLowerCase();
+  return String(email || '')
+    .trim()
+    .toLowerCase();
 }
 
 export function isServerAppRunning(): boolean {
@@ -52,7 +66,9 @@ function rewriteNextExportPath(reqPath: string): string {
   const lastDotIndex = rest.lastIndexOf('.');
   if (lastDotIndex === -1) return reqPath;
 
-  return prefix + rest.substring(0, lastDotIndex).replace(/\./g, '/') + rest.substring(lastDotIndex);
+  return (
+    prefix + rest.substring(0, lastDotIndex).replace(/\./g, '/') + rest.substring(lastDotIndex)
+  );
 }
 
 function requireServerAppAuth(req: Request, res: Response, next: NextFunction) {
@@ -69,7 +85,11 @@ function requireServerAppAuth(req: Request, res: Response, next: NextFunction) {
   try {
     const decoded = jwt.verify(token, getJWTSecret()) as any;
     const db = getDatabase();
-    const user = db.prepare('SELECT id, email, role, tokens_valid_after FROM users WHERE id = ? AND is_active = 1').get(decoded.userId) as any;
+    const user = db
+      .prepare(
+        'SELECT id, email, role, tokens_valid_after FROM users WHERE id = ? AND is_active = 1',
+      )
+      .get(decoded.userId) as any;
     if (!user || isTokenStale(decoded.iat, user.tokens_valid_after)) {
       return res.status(401).json({ error: 'Invalid token' });
     }
@@ -120,6 +140,10 @@ async function forwardToMainApi(req: Request, res: Response, targetPath: string)
 }
 
 export function startServerApp(): Promise<void> {
+  if (!isModuleEnabled('tables')) {
+    console.log('[Server App] Skipped — tables module disabled for active vertical');
+    return Promise.resolve();
+  }
   return new Promise((resolve, reject) => {
     const app: Express = express();
 
@@ -143,7 +167,10 @@ export function startServerApp(): Promise<void> {
 
     app.get('/api/server-app/info', (_req: Request, res: Response) => {
       if (!isServerAppEnabled()) return res.status(404).json({ error: 'Not found' });
-      const rows = getDatabase().prepare('SELECT key, value FROM settings').all() as { key: string; value: string }[];
+      const rows = getDatabase().prepare('SELECT key, value FROM settings').all() as {
+        key: string;
+        value: string;
+      }[];
       const settings: Record<string, string> = {};
       for (const row of rows) settings[row.key] = row.value;
       res.json({
@@ -158,11 +185,14 @@ export function startServerApp(): Promise<void> {
       try {
         const email = normalizeEmail(req.body?.email);
         const { password, remember_me } = req.body;
-        if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+        if (!email || !password)
+          return res.status(400).json({ error: 'Email and password required' });
 
         const db = getDatabase();
         const bcrypt = require('bcryptjs');
-        const user = db.prepare('SELECT * FROM users WHERE email = ? AND is_active = 1').get(email) as any;
+        const user = db
+          .prepare('SELECT * FROM users WHERE email = ? AND is_active = 1')
+          .get(email) as any;
         let passwordMatches = false;
         if (user) {
           try {
@@ -196,7 +226,9 @@ export function startServerApp(): Promise<void> {
 
     app.get('/api/auth/me', requireServerAppAuth, (req: Request, res: Response) => {
       const user = (req as any).user as ServerAppUser;
-      const row = getDatabase().prepare('SELECT id, name, email, role FROM users WHERE id = ? AND is_active = 1').get(user.userId) as any;
+      const row = getDatabase()
+        .prepare('SELECT id, name, email, role FROM users WHERE id = ? AND is_active = 1')
+        .get(user.userId) as any;
       if (!row) return res.status(401).json({ error: 'Invalid token' });
       res.json({ user: row });
     });
@@ -207,15 +239,33 @@ export function startServerApp(): Promise<void> {
       res.json({ success: true });
     });
 
-    app.get('/api/categories', requireServerAppAuth, (req, res) => forwardToMainApi(req, res, '/categories'));
-    app.get('/api/products', requireServerAppAuth, (req, res) => forwardToMainApi(req, res, '/products'));
-    app.get('/api/tables', requireServerAppAuth, (req, res) => forwardToMainApi(req, res, '/tables'));
-    app.get('/api/orders', requireServerAppAuth, (req, res) => forwardToMainApi(req, res, '/orders'));
-    app.post('/api/orders', requireServerAppAuth, (req, res) => forwardToMainApi(req, res, '/orders'));
-    app.post('/api/orders/:id/items', requireServerAppAuth, (req, res) => forwardToMainApi(req, res, `/orders/${encodeURIComponent(String(req.params.id))}/items`));
-    app.get('/api/customers-search', requireServerAppAuth, (req, res) => forwardToMainApi(req, res, '/customers-search'));
-    app.get('/api/crm/lookup', requireServerAppAuth, (req, res) => forwardToMainApi(req, res, '/crm/lookup'));
-    app.post('/api/customers', requireServerAppAuth, (req, res) => forwardToMainApi(req, res, '/customers'));
+    app.get('/api/categories', requireServerAppAuth, (req, res) =>
+      forwardToMainApi(req, res, '/categories'),
+    );
+    app.get('/api/products', requireServerAppAuth, (req, res) =>
+      forwardToMainApi(req, res, '/products'),
+    );
+    app.get('/api/tables', requireServerAppAuth, (req, res) =>
+      forwardToMainApi(req, res, '/tables'),
+    );
+    app.get('/api/orders', requireServerAppAuth, (req, res) =>
+      forwardToMainApi(req, res, '/orders'),
+    );
+    app.post('/api/orders', requireServerAppAuth, (req, res) =>
+      forwardToMainApi(req, res, '/orders'),
+    );
+    app.post('/api/orders/:id/items', requireServerAppAuth, (req, res) =>
+      forwardToMainApi(req, res, `/orders/${encodeURIComponent(String(req.params.id))}/items`),
+    );
+    app.get('/api/customers-search', requireServerAppAuth, (req, res) =>
+      forwardToMainApi(req, res, '/customers-search'),
+    );
+    app.get('/api/crm/lookup', requireServerAppAuth, (req, res) =>
+      forwardToMainApi(req, res, '/crm/lookup'),
+    );
+    app.post('/api/customers', requireServerAppAuth, (req, res) =>
+      forwardToMainApi(req, res, '/customers'),
+    );
 
     const staticDir = getStaticDir();
     if (staticDir) {
@@ -270,7 +320,9 @@ export function startServerApp(): Promise<void> {
       const onListening = () => {
         serverApp?.off('error', onError);
         setServerAppPort(attemptedPort);
-        console.log(`[Server App] HTTP server running on http://localhost:${getActiveServerAppPort()} (bind ${listenHost}, mode ${getNetworkMode()})`);
+        console.log(
+          `[Server App] HTTP server running on http://localhost:${getActiveServerAppPort()} (bind ${listenHost}, mode ${getNetworkMode()})`,
+        );
         resolve();
       };
       const onError = (err: NodeJS.ErrnoException) => {

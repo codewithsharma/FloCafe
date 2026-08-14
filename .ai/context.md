@@ -12,7 +12,7 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 
 Advanced single-location café POS. Executive scores (audit 2026-08-12): Product 68 · Eng 78 · Arch 70 · Sec 66 · Rel 74 · Test 84 · Prod 62 · **Overall 64/100**. CEO: GO WITH CHANGES. CTO: ARCHITECTURE READY WITH CHANGES.
 
-**Post-4.15 pilot-readiness (2026-08-14):** Restaurant **78/100 — PILOT READY WITH CONDITIONS**. Retail **57/100 — NOT PILOT READY**. Canonical audit: `docs/05-production/post-phase-4.15-pilot-readiness-audit.md`. No Phase 4.16.
+**Post-4.15 pilot-readiness (2026-08-14):** Restaurant **78/100 — PILOT READY WITH CONDITIONS**. Retail was **NOT PILOT READY (57/100)** until companion/Products P0s. **Retail isolation P0 remediation (2026-08-14):** KDS/Server App skip when modules off; Products/KDS/Orders pass composition `verticalId`. Doc: `docs/05-production/retail-isolation-p0-remediation.md`. No Phase 4.16.
 
 ## Modular architecture status
 
@@ -20,7 +20,7 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 |-------|--------|
 | **Opervia** | Canonical platform brand |
 | **Opervia Restaurant** | Active production vertical (default; unset `ACTIVE_VERTICAL_ID` → `restaurant`) |
-| **retail** | Production Retail vertical (`ACTIVE_VERTICAL_ID=retail`); **NOT PILOT READY** until KDS/Server App + Products `verticalId` isolation (post-4.15 audit) |
+| **retail** | Production Retail vertical (`ACTIVE_VERTICAL_ID=retail`); companion KDS/Server App now module-gated (P0 isolation 2026-08-14). Store pilot still needs remaining P1s + ops. |
 | **retail-test** | Synthetic composition; selectable via env for validation only — not production Retail |
 | **Phase 2** | **CLOSED** — final exit + closeout gate `docs/03-architecture/phase-2-closeout-and-phase-3-gate.md` (also `phase-2-final-exit-gate.md`). **PASS WITH DOCUMENTED DEFERMENTS**. |
 | **Phase 3** | **3.1–3.4 COMPLETE**; **3.5A–3.6G COMPLETE** (3.5B DEFERRED; 3.5C no safe extraction). Deploy/start: `ACTIVE_VERTICAL_ID` env (unset→`restaurant`; empty/unknown fail-closed); `retail` = production Retail; `retail-test` = synthetic validation only. |
@@ -72,8 +72,8 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Pilot-readiness audit COMPLETE.** Do not invent 4.16. Do not auto-start implementation.
+**Retail isolation P0s CLOSED.** Do not invent 4.16. Do not auto-start the next feature.
 
-- **Restaurant:** execute the §16 café gates (signed artifact, OPS-01, PIN escrow, printer drill, cancel-after-pay accept-or-fix). Human decision required.
-- **Retail:** do not pilot until KDS/Server App are module-gated and Products/KDS pass composition `verticalId`.
+- **Restaurant:** execute café gates (signed artifact, OPS-01, PIN escrow, printer drill, cancel-after-pay accept-or-fix). Human decision required.
+- **Retail:** P0-1/P0-2 fixed. Remaining P1s + ops still apply; do not declare store-pilot-ready from this patch alone.
 - ADR-014 remains **Proposed** (no wiring). Schema v75.

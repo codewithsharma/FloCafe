@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Retail isolation P0 remediation (Implemented)
+
+Gate `startKdsServer` on `isModuleEnabled('kds')` and `startServerApp` on `isModuleEnabled('tables')`; skip must resolve. Products/KDS/Orders pass composition `verticalId`; catalog `Promise.all` excludes addon-groups. Schema v75. Money path untouched. Doc: `retail-isolation-p0-remediation.md`. No Phase 4.16.
+
 ## 2026-08-14 — Post-4.15 pilot-readiness audit (docs only)
 
 Audit of `modular-verticles` @ `5fee6df`, schema v75. **Restaurant: PILOT READY WITH CONDITIONS (78/100). Retail: NOT PILOT READY (57/100).** Product P0s are Retail-only (KDS `:3002` always up; Products admin addon fail-open). No money-path P0. No production code change. No Phase 4.16. Doc: `docs/05-production/post-phase-4.15-pilot-readiness-audit.md`. Human gates: signed artifact, OPS-01, PIN escrow, ADR-014 still Proposed.

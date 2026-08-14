@@ -11,28 +11,39 @@ import { useKdsConnection } from '@/hooks/useKdsConnection';
 import { useSyncServerLanguage } from '@/lib/i18n';
 import type { KdsViewMode } from '@/hooks/useKdsView';
 import { isFeatureAvailable } from '@/lib/modules';
+import { useAuthStore } from '@/store/auth';
+import { usePlatformComposition } from '@/hooks/usePlatformComposition';
 
 // Reads the kds_enabled setting directly (not the cached posSettings copy) so
 // this route reflects the current state even if the sidebar hasn't refreshed
-// its own copy yet. `null` = still loading. Never throws — a fetch failure
-// falls back to "enabled" so a network hiccup doesn't lock owners out.
-// Availability = kds module enabled ∧ kds_enabled flag (Phase 2.2).
+// its own copy yet. `null` = still loading. Fail-closed on composition: Retail
+// must not treat KDS as available. Settings fetch failure still uses the flag
+// default (on) *after* the module gate, so a hiccup does not hide Restaurant KDS.
 function useKdsEnabledCheck(): boolean | null {
-  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const { currentTenant } = useAuthStore();
+  const { data: composition, isLoading: compositionLoading } =
+    usePlatformComposition(!!currentTenant);
+  const [flagOn, setFlagOn] = useState<boolean | null>(null);
+
   useEffect(() => {
     let cancelled = false;
-    api.get('/settings/kds_enabled')
+    api
+      .get('/settings/kds_enabled')
       .then((res) => {
         if (cancelled) return;
-        const flagOn = res.data?.setting?.value !== 'false';
-        setEnabled(isFeatureAvailable('kds', flagOn));
+        setFlagOn(res.data?.setting?.value !== 'false');
       })
       .catch(() => {
-        if (!cancelled) setEnabled(isFeatureAvailable('kds', true));
+        if (!cancelled) setFlagOn(true);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
-  return enabled;
+
+  if (!currentTenant) return null;
+  if (compositionLoading || flagOn === null) return null;
+  return isFeatureAvailable('kds', flagOn, composition?.verticalId);
 }
 
 // Dashboard `/kds` runs on the main API origin (port 3001), which has
@@ -57,30 +68,9 @@ function useDashboardKdsDefault(): KdsViewMode | null {
   return view;
 }
 
-export default function KdsPage() {
-  useSyncServerLanguage();
+function KdsPageWorkspace() {
   const conn = useKdsConnection({ api });
   const kdsDefaultView = useDashboardKdsDefault();
-  const kdsEnabled = useKdsEnabledCheck();
-
-  if (kdsEnabled === null) {
-    return <LoadingState className="min-h-[60vh]" />;
-  }
-  if (kdsEnabled === false) {
-    return (
-      <EmptyState
-        className="min-h-[60vh]"
-        icon={<ChefHat size={40} strokeWidth={1.5} />}
-        title="Kitchen Display is disabled"
-        description="This business has turned off the Kitchen Display System. An owner or manager can turn it back on from Settings."
-        action={
-          <Link href="/settings?tab=kds" className="text-sm text-flo-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500 rounded">
-            Go to Settings
-          </Link>
-        }
-      />
-    );
-  }
 
   if (conn.loading) {
     return <LoadingState className="min-h-[60vh]" />;
@@ -97,4 +87,33 @@ export default function KdsPage() {
       <KdsWorkspace conn={conn} serverDefault={kdsDefaultView} />
     </div>
   );
+}
+
+export default function KdsPage() {
+  useSyncServerLanguage();
+  const kdsEnabled = useKdsEnabledCheck();
+
+  if (kdsEnabled === null) {
+    return <LoadingState className="min-h-[60vh]" />;
+  }
+  if (kdsEnabled === false) {
+    return (
+      <EmptyState
+        className="min-h-[60vh]"
+        icon={<ChefHat size={40} strokeWidth={1.5} />}
+        title="Kitchen Display is disabled"
+        description="This business has turned off the Kitchen Display System. An owner or manager can turn it back on from Settings."
+        action={
+          <Link
+            href="/settings?tab=kds"
+            className="text-sm text-flo-brand-600 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500 rounded"
+          >
+            Go to Settings
+          </Link>
+        }
+      />
+    );
+  }
+
+  return <KdsPageWorkspace />;
 }

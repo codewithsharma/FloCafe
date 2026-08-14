@@ -72,7 +72,9 @@ const tabLabelKey: Record<FilterType, string> = {
 
 export default function OrdersPage() {
   const { currentTenant, user } = useAuthStore();
-  const { data: composition } = usePlatformComposition(!!currentTenant);
+  const { data: composition, isLoading: compositionLoading } =
+    usePlatformComposition(!!currentTenant);
+  const verticalId = composition?.verticalId;
   const restockVerticalEnabled = RESTOCK_VERTICALS.has(String(composition?.verticalId ?? ''));
   const exchangeVerticalEnabled = EXCHANGE_VERTICALS.has(String(composition?.verticalId ?? ''));
   const { printBill } = usePrinterStore();
@@ -192,14 +194,15 @@ export default function OrdersPage() {
   };
 
   useEffect(() => {
+    if (compositionLoading) return;
     api
       .get('/settings/kds_enabled')
       .then((res) => {
         const flagOn = res.data?.setting?.value !== 'false';
-        setKdsEnabled(isFeatureAvailable('kds', flagOn));
+        setKdsEnabled(isFeatureAvailable('kds', flagOn, verticalId));
       })
-      .catch(() => setKdsEnabled(isFeatureAvailable('kds', true)));
-  }, []);
+      .catch(() => setKdsEnabled(isFeatureAvailable('kds', true, verticalId)));
+  }, [compositionLoading, verticalId]);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 30000);
@@ -207,6 +210,7 @@ export default function OrdersPage() {
   }, []);
 
   useEffect(() => {
+    if (compositionLoading) return;
     const initPage = async () => {
       let isTablesRequired = true;
       try {
@@ -219,7 +223,7 @@ export default function OrdersPage() {
 
       fetchOrders();
 
-      if (isTablesRequired && isModuleEnabled('tables')) {
+      if (isTablesRequired && isModuleEnabled('tables', verticalId)) {
         heldOrdersStore.fetchHeldOrders();
         api
           .get('/tables')
@@ -283,7 +287,9 @@ export default function OrdersPage() {
       }
     };
 
-    connectWS();
+    if (kdsEnabled && isModuleEnabled('kds', verticalId)) {
+      connectWS();
+    }
 
     return () => {
       clearInterval(interval);
@@ -295,7 +301,7 @@ export default function OrdersPage() {
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setTablesRequired]);
+  }, [compositionLoading, verticalId, kdsEnabled, setTablesRequired]);
 
   const isOrderPaid = (order: Order) => {
     const status = order.bill?.payment_status;

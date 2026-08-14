@@ -28,6 +28,24 @@ function main(): void {
   assert.ok(productsPage.includes("api.get('/products')"), 'products list API preserved');
   assert.ok(productsPage.includes("api.get('/categories')"), 'categories list API preserved');
   assert.ok(productsPage.includes("api.get('/addon-groups')"), 'addon groups API preserved');
+  assert.ok(
+    productsPage.includes('usePlatformComposition'),
+    'products page uses platform composition (not process ACTIVE_VERTICAL_ID)',
+  );
+  assert.match(
+    productsPage,
+    /isModuleEnabled\(\s*['"]addons['"]\s*,/,
+    'addons gate passes composition verticalId',
+  );
+  assert.match(
+    productsPage,
+    /isModuleEnabled\(\s*['"]inventory['"]\s*,/,
+    'inventory gate passes composition verticalId',
+  );
+  assert.ok(
+    !/if \(addonsEnabled\) requests\.push\(api\.get\(['"]\/addon-groups/.test(productsPage),
+    'addon-groups must not share catalog Promise.all (retail 404 must not fail products)',
+  );
   assert.ok(productsPage.includes('/tax/categories'), 'tax categories API preserved');
   assert.ok(productsPage.includes('/settings/loyalty'), 'loyalty settings API preserved');
   assert.ok(productsPage.includes("api.post('/products'"), 'create product API preserved');
@@ -36,8 +54,7 @@ function main(): void {
   assert.ok(productsPage.includes('/menu-csv/import/'), 'CSV import preserved');
   assert.ok(productsPage.includes('isOwnerOrManager'), 'role gate preserved');
   assert.ok(
-    productsPage.includes("isModuleEnabled('addons')") ||
-      productsPage.includes('isModuleEnabled("addons")'),
+    /isModuleEnabled\(\s*['"]addons['"]/.test(productsPage),
     'addons module gate on products page',
   );
   assert.ok(productsPage.includes('addonsEnabled'), 'addonsEnabled prop wiring preserved');
