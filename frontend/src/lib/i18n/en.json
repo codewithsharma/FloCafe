@@ -1517,6 +1517,7 @@
   "stockAdjust.action": "Adjustment type",
   "stockAdjust.actionIncrease": "Increase by",
   "stockAdjust.actionDecrease": "Decrease by",
+  "stockAdjust.actionWastage": "Wastage",
   "stockAdjust.actionSet": "Set to",
   "stockAdjust.quantity": "Quantity",
   "stockAdjust.newQuantity": "New stock quantity",

@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Phase 4.15 Wastage stock (Implemented)
+
+Fourth `POST /products/:id/stock` action `wastage` decreases qty; ledger `reason=wastage`, `movement_type=adjustment`. Schema v75 CHECK unchanged. Doc: `phase-4.15-wastage-stock.md`.
+
 ## 2026-08-14 — ADR-014 Configurable service charge (Proposed)
 
 `docs/14-decisions/ADR-014-service-charge.md`. Restaurant dine-in percent; persist amount on v76+; Retail off; tips excluded; FIN-01 definition unchanged. **Human Accept required before wiring.** Phase 4.14 COMPLETE as paper. Schema v75 unchanged.

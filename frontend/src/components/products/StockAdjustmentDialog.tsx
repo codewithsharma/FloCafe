@@ -77,6 +77,7 @@ export function StockAdjustmentDialog({
             >
               <option value="increase">{t('stockAdjust.actionIncrease')}</option>
               <option value="decrease">{t('stockAdjust.actionDecrease')}</option>
+              <option value="wastage">{t('stockAdjust.actionWastage')}</option>
               <option value="set">{t('stockAdjust.actionSet')}</option>
             </select>
           </div>

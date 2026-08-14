@@ -123,7 +123,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Phase 4.12** Retail POS fulfillment-type honesty (`docs/04-product/phase-4.12-retail-fulfillment-types.md`; `npm run test:phase-4.12`)
 - [x] **Phase 4.13** Table merge discovery (`docs/04-product/phase-4.13-table-merge-discovery.md`) — unpaid-only SAFE NOW; billed merge ADR_REQUIRED; **not implemented**
 - [x] **Phase 4.14** Service charge ADR (`docs/14-decisions/ADR-014-service-charge.md` **Proposed**; discovery `phase-4.14-service-charge-discovery.md`) — **not wired**
-- [ ] **Phase 4.15** Wastage stock decrease (`prompts/phases/phase-4.15.md`)
+- [x] **Phase 4.15** Wastage stock decrease (`docs/04-product/phase-4.15-wastage-stock.md`; `npm run test:phase-4.15`)
 - [ ] **Phase 4.6 matrix implementation** — not in this 10; blocked until ADR-013 Accepted with an implementation slice.
 - [ ] **Phase 3.5** Remaining optional — packages/extraction, recipes/BOM, suppliers/PO (not authorized unless explicitly tasked). Tax cleanup stays deferred (3.5B).
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet

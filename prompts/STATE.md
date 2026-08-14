@@ -1,24 +1,31 @@
 # Prompt pipeline state
 
 ```text
-CURRENT_PHASE=4.15
-STATUS=ACTIVE
-CURRENT_PROMPT=prompts/phases/phase-4.15.md
-LAST_COMPLETED=4.14
-LAST_COMMIT=pending-4.14-docs
-HEAD_AT_PIPELINE=pending-4.14-docs
+CURRENT_PHASE=none
+STATUS=COMPLETE
+CURRENT_PROMPT=none
+LAST_COMPLETED=4.15
+LAST_COMMIT=pending-4.15-feat
+HEAD_AT_PIPELINE=pending-4.15-feat
 NEXT_PHASE=
 SCHEMA=v75
-PRODUCTION_CODE=UNCHANGED_THIS_PHASE
+PRODUCTION_CODE=PHASE_4.15_SHIPPED
 PIPELINE_CREATED=2026-08-14
-LAST_VERIFICATION=2026-08-14 Phase 4.14 COMPLETE (ADR-014 Proposed; no wiring)
-ADR=ADR-013 Accepted; ADR-014 Proposed (human Accept before future service-charge wiring)
+LAST_VERIFICATION=2026-08-14 Phase 4.6–4.15 COMPLETE
+ADR=ADR-013 Accepted; ADR-014 Proposed (human Accept before service-charge wiring)
 ```
+
+## Roadmap 4.6–4.15
+
+COMPLETE. Do not invent 4.16.
+
+## Remaining human gates (not this 10)
+
+- ADR-014 Accept before any service-charge **wiring**
+- Table merge implementation (discovery only; billed merge still ADR_REQUIRED)
+- Variants matrix (ADR-013 forbids until a new authorized slice)
 
 ## Auto-advance rule
 
-Pipeline mode: AUTONOMOUS
-Current phase: 4.15 (last in this 10)
-After 4.15 COMPLETE: STATUS=COMPLETE, NEXT_PHASE empty. Do not invent 4.16.
-Do not wire ADR-014.
-If wastage requires CHECK/migration: STOP + ADR.
+Pipeline mode: COMPLETE
+Stop. Do not start unlisted phases.

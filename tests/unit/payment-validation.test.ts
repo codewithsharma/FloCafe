@@ -57,9 +57,9 @@ describe('payment zod schemas', () => {
 });
 
 describe('stock adjust zod schema', () => {
-  it('accepts set/increase/decrease with non-negative quantity', () => {
-    const parsed = stockAdjustBodySchema.parse({ action: 'increase', quantity: 4 });
-    expect(parsed.action).toBe('increase');
+  it('accepts wastage with non-negative quantity', () => {
+    const parsed = stockAdjustBodySchema.parse({ action: 'wastage', quantity: 2 });
+    expect(parsed.action).toBe('wastage');
   });
 
   it('rejects invalid action', () => {

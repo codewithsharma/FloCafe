@@ -21,7 +21,7 @@ This roadmap is derived from repository evidence (Phase 4 discovery, feature-lis
 |  4.12 | Retail POS fulfillment-type honesty            | Retail                               | Low                          | NO                             | NO                                 | **COMPLETE**                           |
 |  4.13 | Restaurant table merge discovery               | Restaurant                           | Medium                       | TBD                            | TBD (open orders only)             | **COMPLETE**                           |
 |  4.14 | Configurable service charge ADR                | Restaurant (tax infra shared)        | High                         | TBD                            | YES — ADR required                 | **COMPLETE** (paper; ADR-014 Proposed) |
-|  4.15 | Wastage stock decrease action                  | Shared                               | Low–medium (inventory write) | NO                             | Inventory write; not tender/refund | PENDING                                |
+|  4.15 | Wastage stock decrease action                  | Shared                               | Low–medium (inventory write) | NO                             | Inventory write; not tender/refund | **COMPLETE**                           |
 
 ---
 

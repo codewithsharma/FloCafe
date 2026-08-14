@@ -28,7 +28,10 @@ function main(): void {
   assert.ok(helper.includes('quantity: body.quantity'), 'payload includes quantity');
   assert.ok(!/reason:\s*body/.test(helper), 'client must not invent reason field');
   assert.ok(
-    helper.includes("'set'") && helper.includes("'increase'") && helper.includes("'decrease'"),
+    helper.includes("'set'") &&
+      helper.includes("'increase'") &&
+      helper.includes("'decrease'") &&
+      helper.includes("'wastage'"),
     'actions match API enum',
   );
   console.log('   ✓ stock-adjust client contract');
@@ -51,7 +54,10 @@ function main(): void {
   const dialog = read('components/products/StockAdjustmentDialog.tsx');
   assert.ok(dialog.includes('Dialog'), 'StockAdjustmentDialog uses Dialog');
   assert.ok(
-    dialog.includes('set') && dialog.includes('increase') && dialog.includes('decrease'),
+    dialog.includes('set') &&
+      dialog.includes('increase') &&
+      dialog.includes('decrease') &&
+      dialog.includes('wastage'),
     'dialog exposes API actions',
   );
   assert.ok(
@@ -93,8 +99,8 @@ function main(): void {
 
   const validation = fs.readFileSync(path.join(ROOT, 'main/validation/inventory.ts'), 'utf8');
   assert.ok(
-    validation.includes("z.enum(['set', 'increase', 'decrease']"),
-    'backend schema unchanged',
+    validation.includes("z.enum(['set', 'increase', 'decrease', 'wastage']"),
+    'backend schema includes wastage',
   );
   assert.ok(!validation.includes('reason'), 'backend still has no reason field');
   console.log('   ✓ backend contract unchanged');

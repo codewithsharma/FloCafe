@@ -1516,6 +1516,7 @@
   "stockAdjust.action": "Tipo de ajuste",
   "stockAdjust.actionIncrease": "Aumentar en",
   "stockAdjust.actionDecrease": "Disminuir en",
+  "stockAdjust.actionWastage": "Merma",
   "stockAdjust.actionSet": "Establecer en",
   "stockAdjust.quantity": "Cantidad",
   "stockAdjust.newQuantity": "Nueva cantidad",

@@ -1,15 +1,14 @@
 # ACTIVE PHASE
 
-Phase: 4.15
+Phase: none
 
 Prompt:
-prompts/phases/phase-4.15.md
+none
 
 Status:
-ACTIVE
+COMPLETE
 
-Execute this phase only until it completes, then auto-advance.
-Do not wire service charge (ADR-014 Proposed).
+Roadmap 4.6–4.15 is complete. Do not invent Phase 4.16.
 Do not implement a variants matrix.
-Honor ADR / schema / money STOP conditions.
-If inventory_movements CHECK must change: STOP + ADR.
+Do not wire ADR-014 until human Accept + a future wiring phase.
+Schema remains v75.

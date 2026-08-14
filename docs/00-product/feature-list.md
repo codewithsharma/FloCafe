@@ -151,7 +151,7 @@ Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webus
 | Recipes / BOM                    | [FROZEN]    | STRATEGY / Phase 3.5 — not in code                                                                                                 | —                    |
 | Suppliers / purchasing           | [FROZEN]    | STRATEGY / Phase 3.5 — not in code                                                                                                 | —                    |
 | Stock transfers                  | [NOT BUILT] | —                                                                                                                                  | —                    |
-| Wastage tracking                 | [NOT BUILT] | —                                                                                                                                  | —                    |
+| Wastage tracking                 | [BUILT]     | Phase 4.15: `POST /api/products/:id/stock` `action=wastage`; ledger `reason=wastage`, `movement_type=adjustment`                   | Medium               |
 
 ## Operations & Data
 

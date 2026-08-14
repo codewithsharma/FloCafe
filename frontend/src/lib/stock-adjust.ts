@@ -4,7 +4,7 @@
  */
 import api from './api';
 
-export type StockAdjustAction = 'set' | 'increase' | 'decrease';
+export type StockAdjustAction = 'set' | 'increase' | 'decrease' | 'wastage';
 
 export interface StockAdjustInput {
   action: StockAdjustAction;
@@ -29,7 +29,9 @@ export function parseStockAdjustQuantity(raw: string): number | null {
 }
 
 export function canSubmitStockAdjust(action: StockAdjustAction | '', quantityRaw: string): boolean {
-  if (action !== 'set' && action !== 'increase' && action !== 'decrease') return false;
+  if (action !== 'set' && action !== 'increase' && action !== 'decrease' && action !== 'wastage') {
+    return false;
+  }
   return parseStockAdjustQuantity(quantityRaw) !== null;
 }
 

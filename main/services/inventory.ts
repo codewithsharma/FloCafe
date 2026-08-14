@@ -44,7 +44,7 @@ export interface StockTrackedProduct {
   stock_quantity?: number | null;
 }
 
-export type StockAdjustAction = 'set' | 'increase' | 'decrease';
+export type StockAdjustAction = 'set' | 'increase' | 'decrease' | 'wastage';
 export type InventoryMovementType = 'sale' | 'cancel_restore' | 'adjustment';
 
 export interface InventoryMovementRef {
@@ -310,8 +310,11 @@ export function adjustProductStock(
       if (!action || quantity === undefined) {
         throw new InventoryServiceError(400, 'Action and quantity are required');
       }
-      if (!['set', 'increase', 'decrease'].includes(action)) {
-        throw new InventoryServiceError(400, 'Invalid action. Use: set, increase, decrease');
+      if (!['set', 'increase', 'decrease', 'wastage'].includes(action)) {
+        throw new InventoryServiceError(
+          400,
+          'Invalid action. Use: set, increase, decrease, wastage',
+        );
       }
       if (typeof quantity !== 'number' || !Number.isFinite(quantity) || quantity < 0) {
         throw new InventoryServiceError(400, 'quantity must be a non-negative number');
@@ -365,7 +368,9 @@ export function adjustProductStock(
         if (result.changes === 0) {
           throw new InventoryServiceError(
             400,
-            action === 'decrease' ? 'Insufficient stock' : 'Product not found',
+            action === 'decrease' || action === 'wastage'
+              ? 'Insufficient stock'
+              : 'Product not found',
           );
         }
 
