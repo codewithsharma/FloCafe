@@ -735,7 +735,9 @@ router.post(
       });
     } catch (error: any) {
       console.error('[Orders] Create error:', error);
-      console.error('[API] Internal error:', error);
+      if (!(error?.statusCode >= 400 && error.statusCode < 500)) {
+        console.error('[API] Internal error:', error);
+      }
       res
         .status(error.statusCode || 500)
         .json({ error: error.statusCode ? error.message : 'Internal server error' });
@@ -1099,7 +1101,9 @@ router.post(
 
       res.json({ order: Object.assign({}, result.updatedOrder, { items: result.updatedItems }) });
     } catch (error: any) {
-      console.error('[API] Internal error:', error);
+      if (!(error?.statusCode >= 400 && error.statusCode < 500)) {
+        console.error('[API] Internal error:', error);
+      }
       res
         .status(error.statusCode || 500)
         .json({ error: error.statusCode ? error.message : 'Internal server error' });
