@@ -129,6 +129,7 @@
   "orders.all": "Todos",
   "orders.held": "Em Espera",
   "orders.balance": "Saldo",
+  "orders.collectible": "A cobrar",
   "orders.addItems": "Adicionar Itens ao Pedido",
   "orders.addItemsFailed": "Falha ao adicionar itens",
   "orders.allCategories": "Todas as categorias",

@@ -1,14 +1,18 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Wallet, ArrowLeftRight, CheckCircle2, Sparkles, User, Percent, Send, ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Wallet,
+  ArrowLeftRight,
+  CheckCircle2,
+  Sparkles,
+  User,
+  Percent,
+  Send,
+  ChevronDown,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import type { Bill } from '@/lib/types';
@@ -21,6 +25,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useWhatsAppReady } from '@/hooks/useWhatsAppReady';
 import { sendBillViaFlo, shareBillViaWhatsApp } from '@/lib/whatsapp-share';
 import { useAuthStore } from '@/store/auth';
+import { collectibleOutstanding } from '@/lib/bill-collectible';
 
 interface Props {
   bill: Bill;
@@ -41,7 +46,7 @@ interface Payment {
 const LOYALTY_REDEMPTION_RATE = 100;
 
 export default function PaymentModal({ bill, currency, onClose, onPaid, onBillUpdate }: Props) {
-  const remaining = Number(bill.balance);
+  const remaining = collectibleOutstanding(bill);
   const cartCustomerId = useCartStore((s) => s.customerId);
   const cartCustomer = useCartStore((s) => s.customer);
   const effectiveCustomerId = bill.customer_id || cartCustomerId || null;
@@ -105,35 +110,53 @@ export default function PaymentModal({ bill, currency, onClose, onPaid, onBillUp
     setSyncedRemaining(remaining);
     const totalAllocated = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
     if (totalAllocated > 0) {
-      setPayments(payments.map(p => {
-        const ratio = (parseFloat(p.amount) || 0) / totalAllocated;
-        return { ...p, amount: (remaining * ratio).toFixed(2) };
-      }));
+      setPayments(
+        payments.map((p) => {
+          const ratio = (parseFloat(p.amount) || 0) / totalAllocated;
+          return { ...p, amount: (remaining * ratio).toFixed(2) };
+        }),
+      );
     }
   }
 
   useEffect(() => {
     const custId = bill.customer_id || cartCustomerId;
     if (custId) {
-      api.get(`/customers/${custId}/wallet`)
+      api
+        .get(`/customers/${custId}/wallet`)
         .then((res) => {
           setWalletBalance(Number(res.data.balance) || 0);
         })
         .catch(() => setWalletBalance(0));
     }
-    api.get('/settings/loyalty')
+    api
+      .get('/settings/loyalty')
       .then((res) => setLoyaltySettings(res.data))
       .catch(() => {});
-    api.get('/settings/discount')
+    api
+      .get('/settings/discount')
       .then((res) => setDiscountRequiresApproval(!!res.data.discount_requires_approval))
       .catch(() => {});
-    api.get('/payment-methods')
+    api
+      .get('/payment-methods')
       .then((res) => {
         const methods: CustomPaymentMethod[] = res.data.payment_methods || [];
         setCustomMethods(methods);
         setPayments((current) => [
-          ...PAYMENT_METHODS.map((method) => current.find((row) => row.method === method.key && row.payment_method_id === undefined) || { method: method.key, amount: '' }),
-          ...methods.map((method) => current.find((row) => row.payment_method_id === method.id) || { method: 'custom', payment_method_id: method.id, amount: '' }),
+          ...PAYMENT_METHODS.map(
+            (method) =>
+              current.find(
+                (row) => row.method === method.key && row.payment_method_id === undefined,
+              ) || { method: method.key, amount: '' },
+          ),
+          ...methods.map(
+            (method) =>
+              current.find((row) => row.payment_method_id === method.id) || {
+                method: 'custom',
+                payment_method_id: method.id,
+                amount: '',
+              },
+          ),
         ]);
       })
       .catch(() => setCustomMethods([]));
@@ -144,21 +167,31 @@ export default function PaymentModal({ bill, currency, onClose, onPaid, onBillUp
 
   const updatePaymentAmount = (idx: number, value: string) => {
     setPaymentsTouched(true);
-    setPayments(payments.map((payment, index) => index === idx ? { ...payment, amount: value } : payment));
+    setPayments(
+      payments.map((payment, index) => (index === idx ? { ...payment, amount: value } : payment)),
+    );
   };
 
   const allocateRemainingTo = (idx: number) => {
-    const allocatedElsewhere = payments.reduce((sum, payment, index) => index === idx ? sum : sum + (parseFloat(payment.amount) || 0), walletAmt);
+    const allocatedElsewhere = payments.reduce(
+      (sum, payment, index) => (index === idx ? sum : sum + (parseFloat(payment.amount) || 0)),
+      walletAmt,
+    );
     const due = Math.max(0, remaining - allocatedElsewhere);
     setPaymentsTouched(true);
-    setPayments(payments.map((payment, index) => index === idx ? { ...payment, amount: due > 0 ? due.toFixed(2) : '' } : payment));
+    setPayments(
+      payments.map((payment, index) =>
+        index === idx ? { ...payment, amount: due > 0 ? due.toFixed(2) : '' } : payment,
+      ),
+    );
   };
 
   const hasCash = payments.some((p) => p.method === 'cash' && (parseFloat(p.amount) || 0) > 0);
 
-  const change = hasCash && totalPayment > remaining + 0.009
-    ? parseFloat((totalPayment - remaining).toFixed(2))
-    : 0;
+  const change =
+    hasCash && totalPayment > remaining + 0.009
+      ? parseFloat((totalPayment - remaining).toFixed(2))
+      : 0;
 
   const currencyFmt = useFormatCurrency();
 
@@ -195,8 +228,13 @@ export default function PaymentModal({ bill, currency, onClose, onPaid, onBillUp
         onBillUpdate(data.bill);
       }
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { status?: number; data?: { error?: string; message?: string } } };
-      const msg = axiosErr.response?.data?.error || axiosErr.response?.data?.message || t('pos.failedToUpdateDiscount');
+      const axiosErr = err as {
+        response?: { status?: number; data?: { error?: string; message?: string } };
+      };
+      const msg =
+        axiosErr.response?.data?.error ||
+        axiosErr.response?.data?.message ||
+        t('pos.failedToUpdateDiscount');
       toast.error(msg);
       // Clear the PIN on any failure (wrong PIN or rate-limited) so a stale/rejected
       // PIN doesn't sit in the field looking like it might still work on retry.
@@ -207,11 +245,16 @@ export default function PaymentModal({ bill, currency, onClose, onPaid, onBillUp
   };
 
   const handlePay = async () => {
-    const amountIsValid = (value: string) => value.trim() === '' || /^\d+(?:\.\d{1,2})?$/.test(value.trim());
-    if (payments.some((p) => (
-      !PAYMENT_METHODS.some((allowed) => allowed.key === p.method)
-      && !customMethods.some((method) => method.id === p.payment_method_id)
-    ) || !amountIsValid(p.amount))) {
+    const amountIsValid = (value: string) =>
+      value.trim() === '' || /^\d+(?:\.\d{1,2})?$/.test(value.trim());
+    if (
+      payments.some(
+        (p) =>
+          (!PAYMENT_METHODS.some((allowed) => allowed.key === p.method) &&
+            !customMethods.some((method) => method.id === p.payment_method_id)) ||
+          !amountIsValid(p.amount),
+      )
+    ) {
       toast.error(t('pos.paymentFailed'));
       return;
     }
@@ -219,9 +262,10 @@ export default function PaymentModal({ bill, currency, onClose, onPaid, onBillUp
       toast.error(t('pos.paymentFailed'));
       return;
     }
-    const nonCashTotal = payments
-      .filter((p) => p.method !== 'cash')
-      .reduce((sum, p) => sum + (Number(p.amount) || 0), 0) + walletAmt;
+    const nonCashTotal =
+      payments
+        .filter((p) => p.method !== 'cash')
+        .reduce((sum, p) => sum + (Number(p.amount) || 0), 0) + walletAmt;
     if (nonCashTotal > remaining + 0.000001) {
       toast.error(t('pos.paymentAboveBalance'));
       return;
@@ -254,9 +298,11 @@ export default function PaymentModal({ bill, currency, onClose, onPaid, onBillUp
       // Single atomic call (#177) — either every split line is applied, or none are.
       // Sequential per-line requests would leave the bill partially paid if a later
       // line failed (e.g. network drop) after an earlier one had already committed.
-      const idempotencyKey = idempotencyKeyRef.current || (typeof globalThis.crypto?.randomUUID === 'function'
-        ? globalThis.crypto.randomUUID()
-        : `payment-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+      const idempotencyKey =
+        idempotencyKeyRef.current ||
+        (typeof globalThis.crypto?.randomUUID === 'function'
+          ? globalThis.crypto.randomUUID()
+          : `payment-${Date.now()}-${Math.random().toString(36).slice(2)}`);
       idempotencyKeyRef.current = idempotencyKey;
       const res = await api.post(
         `/bills/${bill.id}/payments`,
@@ -269,9 +315,11 @@ export default function PaymentModal({ bill, currency, onClose, onPaid, onBillUp
         // new request and must not reuse the completed request's hash.
         if (updatedBill) idempotencyKeyRef.current = null;
         if (updatedBill && onBillUpdate) onBillUpdate(updatedBill);
-        throw new Error(t('pos.paymentIncomplete', {
-          amount: currencyFmt(Number(updatedBill?.balance) || 0),
-        }));
+        throw new Error(
+          t('pos.paymentIncomplete', {
+            amount: currencyFmt(Number(updatedBill?.balance) || 0),
+          }),
+        );
       }
       const earned = res.data?.loyaltyPointsEarned > 0 ? res.data.loyaltyPointsEarned : 0;
       setPointsEarned(earned);
@@ -319,7 +367,7 @@ export default function PaymentModal({ bill, currency, onClose, onPaid, onBillUp
         bill,
         { phone: cartCustomer.phone, country_code: cartCustomer.country_code },
         tenantForShare,
-        { pointsEarned }
+        { pointsEarned },
       );
     } catch {
       toast.error(t('orders.whatsappFailed'));
@@ -328,299 +376,396 @@ export default function PaymentModal({ bill, currency, onClose, onPaid, onBillUp
 
   return (
     <>
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="border-flo-border bg-flo-surface sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col gap-0 p-0">
-        <DialogHeader className="px-5 pt-5 pb-4 border-b border-flo-border">
-          <DialogTitle className="text-flo-text">{t('pos.payment')}</DialogTitle>
-          <p className="text-xs text-flo-text-muted mt-0.5">{t('pos.billNumber', { number: bill.bill_number })}</p>
-        </DialogHeader>
+      <Dialog
+        open
+        onOpenChange={(open) => {
+          if (!open) onClose();
+        }}
+      >
+        <DialogContent className="border-flo-border bg-flo-surface sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col gap-0 p-0">
+          <DialogHeader className="px-5 pt-5 pb-4 border-b border-flo-border">
+            <DialogTitle className="text-flo-text">{t('pos.payment')}</DialogTitle>
+            <p className="text-xs text-flo-text-muted mt-0.5">
+              {t('pos.billNumber', { number: bill.bill_number })}
+            </p>
+          </DialogHeader>
 
-        <div className="px-5 py-4 space-y-4 max-h-[75vh] overflow-y-auto">
-
-          {/* Amount + Customer Card */}
-          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl px-5 py-4 text-white">
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">{t('pos.totalDue')}</p>
-                <p className="text-4xl font-bold mt-1 tracking-tight">{currencyFmt(remaining)}</p>
-              </div>
-              {cartCustomer && (
-                <div className="text-right ml-4 shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-flo-surface/10 flex items-center justify-center mb-1 ml-auto">
-                    <User size={16} className="text-white/70" />
+          <div className="px-5 py-4 space-y-4 max-h-[75vh] overflow-y-auto">
+            {/* Amount + Customer Card */}
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl px-5 py-4 text-white">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">
+                    {t('pos.totalDue')}
+                  </p>
+                  <p className="text-4xl font-bold mt-1 tracking-tight">{currencyFmt(remaining)}</p>
+                </div>
+                {cartCustomer && (
+                  <div className="text-right ml-4 shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-flo-surface/10 flex items-center justify-center mb-1 ml-auto">
+                      <User size={16} className="text-white/70" />
+                    </div>
+                    <p className="text-sm font-semibold text-white leading-tight">
+                      {cartCustomer.name}
+                    </p>
                   </div>
-                  <p className="text-sm font-semibold text-white leading-tight">{cartCustomer.name}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="border-t border-white/10 pt-3 space-y-1.5 text-xs">
-              <div className="flex justify-between text-slate-300">
-                <span>{t('pos.subtotal')}</span>
-                <span>{currencyFmt(Number(bill.subtotal))}</span>
-              </div>
-              {Number(bill.discount_amount) > 0 && (
-                <div className="flex justify-between text-emerald-400 font-medium">
-                  <span>{t('pos.discount')}</span>
-                  <span>− {currencyFmt(Number(bill.discount_amount))}</span>
-                </div>
-              )}
-              <TaxBreakdown taxAmount={Number(bill.tax_amount)} taxBreakdown={bill.tax_breakdown} />
-              {Number(bill.delivery_charge) > 0 && (
-                <div className="flex justify-between text-slate-300">
-                  <span>{t('pos.delivery')}</span>
-                  <span>{currencyFmt(Number(bill.delivery_charge))}</span>
-                </div>
-              )}
-              {Number(bill.packaging_charge) > 0 && (
-                <div className="flex justify-between text-slate-300">
-                  <span>{t('pos.packaging')}</span>
-                  <span>{currencyFmt(Number(bill.packaging_charge))}</span>
-                </div>
-              )}
-              {Number(bill.round_off) !== 0 && (
-                <div className="flex justify-between text-slate-300">
-                  <span>{t('pos.roundOff')}</span>
-                  <span>{Number(bill.round_off) > 0 ? '+' : ''}{currencyFmt(Number(bill.round_off))}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-white font-semibold border-t border-white/10 pt-1.5 mt-1">
-                <span>{t('pos.total')}</span>
-                <span>{currencyFmt(Number(bill.total))}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Loyalty Info Strip (staff reference) */}
-          {loyaltySettings?.loyalty_enabled && effectiveCustomerId && (
-            <div className="flex items-center gap-2 px-3.5 py-2.5 bg-flo-bg border border-flo-border rounded-xl">
-              <Sparkles size={13} className="text-flo-text-muted shrink-0" />
-              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs">
-                <span className="text-flo-text font-medium">{t('pos.loyalty')}</span>
-                <span className="font-semibold text-flo-text">
-                  {walletBalance !== null
-                    ? t('pos.pointsApproxValue', { count: walletBalance, value: currencyFmt(Math.floor(walletBalance / (LOYALTY_REDEMPTION_RATE))) })
-                    : '…'}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Discount */}
-          {!bill.split_group_id && <div className="rounded-xl border border-flo-border overflow-hidden">
-            <button type="button" onClick={() => setShowDiscount((open) => !open)} className="w-full flex items-center justify-between gap-3 px-3 py-2.5 bg-flo-bg text-left">
-              <span className="text-sm font-medium text-flo-text">
-                {Number(bill.discount_amount) > 0
-                  ? `${t('pos.discount')}: -${currencyFmt(Number(bill.discount_amount))}`
-                  : t('pos.applyDiscount')}
-              </span>
-              <ChevronDown size={16} className={`text-flo-text-muted transition-transform ${showDiscount ? 'rotate-180' : ''}`} />
-            </button>
-
-            {showDiscount && (
-              <div className="bg-purple-50 border-t border-purple-200 p-3 space-y-2">
-                <div className="flex rounded-lg overflow-hidden border border-purple-200">
-                  <button
-                    onClick={() => { setDiscountType('percentage'); }}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${discountType === 'percentage' ? 'bg-purple-600 text-white' : 'bg-flo-surface text-flo-text-secondary hover:bg-flo-bg'}`}
-                  >
-                    <Percent size={14} />
-                    {t('pos.percentage')}
-                  </button>
-                  <button
-                    onClick={() => { setDiscountType('amount'); }}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${discountType === 'amount' ? 'bg-purple-600 text-white' : 'bg-flo-surface text-flo-text-secondary hover:bg-flo-bg'}`}
-                  >
-                    {t('pos.flatAmount')}
-                  </button>
-                </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-flo-text-muted text-sm">
-                    {discountType === 'percentage' ? '%' : currency}
-                  </span>
-                  <input
-                    type="number"
-                    value={discountValue}
-                    onChange={(e) => setDiscountValue(e.target.value)}
-                    placeholder={discountType === 'percentage' ? '0' : '0.00'}
-                    min="0"
-                    max={discountType === 'percentage' ? 100 : Number(bill.subtotal)}
-                    step={discountType === 'percentage' ? 1 : 0.01}
-                    className="w-full pl-8 pr-3 py-2 text-sm border border-purple-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-flo-surface"
-                  />
-                </div>
-                <input
-                  type="text"
-                  value={discountReason}
-                  onChange={(e) => setDiscountReason(e.target.value)}
-                  placeholder={t('pos.discountReasonPlaceholder')}
-                  className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-flo-surface"
-                />
-                {discountRequiresApproval && parseFloat(discountValue) > 0 && (
-                  <input
-                    type="password"
-                    value={discountPin}
-                    onChange={(e) => setDiscountPin(e.target.value)}
-                    placeholder={t('pos.managerPin')}
-                    maxLength={6}
-                    className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-flo-surface"
-                  />
                 )}
-                <Button
-                  size="sm"
-                  onClick={() => handleApplyDiscount()}
-                  disabled={applyingDiscount || discountValue === '' || isNaN(parseFloat(discountValue))}
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-                >
-                  {applyingDiscount
-                    ? t('pos.applyingDiscount')
-                    : Number(bill.discount_amount) > 0 ? t('pos.updateDiscount') : t('pos.applyDiscount')}
-                </Button>
+              </div>
+
+              <div className="border-t border-white/10 pt-3 space-y-1.5 text-xs">
+                <div className="flex justify-between text-slate-300">
+                  <span>{t('pos.subtotal')}</span>
+                  <span>{currencyFmt(Number(bill.subtotal))}</span>
+                </div>
                 {Number(bill.discount_amount) > 0 && (
-                  <Button variant="outline" size="sm" className="w-full" onClick={async () => {
-                    if (await confirm(t('pos.removeDiscountConfirm'), { destructive: true, confirmLabel: t('pos.remove') })) void handleApplyDiscount(0);
-                  }}>
-                    {t('pos.remove')}
-                  </Button>
+                  <div className="flex justify-between text-emerald-400 font-medium">
+                    <span>{t('pos.discount')}</span>
+                    <span>− {currencyFmt(Number(bill.discount_amount))}</span>
+                  </div>
+                )}
+                <TaxBreakdown
+                  taxAmount={Number(bill.tax_amount)}
+                  taxBreakdown={bill.tax_breakdown}
+                />
+                {Number(bill.delivery_charge) > 0 && (
+                  <div className="flex justify-between text-slate-300">
+                    <span>{t('pos.delivery')}</span>
+                    <span>{currencyFmt(Number(bill.delivery_charge))}</span>
+                  </div>
+                )}
+                {Number(bill.packaging_charge) > 0 && (
+                  <div className="flex justify-between text-slate-300">
+                    <span>{t('pos.packaging')}</span>
+                    <span>{currencyFmt(Number(bill.packaging_charge))}</span>
+                  </div>
+                )}
+                {Number(bill.round_off) !== 0 && (
+                  <div className="flex justify-between text-slate-300">
+                    <span>{t('pos.roundOff')}</span>
+                    <span>
+                      {Number(bill.round_off) > 0 ? '+' : ''}
+                      {currencyFmt(Number(bill.round_off))}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between text-white font-semibold border-t border-white/10 pt-1.5 mt-1">
+                  <span>{t('pos.total')}</span>
+                  <span>{currencyFmt(Number(bill.total))}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Loyalty Info Strip (staff reference) */}
+            {loyaltySettings?.loyalty_enabled && effectiveCustomerId && (
+              <div className="flex items-center gap-2 px-3.5 py-2.5 bg-flo-bg border border-flo-border rounded-xl">
+                <Sparkles size={13} className="text-flo-text-muted shrink-0" />
+                <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs">
+                  <span className="text-flo-text font-medium">{t('pos.loyalty')}</span>
+                  <span className="font-semibold text-flo-text">
+                    {walletBalance !== null
+                      ? t('pos.pointsApproxValue', {
+                          count: walletBalance,
+                          value: currencyFmt(Math.floor(walletBalance / LOYALTY_REDEMPTION_RATE)),
+                        })
+                      : '…'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Discount */}
+            {!bill.split_group_id && (
+              <div className="rounded-xl border border-flo-border overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowDiscount((open) => !open)}
+                  className="w-full flex items-center justify-between gap-3 px-3 py-2.5 bg-flo-bg text-left"
+                >
+                  <span className="text-sm font-medium text-flo-text">
+                    {Number(bill.discount_amount) > 0
+                      ? `${t('pos.discount')}: -${currencyFmt(Number(bill.discount_amount))}`
+                      : t('pos.applyDiscount')}
+                  </span>
+                  <ChevronDown
+                    size={16}
+                    className={`text-flo-text-muted transition-transform ${showDiscount ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {showDiscount && (
+                  <div className="bg-purple-50 border-t border-purple-200 p-3 space-y-2">
+                    <div className="flex rounded-lg overflow-hidden border border-purple-200">
+                      <button
+                        onClick={() => {
+                          setDiscountType('percentage');
+                        }}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${discountType === 'percentage' ? 'bg-purple-600 text-white' : 'bg-flo-surface text-flo-text-secondary hover:bg-flo-bg'}`}
+                      >
+                        <Percent size={14} />
+                        {t('pos.percentage')}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDiscountType('amount');
+                        }}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${discountType === 'amount' ? 'bg-purple-600 text-white' : 'bg-flo-surface text-flo-text-secondary hover:bg-flo-bg'}`}
+                      >
+                        {t('pos.flatAmount')}
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-flo-text-muted text-sm">
+                        {discountType === 'percentage' ? '%' : currency}
+                      </span>
+                      <input
+                        type="number"
+                        value={discountValue}
+                        onChange={(e) => setDiscountValue(e.target.value)}
+                        placeholder={discountType === 'percentage' ? '0' : '0.00'}
+                        min="0"
+                        max={discountType === 'percentage' ? 100 : Number(bill.subtotal)}
+                        step={discountType === 'percentage' ? 1 : 0.01}
+                        className="w-full pl-8 pr-3 py-2 text-sm border border-purple-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-flo-surface"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      value={discountReason}
+                      onChange={(e) => setDiscountReason(e.target.value)}
+                      placeholder={t('pos.discountReasonPlaceholder')}
+                      className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-flo-surface"
+                    />
+                    {discountRequiresApproval && parseFloat(discountValue) > 0 && (
+                      <input
+                        type="password"
+                        value={discountPin}
+                        onChange={(e) => setDiscountPin(e.target.value)}
+                        placeholder={t('pos.managerPin')}
+                        maxLength={6}
+                        className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-flo-surface"
+                      />
+                    )}
+                    <Button
+                      size="sm"
+                      onClick={() => handleApplyDiscount()}
+                      disabled={
+                        applyingDiscount || discountValue === '' || isNaN(parseFloat(discountValue))
+                      }
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      {applyingDiscount
+                        ? t('pos.applyingDiscount')
+                        : Number(bill.discount_amount) > 0
+                          ? t('pos.updateDiscount')
+                          : t('pos.applyDiscount')}
+                    </Button>
+                    {Number(bill.discount_amount) > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={async () => {
+                          if (
+                            await confirm(t('pos.removeDiscountConfirm'), {
+                              destructive: true,
+                              confirmLabel: t('pos.remove'),
+                            })
+                          )
+                            void handleApplyDiscount(0);
+                        }}
+                      >
+                        {t('pos.remove')}
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
             )}
-          </div>}
 
-          <div className="space-y-2">
-            {payments.map((payment, idx) => {
-              const builtIn = PAYMENT_METHODS.find((method) => method.key === payment.method && payment.payment_method_id === undefined);
-              const custom = customMethods.find((method) => method.id === payment.payment_method_id);
-              const label = builtIn ? t(builtIn.labelKey) : custom?.name || t('common.unknown');
-              const Icon = builtIn?.icon;
-              const active = (parseFloat(payment.amount) || 0) > 0;
-              return <div key={payment.payment_method_id === undefined ? payment.method : `custom:${payment.payment_method_id}`} className="flex h-11">
-                <button type="button" title={label} onClick={() => allocateRemainingTo(idx)} className={`w-36 shrink-0 rounded-l-xl border px-3 flex items-center gap-2 text-sm font-semibold transition-colors ${active ? 'bg-flo-brand-600 text-white border-flo-brand-600' : 'bg-flo-bg text-flo-text border-flo-border hover:border-flo-brand-600 hover:text-flo-brand-600'}`}>
-                  {Icon && <Icon size={15} />}
-                  <span className="truncate">{label}</span>
-                </button>
-                <div className="flex flex-1 items-center border border-l-0 border-flo-border rounded-r-xl bg-flo-surface focus-within:ring-2 focus-within:ring-flo-brand-500 focus-within:border-transparent">
-                  <span className="pl-3 text-flo-text-muted text-xs">{currency}</span>
-                  <input
-                    type="number"
-                    value={payment.amount}
-                    onChange={(e) => updatePaymentAmount(idx, e.target.value)}
-                    placeholder="0.00"
-                    className="min-w-0 flex-1 px-2 py-2 text-right text-sm font-semibold outline-none rounded-r-xl"
-                    step="0.01"
-                    min="0"
-                  />
-                </div>
-              </div>;
-            })}
-          </div>
+            <div className="space-y-2">
+              {payments.map((payment, idx) => {
+                const builtIn = PAYMENT_METHODS.find(
+                  (method) =>
+                    method.key === payment.method && payment.payment_method_id === undefined,
+                );
+                const custom = customMethods.find(
+                  (method) => method.id === payment.payment_method_id,
+                );
+                const label = builtIn ? t(builtIn.labelKey) : custom?.name || t('common.unknown');
+                const Icon = builtIn?.icon;
+                const active = (parseFloat(payment.amount) || 0) > 0;
+                return (
+                  <div
+                    key={
+                      payment.payment_method_id === undefined
+                        ? payment.method
+                        : `custom:${payment.payment_method_id}`
+                    }
+                    className="flex h-11"
+                  >
+                    <button
+                      type="button"
+                      title={label}
+                      onClick={() => allocateRemainingTo(idx)}
+                      className={`w-36 shrink-0 rounded-l-xl border px-3 flex items-center gap-2 text-sm font-semibold transition-colors ${active ? 'bg-flo-brand-600 text-white border-flo-brand-600' : 'bg-flo-bg text-flo-text border-flo-border hover:border-flo-brand-600 hover:text-flo-brand-600'}`}
+                    >
+                      {Icon && <Icon size={15} />}
+                      <span className="truncate">{label}</span>
+                    </button>
+                    <div className="flex flex-1 items-center border border-l-0 border-flo-border rounded-r-xl bg-flo-surface focus-within:ring-2 focus-within:ring-flo-brand-500 focus-within:border-transparent">
+                      <span className="pl-3 text-flo-text-muted text-xs">{currency}</span>
+                      <input
+                        type="number"
+                        value={payment.amount}
+                        onChange={(e) => updatePaymentAmount(idx, e.target.value)}
+                        placeholder="0.00"
+                        className="min-w-0 flex-1 px-2 py-2 text-right text-sm font-semibold outline-none rounded-r-xl"
+                        step="0.01"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
-          {/* Change Returned */}
-          {hasCash && (
-            <div className={`rounded-xl px-4 py-3 flex items-center justify-between border-2 transition-all duration-200 ${
-              change > 0
-                ? 'bg-emerald-50 border-emerald-200'
-                : 'bg-flo-bg border-flo-border'
-            }`}>
-              <div className="flex items-center gap-2.5">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center ${
-                  change > 0 ? 'bg-emerald-100' : 'bg-flo-border'
-                }`}>
-                  {change > 0
-                    ? <CheckCircle2 size={15} className="text-emerald-600" />
-                    : <ArrowLeftRight size={13} className="text-flo-text-muted" />
-                  }
+            {/* Change Returned */}
+            {hasCash && (
+              <div
+                className={`rounded-xl px-4 py-3 flex items-center justify-between border-2 transition-all duration-200 ${
+                  change > 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-flo-bg border-flo-border'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className={`w-7 h-7 rounded-full flex items-center justify-center ${
+                      change > 0 ? 'bg-emerald-100' : 'bg-flo-border'
+                    }`}
+                  >
+                    {change > 0 ? (
+                      <CheckCircle2 size={15} className="text-emerald-600" />
+                    ) : (
+                      <ArrowLeftRight size={13} className="text-flo-text-muted" />
+                    )}
+                  </div>
+                  <span
+                    className={`text-sm font-semibold ${
+                      change > 0 ? 'text-emerald-800' : 'text-flo-text-muted'
+                    }`}
+                  >
+                    {t('pos.changeReturned')}
+                  </span>
                 </div>
-                <span className={`text-sm font-semibold ${
-                  change > 0 ? 'text-emerald-800' : 'text-flo-text-muted'
-                }`}>
-                  {t('pos.changeReturned')}
+                <span
+                  className={`text-xl font-bold tabular-nums ${
+                    change > 0 ? 'text-emerald-600' : 'text-flo-text-muted'
+                  }`}
+                >
+                  {currencyFmt(change)}
                 </span>
               </div>
-              <span className={`text-xl font-bold tabular-nums ${
-                change > 0 ? 'text-emerald-600' : 'text-flo-text-muted'
-              }`}>
-                {currencyFmt(change)}
-              </span>
-            </div>
-          )}
+            )}
 
-          {bill.customer_id && walletBalance !== null && (
-            <div className="space-y-1">
-              <div className="flex h-11">
-                <button type="button" disabled={walletBalance <= 0} onClick={() => {
-                  const allocatedElsewhere = payments.reduce((sum, payment) => sum + (parseFloat(payment.amount) || 0), 0);
-                  const maxWallet = Math.floor(walletBalance / LOYALTY_REDEMPTION_RATE);
-                  const due = Math.min(maxWallet, Math.max(0, remaining - allocatedElsewhere));
-                  setWalletAmount(due > 0 ? due.toFixed(2) : '');
-                }} className={`w-36 shrink-0 rounded-l-xl border px-3 flex items-center gap-2 text-sm font-semibold ${walletAmt > 0 ? 'bg-purple-600 text-white border-purple-600' : 'bg-purple-50 text-purple-800 border-purple-200 disabled:bg-flo-bg disabled:text-flo-text-muted disabled:border-flo-border'}`}>
-                  <Wallet size={15} /><span className="truncate">{t('pos.loyaltyWallet')}</span>
-                </button>
-                <div className="flex flex-1 items-center border border-l-0 border-purple-200 rounded-r-xl bg-flo-surface focus-within:ring-2 focus-within:ring-purple-400">
-                  <span className="pl-3 text-flo-text-muted text-xs">{currency}</span>
-                  <input
-                    type="number"
-                    value={walletAmount}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      const maxWalletCurrency = Math.floor(walletBalance / (LOYALTY_REDEMPTION_RATE));
-                      const max = Math.min(maxWalletCurrency, remaining);
-                      const clamped = parseFloat(v) > max ? max.toFixed(2) : v;
-                      setWalletAmount(clamped);
-                    }}
-                    placeholder="0.00"
+            {bill.customer_id && walletBalance !== null && (
+              <div className="space-y-1">
+                <div className="flex h-11">
+                  <button
+                    type="button"
                     disabled={walletBalance <= 0}
-                    className="min-w-0 flex-1 px-2 py-2 text-right text-sm font-semibold outline-none rounded-r-xl disabled:bg-flo-bg"
-                    step="0.01"
-                    min="0"
-                    max={Math.min(Math.floor(walletBalance / (LOYALTY_REDEMPTION_RATE)), remaining)}
-                  />
+                    onClick={() => {
+                      const allocatedElsewhere = payments.reduce(
+                        (sum, payment) => sum + (parseFloat(payment.amount) || 0),
+                        0,
+                      );
+                      const maxWallet = Math.floor(walletBalance / LOYALTY_REDEMPTION_RATE);
+                      const due = Math.min(maxWallet, Math.max(0, remaining - allocatedElsewhere));
+                      setWalletAmount(due > 0 ? due.toFixed(2) : '');
+                    }}
+                    className={`w-36 shrink-0 rounded-l-xl border px-3 flex items-center gap-2 text-sm font-semibold ${walletAmt > 0 ? 'bg-purple-600 text-white border-purple-600' : 'bg-purple-50 text-purple-800 border-purple-200 disabled:bg-flo-bg disabled:text-flo-text-muted disabled:border-flo-border'}`}
+                  >
+                    <Wallet size={15} />
+                    <span className="truncate">{t('pos.loyaltyWallet')}</span>
+                  </button>
+                  <div className="flex flex-1 items-center border border-l-0 border-purple-200 rounded-r-xl bg-flo-surface focus-within:ring-2 focus-within:ring-purple-400">
+                    <span className="pl-3 text-flo-text-muted text-xs">{currency}</span>
+                    <input
+                      type="number"
+                      value={walletAmount}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        const maxWalletCurrency = Math.floor(
+                          walletBalance / LOYALTY_REDEMPTION_RATE,
+                        );
+                        const max = Math.min(maxWalletCurrency, remaining);
+                        const clamped = parseFloat(v) > max ? max.toFixed(2) : v;
+                        setWalletAmount(clamped);
+                      }}
+                      placeholder="0.00"
+                      disabled={walletBalance <= 0}
+                      className="min-w-0 flex-1 px-2 py-2 text-right text-sm font-semibold outline-none rounded-r-xl disabled:bg-flo-bg"
+                      step="0.01"
+                      min="0"
+                      max={Math.min(Math.floor(walletBalance / LOYALTY_REDEMPTION_RATE), remaining)}
+                    />
+                  </div>
                 </div>
+                <p className="px-1 text-[11px] text-flo-text-muted text-right">
+                  {walletBalance > 0
+                    ? t('pos.pointsApproxValue', {
+                        count: walletBalance.toLocaleString(),
+                        value: currencyFmt(Math.floor(walletBalance / LOYALTY_REDEMPTION_RATE)),
+                      })
+                    : t('pos.noBalance')}
+                </p>
               </div>
-              <p className="px-1 text-[11px] text-flo-text-muted text-right">{walletBalance > 0 ? t('pos.pointsApproxValue', { count: walletBalance.toLocaleString(), value: currencyFmt(Math.floor(walletBalance / LOYALTY_REDEMPTION_RATE)) }) : t('pos.noBalance')}</p>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        <div className="px-5 pb-5 border-t border-flo-border pt-3 space-y-2">
-          {justPaid ? (
-            <>
-              {cartCustomer?.phone && (
-                isWhatsAppReady ? (
-                  <Button
-                    onClick={handleSendWhatsApp}
-                    disabled={sendingWa}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700"
-                    size="lg"
-                  >
-                    <Send size={16} className="mr-2" />
-                    {sendingWa ? t('pos.processingPayment') : t('pos.sendViaWhatsApp')}
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleShareWhatsApp}
-                    variant="outline"
-                    className="w-full"
-                    size="lg"
-                  >
-                    <Send size={16} className="mr-2" />
-                    {t('common.shareViaWhatsApp')}
-                  </Button>
-                )
-              )}
-              <Button onClick={onPaid} variant="outline" className="w-full" size="lg">
-                {t('common.done')}
+          <div className="px-5 pb-5 border-t border-flo-border pt-3 space-y-2">
+            {justPaid ? (
+              <>
+                {cartCustomer?.phone &&
+                  (isWhatsAppReady ? (
+                    <Button
+                      onClick={handleSendWhatsApp}
+                      disabled={sendingWa}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700"
+                      size="lg"
+                    >
+                      <Send size={16} className="mr-2" />
+                      {sendingWa ? t('pos.processingPayment') : t('pos.sendViaWhatsApp')}
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleShareWhatsApp}
+                      variant="outline"
+                      className="w-full"
+                      size="lg"
+                    >
+                      <Send size={16} className="mr-2" />
+                      {t('common.shareViaWhatsApp')}
+                    </Button>
+                  ))}
+                <Button onClick={onPaid} variant="outline" className="w-full" size="lg">
+                  {t('common.done')}
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={handlePay}
+                disabled={processing || totalPayment < remaining - 0.01}
+                className="w-full min-h-11 bg-flo-brand-600 hover:bg-flo-brand-700"
+                size="lg"
+              >
+                {processing
+                  ? t('pos.processingPayment')
+                  : `${t('pos.pay')} ${currencyFmt(totalPayment)}`}
               </Button>
-            </>
-          ) : (
-            <Button onClick={handlePay} disabled={processing || totalPayment < remaining - 0.01} className="w-full min-h-11 bg-flo-brand-600 hover:bg-flo-brand-700" size="lg">
-              {processing ? t('pos.processingPayment') : `${t('pos.pay')} ${currencyFmt(totalPayment)}`}
-            </Button>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-    {ConfirmDialog}
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+      {ConfirmDialog}
     </>
   );
 }

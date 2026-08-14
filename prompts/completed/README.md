@@ -2,6 +2,9 @@
 
 - [phase-4.6.md](phase-4.6.md) — ADR-013 Accepted (identity lock; no matrix implementation)
 - [phase-4.7.md](phase-4.7.md) — Restaurant 86 availability workflow
+- [phase-4.8.md](phase-4.8.md) — Reports multi-day range picker
+- [phase-4.9.md](phase-4.9.md) — Customer deactivate lifecycle
+- [phase-4.10.md](phase-4.10.md) — FIN-01 collectible outstanding display
 
 When a phase in `prompts/phases/` is genuinely complete (all gates in that prompt’s Completion Criteria), either:
 

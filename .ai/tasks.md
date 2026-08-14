@@ -58,7 +58,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] QA-INV-TAGS-01 — Array.isArray + recursive parseTags verified in rebuilt TRAINING package; regression `tests/product-tags-parse.test.ts` (commit still pending)
 - [x] QA-FIN01-OVERPAY-01 — **false positive closed**: cash remaining+1 is change-on-cash (PASS); non-cash remaining+1 rejects 400 (PASS). See `pending-complete-test-report.md`
 - [x] Pending-complete matrix — tax advanced, Drive/WA UI, restore UI, light load, JWT file, REC-01 re-drill (`pending-complete-test-report.md`)
-- [ ] QA-FIN01-STATUS-01 — align bill `payment_status`/`balance` with FIN-01 collectible outstanding (P2; do not weaken rejection)
+- [x] QA-FIN01-STATUS-01 — **display aligned** (Phase 4.10): UI uses collectible outstanding; stored `payment_status`/`balance` unchanged; rejection not weakened
 - [ ] QA-KDS-ROUTE-01 — packaged static `/kds/` directory index 404 (P3)
 - [x] P1.5 Pilot pack — install, backup/restore, recovery, troubleshooting, operator guide, support process (**docs shipped**; execute `dr-drill-worksheet.md` before go-live; numeric backup policy PENDING APPROVAL)
 - [x] P1.6 Pilot release readiness audit + checklists — **READY WITH CONDITIONS** (`p1.6-pilot-release-readiness.md`; signoff/incident log/checklist)
@@ -118,7 +118,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Phase 4.7** Restaurant 86 workflow — `POST /api/products/:id/availability`; Restaurant POS 86; schema v75; `npm run test:phase-4.7`
 - [x] **Phase 4.8** Reports multi-day range picker — start/end dates; 93-day client cap; `npm run test:phase-4.8`
 - [x] **Phase 4.9** Customer deactivate — `POST /api/customers/:id/deactivate`; owner/manager; `npm run test:phase-4.9`
-- [ ] **Phase 4.10** FIN-01 collectible outstanding display (`prompts/phases/phase-4.10.md`)
+- [x] **Phase 4.10** FIN-01 collectible outstanding display (`docs/04-product/phase-4.10-fin01-outstanding-display.md`; `npm run test:phase-4.10`)
 - [ ] **Phase 4.11** Inventory on-hand valuation report (`prompts/phases/phase-4.11.md`)
 - [ ] **Phase 4.12** Retail POS fulfillment-type honesty (`prompts/phases/phase-4.12.md`)
 - [ ] **Phase 4.13** Table merge discovery (`prompts/phases/phase-4.13.md`)

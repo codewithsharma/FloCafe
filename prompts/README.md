@@ -209,3 +209,87 @@ Commit **only** the phase.
 Creating or updating this folder does **not** authorize Phase 4.6–4.15 implementation.
 
 Schema remains **v75** until a later accepted ADR + migration phase (none of the 10 phases may silently bump it).
+
+## Autonomous Phase Advancement
+
+The prompt pipeline is designed to execute the entire active roadmap continuously.
+
+After a phase completes successfully:
+
+1. Verify all acceptance criteria.
+2. Run required tests.
+3. Run full regression suite.
+4. Run lint and builds.
+5. Run isolation checks for Restaurant and Retail.
+6. Run subagent review.
+7. Record the completion in STATE.md.
+8. Move the completed prompt to completed/.
+9. Activate the next eligible phase.
+10. Execute the next phase automatically.
+
+Do NOT stop merely because a phase completed.
+
+Human intervention is required ONLY when a genuine blocker exists.
+
+### Automatic continuation
+
+A successful phase completion MUST automatically advance:
+
+ACTIVE.md
+↓
+completed/<phase>.md
+↓
+pending/<next-phase>.md
+↓
+ACTIVE.md
+
+The orchestrator MUST continue execution until:
+
+- all roadmap phases are COMPLETE, OR
+- a genuine BLOCKED/HUMAN_GATE condition is encountered.
+
+### Human gates
+
+The pipeline MUST stop when:
+
+- an ADR requires explicit human acceptance;
+- a required product decision cannot be safely inferred;
+- implementation violates the phase contract;
+- schema/money-path architecture unexpectedly changes;
+- required tests/builds cannot be made to pass safely;
+- a security, isolation, financial-integrity, or data-loss risk is discovered.
+
+A normal successful phase completion is NOT a human gate.
+
+### Never auto-authorize scope
+
+Automatic advancement means:
+
+"execute the next already-approved phase."
+
+It does NOT mean:
+
+"invent new scope."
+
+The orchestrator must execute only phases already defined in ROADMAP.md.
+
+### No skipping
+
+Phases execute sequentially unless ROADMAP.md explicitly defines
+dependencies allowing parallel execution.
+
+4.8 → 4.9 → 4.10 → ... → 4.15
+
+A later phase must never be started while its dependency is incomplete.
+
+### Final completion
+
+When every roadmap phase is complete:
+
+ACTIVE.md:
+status: COMPLETE
+
+STATE.md:
+pipeline_status: COMPLETE
+
+The orchestrator must stop only after the entire roadmap is complete.

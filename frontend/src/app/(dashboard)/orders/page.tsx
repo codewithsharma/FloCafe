@@ -24,6 +24,7 @@ import { useWhatsAppReady } from '@/hooks/useWhatsAppReady';
 import { PageHeader, LoadingState, EmptyState } from '@/components/flo';
 import { isFeatureAvailable, isModuleEnabled } from '@/lib/modules';
 import { usePlatformComposition } from '@/hooks/usePlatformComposition';
+import { hasCollectibleOutstanding } from '@/lib/bill-collectible';
 import {
   OrdersFilterBar,
   OrderCard,
@@ -891,7 +892,9 @@ export default function OrdersPage() {
   };
 
   const showCheckout = (order: Order) => {
-    return !isOrderPaid(order) && !['completed', 'cancelled'].includes(order.status);
+    if (['completed', 'cancelled'].includes(order.status)) return false;
+    if (order.bill) return hasCollectibleOutstanding(order.bill);
+    return !isOrderPaid(order);
   };
 
   const handleConvertToTakeaway = async (order: Order) => {

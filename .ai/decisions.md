@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-08-14 — Phase 4.10 FIN-01 collectible display (Implemented)
+
+Display-only. `frontend/src/lib/bill-collectible.ts` derives collectible = total − gross `payment_details` tender. Orders Checkout + PaymentModal remaining due use collectible, not net `bill.balance`. No `UPDATE bills`. Schema v75. Doc: `phase-4.10-fin01-outstanding-display.md`.
+
+## 2026-08-14 — Phase 4.9 Customer deactivate (Implemented)
+
+`POST /api/customers/:id/deactivate` owner/manager. Flag only. Schema v75. Doc: `phase-4.9-customer-deactivate.md`.
+
 ## 2026-08-14 — Phase 4.8 Reports multi-day export range (Implemented)
 
 Two native date inputs on Reports. CSV + topProducts use start/end. Client cap 93 days matches backend. `/summary` and `daily-stats` unchanged. Schema v75. Doc: `phase-4.8-reports-date-range.md`.

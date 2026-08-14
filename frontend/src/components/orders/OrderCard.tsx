@@ -32,6 +32,7 @@ import type { Customer, Order, OrderItem } from '@/lib/types';
 import { useI18n } from '@/hooks/useI18n';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
+import { collectibleOutstanding } from '@/lib/bill-collectible';
 
 export type PaymentStatus = 'paid' | 'partial' | 'unpaid' | 'partially_refunded' | 'refunded';
 
@@ -454,7 +455,7 @@ export function OrderCard({
                 {t('orders.paid')} {fmt(Number(bill.paid_amount))}
               </span>
               <span>
-                {t('orders.balance')} {fmt(Number(bill.balance))}
+                {t('orders.collectible')} {fmt(collectibleOutstanding(bill))}
               </span>
             </div>
           ) : null}

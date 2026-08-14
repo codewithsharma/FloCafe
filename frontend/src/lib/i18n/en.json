@@ -129,6 +129,7 @@
   "orders.active": "Active",
   "orders.all": "All",
   "orders.held": "Held",
+  "orders.collectible": "Collectible",
   "orders.balance": "Balance",
   "orders.addItems": "Add Items to Order",
   "orders.addItemsFailed": "Failed to add items",
