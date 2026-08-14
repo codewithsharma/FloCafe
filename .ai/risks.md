@@ -7,7 +7,7 @@
 - 🔒 SEC: JWT in `safeStorage` (`jwt-secret.enc`). Residual: same-OS-user malware; Linux keyring (**P2**).
 - 🔒 SEC: CSP `'unsafe-inline'` + JWT in `localStorage` — XSS→API (**P1 / Phase C**). Stolen owner/manager JWT also authorizes Drive backup-now and B2 restart.
 - 🔒 SEC: Drive `backup-now` is owner JWT without Master PIN (**P1 DRV-01**).
-- ⚠️ RISK: Money `REAL` residual (P0.3 docs-only); cancel-after-pay / discount-on-settled gaps (**P1**); refund print deferred.
+- ⚠️ RISK: Money `REAL` residual (P0.3 docs-only); cancel-after-pay / discount-on-settled gaps (**P1**). Refund receipt print: Phase 3.6A (server default printer); browser/WebUSB refund print parity still deferred.
 - ⚠️ RISK: Financial audit still sparse on discounts, PIN overrides, DB import/export, Master PIN ops.
 - ⚠️ RISK: Order cancel after pay still lacks refund interaction (P1).
 
@@ -21,7 +21,7 @@
 - ⚠️ RISK: Upgrades seed `network_mode=localhost`. Existing LAN KDS/POS/waiter setups need Settings → `kds_lan` or `lan` + restart before tablets reconnect.
 - ⚠️ RISK: Electron renderer `flo_terminal_id` and host `settings.terminal_id` may differ. POS requests send the client id; header-less `openShift` still uses the host id.
 - ⚠️ RISK: Lost `terminal_id` (cleared localStorage) orphans an open shift; managers must force-close.
-- ⚠️ RISK: Doc drift — some older architecture pages may still cite pre-v75 schema; Phase 2–3 truth is **closeout gate + `.ai/`** (Phase 2 CLOSED; Phase 3.1–3.4 COMPLETE; 3.5A COMPLETE; 3.5B DEFERRED pending pilot).
+- ⚠️ RISK: Doc drift — some older architecture pages may still cite pre-v75 schema; Phase 2–3 truth is **closeout gate + `.ai/`** (Phase 2 CLOSED; Phase 3.1–3.4 COMPLETE; 3.5A COMPLETE; 3.5B DEFERRED; 3.5C NO SAFE EXTRACTION; 3.6A refund receipt print COMPLETE).
 - 🔴 DEBT: Legacy `products.tax_type` / `tax_rate` remain on schema v75 (forced none/0; not authoritative). **Phase 3.5B DEFERRED** until pilot evidence; Mode B vs DROP not chosen. See `phase-3.5b-legacy-tax-cleanup-discovery.md`.
 - ⚠️ RISK (ops): Café pilots must keep `ACTIVE_VERTICAL_ID` unset or `restaurant`. Accidental `=retail` selects production Retail (wrong for café); `=retail-test` selects synthetic composition.
 - ⚠️ RISK: Brand consolidation to **Opervia** (ADR-010) — living docs/STRATEGY/`productName`/UI i18n updated; historical `15-*` audits still say Nexora/FloCafe; `appId`/`executableName` remain flo\* for upgrade continuity; Drive folder is `Opervia Backups` (old `Nexora Backups` not auto-migrated).

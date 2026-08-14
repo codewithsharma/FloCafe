@@ -79,6 +79,10 @@ export interface OrderCardProps {
   canRefund?: boolean;
   onRefund?: () => void;
   refunding?: boolean;
+  /** Show print-refund affordance when bill has been refunded. */
+  canPrintRefund?: boolean;
+  onPrintRefund?: () => void;
+  printingRefund?: boolean;
 }
 
 function paymentStatusVariant(status: PaymentStatus): StatusBadgeVariant {
@@ -146,6 +150,9 @@ export function OrderCard({
   canRefund = false,
   onRefund,
   refunding = false,
+  canPrintRefund = false,
+  onPrintRefund,
+  printingRefund = false,
 }: OrderCardProps) {
   const { t } = useI18n();
   const fmt = useFormatCurrency();
@@ -162,9 +169,7 @@ export function OrderCard({
     <Panel
       className={cn(
         'p-0 overflow-hidden flex flex-col border-l-4',
-        order.status === 'cancelled'
-          ? 'border-l-flo-danger opacity-75'
-          : 'border-l-flo-brand-500',
+        order.status === 'cancelled' ? 'border-l-flo-danger opacity-75' : 'border-l-flo-brand-500',
       )}
     >
       <div className="flex items-center justify-between gap-2 px-4 py-3 bg-flo-bg border-b border-flo-border">
@@ -218,6 +223,21 @@ export function OrderCard({
               {refunding ? <Loader2 className="size-4 animate-spin" /> : <Undo2 size={14} />}
             </button>
           ) : null}
+          {canPrintRefund && onPrintRefund ? (
+            <button
+              type="button"
+              onClick={onPrintRefund}
+              disabled={printingRefund}
+              className="p-1.5 rounded-flo-md border border-flo-border text-flo-text-secondary hover:bg-flo-bg disabled:opacity-50 transition-colors min-h-11 min-w-11 inline-flex items-center justify-center"
+              title={t('orders.printRefundReceipt')}
+            >
+              {printingRefund ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Printer size={14} className="text-flo-warning" />
+              )}
+            </button>
+          ) : null}
           {order.bill ? (
             <button
               type="button"
@@ -244,7 +264,9 @@ export function OrderCard({
         <div className="px-4 py-2 bg-flo-info-subtle/50 border-b border-flo-border flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <User size={14} className="text-flo-info shrink-0" aria-hidden />
-            <span className="text-small font-medium text-flo-text truncate">{order.customer.name}</span>
+            <span className="text-small font-medium text-flo-text truncate">
+              {order.customer.name}
+            </span>
             {order.customer.phone ? (
               <span className="text-caption text-flo-info shrink-0">{order.customer.phone}</span>
             ) : null}
@@ -301,7 +323,9 @@ export function OrderCard({
                   <div>
                     <span className="text-small font-medium text-flo-text">{customer.name}</span>
                     {customer.phone ? (
-                      <span className="text-caption text-flo-text-muted ml-2">{customer.phone}</span>
+                      <span className="text-caption text-flo-text-muted ml-2">
+                        {customer.phone}
+                      </span>
                     ) : null}
                   </div>
                   {linkingCustomer ? (
@@ -366,12 +390,13 @@ export function OrderCard({
               {item.addons && item.addons.length > 0 ? (
                 <div className="pl-4 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
                   {item.addons.map((addon, idx) => (
-                    <span key={addon.id ?? `${item.id}-${idx}`} className="text-caption text-flo-text-muted">
+                    <span
+                      key={addon.id ?? `${item.id}-${idx}`}
+                      className="text-caption text-flo-text-muted"
+                    >
                       + {addon.name}
                       {(addon.quantity || 1) > 1 ? ` ×${addon.quantity}` : ''}
-                      {addon.price
-                        ? ` (${fmt(Number(addon.price) * (addon.quantity || 1))})`
-                        : ''}
+                      {addon.price ? ` (${fmt(Number(addon.price) * (addon.quantity || 1))})` : ''}
                     </span>
                   ))}
                 </div>

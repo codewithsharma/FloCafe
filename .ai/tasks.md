@@ -12,12 +12,12 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 
 ## P0 — Production blockers (Opervia Restaurant v1.0)
 
-- [x] P0.1 M6 Refund workflow (API + UI green; print deferred)
+- [x] P0.1 M6 Refund workflow (API + UI green; receipt print Phase 3.6A)
 - [x] P0.2 Financial-ops audit — YELLOW (`docs/15-project-management/p0.2-financial-ops-audit.md`)
 - [x] P0.2 follow-up hardening (approved): block re-pay on refunded; reporting Gross/Refunds/Net; `payment.received` audit; mandatory payment Idempotency-Key
 - [x] P0.2 day-close cash − cash refunds (reuse `getShiftPaymentSummary`; Cash In / Cash Refunds / Net Cash)
 - [ ] P0.3 Money representation migration design + implementation (plan in P0.2 §F; documentation only until approved)
-- [ ] Optional refund receipt print
+- [x] Optional refund receipt print (Phase 3.6A)
 - [x] P0.4 / P0.1 LAN security — IMPLEMENTED → GREEN WITH HARDENING (`docs/15-project-management/p0.1-lan-security-audit.md`)
   - [x] P0.4.1 LAN hardening: `network_mode` bind hosts, mDNS/QR gates, Settings UI, `tests/network-mode.test.ts`; TLS deferred P2
 - [x] P0.5 / JWT secret storage — IMPLEMENTED → GREEN WITH HARDENING (`p0.2-jwt-secret-storage-audit.md`; `main/services/jwt-secret.ts`; schema v74)

@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Phase 3.6A Refund Receipt Printing (Accepted + Implemented)
+
+Best-effort refund proof print after successful refund. Money path unchanged (`createBillRefund` does not print). Hardware: `POST /printers/print-refund` → thermal `formatRefundReceipt` / `printRefundReceipt`. Audit: `print_type: 'refund'` does not set `bills.printed_at`. Print failure does not roll back refund. Browser/WebUSB refund print parity deferred. Doc: `docs/03-architecture/phase-3.6a-refund-receipt-printing.md`.
+
 ## 2026-08-14 — Phase 3.5B Legacy Tax Column Cleanup (DEFERRED)
 
 Discovery: `phase-3.5b-legacy-tax-cleanup-discovery.md` (candidates `products.tax_type` / `products.tax_rate` only; not authoritative; snapshots/FIN-01/REAL→cents out of scope). Human decision: **DEFER until pilot evidence**. Schema remains **v75**. Columns remain. API writers/readers unchanged. No migration. No Mode B. No DROP. Future choice (not made now): Mode B (code-only stop-return/stop-write) **or** DROP (separate ADR + migration + consumer review). **No implementation.**

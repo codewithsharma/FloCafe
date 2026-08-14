@@ -4,7 +4,7 @@
  * Known limitations (MVP):
  * - Card refunds are financial records only — no payment gateway reversal/chargeback.
  * - Earned loyalty cashback is not clawed back on refund.
- * - Refund print / UI deferred.
+ * - Refund receipt printing is best-effort outside this service (separate print API).
  * - No inventory restock or order reopen.
  */
 
@@ -79,7 +79,9 @@ function parsePaymentDetails(raw: unknown): Array<Record<string, unknown>> {
     }
   }
   if (Array.isArray(parsed)) {
-    return parsed.filter((line) => line && typeof line === 'object' && !Array.isArray(line)) as Array<Record<string, unknown>>;
+    return parsed.filter(
+      (line) => line && typeof line === 'object' && !Array.isArray(line),
+    ) as Array<Record<string, unknown>>;
   }
   if (parsed && typeof parsed === 'object') return [parsed as Record<string, unknown>];
   return [];
@@ -104,7 +106,9 @@ function sumMethodCents(lines: Array<Record<string, unknown>>, method: string): 
   return total;
 }
 
-function methodTotals(lines: Array<Record<string, unknown>>): Map<string, { cents: number; paymentMethodId: number | null }> {
+function methodTotals(
+  lines: Array<Record<string, unknown>>,
+): Map<string, { cents: number; paymentMethodId: number | null }> {
   const totals = new Map<string, { cents: number; paymentMethodId: number | null }>();
   for (const line of lines) {
     if (typeof line.method !== 'string' || !line.method) continue;
@@ -126,7 +130,9 @@ function methodTotals(lines: Array<Record<string, unknown>>): Map<string, { cent
   return totals;
 }
 
-function largestTenderMethod(totals: Map<string, { cents: number; paymentMethodId: number | null }>): string | null {
+function largestTenderMethod(
+  totals: Map<string, { cents: number; paymentMethodId: number | null }>,
+): string | null {
   let best: string | null = null;
   let bestCents = -1;
   for (const [method, entry] of totals) {
@@ -139,11 +145,15 @@ function largestTenderMethod(totals: Map<string, { cents: number; paymentMethodI
 }
 
 function completedRefundCents(db: ReturnType<typeof getDatabase>, billId: number | string): number {
-  const row = db.prepare(`
+  const row = db
+    .prepare(
+      `
     SELECT COALESCE(SUM(amount_cents), 0) AS total
     FROM refunds
     WHERE bill_id = ? AND status = 'completed'
-  `).get(billId) as { total: number };
+  `,
+    )
+    .get(billId) as { total: number };
   return Number(row.total) || 0;
 }
 
@@ -152,17 +162,25 @@ function completedRefundCentsForMethod(
   billId: number | string,
   method: string,
 ): number {
-  const row = db.prepare(`
+  const row = db
+    .prepare(
+      `
     SELECT COALESCE(SUM(amount_cents), 0) AS total
     FROM refunds
     WHERE bill_id = ? AND status = 'completed' AND method = ?
-  `).get(billId, method) as { total: number };
+  `,
+    )
+    .get(billId, method) as { total: number };
   return Number(row.total) || 0;
 }
 
 function parseRefundAmountCents(value: unknown): number {
   if (typeof value !== 'number' && typeof value !== 'string') {
-    throw new RefundServiceError(400, 'Refund amount must be a finite number greater than zero', 'REFUND_AMOUNT_INVALID');
+    throw new RefundServiceError(
+      400,
+      'Refund amount must be a finite number greater than zero',
+      'REFUND_AMOUNT_INVALID',
+    );
   }
   const text = String(value).trim();
   if (!/^\d+(?:\.\d{1,2})?$/.test(text)) {
@@ -175,7 +193,11 @@ function parseRefundAmountCents(value: unknown): number {
   const parsed = Number(text);
   const cents = Math.round(parsed * 100);
   if (!Number.isFinite(parsed) || parsed <= 0 || !Number.isSafeInteger(cents) || cents <= 0) {
-    throw new RefundServiceError(400, 'Refund amount must be a finite number greater than zero', 'REFUND_AMOUNT_INVALID');
+    throw new RefundServiceError(
+      400,
+      'Refund amount must be a finite number greater than zero',
+      'REFUND_AMOUNT_INVALID',
+    );
   }
   return cents;
 }
@@ -191,19 +213,23 @@ function resolveApprovedBy(
   const pin = String(overridePin);
   let user: { id: string } | null = null;
   if (managerId) {
-    const candidate = db.prepare(
-      `SELECT id, pin_hash FROM users
+    const candidate = db
+      .prepare(
+        `SELECT id, pin_hash FROM users
        WHERE id = ? AND pin_hash IS NOT NULL AND role IN ('owner', 'manager') AND is_active = 1`,
-    ).get(managerId) as { id: string; pin_hash: string } | undefined;
+      )
+      .get(managerId) as { id: string; pin_hash: string } | undefined;
     if (candidate && verifyPin(candidate.pin_hash, pin)) {
       user = candidate;
     }
   }
   if (!user) {
-    const managers = db.prepare(
-      `SELECT id, pin_hash FROM users
+    const managers = db
+      .prepare(
+        `SELECT id, pin_hash FROM users
        WHERE pin_hash IS NOT NULL AND role IN ('owner', 'manager') AND is_active = 1`,
-    ).all() as Array<{ id: string; pin_hash: string }>;
+      )
+      .all() as Array<{ id: string; pin_hash: string }>;
     for (const candidate of managers) {
       if (verifyPin(candidate.pin_hash, pin)) {
         user = candidate;
@@ -238,11 +264,16 @@ function loadIdempotentReplay(
   billId: number | string,
   requestHash: string,
 ): { refund: RefundRecord; bill: any } | null {
-  const prior = db.prepare(`
+  const prior = db
+    .prepare(
+      `
     SELECT bill_id, request_hash, response_json
     FROM refund_idempotency
     WHERE user_id = ? AND idempotency_key = ?
-  `).get(userId, idempotencyKey) as { bill_id: number; request_hash: string; response_json: string } | undefined;
+  `,
+    )
+    .get(userId, idempotencyKey) as
+    { bill_id: number; request_hash: string; response_json: string } | undefined;
   if (!prior) return null;
   if (String(prior.bill_id) !== String(billId) || prior.request_hash !== requestHash) {
     throw new RefundServiceError(
@@ -262,7 +293,10 @@ function loadIdempotentReplay(
  * Create a completed refund against a bill's collected payments.
  * Must be called inside or will use withTxn for the mutation path.
  */
-export function createBillRefund(input: CreateBillRefundInput): { refund: RefundRecord; bill: any } {
+export function createBillRefund(input: CreateBillRefundInput): {
+  refund: RefundRecord;
+  bill: any;
+} {
   if (!REFUND_ROLES.has(String(input.actorRole))) {
     throw new RefundServiceError(403, 'Insufficient permissions', 'REFUND_FORBIDDEN');
   }
@@ -315,22 +349,39 @@ export function createBillRefund(input: CreateBillRefundInput): { refund: Refund
       const priorRefundCents = completedRefundCents(db, bill.id);
       const refundableCents = originalCollectedCents - priorRefundCents;
       if (refundableCents <= 0) {
-        throw new RefundServiceError(409, 'Nothing left to refund on this bill', 'REFUND_NOTHING_TO_REFUND');
+        throw new RefundServiceError(
+          409,
+          'Nothing left to refund on this bill',
+          'REFUND_NOTHING_TO_REFUND',
+        );
       }
 
-      const amountProvided = input.amount !== undefined && input.amount !== null && String(input.amount).trim() !== '';
+      const amountProvided =
+        input.amount !== undefined && input.amount !== null && String(input.amount).trim() !== '';
       const amountCents = amountProvided ? parseRefundAmountCents(input.amount) : refundableCents;
       if (amountCents > refundableCents) {
-        throw new RefundServiceError(409, 'Refund amount exceeds refundable paid amount', 'REFUND_EXCEEDS_PAID');
+        throw new RefundServiceError(
+          409,
+          'Refund amount exceeds refundable paid amount',
+          'REFUND_EXCEEDS_PAID',
+        );
       }
 
       const totals = methodTotals(paymentLines);
       if (totals.size === 0) {
-        throw new RefundServiceError(409, 'Nothing left to refund on this bill', 'REFUND_NOTHING_TO_REFUND');
+        throw new RefundServiceError(
+          409,
+          'Nothing left to refund on this bill',
+          'REFUND_NOTHING_TO_REFUND',
+        );
       }
 
       let method: string;
-      if (input.method !== undefined && input.method !== null && String(input.method).trim() !== '') {
+      if (
+        input.method !== undefined &&
+        input.method !== null &&
+        String(input.method).trim() !== ''
+      ) {
         if (typeof input.method !== 'string' || input.method.length > MAX_METHOD_LENGTH) {
           throw new RefundServiceError(400, 'Refund method is invalid', 'REFUND_METHOD_INVALID');
         }
@@ -352,7 +403,8 @@ export function createBillRefund(input: CreateBillRefundInput): { refund: Refund
 
       // Card refunds are financial records only — no payment gateway reversal.
       const methodMeta = totals.get(method)!;
-      const remainingMethodCents = methodMeta.cents - completedRefundCentsForMethod(db, bill.id, method);
+      const remainingMethodCents =
+        methodMeta.cents - completedRefundCentsForMethod(db, bill.id, method);
       if (amountCents > remainingMethodCents) {
         throw new RefundServiceError(
           409,
@@ -373,7 +425,11 @@ export function createBillRefund(input: CreateBillRefundInput): { refund: Refund
 
       if (method === 'wallet') {
         if (!bill.customer_id) {
-          throw new RefundServiceError(400, 'Wallet refund requires a customer on the bill', 'REFUND_WALLET_NO_CUSTOMER');
+          throw new RefundServiceError(
+            400,
+            'Wallet refund requires a customer on the bill',
+            'REFUND_WALLET_NO_CUSTOMER',
+          );
         }
         const walletPaidCents = sumMethodCents(paymentLines, 'wallet');
         const walletRefundedCents = completedRefundCentsForMethod(db, bill.id, 'wallet');
@@ -423,17 +479,21 @@ export function createBillRefund(input: CreateBillRefundInput): { refund: Refund
       );
       const refundId = Number(result.lastInsertRowid);
 
-      db.prepare(`
+      db.prepare(
+        `
         UPDATE bills
         SET paid_amount = ?, balance = ?, payment_status = ?, updated_at = ?
         WHERE id = ?
-      `).run(newPaidCents / 100, newBalanceCents / 100, paymentStatus, changedAt, bill.id);
+      `,
+      ).run(newPaidCents / 100, newBalanceCents / 100, paymentStatus, changedAt, bill.id);
 
       if (method === 'wallet') {
-        db.prepare(`
+        db.prepare(
+          `
           INSERT INTO loyalty_ledger (customer_id, bill_id, type, amount, description, created_at, updated_at)
           VALUES (?, ?, 'credit', ?, ?, ?, ?)
-        `).run(
+        `,
+        ).run(
           bill.customer_id,
           bill.id,
           amountCents,
@@ -471,10 +531,12 @@ export function createBillRefund(input: CreateBillRefundInput): { refund: Refund
       });
 
       const response = { refund, bill: updatedBill };
-      db.prepare(`
+      db.prepare(
+        `
         INSERT INTO refund_idempotency (user_id, idempotency_key, bill_id, request_hash, response_json, created_at)
         VALUES (?, ?, ?, ?, ?, ?)
-      `).run(
+      `,
+      ).run(
         input.actorUserId,
         input.idempotencyKey,
         bill.id,
@@ -493,15 +555,17 @@ export function createBillRefund(input: CreateBillRefundInput): { refund: Refund
 export function listRefunds(opts: { billId?: number | string | null } = {}): RefundRecord[] {
   const db = getDatabase();
   if (opts.billId !== undefined && opts.billId !== null && String(opts.billId).trim() !== '') {
-    return db.prepare(
-      `SELECT * FROM refunds WHERE bill_id = ? ORDER BY id ASC`,
-    ).all(opts.billId) as RefundRecord[];
+    return db
+      .prepare(`SELECT * FROM refunds WHERE bill_id = ? ORDER BY id ASC`)
+      .all(opts.billId) as RefundRecord[];
   }
   return db.prepare(`SELECT * FROM refunds ORDER BY id DESC LIMIT 200`).all() as RefundRecord[];
 }
 
 export function sumCashRefundCentsForShift(shiftId: number): { totalCents: number; count: number } {
-  const row = getDatabase().prepare(`
+  const row = getDatabase()
+    .prepare(
+      `
     SELECT
       COALESCE(SUM(amount_cents), 0) AS total_cents,
       COUNT(*) AS count
@@ -509,7 +573,9 @@ export function sumCashRefundCentsForShift(shiftId: number): { totalCents: numbe
     WHERE shift_id = ?
       AND status = 'completed'
       AND method = 'cash'
-  `).get(shiftId) as { total_cents: number; count: number };
+  `,
+    )
+    .get(shiftId) as { total_cents: number; count: number };
   return {
     totalCents: Number(row.total_cents) || 0,
     count: Number(row.count) || 0,

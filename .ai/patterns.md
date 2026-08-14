@@ -19,7 +19,7 @@
 
 - **Local-first / offline billing:** cloud and optional services must never block order create, pay, or kitchen fulfillment.
 - Money-critical workflows (payments, refunds, shifts, day close): require authz + audit + idempotency + reconciliation tests before “production ready.”
-- Refunds: `RefundServiceError` + `{ error, code }`; idempotency mirrors payments; PIN always via `verifyPin` + rate limit; cash gate via `assertOpenShiftForCashPayment`.
+- Refunds: `RefundServiceError` + `{ error, code }`; idempotency mirrors payments; PIN always via `verifyPin` + rate limit; cash gate via `assertOpenShiftForCashPayment`. Refund receipt print is best-effort outside the refund txn (`/printers/print-refund` + audit `print_type: refund`); print failure must not reverse money.
 - **Complete ≠ Pilot validated:** Implemented → Functional → Tested → Production ready → Pilot validated — do not interchange.
 - **Refactor-on-touch:** when changing billing/payments for refunds, improve that slice’s boundaries/validation; do not rewrite the monolith.
 - **Status vocabulary in docs:** COMPLETE / PARTIAL / PLACEHOLDER / PLANNED / NOT FOUND — code is source of truth.

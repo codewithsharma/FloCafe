@@ -45,6 +45,7 @@ import {
   extractRefundErrorMessage,
   postBillRefund,
 } from '@/lib/refunds';
+import { printLatestRefundReceiptForBill, printRefundReceipt } from '@/lib/refund-receipt-print';
 
 type FilterType = 'all' | 'active' | 'unpaid' | 'held';
 
@@ -78,7 +79,12 @@ export default function OrdersPage() {
   const isWhatsAppReady = useWhatsAppReady();
 
   // Consolidated filter state
-  const [filters, setFilters] = useState<OrdersFilters>({ search: '', table: '', type: '', status: '' });
+  const [filters, setFilters] = useState<OrdersFilters>({
+    search: '',
+    table: '',
+    type: '',
+    status: '',
+  });
 
   // Consolidated cancel modal state
   const [cancelModal, setCancelModal] = useState<CancelOrderState | null>(null);
@@ -101,13 +107,16 @@ export default function OrdersPage() {
   // Print states
   const [generatingBill, setGeneratingBill] = useState<number | null>(null);
   const [printingBillId, setPrintingBillId] = useState<number | null>(null);
+  const [printingRefundBillId, setPrintingRefundBillId] = useState<number | null>(null);
   const [sendingWaOrderId, setSendingWaOrderId] = useState<number | null>(null);
   const [confirmPrintBillId, setConfirmPrintBillId] = useState<number | null>(null);
 
   // Other states
   const [addItemsOrder, setAddItemsOrder] = useState<Order | null>(null);
   const [printHistoryExpanded, setPrintHistoryExpanded] = useState<Record<number, boolean>>({});
-  const [printHistory, setPrintHistory] = useState<Record<number, { id: number; print_type: string; user_name: string; printed_at: string }[]>>({});
+  const [printHistory, setPrintHistory] = useState<
+    Record<number, { id: number; print_type: string; user_name: string; printed_at: string }[]>
+  >({});
   const fetchedBillIdsRef = useRef<Set<number>>(new Set());
 
   // Add Item modal states
@@ -124,14 +133,17 @@ export default function OrdersPage() {
   const [linkingCustomer, setLinkingCustomer] = useState(false);
   const linkSearchRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const currency = getCurrencySymbol(currentTenant?.currency || 'INR', getCountryByCode(currentTenant?.country ?? 'IN')?.locale);
+  const currency = getCurrencySymbol(
+    currentTenant?.currency || 'INR',
+    getCountryByCode(currentTenant?.country ?? 'IN')?.locale,
+  );
   const fmt = useFormatCurrency();
   const isOwnerOrManager = currentTenant?.role === 'owner' || currentTenant?.role === 'manager';
 
   const fetchPrintHistory = async (billId: number) => {
     try {
       const { data } = await api.get(`/bills/${billId}/print-history`);
-      setPrintHistory(prev => ({ ...prev, [billId]: data.prints || [] }));
+      setPrintHistory((prev) => ({ ...prev, [billId]: data.prints || [] }));
     } catch {
       // Ignore error
     }
@@ -157,7 +169,8 @@ export default function OrdersPage() {
   };
 
   useEffect(() => {
-    api.get('/settings/kds_enabled')
+    api
+      .get('/settings/kds_enabled')
       .then((res) => {
         const flagOn = res.data?.setting?.value !== 'false';
         setKdsEnabled(isFeatureAvailable('kds', flagOn));
@@ -185,12 +198,14 @@ export default function OrdersPage() {
 
       if (isTablesRequired && isModuleEnabled('tables')) {
         heldOrdersStore.fetchHeldOrders();
-        api.get('/tables')
+        api
+          .get('/tables')
           .then((res) => setTables(res.data.tables || []))
           .catch(() => {});
       }
 
-      api.get('/settings/discount')
+      api
+        .get('/settings/discount')
         .then((res) => setDiscountRequiresApproval(!!res.data.discount_requires_approval))
         .catch(() => {});
     };
@@ -207,7 +222,7 @@ export default function OrdersPage() {
     const connectWS = () => {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.host}/kds`;
-      
+
       try {
         ws = new WebSocket(wsUrl);
 
@@ -221,7 +236,11 @@ export default function OrdersPage() {
         ws.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            if (data.type === 'order_updated' || data.type === 'orders' || data.type === 'initial_data') {
+            if (
+              data.type === 'order_updated' ||
+              data.type === 'orders' ||
+              data.type === 'initial_data'
+            ) {
               fetchOrders();
             }
           } catch {
@@ -251,7 +270,7 @@ export default function OrdersPage() {
         ws.close();
       }
     };
-     
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setTablesRequired]);
 
@@ -279,8 +298,7 @@ export default function OrdersPage() {
   const canRefundOrder = (order: Order): boolean => {
     const status = order.bill?.payment_status;
     return (
-      (status === 'paid' || status === 'partially_refunded') &&
-      Number(order.bill?.paid_amount) > 0
+      (status === 'paid' || status === 'partially_refunded') && Number(order.bill?.paid_amount) > 0
     );
   };
 
@@ -296,18 +314,17 @@ export default function OrdersPage() {
 
     // Check for active POS cart items to avoid accidental loss of progress
     if (cartStore.items.length > 0) {
-      const proceed = await confirm(
-        t('orders.cartClearConfirm')
-      );
+      const proceed = await confirm(t('orders.cartClearConfirm'));
       if (!proceed) return;
     }
 
     cartStore.clearCart();
     cartStore.setCustomer(order.customer);
 
-    const posOrderType = (order.type === 'dine_in' || order.type === 'takeaway' || order.type === 'delivery')
-      ? order.type
-      : 'takeaway';
+    const posOrderType =
+      order.type === 'dine_in' || order.type === 'takeaway' || order.type === 'delivery'
+        ? order.type
+        : 'takeaway';
     cartStore.setOrderType(posOrderType);
 
     if (posOrderType === 'dine_in' && order.table_id) {
@@ -331,7 +348,7 @@ export default function OrdersPage() {
     linkSearchRef.current = setTimeout(async () => {
       try {
         const { data } = await api.get(`/customers-search?q=${encodeURIComponent(query)}`);
-        setLinkCustomerResults(Array.isArray(data) ? data : (data.customers || []));
+        setLinkCustomerResults(Array.isArray(data) ? data : data.customers || []);
       } catch {
         setLinkCustomerResults([]);
       }
@@ -364,7 +381,10 @@ export default function OrdersPage() {
   const isOrderActive = (order: Order) => {
     if (order.status === 'cancelled') return false;
     if (order.status === 'completed') {
-      return kdsEnabled && (order.items || []).some((item) => !['served', 'cancelled'].includes(item.status));
+      return (
+        kdsEnabled &&
+        (order.items || []).some((item) => !['served', 'cancelled'].includes(item.status))
+      );
     }
     return true;
   };
@@ -375,10 +395,14 @@ export default function OrdersPage() {
     // An order without a bill has not been paid yet. Bills are deliberately
     // generated only when checkout starts, so filtering on bill existence
     // hid otherwise payable orders from the Unpaid tab.
-    if (tabFilter === 'unpaid' && !['unpaid', 'partial'].includes(paymentStatusOf(order) || '')) return false;
+    if (tabFilter === 'unpaid' && !['unpaid', 'partial'].includes(paymentStatusOf(order) || ''))
+      return false;
 
     // Search by order number
-    if (filters.search && !order.order_number.toLowerCase().includes(filters.search.toLowerCase())) {
+    if (
+      filters.search &&
+      !order.order_number.toLowerCase().includes(filters.search.toLowerCase())
+    ) {
       return false;
     }
     // Filter by table
@@ -433,7 +457,7 @@ export default function OrdersPage() {
               currency,
               country: currentTenant?.country || 'IN',
             },
-            { isReprint: false }
+            { isReprint: false },
           );
           await api.post(`/bills/${bill.id}/print`, { print_type: 'receipt' });
         } catch {
@@ -461,7 +485,7 @@ export default function OrdersPage() {
           currency,
           country: currentTenant?.country || 'IN',
         },
-        { isReprint }
+        { isReprint },
       );
       await api.post(`/bills/${billId}/print`, { print_type: isReprint ? 'reprint' : 'receipt' });
       toast.success(isReprint ? t('orders.printReceiptReprint') : t('orders.printReceipt'));
@@ -511,9 +535,17 @@ export default function OrdersPage() {
       toast.error(t('orders.onlyOwnersRemove'));
       return;
     }
-    if (!await confirm(t('orders.removeItemConfirm'), { destructive: true, confirmLabel: t('common.remove') })) return;
+    if (
+      !(await confirm(t('orders.removeItemConfirm'), {
+        destructive: true,
+        confirmLabel: t('common.remove'),
+      }))
+    )
+      return;
     try {
-      await api.patch(`/orders/${orderId}/items/${itemId}/cancel`, { reason: t('orders.removedByManager') });
+      await api.patch(`/orders/${orderId}/items/${itemId}/cancel`, {
+        reason: t('orders.removedByManager'),
+      });
       toast.success(t('orders.itemRemoved'));
       fetchOrders();
     } catch (err: unknown) {
@@ -546,7 +578,7 @@ export default function OrdersPage() {
     setRefunding(true);
     try {
       const amountTrim = refundModal.amount.trim();
-      await postBillRefund(
+      const result = await postBillRefund(
         refundModal.billId,
         {
           ...(amountTrim ? { amount: amountTrim } : {}),
@@ -556,12 +588,47 @@ export default function OrdersPage() {
         { idempotencyKey: createRefundIdempotencyKey() },
       );
       toast.success(t('orders.refundSuccess'));
+      const billId = refundModal.billId;
+      const refundId = result.refund?.id;
       setRefundModal(null);
       fetchOrders();
+
+      // Best-effort print — must never imply refund failure
+      if (refundId) {
+        setPrintingRefundBillId(billId);
+        try {
+          const printResult = await printRefundReceipt(refundId, billId);
+          if (printResult.printed) {
+            toast.success(t('orders.refundReceiptPrinted'));
+          } else {
+            toast.error(printResult.error || t('orders.refundReceiptPrintFailed'));
+          }
+        } catch {
+          toast.error(t('orders.refundReceiptPrintFailed'));
+        } finally {
+          setPrintingRefundBillId(null);
+        }
+      }
     } catch (err: unknown) {
       toast.error(extractRefundErrorMessage(err) || t('orders.refundFailed'));
     } finally {
       setRefunding(false);
+    }
+  };
+
+  const handlePrintRefundReceipt = async (billId: number) => {
+    setPrintingRefundBillId(billId);
+    try {
+      const printResult = await printLatestRefundReceiptForBill(billId);
+      if (printResult.printed) {
+        toast.success(t('orders.refundReceiptPrinted'));
+      } else {
+        toast.error(printResult.error || t('orders.refundReceiptReprintFailed'));
+      }
+    } catch {
+      toast.error(t('orders.refundReceiptReprintFailed'));
+    } finally {
+      setPrintingRefundBillId(null);
     }
   };
 
@@ -596,7 +663,7 @@ export default function OrdersPage() {
           currency,
           country: currentTenant?.country || 'IN',
         },
-        { pointsEarned: order.bill.points_earned ?? 0 }
+        { pointsEarned: order.bill.points_earned ?? 0 },
       );
     } catch {
       toast.error(t('orders.whatsappFailed'));
@@ -623,7 +690,7 @@ export default function OrdersPage() {
           country: currentTenant?.country || 'IN',
         },
         t,
-        { pointsEarned: order.bill.points_earned ?? 0 }
+        { pointsEarned: order.bill.points_earned ?? 0 },
       );
     } finally {
       setSendingWaOrderId(null);
@@ -663,7 +730,12 @@ export default function OrdersPage() {
 
   const handleConvertToTakeaway = async (order: Order) => {
     const tableNote = order.table ? t('orders.freeTableSuffix', { name: order.table.name }) : '';
-    if (!await confirm(t('orders.convertToTakeawayConfirm', { number: order.order_number, tableNote }))) return;
+    if (
+      !(await confirm(
+        t('orders.convertToTakeawayConfirm', { number: order.order_number, tableNote }),
+      ))
+    )
+      return;
     setConvertingOrderId(order.id);
     try {
       await api.patch(`/orders/${order.id}/convert-to-takeaway`);
@@ -685,56 +757,81 @@ export default function OrdersPage() {
 
   useEffect(() => {
     if (!addItemsOrder) return;
-    api.get('/products', { params: { per_page: 200 } })
+    api
+      .get('/products', { params: { per_page: 200 } })
       .then(({ data }) => setProducts(data.products || []))
       .catch(() => toast.error(t('orders.menuLoadFailed')));
   }, [addItemsOrder, t]);
 
   const handleAddItemToSelection = (product: Product) => {
-    setSelectedItems(prev => {
-      const existing = prev.find(i => i.product_id === product.id);
+    setSelectedItems((prev) => {
+      const existing = prev.find((i) => i.product_id === product.id);
       if (existing) {
-        return prev.map(i => i.product_id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
+        return prev.map((i) =>
+          i.product_id === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+        );
       }
-      return [...prev, { product_id: product.id, product_name: product.name, quantity: 1, special_instructions: '' }];
+      return [
+        ...prev,
+        {
+          product_id: product.id,
+          product_name: product.name,
+          quantity: 1,
+          special_instructions: '',
+        },
+      ];
     });
   };
 
   const handleRemoveFromSelection = (productId: number) => {
-    setSelectedItems(prev => prev.filter(i => i.product_id !== productId));
+    setSelectedItems((prev) => prev.filter((i) => i.product_id !== productId));
   };
 
   const handleUpdateSelectionQty = (productId: number, quantity: number) => {
     if (quantity < 1) return;
-    setSelectedItems(prev => prev.map(i => i.product_id === productId ? { ...i, quantity } : i));
+    setSelectedItems((prev) =>
+      prev.map((i) => (i.product_id === productId ? { ...i, quantity } : i)),
+    );
   };
 
   const handleUpdateSelectionNotes = (productId: number, notes: string) => {
-    setSelectedItems(prev => prev.map(i => i.product_id === productId ? { ...i, special_instructions: notes } : i));
+    setSelectedItems((prev) =>
+      prev.map((i) => (i.product_id === productId ? { ...i, special_instructions: notes } : i)),
+    );
   };
 
   const handleSubmitAddItems = async () => {
     if (!addItemsOrder || selectedItems.length === 0) return;
     setAddingItems(true);
     try {
-      const items = selectedItems.map(i => ({
+      const items = selectedItems.map((i) => ({
         product_id: i.product_id,
         quantity: i.quantity,
         special_instructions: i.special_instructions || undefined,
       }));
-      const fingerprint = JSON.stringify({ user_id: user?.id ?? null, order_id: addItemsOrder.id, items });
-      const attempt = addItemsAttemptRef.current?.fingerprint === fingerprint
-        ? addItemsAttemptRef.current
-        : {
-          fingerprint,
-          key: typeof globalThis.crypto?.randomUUID === 'function'
-            ? globalThis.crypto.randomUUID()
-            : `items-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        };
-      addItemsAttemptRef.current = attempt;
-      await api.post(`/orders/${addItemsOrder.id}/items`, {
+      const fingerprint = JSON.stringify({
+        user_id: user?.id ?? null,
+        order_id: addItemsOrder.id,
         items,
-      }, { headers: { 'Idempotency-Key': attempt.key } });
+      });
+      const attempt =
+        addItemsAttemptRef.current?.fingerprint === fingerprint
+          ? addItemsAttemptRef.current
+          : {
+              fingerprint,
+              key:
+                typeof globalThis.crypto?.randomUUID === 'function'
+                  ? globalThis.crypto.randomUUID()
+                  : `items-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            };
+      addItemsAttemptRef.current = attempt;
+      await api.post(
+        `/orders/${addItemsOrder.id}/items`,
+        {
+          items,
+        },
+        { headers: { 'Idempotency-Key': attempt.key } },
+      );
       addItemsAttemptRef.current = null;
       toast.success(t('orders.itemsAdded', { count: selectedItems.length }));
       openAddItemsModal(null);
@@ -809,11 +906,7 @@ export default function OrdersPage() {
         }
       />
 
-      <OrdersFilterBar
-        filters={filters}
-        onChange={setFilters}
-        tables={tables}
-      />
+      <OrdersFilterBar filters={filters} onChange={setFilters} tables={tables} />
 
       {tabFilter === 'held' ? (
         loading ? (
@@ -930,6 +1023,13 @@ export default function OrdersPage() {
               }}
               canRefund={canRefundOrder(order)}
               refunding={refunding && refundModal?.billId === order.bill?.id}
+              canPrintRefund={
+                !!order.bill &&
+                (paymentStatusOf(order) === 'refunded' ||
+                  paymentStatusOf(order) === 'partially_refunded')
+              }
+              printingRefund={printingRefundBillId === order.bill?.id}
+              onPrintRefund={() => order.bill && void handlePrintRefundReceipt(order.bill.id)}
               onRefund={() => {
                 if (!order.bill) return;
                 setRefundModal({
@@ -960,11 +1060,15 @@ export default function OrdersPage() {
       <PrintConfirmDialog
         open={confirmPrintBillId !== null}
         onOpenChange={(open) => !open && setConfirmPrintBillId(null)}
-        isReprint={confirmPrintBillId !== null && (printHistory[confirmPrintBillId]?.length ?? 0) > 0}
+        isReprint={
+          confirmPrintBillId !== null && (printHistory[confirmPrintBillId]?.length ?? 0) > 0
+        }
         printing={confirmPrintBillId !== null && printingBillId === confirmPrintBillId}
         previewing={confirmPrintBillId !== null && previewingBillId === confirmPrintBillId}
         onPrint={() => confirmPrintBillId !== null && handlePrint(confirmPrintBillId)}
-        onDownloadPreview={() => confirmPrintBillId !== null && handleDownloadPrintPreview(confirmPrintBillId)}
+        onDownloadPreview={() =>
+          confirmPrintBillId !== null && handleDownloadPrintPreview(confirmPrintBillId)
+        }
       />
 
       <CancelOrderDialog

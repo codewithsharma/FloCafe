@@ -24,7 +24,10 @@ function main(): void {
   assert.ok(refunds.includes('extractRefundErrorMessage'), 'extractRefundErrorMessage exported');
   assert.ok(refunds.includes('/bills/'), 'posts to /bills/ path');
   assert.ok(refunds.includes('refund'), 'refund path segment present');
-  assert.ok(refunds.includes('Idempotency-Key') || refunds.includes('idempotencyKey'), 'idempotency supported');
+  assert.ok(
+    refunds.includes('Idempotency-Key') || refunds.includes('idempotencyKey'),
+    'idempotency supported',
+  );
   console.log('   ✓ refunds.ts client contract');
 
   const terminalId = read('lib/terminal-id.ts');
@@ -39,7 +42,10 @@ function main(): void {
   console.log('   ✓ terminal-id attaches refund path');
 
   const types = read('lib/types.ts');
-  assert.ok(types.includes("'partially_refunded'"), 'Bill.payment_status includes partially_refunded');
+  assert.ok(
+    types.includes("'partially_refunded'"),
+    'Bill.payment_status includes partially_refunded',
+  );
   assert.ok(types.includes("'refunded'"), 'Bill.payment_status includes refunded');
   console.log('   ✓ types include refund payment statuses');
 
@@ -59,6 +65,10 @@ function main(): void {
   assert.ok(orderCard.includes('onRefund'), 'OrderCard includes onRefund');
   assert.ok(orderCard.includes('canRefund'), 'OrderCard includes canRefund');
   assert.ok(
+    orderCard.includes('onPrintRefund') || orderCard.includes('printRefund'),
+    'OrderCard print refund affordance',
+  );
+  assert.ok(
     orderCard.includes('partially_refunded') && orderCard.includes('refunded'),
     'OrderCard PaymentStatus includes refund statuses',
   );
@@ -67,6 +77,10 @@ function main(): void {
   const ordersPage = read('app/(dashboard)/orders/page.tsx');
   assert.ok(ordersPage.includes('RefundDialog'), 'orders page includes RefundDialog');
   assert.ok(ordersPage.includes('handleRefund'), 'orders page includes handleRefund');
+  assert.ok(
+    ordersPage.includes('printRefund') || ordersPage.includes('print-refund'),
+    'orders page prints refund receipt',
+  );
   assert.ok(
     ordersPage.includes('postBillRefund') || ordersPage.includes('/bills/'),
     'orders page posts bill refund',

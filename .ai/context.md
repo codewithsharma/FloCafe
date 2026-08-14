@@ -21,7 +21,7 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 | **retail** | Production Retail vertical; selectable via `ACTIVE_VERTICAL_ID=retail` (shared commerce modules; no tables/kitchen/kds) |
 | **retail-test** | Synthetic composition; selectable via env for validation only — not production Retail |
 | **Phase 2** | **CLOSED** — final exit + closeout gate `docs/03-architecture/phase-2-closeout-and-phase-3-gate.md` (also `phase-2-final-exit-gate.md`). **PASS WITH DOCUMENTED DEFERMENTS**. |
-| **Phase 3** | **3.1–3.4 COMPLETE**; **3.5A Inventory Ledger UI COMPLETE**; **3.5B DEFERRED** (legacy tax columns pending pilot evidence). Remaining 3.5 options not started. Deploy/start: `ACTIVE_VERTICAL_ID` env (unset→`restaurant`; empty/unknown fail-closed); `retail` = production Retail; `retail-test` = synthetic validation only. |
+| **Phase 3** | **3.1–3.4 COMPLETE**; **3.5A Inventory Ledger UI COMPLETE**; **3.5B DEFERRED**; **3.5C NO SAFE EXTRACTION**; **3.6A Refund Receipt Printing COMPLETE**. Remaining depth work TBD. Deploy/start: `ACTIVE_VERTICAL_ID` env (unset→`restaurant`; empty/unknown fail-closed); `retail` = production Retail; `retail-test` = synthetic validation only. |
 
 Phase 2 delivered: registry → … → 2.14 Order → 2.15 Payment → 2.16 POS → 2.17 Restaurant isolation → 2.18 synthetic Retail → final exit → **closeout / Phase 3 gate**.
 
@@ -30,7 +30,7 @@ Phase 2 delivered: registry → … → 2.14 Order → 2.15 Payment → 2.16 POS
 **North-star KPI:** 3 cafés × 30 days × zero critical failures.
 
 **P0 (in flight / next):**
-1. M6 Refunds API + Orders refund UI — **GREEN** (print deferred)
+1. M6 Refunds API + Orders refund UI — **GREEN** (receipt print: Phase 3.6A)
 2. P0.2 financial hardening — **implemented** (re-pay block, reporting semantics, payment audit, mandatory payment Idempotency-Key, day-close Cash In − Cash Refunds)
 3. Money-path REAL→cents migration — **documentation only** until approved
 4. LAN security / HTTP exposure — **IMPLEMENTED** (`network_mode` localhost|kds_lan|lan; audit `p0.1-lan-security-audit.md` → GREEN WITH HARDENING)
@@ -55,7 +55,7 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 - Shifts: `main/services/shift.ts`, `main/routes/shifts.ts`, `frontend/src/lib/shifts.ts`
 - Cash classification: `main/services/payment-cash.ts`
 - Day close: `main/services/day-close.ts` + `main/routes/reports.ts`
-- Refunds: `main/services/refund.ts`, `main/routes/refunds.ts` (ADR-009)
+- Refunds: `main/services/refund.ts`, `main/routes/refunds.ts` (ADR-009); refund proof print via `POST /printers/print-refund` + `print_type: refund` audit (Phase 3.6A)
 - Terminal id: `frontend/src/lib/terminal-id.ts` (identification only, not auth)
 - Cloud: outbound-only `main/services/cloud-sync.ts` — never blocks billing
 

@@ -5,7 +5,12 @@ import * as path from 'path';
 import { execSync, exec, execFile, execFileSync } from 'child_process';
 import { promisify } from 'util';
 import { getDatabase, parseDbTimestamp } from '../db';
-import { PrinterCutMode, resolvePrinterProfile, matchSupportedPrinterProfile, SupportedPrinterProfile } from './profiles';
+import {
+  PrinterCutMode,
+  resolvePrinterProfile,
+  matchSupportedPrinterProfile,
+  SupportedPrinterProfile,
+} from './profiles';
 import { getCountryByCode } from '../countries';
 import { resolveTaxComponents } from '../services/tax-components';
 import { correlationId, type FloErrorCode } from '../errors';
@@ -61,14 +66,31 @@ export type PrintFailureClass =
 export function classifyPrintFailure(detail?: string): PrintFailureClass {
   const value = String(detail || '').toLowerCase();
   if (!value) return 'unknown';
-  if (value.includes('no printer configured') || value.includes('no windows printer configured')) return 'not_configured';
-  if (value.includes('offline') || value.includes('use printer offline') || value.includes('disconnected')) return 'offline';
-  if (value.includes('not accepting') || value.includes('queue') && value.includes('unavailable') || value.includes('cannot open printer')) return 'queue_unavailable';
-  if (value.includes('spool') || value.includes('startdocprinter') || value.includes('startpageprinter')) return 'spooler_error';
+  if (value.includes('no printer configured') || value.includes('no windows printer configured'))
+    return 'not_configured';
+  if (
+    value.includes('offline') ||
+    value.includes('use printer offline') ||
+    value.includes('disconnected')
+  )
+    return 'offline';
+  if (
+    value.includes('not accepting') ||
+    (value.includes('queue') && value.includes('unavailable')) ||
+    value.includes('cannot open printer')
+  )
+    return 'queue_unavailable';
+  if (
+    value.includes('spool') ||
+    value.includes('startdocprinter') ||
+    value.includes('startpageprinter')
+  )
+    return 'spooler_error';
   if (value.includes('driver') || value.includes('no driver')) return 'driver_error';
   if (value.includes('access denied') || value.includes('permission')) return 'permission_denied';
   if (value.includes('timed out') || value.includes('timeout')) return 'timeout';
-  if (value.includes('writeprinter') || value.includes('accepted') && value.includes('of')) return 'write_error';
+  if (value.includes('writeprinter') || (value.includes('accepted') && value.includes('of')))
+    return 'write_error';
   if (value.includes('not supported') || value.includes('unsupported')) return 'unsupported';
   return 'unknown';
 }
@@ -81,8 +103,7 @@ function extractPlatformErrorCode(detail?: string): number | undefined {
 }
 
 const isMasBuild =
-  process.env.MAS_BUILD === '1' ||
-  (process as NodeJS.Process & { mas?: boolean }).mas === true;
+  process.env.MAS_BUILD === '1' || (process as NodeJS.Process & { mas?: boolean }).mas === true;
 
 const RECEIPT_BRANDING_NAME = 'Powered by FloPOS';
 const RECEIPT_BRANDING_URL = 'https://flopos.com';
@@ -112,7 +133,9 @@ function guessPaperWidth(name: string, model: string): string {
 
 function annotateProfile(info: Omit<PrinterInfo, 'profileId'>): PrinterInfo {
   const profile = matchSupportedPrinterProfile(info.name, info.make, info.model);
-  return profile ? { ...info, profileId: profile.id, paperWidth: info.paperWidth || profile.defaultPaperWidth } : info;
+  return profile
+    ? { ...info, profileId: profile.id, paperWidth: info.paperWidth || profile.defaultPaperWidth }
+    : info;
 }
 
 function parseDeviceUri(uri: string): { ip?: string; port?: number } {
@@ -170,18 +193,20 @@ async function detectMacOSPrinters(): Promise<PrinterInfo[]> {
           const isNetwork = /^(socket|ipp|ipps|http|https|lpd):\/\//i.test(uri);
           const { ip, port } = isNetwork ? parseDeviceUri(uri) : {};
 
-          printers.push(annotateProfile({
-            name,
-            make: makeModel.make,
-            model: makeModel.model,
-            connectionType: isNetwork ? 'network' : 'usb',
-            deviceUri: uri,
-            status,
-            isDefault,
-            ipAddress: ip,
-            port: port || (isNetwork ? 9100 : undefined),
-            paperWidth: guessPaperWidth(name, makeModel.model),
-          }));
+          printers.push(
+            annotateProfile({
+              name,
+              make: makeModel.make,
+              model: makeModel.model,
+              connectionType: isNetwork ? 'network' : 'usb',
+              deviceUri: uri,
+              status,
+              isDefault,
+              ipAddress: ip,
+              port: port || (isNetwork ? 9100 : undefined),
+              paperWidth: guessPaperWidth(name, makeModel.model),
+            }),
+          );
         }
       }
     }
@@ -194,7 +219,10 @@ async function detectMacOSPrinters(): Promise<PrinterInfo[]> {
 
 async function getMacOSPrinterStatus(name: string): Promise<'idle' | 'printing' | 'offline'> {
   try {
-    const out = execFileSync('lpstat', ['-p', name], { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).toLowerCase();
+    const out = execFileSync('lpstat', ['-p', name], {
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).toLowerCase();
     if (out.includes('disabled')) return 'offline';
     if (out.includes('printing') || out.includes('now printing')) return 'printing';
     return 'idle';
@@ -208,7 +236,10 @@ async function getMacOSPrinterDetails(name: string): Promise<{ make: string; mod
   let model = 'Thermal Printer';
 
   try {
-    const info = execFileSync('lpoptions', ['-p', name, '-l'], { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+    const info = execFileSync('lpoptions', ['-p', name, '-l'], {
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
 
     const lower = info.toLowerCase();
 
@@ -276,7 +307,10 @@ function extractEpsonModel(name: string, info: string): string {
 
 async function isMacOSDefaultPrinter(name: string): Promise<boolean> {
   try {
-    const defaultPrinter = execFileSync('lpstat', ['-d'], { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+    const defaultPrinter = execFileSync('lpstat', ['-d'], {
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
     return defaultPrinter.includes(name);
   } catch {
     return false;
@@ -330,17 +364,19 @@ async function detectWindowsPrinters(): Promise<PrinterInfo[]> {
         const driver = typeof entry.DriverName === 'string' ? entry.DriverName : '';
         const makeModel = detectWindowsMakeModel(name, driver);
 
-        printers.push(annotateProfile({
-          name,
-          make: makeModel.make,
-          model: makeModel.model,
-          connectionType: 'usb',
-          deviceUri: name,
-          driver,
-          status: mapWindowsPrinterStatus(entry.PrinterStatus),
-          isDefault: entry.Default === true,
-          paperWidth: guessPaperWidth(name, makeModel.model),
-        }));
+        printers.push(
+          annotateProfile({
+            name,
+            make: makeModel.make,
+            model: makeModel.model,
+            connectionType: 'usb',
+            deviceUri: name,
+            driver,
+            status: mapWindowsPrinterStatus(entry.PrinterStatus),
+            isDefault: entry.Default === true,
+            paperWidth: guessPaperWidth(name, makeModel.model),
+          }),
+        );
       }
     }
   } catch (err) {
@@ -358,10 +394,15 @@ function detectWindowsMakeModel(name: string, driver: string): { make: string; m
 
   if (lower.includes('epson') || name.toLowerCase().includes('tm-')) {
     make = 'Epson';
-    model = name.includes('TM-m30') ? 'TM-m30' :
-            name.includes('TM-T88') ? 'TM-T88' :
-            name.includes('TM-T82') ? 'TM-T82' :
-            name.includes('TM-T20') ? 'TM-T20' : 'TM Series';
+    model = name.includes('TM-m30')
+      ? 'TM-m30'
+      : name.includes('TM-T88')
+        ? 'TM-T88'
+        : name.includes('TM-T82')
+          ? 'TM-T82'
+          : name.includes('TM-T20')
+            ? 'TM-T20'
+            : 'TM Series';
   } else if (lower.includes('xprinter')) {
     make = 'Xprinter';
     model = lower.includes('80') ? 'Xprinter 80mm' : 'Xprinter 58mm';
@@ -427,12 +468,20 @@ function getMakeModelFromLpstat(): Map<string, { make: string; model: string }> 
         if (parsed) result.set(currentName, parsed);
       }
     }
-  } catch { /* CUPS not available */ }
+  } catch {
+    /* CUPS not available */
+  }
   return result;
 }
 
-function getUsbPrinterVendorIds(): Map<string, { vendorId: string; manufacturer: string | null; product: string | null }> {
-  const result = new Map<string, { vendorId: string; manufacturer: string | null; product: string | null }>();
+function getUsbPrinterVendorIds(): Map<
+  string,
+  { vendorId: string; manufacturer: string | null; product: string | null }
+> {
+  const result = new Map<
+    string,
+    { vendorId: string; manufacturer: string | null; product: string | null }
+  >();
   const devicesDir = '/sys/bus/usb/devices';
   try {
     const entries = fs.readdirSync(devicesDir);
@@ -446,15 +495,22 @@ function getUsbPrinterVendorIds(): Map<string, { vendorId: string; manufacturer:
         const manufacturer = readSysfsSafe(`${devPath}/manufacturer`);
         const product = readSysfsSafe(`${devPath}/product`);
         result.set(entry, { vendorId, manufacturer, product });
-      } catch { /* skip device */ }
+      } catch {
+        /* skip device */
+      }
     }
-  } catch { /* sysfs not available */ }
+  } catch {
+    /* sysfs not available */
+  }
   return result;
 }
 
 function readSysfsSafe(filePath: string): string | null {
-  try { return fs.readFileSync(filePath, 'utf8').trim(); }
-  catch { return null; }
+  try {
+    return fs.readFileSync(filePath, 'utf8').trim();
+  } catch {
+    return null;
+  }
 }
 
 function detectLinuxPrinters(): PrinterInfo[] {
@@ -505,18 +561,20 @@ function detectLinuxPrinters(): PrinterInfo[] {
           }
         }
 
-        printers.push(annotateProfile({
-          name,
-          make,
-          model,
-          connectionType: isNetwork ? 'network' : 'usb',
-          deviceUri: uri,
-          status: 'idle',
-          isDefault: false,
-          ipAddress: ip,
-          port: port || (isNetwork ? 9100 : undefined),
-          paperWidth: guessPaperWidth(name, model),
-        }));
+        printers.push(
+          annotateProfile({
+            name,
+            make,
+            model,
+            connectionType: isNetwork ? 'network' : 'usb',
+            deviceUri: uri,
+            status: 'idle',
+            isDefault: false,
+            ipAddress: ip,
+            port: port || (isNetwork ? 9100 : undefined),
+            paperWidth: guessPaperWidth(name, model),
+          }),
+        );
       }
     }
   } catch {
@@ -540,13 +598,45 @@ export async function initPrinter(): Promise<void> {
   }
 }
 
-export async function printReceipt(order: any, bill: any, business?: any, template: string = 'classic', useUnicode: boolean = false, isReprint: boolean = false): Promise<DispatchResult> {
+export async function printReceipt(
+  order: any,
+  bill: any,
+  business?: any,
+  template: string = 'classic',
+  useUnicode: boolean = false,
+  isReprint: boolean = false,
+): Promise<DispatchResult> {
   try {
-    console.log('[Printer] printReceipt called, template:', template, 'useUnicode:', useUnicode, 'isReprint:', isReprint);
-    const { printer, data, warnings, columns } = prepareReceipt(order, bill, business, template, useUnicode, isReprint);
-    console.log('[Printer] Using printer:', printer.name, printer.connection_type, 'columns:', columns);
+    console.log(
+      '[Printer] printReceipt called, template:',
+      template,
+      'useUnicode:',
+      useUnicode,
+      'isReprint:',
+      isReprint,
+    );
+    const { printer, data, warnings, columns } = prepareReceipt(
+      order,
+      bill,
+      business,
+      template,
+      useUnicode,
+      isReprint,
+    );
+    console.log(
+      '[Printer] Using printer:',
+      printer.name,
+      printer.connection_type,
+      'columns:',
+      columns,
+    );
     console.log('[Printer] Receipt data length:', data.length, 'bytes');
-    console.log('[Printer] First 100 bytes:', Array.from(data.slice(0, 100)).map(b => b.toString(16)).join(' '));
+    console.log(
+      '[Printer] First 100 bytes:',
+      Array.from(data.slice(0, 100))
+        .map((b) => b.toString(16))
+        .join(' '),
+    );
 
     const dispatch = await dispatchPrint(printer, data);
     return warnings.length > 0 ? { ...dispatch, warnings } : dispatch;
@@ -556,9 +646,134 @@ export async function printReceipt(order: any, bill: any, business?: any, templa
   }
 }
 
-export async function printKOT(order: any, items: any[], stationName: string, useUnicode: boolean = false, targetPrinter?: any): Promise<DispatchResult> {
+/** Phase 3.6A — refund proof slip (separate from sale invoice). */
+export function formatRefundReceipt(
+  refund: {
+    id: number | string;
+    amount: number;
+    method?: string | null;
+    reason?: string | null;
+    created_at?: string | null;
+    bill_id?: number | string | null;
+  },
+  bill: { bill_number?: string | null; total?: number | null },
+  business?: {
+    name?: string;
+    currency_symbol?: string;
+    country?: string;
+    timezone?: string;
+    trim_decimals?: boolean;
+  },
+  cols: number = 48,
+  useUnicode: boolean = false,
+  cutMode: PrinterCutMode = 'full',
+  warnings?: PrintWarning[],
+): Buffer {
+  const biz = business || {};
+  const lines: string[] = [];
+  const bar = '='.repeat(cols);
+  const dash = '-'.repeat(cols);
+  const prefix = resolveCurrencyPrefix(biz.currency_symbol || '₹', useUnicode);
+  const locale = getCountryByCode(biz.country || 'IN')?.locale ?? 'en-US';
+  const trimDecimals = biz.trim_decimals === true;
+  const tzOptions = biz.timezone ? { timeZone: biz.timezone } : undefined;
+  const when = refund.created_at ? parseDbTimestamp(refund.created_at) : new Date();
+
+  lines.push('{INIT}');
+  lines.push(
+    '{CENTER}{BOLD}{DOUBLE_HEIGHT}{DOUBLE_WIDTH}** REFUND **{/DOUBLE_WIDTH}{/DOUBLE_HEIGHT}{/BOLD}{/CENTER}',
+  );
+  lines.push(bar);
+  if (biz.name) lines.push(`{CENTER}{BOLD}${biz.name}{/BOLD}{/CENTER}`);
+  lines.push(`Bill: ${bill.bill_number || refund.bill_id || '—'}`);
+  lines.push(`Refund #: ${refund.id}`);
+  lines.push(
+    when.toLocaleString(locale, {
+      ...(tzOptions || {}),
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }),
+  );
+  lines.push(dash);
+  lines.push(
+    'Amount' +
+      rightAlign(
+        formatCurrency(Number(refund.amount) || 0, prefix, locale, trimDecimals),
+        cols - 6,
+      ),
+  );
+  if (refund.method) {
+    const methodLabel = truncate(String(refund.method), cols - 8);
+    lines.push(`Method: ${methodLabel}`);
+  }
+  if (refund.reason) {
+    lines.push('Reason:');
+    pushWrapped(lines, String(refund.reason), cols);
+  }
+  if (bill.total != null) {
+    lines.push(
+      'Bill total' +
+        rightAlign(
+          formatCurrency(Number(bill.total) || 0, prefix, locale, trimDecimals),
+          cols - 10,
+        ),
+    );
+  }
+  lines.push(bar);
+  lines.push('{CENTER}Refund proof{/CENTER}');
+  appendPoweredByFooter(lines);
+  lines.push('{CUT}');
+  return buildEscPos(lines, useUnicode, { cutMode }, warnings);
+}
+
+export async function printRefundReceipt(
+  refund: Parameters<typeof formatRefundReceipt>[0],
+  bill: Parameters<typeof formatRefundReceipt>[1],
+  business?: Parameters<typeof formatRefundReceipt>[2],
+  useUnicode: boolean = false,
+): Promise<DispatchResult> {
   try {
-    console.log('[Printer] printKOT called, items count:', items?.length || 0, 'useUnicode:', useUnicode, 'station:', stationName);
+    const printer = getPrinterConfig();
+    if (!printer) return { ok: false, detail: 'No printer configured' };
+    const profile = resolvePrinterProfile(printer);
+    const columns = getColumnsForPrinter(printer, profile);
+    const warnings: PrintWarning[] = [];
+    const data = formatRefundReceipt(
+      refund,
+      bill,
+      business,
+      columns,
+      useUnicode,
+      profile.cutMode,
+      warnings,
+    );
+    const dispatch = await dispatchPrint(printer, data);
+    return warnings.length > 0 ? { ...dispatch, warnings } : dispatch;
+  } catch (error: any) {
+    console.error('[Printer] Refund print error:', error);
+    return { ok: false, detail: error?.message };
+  }
+}
+
+export async function printKOT(
+  order: any,
+  items: any[],
+  stationName: string,
+  useUnicode: boolean = false,
+  targetPrinter?: any,
+): Promise<DispatchResult> {
+  try {
+    console.log(
+      '[Printer] printKOT called, items count:',
+      items?.length || 0,
+      'useUnicode:',
+      useUnicode,
+      'station:',
+      stationName,
+    );
     const printer = targetPrinter || getPrinterConfig();
     if (!printer) {
       console.log('[Printer] No printer configured');
@@ -571,11 +786,21 @@ export async function printKOT(order: any, items: any[], stationName: string, us
 
     const db = getDatabase();
     const biz = db.prepare('SELECT * FROM settings LIMIT 1').get() as any;
-    const locale = biz?.country ? getCountryByCode(biz.country)?.locale ?? 'en-US' : 'en-US';
+    const locale = biz?.country ? (getCountryByCode(biz.country)?.locale ?? 'en-US') : 'en-US';
     const tzOptions = biz?.timezone ? { timeZone: biz.timezone } : undefined;
 
     const warnings: PrintWarning[] = [];
-    const data = formatKOT(order, items, stationName, cols, useUnicode, profile.cutMode, locale, tzOptions, warnings);
+    const data = formatKOT(
+      order,
+      items,
+      stationName,
+      cols,
+      useUnicode,
+      profile.cutMode,
+      locale,
+      tzOptions,
+      warnings,
+    );
     console.log('[Printer] KOT data length:', data.length, 'bytes');
     const dispatch = await dispatchPrint(printer, data);
     return warnings.length > 0 ? { ...dispatch, warnings } : dispatch;
@@ -596,7 +821,9 @@ function reportPrintFailure(kind: 'receipt' | 'kot', result: PrintResult): void 
   let connectionType = 'unknown';
   try {
     connectionType = getPrinterConfig()?.connection_type || 'unknown';
-  } catch { /* best-effort only */ }
+  } catch {
+    /* best-effort only */
+  }
 
   const failureClass = result.failureClass || classifyPrintFailure(result.detail);
   void sendEvent('print_failed', {
@@ -606,7 +833,9 @@ function reportPrintFailure(kind: 'receipt' | 'kot', result: PrintResult): void 
     connection_type: connectionType,
     correlation_id: result.correlationId,
     failure_class: failureClass,
-    ...(result.platformErrorCode !== undefined ? { platform_error_code: result.platformErrorCode } : {}),
+    ...(result.platformErrorCode !== undefined
+      ? { platform_error_code: result.platformErrorCode }
+      : {}),
     ...(result.jobId !== undefined ? { job_id: result.jobId } : {}),
   });
 
@@ -622,7 +851,9 @@ function reportPrintFailure(kind: 'receipt' | 'kot', result: PrintResult): void 
         kind,
         os_platform: process.platform,
         failure_class: failureClass,
-        ...(result.platformErrorCode !== undefined ? { platform_error_code: result.platformErrorCode } : {}),
+        ...(result.platformErrorCode !== undefined
+          ? { platform_error_code: result.platformErrorCode }
+          : {}),
         ...(result.jobId !== undefined ? { job_id: result.jobId } : {}),
         ...(result.driverName ? { driver_name: result.driverName.slice(0, 160) } : {}),
         ...(result.printerStatus !== undefined ? { printer_status: result.printerStatus } : {}),
@@ -638,30 +869,41 @@ function reportPrintFailure(kind: 'receipt' | 'kot', result: PrintResult): void 
 }
 
 /** Typed adapters used by API callers while legacy boolean callers migrate. */
-export async function printReceiptDetailed(...args: Parameters<typeof printReceipt>): Promise<PrintResult> {
+export async function printReceiptDetailed(
+  ...args: Parameters<typeof printReceipt>
+): Promise<PrintResult> {
   const id = correlationId();
   try {
     const dispatch = await printReceipt(...args);
     const result: PrintResult = dispatch.ok
       ? { ok: true, correlationId: id, stage: 'dispatch', warnings: dispatch.warnings }
       : {
-        ok: false,
-        code: 'print.receipt.failed',
-        correlationId: id,
-        stage: 'dispatch',
-        detail: dispatch.detail,
-        failureClass: dispatch.failureClass || classifyPrintFailure(dispatch.detail),
-        platformErrorCode: dispatch.platformErrorCode || extractPlatformErrorCode(dispatch.detail),
-        jobId: dispatch.jobId,
-        driverName: dispatch.driverName,
-        printerStatus: dispatch.printerStatus,
-        warnings: dispatch.warnings,
-      };
+          ok: false,
+          code: 'print.receipt.failed',
+          correlationId: id,
+          stage: 'dispatch',
+          detail: dispatch.detail,
+          failureClass: dispatch.failureClass || classifyPrintFailure(dispatch.detail),
+          platformErrorCode:
+            dispatch.platformErrorCode || extractPlatformErrorCode(dispatch.detail),
+          jobId: dispatch.jobId,
+          driverName: dispatch.driverName,
+          printerStatus: dispatch.printerStatus,
+          warnings: dispatch.warnings,
+        };
     if (!result.ok) reportPrintFailure('receipt', result);
     return result;
   } catch (error) {
     const detail = (error as Error).message;
-    const result: PrintResult = { ok: false, code: 'print.receipt.failed', correlationId: id, stage: 'dispatch', detail, failureClass: classifyPrintFailure(detail), platformErrorCode: extractPlatformErrorCode(detail) };
+    const result: PrintResult = {
+      ok: false,
+      code: 'print.receipt.failed',
+      correlationId: id,
+      stage: 'dispatch',
+      detail,
+      failureClass: classifyPrintFailure(detail),
+      platformErrorCode: extractPlatformErrorCode(detail),
+    };
     reportPrintFailure('receipt', result);
     return result;
   }
@@ -674,23 +916,32 @@ export async function printKOTDetailed(...args: Parameters<typeof printKOT>): Pr
     const result: PrintResult = dispatch.ok
       ? { ok: true, correlationId: id, stage: 'dispatch', warnings: dispatch.warnings }
       : {
-        ok: false,
-        code: 'print.kot.failed',
-        correlationId: id,
-        stage: 'dispatch',
-        detail: dispatch.detail,
-        failureClass: dispatch.failureClass || classifyPrintFailure(dispatch.detail),
-        platformErrorCode: dispatch.platformErrorCode || extractPlatformErrorCode(dispatch.detail),
-        jobId: dispatch.jobId,
-        driverName: dispatch.driverName,
-        printerStatus: dispatch.printerStatus,
-        warnings: dispatch.warnings,
-      };
+          ok: false,
+          code: 'print.kot.failed',
+          correlationId: id,
+          stage: 'dispatch',
+          detail: dispatch.detail,
+          failureClass: dispatch.failureClass || classifyPrintFailure(dispatch.detail),
+          platformErrorCode:
+            dispatch.platformErrorCode || extractPlatformErrorCode(dispatch.detail),
+          jobId: dispatch.jobId,
+          driverName: dispatch.driverName,
+          printerStatus: dispatch.printerStatus,
+          warnings: dispatch.warnings,
+        };
     if (!result.ok) reportPrintFailure('kot', result);
     return result;
   } catch (error) {
     const detail = (error as Error).message;
-    const result: PrintResult = { ok: false, code: 'print.kot.failed', correlationId: id, stage: 'dispatch', detail, failureClass: classifyPrintFailure(detail), platformErrorCode: extractPlatformErrorCode(detail) };
+    const result: PrintResult = {
+      ok: false,
+      code: 'print.kot.failed',
+      correlationId: id,
+      stage: 'dispatch',
+      detail,
+      failureClass: classifyPrintFailure(detail),
+      platformErrorCode: extractPlatformErrorCode(detail),
+    };
     reportPrintFailure('kot', result);
     return result;
   }
@@ -727,14 +978,18 @@ async function dispatchPrint(printer: any, data: Buffer): Promise<DispatchResult
       return await printViaNetwork(printer.ip_address, printer.port || 9100, data);
     case 'usb':
       if (isMasBuild) {
-        const detail = 'USB printers are not supported in the App Store build. Use a network printer.';
+        const detail =
+          'USB printers are not supported in the App Store build. Use a network printer.';
         console.log(`[Printer] ${detail}`);
         return { ok: false, detail };
       }
       return await printViaUSB(data, printer.name);
     case 'webusb':
       console.log('[Printer] WebUSB printer — not supported in Electron');
-      return { ok: false, detail: 'WebUSB printers are handled in the browser, not by the desktop app' };
+      return {
+        ok: false,
+        detail: 'WebUSB printers are handled in the browser, not by the desktop app',
+      };
     default:
       console.log(`[Printer] Unsupported connection type: ${printer.connection_type}`);
       return { ok: false, detail: `Unsupported connection type: ${printer.connection_type}` };
@@ -746,7 +1001,14 @@ function getPrinterConfig(): any {
   return db.prepare('SELECT * FROM printers WHERE is_default = 1').get();
 }
 
-export function prepareReceipt(order: any, bill: any, business?: any, template: string = 'classic', useUnicode: boolean = false, isReprint: boolean = false): {
+export function prepareReceipt(
+  order: any,
+  bill: any,
+  business?: any,
+  template: string = 'classic',
+  useUnicode: boolean = false,
+  isReprint: boolean = false,
+): {
   printer: any;
   data: Buffer;
   warnings: PrintWarning[];
@@ -758,11 +1020,31 @@ export function prepareReceipt(order: any, bill: any, business?: any, template: 
   const profile = resolvePrinterProfile(printer);
   const columns = getColumnsForPrinter(printer, profile);
   const warnings: PrintWarning[] = [];
-  const data = formatReceipt(order, bill, business, template, columns, useUnicode, isReprint, profile.cutMode, warnings);
+  const data = formatReceipt(
+    order,
+    bill,
+    business,
+    template,
+    columns,
+    useUnicode,
+    isReprint,
+    profile.cutMode,
+    warnings,
+  );
   return { printer, data, warnings, columns };
 }
 
-export function formatReceipt(order: any, bill: any, business?: any, template?: string, cols: number = 48, useUnicode: boolean = false, isReprint: boolean = false, cutMode: PrinterCutMode = 'full', warnings?: PrintWarning[]): Buffer {
+export function formatReceipt(
+  order: any,
+  bill: any,
+  business?: any,
+  template?: string,
+  cols: number = 48,
+  useUnicode: boolean = false,
+  isReprint: boolean = false,
+  cutMode: PrinterCutMode = 'full',
+  warnings?: PrintWarning[],
+): Buffer {
   console.log('[Printer] formatReceipt - template:', template);
   console.log('[Printer] formatReceipt - order:', order?.order_number, 'bill:', bill?.bill_number);
   console.log('[Printer] formatReceipt - items count:', order?.items?.length || 0, 'cols:', cols);
@@ -773,11 +1055,38 @@ export function formatReceipt(order: any, bill: any, business?: any, template?: 
   try {
     switch (tpl) {
       case 'classic':
-        return formatClassicReceipt(order, bill, biz, cols, useUnicode, isReprint, cutMode, warnings);
+        return formatClassicReceipt(
+          order,
+          bill,
+          biz,
+          cols,
+          useUnicode,
+          isReprint,
+          cutMode,
+          warnings,
+        );
       case 'detailed':
-        return formatDetailedReceipt(order, bill, biz, cols, useUnicode, isReprint, cutMode, warnings);
+        return formatDetailedReceipt(
+          order,
+          bill,
+          biz,
+          cols,
+          useUnicode,
+          isReprint,
+          cutMode,
+          warnings,
+        );
       default:
-        return formatCompactReceipt(order, bill, biz, cols, useUnicode, isReprint, cutMode, warnings);
+        return formatCompactReceipt(
+          order,
+          bill,
+          biz,
+          cols,
+          useUnicode,
+          isReprint,
+          cutMode,
+          warnings,
+        );
     }
   } catch (err) {
     console.error('[Printer] formatReceipt error:', err);
@@ -786,9 +1095,12 @@ export function formatReceipt(order: any, bill: any, business?: any, template?: 
 }
 
 function normalizeReceiptTemplate(template?: string): 'classic' | 'compact' | 'detailed' {
-  const normalized = String(template || 'classic').toLowerCase().replace(/[^a-z]/g, '');
+  const normalized = String(template || 'classic')
+    .toLowerCase()
+    .replace(/[^a-z]/g, '');
   if (normalized.includes('compact') || normalized.includes('minimal')) return 'compact';
-  if (normalized.includes('detailed') || normalized.includes('gst') || normalized.includes('tax')) return 'detailed';
+  if (normalized.includes('detailed') || normalized.includes('gst') || normalized.includes('tax'))
+    return 'detailed';
   return 'classic';
 }
 
@@ -797,7 +1109,16 @@ function appendPoweredByFooter(lines: string[]): void {
   lines.push('{CENTER}{FONT_B}' + RECEIPT_BRANDING_URL + '{/FONT_B}{/CENTER}');
 }
 
-function formatCompactReceipt(order: any, bill: any, biz: any, cols: number = 48, useUnicode: boolean = false, isReprint: boolean = false, cutMode: PrinterCutMode = 'full', warnings?: PrintWarning[]): Buffer {
+function formatCompactReceipt(
+  order: any,
+  bill: any,
+  biz: any,
+  cols: number = 48,
+  useUnicode: boolean = false,
+  isReprint: boolean = false,
+  cutMode: PrinterCutMode = 'full',
+  warnings?: PrintWarning[],
+): Buffer {
   const lines: string[] = [];
   const date = parseDbTimestamp(order.created_at);
 
@@ -811,20 +1132,32 @@ function formatCompactReceipt(order: any, bill: any, biz: any, cols: number = 48
   const locale = getCountryByCode(biz.country)?.locale ?? 'en-US';
   const taxIdLabel = getCountryByCode(biz.country)?.taxIdLabel || 'Tax ID';
   const taxComponents = resolveTaxComponents({ ...bill, items: order.items });
-  const hasTax = Number(bill.tax_amount) !== 0
-    || taxComponents.some((component) => component.amount !== 0);
+  const hasTax =
+    Number(bill.tax_amount) !== 0 || taxComponents.some((component) => component.amount !== 0);
 
   const tzOptions = biz.timezone ? { timeZone: biz.timezone } : undefined;
 
   lines.push('{INIT}');
-  if (isReprint) lines.push('{CENTER}{BOLD}{DOUBLE_HEIGHT}{DOUBLE_WIDTH}** REPRINT **{/DOUBLE_WIDTH}{/DOUBLE_HEIGHT}{/BOLD}{/CENTER}');
-  if (biz.show_name !== false && biz.name) lines.push('{STORE_NAME}{CENTER}{BOLD}' + biz.name + '{/BOLD}{/CENTER}');
+  if (isReprint)
+    lines.push(
+      '{CENTER}{BOLD}{DOUBLE_HEIGHT}{DOUBLE_WIDTH}** REPRINT **{/DOUBLE_WIDTH}{/DOUBLE_HEIGHT}{/BOLD}{/CENTER}',
+    );
+  if (biz.show_name !== false && biz.name)
+    lines.push('{STORE_NAME}{CENTER}{BOLD}' + biz.name + '{/BOLD}{/CENTER}');
   lines.push(bar);
   lines.push('Bill #: ' + (bill.bill_number || order.order_number));
-  lines.push('Date: ' + date.toLocaleDateString(locale + '-u-nu-latn', tzOptions) + ' ' + date.toLocaleTimeString(locale + '-u-nu-latn', tzOptions));
-  if (biz.show_table_number !== false && order.table?.name) lines.push('Table: ' + order.table.name);
-  if (biz.show_customer_name !== false && biz.customer_name) lines.push('Customer: ' + biz.customer_name);
-  if (biz.show_customer_phone !== false && biz.customer_phone) lines.push('Customer No: ' + biz.customer_phone);
+  lines.push(
+    'Date: ' +
+      date.toLocaleDateString(locale + '-u-nu-latn', tzOptions) +
+      ' ' +
+      date.toLocaleTimeString(locale + '-u-nu-latn', tzOptions),
+  );
+  if (biz.show_table_number !== false && order.table?.name)
+    lines.push('Table: ' + order.table.name);
+  if (biz.show_customer_name !== false && biz.customer_name)
+    lines.push('Customer: ' + biz.customer_name);
+  if (biz.show_customer_phone !== false && biz.customer_phone)
+    lines.push('Customer No: ' + biz.customer_phone);
   lines.push(dash);
   lines.push(itemHeader(itemNameLen, amtLen));
   lines.push(dash);
@@ -844,31 +1177,57 @@ function formatCompactReceipt(order: any, bill: any, biz: any, cols: number = 48
   }
 
   lines.push(dash);
-  lines.push('Subtotal' + rightAlign(formatCurrency(bill.subtotal, prefix, locale, trimDecimals), cols - 8));
+  lines.push(
+    'Subtotal' + rightAlign(formatCurrency(bill.subtotal, prefix, locale, trimDecimals), cols - 8),
+  );
   if (bill.discount_amount > 0) {
-    lines.push('Discount' + rightAlign('-' + formatCurrency(bill.discount_amount, prefix, locale, trimDecimals), cols - 8));
+    lines.push(
+      'Discount' +
+        rightAlign(
+          '-' + formatCurrency(bill.discount_amount, prefix, locale, trimDecimals),
+          cols - 8,
+        ),
+    );
   }
   if (biz.show_tax_breakdown === true && taxComponents.length > 0) {
     for (const tax of taxComponents) {
       if (tax.amount === 0) continue;
       const rawLabel = tax.rate === null ? tax.title : `${tax.title} @${tax.rate}%`;
       const label = truncate(rawLabel, cols - 12);
-      lines.push(label + rightAlign(formatCurrency(tax.amount, prefix, locale, trimDecimals), cols - label.length));
+      lines.push(
+        label +
+          rightAlign(formatCurrency(tax.amount, prefix, locale, trimDecimals), cols - label.length),
+      );
     }
   } else if (Number(bill.tax_amount) !== 0) {
-    lines.push('Tax' + rightAlign(formatCurrency(bill.tax_amount, prefix, locale, trimDecimals), cols - 3));
+    lines.push(
+      'Tax' + rightAlign(formatCurrency(bill.tax_amount, prefix, locale, trimDecimals), cols - 3),
+    );
   }
-  lines.push('{BOLD}TOTAL' + rightAlign(formatCurrency(bill.total, prefix, locale, trimDecimals), cols - 5) + '{/BOLD}');
+  lines.push(
+    '{BOLD}TOTAL' +
+      rightAlign(formatCurrency(bill.total, prefix, locale, trimDecimals), cols - 5) +
+      '{/BOLD}',
+  );
 
   if (bill.payment_details) {
     lines.push(dash);
     try {
-      const payments = typeof bill.payment_details === 'string' ? JSON.parse(bill.payment_details) : bill.payment_details;
+      const payments =
+        typeof bill.payment_details === 'string'
+          ? JSON.parse(bill.payment_details)
+          : bill.payment_details;
       if (payments && Array.isArray(payments)) {
         for (const payment of payments) {
           if (payment && payment.method) {
             const methodLabel = truncate(String(payment.method), cols - 12);
-            lines.push(methodLabel + rightAlign(formatCurrency(payment.amount, prefix, locale, trimDecimals), cols - methodLabel.length));
+            lines.push(
+              methodLabel +
+                rightAlign(
+                  formatCurrency(payment.amount, prefix, locale, trimDecimals),
+                  cols - methodLabel.length,
+                ),
+            );
           }
         }
       }
@@ -880,7 +1239,11 @@ function formatCompactReceipt(order: any, bill: any, biz: any, cols: number = 48
   lines.push(bar);
   if (biz.show_address !== false && biz.address) pushWrapped(lines, biz.address, cols);
   if (biz.show_phone !== false && biz.phone) pushWrapped(lines, 'Ph: ' + biz.phone, cols);
-  if ((biz.show_tax_id === true || (biz.show_tax_id !== false && hasTax)) && biz.taxRegistrationNumber) pushWrapped(lines, taxIdLabel + ': ' + biz.taxRegistrationNumber, cols);
+  if (
+    (biz.show_tax_id === true || (biz.show_tax_id !== false && hasTax)) &&
+    biz.taxRegistrationNumber
+  )
+    pushWrapped(lines, taxIdLabel + ': ' + biz.taxRegistrationNumber, cols);
   if (biz.footer_note) pushCenteredWrapped(lines, biz.footer_note, cols);
   else lines.push('{CENTER}Thank you!{/CENTER}');
   appendPoweredByFooter(lines);
@@ -889,7 +1252,16 @@ function formatCompactReceipt(order: any, bill: any, biz: any, cols: number = 48
   return buildEscPos(lines, useUnicode, { cutMode }, warnings);
 }
 
-function formatClassicReceipt(order: any, bill: any, biz: any, cols: number = 48, useUnicode: boolean = false, isReprint: boolean = false, cutMode: PrinterCutMode = 'full', warnings?: PrintWarning[]): Buffer {
+function formatClassicReceipt(
+  order: any,
+  bill: any,
+  biz: any,
+  cols: number = 48,
+  useUnicode: boolean = false,
+  isReprint: boolean = false,
+  cutMode: PrinterCutMode = 'full',
+  warnings?: PrintWarning[],
+): Buffer {
   const lines: string[] = [];
   const date = parseDbTimestamp(order.created_at);
 
@@ -901,24 +1273,41 @@ function formatClassicReceipt(order: any, bill: any, biz: any, cols: number = 48
   const trimDecimals = biz.trim_decimals === true;
   const locale = getCountryByCode(biz.country)?.locale ?? 'en-US';
   const taxComponents = resolveTaxComponents({ ...bill, items: order.items });
-  const hasTax = Number(bill.tax_amount) !== 0
-    || taxComponents.some((component) => component.amount !== 0);
+  const hasTax =
+    Number(bill.tax_amount) !== 0 || taxComponents.some((component) => component.amount !== 0);
 
   const tzOptions = biz.timezone ? { timeZone: biz.timezone } : undefined;
 
   lines.push('{INIT}');
-  if (isReprint) lines.push('{CENTER}{BOLD}{DOUBLE_HEIGHT}{DOUBLE_WIDTH}** REPRINT **{/DOUBLE_WIDTH}{/DOUBLE_HEIGHT}{/BOLD}{/CENTER}');
+  if (isReprint)
+    lines.push(
+      '{CENTER}{BOLD}{DOUBLE_HEIGHT}{DOUBLE_WIDTH}** REPRINT **{/DOUBLE_WIDTH}{/DOUBLE_HEIGHT}{/BOLD}{/CENTER}',
+    );
 
   // Header: store name (Font A, big + bold), then customer name (Font B) and
   // mobile number, each only if the bill actually has that data.
-  if (biz.show_name !== false && biz.name) lines.push('{STORE_NAME}{CENTER}{BOLD}{DOUBLE_HEIGHT}{DOUBLE_WIDTH}' + biz.name + '{/DOUBLE_WIDTH}{/DOUBLE_HEIGHT}{/BOLD}{/CENTER}');
-  if (biz.show_customer_name !== false && biz.customer_name) lines.push('{CENTER}{FONT_B}' + biz.customer_name + '{/FONT_B}{/CENTER}');
-  if (biz.show_customer_phone !== false && biz.customer_phone) lines.push('{CENTER}' + biz.customer_phone + '{/CENTER}');
+  if (biz.show_name !== false && biz.name)
+    lines.push(
+      '{STORE_NAME}{CENTER}{BOLD}{DOUBLE_HEIGHT}{DOUBLE_WIDTH}' +
+        biz.name +
+        '{/DOUBLE_WIDTH}{/DOUBLE_HEIGHT}{/BOLD}{/CENTER}',
+    );
+  if (biz.show_customer_name !== false && biz.customer_name)
+    lines.push('{CENTER}{FONT_B}' + biz.customer_name + '{/FONT_B}{/CENTER}');
+  if (biz.show_customer_phone !== false && biz.customer_phone)
+    lines.push('{CENTER}' + biz.customer_phone + '{/CENTER}');
 
   lines.push(dash);
   lines.push('{CENTER}Invoice #: ' + (bill.bill_number || order.order_number) + '{/CENTER}');
-  lines.push('{CENTER}' + date.toLocaleDateString(locale + '-u-nu-latn', tzOptions) + ' ' + date.toLocaleTimeString(locale + '-u-nu-latn', tzOptions) + '{/CENTER}');
-  if (biz.show_table_number !== false && order.table?.name) lines.push('{CENTER}Table: ' + order.table.name + '{/CENTER}');
+  lines.push(
+    '{CENTER}' +
+      date.toLocaleDateString(locale + '-u-nu-latn', tzOptions) +
+      ' ' +
+      date.toLocaleTimeString(locale + '-u-nu-latn', tzOptions) +
+      '{/CENTER}',
+  );
+  if (biz.show_table_number !== false && order.table?.name)
+    lines.push('{CENTER}Table: ' + order.table.name + '{/CENTER}');
   lines.push(dash);
 
   lines.push(itemHeader(itemNameLen, amtLen));
@@ -942,34 +1331,60 @@ function formatClassicReceipt(order: any, bill: any, biz: any, cols: number = 48
 
   // Discount / redeemed points sit above the subtotal, each only if present.
   if (bill.discount_amount > 0) {
-    lines.push('Discount' + rightAlign('-' + formatCurrency(bill.discount_amount, prefix, locale, trimDecimals), cols - 8));
+    lines.push(
+      'Discount' +
+        rightAlign(
+          '-' + formatCurrency(bill.discount_amount, prefix, locale, trimDecimals),
+          cols - 8,
+        ),
+    );
   }
   if (biz.points_redeemed > 0) {
     const label = 'Points Redeemed';
     lines.push(label + rightAlign('-' + biz.points_redeemed + ' pts', cols - label.length));
   }
 
-  lines.push('Subtotal' + rightAlign(formatCurrency(bill.subtotal, prefix, locale, trimDecimals), cols - 8));
+  lines.push(
+    'Subtotal' + rightAlign(formatCurrency(bill.subtotal, prefix, locale, trimDecimals), cols - 8),
+  );
   if (biz.show_tax_breakdown === true && taxComponents.length > 0) {
     for (const tax of taxComponents) {
       if (tax.amount === 0) continue;
       const rawLabel = tax.rate === null ? tax.title : `${tax.title} @${tax.rate}%`;
       const label = truncate(rawLabel, cols - 12);
-      lines.push(label + rightAlign(formatCurrency(tax.amount, prefix, locale, trimDecimals), cols - label.length));
+      lines.push(
+        label +
+          rightAlign(formatCurrency(tax.amount, prefix, locale, trimDecimals), cols - label.length),
+      );
     }
   } else if (Number(bill.tax_amount) !== 0) {
-    lines.push('Tax' + rightAlign(formatCurrency(bill.tax_amount, prefix, locale, trimDecimals), cols - 3));
+    lines.push(
+      'Tax' + rightAlign(formatCurrency(bill.tax_amount, prefix, locale, trimDecimals), cols - 3),
+    );
   }
-  lines.push('{BOLD}TOTAL' + rightAlign(formatCurrency(bill.total, prefix, locale, trimDecimals), cols - 5) + '{/BOLD}');
+  lines.push(
+    '{BOLD}TOTAL' +
+      rightAlign(formatCurrency(bill.total, prefix, locale, trimDecimals), cols - 5) +
+      '{/BOLD}',
+  );
 
   if (bill.payment_details) {
     try {
-      const payments = typeof bill.payment_details === 'string' ? JSON.parse(bill.payment_details) : bill.payment_details;
+      const payments =
+        typeof bill.payment_details === 'string'
+          ? JSON.parse(bill.payment_details)
+          : bill.payment_details;
       if (payments && Array.isArray(payments)) {
         for (const payment of payments) {
           if (payment && payment.method) {
             const methodLabel = truncate(String(payment.method), cols - 12);
-            lines.push(methodLabel + rightAlign(formatCurrency(payment.amount, prefix, locale, trimDecimals), cols - methodLabel.length));
+            lines.push(
+              methodLabel +
+                rightAlign(
+                  formatCurrency(payment.amount, prefix, locale, trimDecimals),
+                  cols - methodLabel.length,
+                ),
+            );
           }
         }
       }
@@ -984,14 +1399,21 @@ function formatClassicReceipt(order: any, bill: any, biz: any, cols: number = 48
   if (hasEarned || hasBalance) {
     lines.push(dash);
     if (hasEarned) lines.push('Points Earned' + rightAlign(String(biz.points_earned), cols - 13));
-    if (hasBalance) lines.push('Points Balance' + rightAlign(String(biz.points_balance), cols - 14));
+    if (hasBalance)
+      lines.push('Points Balance' + rightAlign(String(biz.points_balance), cols - 14));
   }
 
   // Footer: store contact details, only the ones actually configured.
   const footerLines: string[] = [];
   if (biz.show_address !== false && biz.address) footerLines.push(biz.address);
   if (biz.show_phone !== false && biz.phone) footerLines.push('Ph: ' + biz.phone);
-  if ((biz.show_tax_id === true || (biz.show_tax_id !== false && hasTax)) && biz.taxRegistrationNumber) footerLines.push((getCountryByCode(biz.country)?.taxIdLabel || 'Tax ID') + ': ' + biz.taxRegistrationNumber);
+  if (
+    (biz.show_tax_id === true || (biz.show_tax_id !== false && hasTax)) &&
+    biz.taxRegistrationNumber
+  )
+    footerLines.push(
+      (getCountryByCode(biz.country)?.taxIdLabel || 'Tax ID') + ': ' + biz.taxRegistrationNumber,
+    );
   if (biz.instagram_handle) footerLines.push(biz.instagram_handle);
   if (footerLines.length > 0) {
     lines.push(dash);
@@ -1006,7 +1428,16 @@ function formatClassicReceipt(order: any, bill: any, biz: any, cols: number = 48
   return buildEscPos(lines, useUnicode, { cutMode }, warnings);
 }
 
-function formatDetailedReceipt(order: any, bill: any, biz: any, cols: number = 48, useUnicode: boolean = false, isReprint: boolean = false, cutMode: PrinterCutMode = 'full', warnings?: PrintWarning[]): Buffer {
+function formatDetailedReceipt(
+  order: any,
+  bill: any,
+  biz: any,
+  cols: number = 48,
+  useUnicode: boolean = false,
+  isReprint: boolean = false,
+  cutMode: PrinterCutMode = 'full',
+  warnings?: PrintWarning[],
+): Buffer {
   const lines: string[] = [];
   const date = parseDbTimestamp(order.created_at);
 
@@ -1019,23 +1450,30 @@ function formatDetailedReceipt(order: any, bill: any, biz: any, cols: number = 4
   const locale = getCountryByCode(biz.country)?.locale ?? 'en-US';
   const taxIdLabel = getCountryByCode(biz.country)?.taxIdLabel || 'Tax ID';
   const taxComponents = resolveTaxComponents({ ...bill, items: order.items });
-  const hasTax = Number(bill.tax_amount) !== 0
-    || taxComponents.some((component) => component.amount !== 0);
+  const hasTax =
+    Number(bill.tax_amount) !== 0 || taxComponents.some((component) => component.amount !== 0);
 
   const tzOptions = biz.timezone ? { timeZone: biz.timezone } : undefined;
 
   lines.push('{INIT}');
-  if (isReprint) lines.push('{CENTER}{BOLD}{DOUBLE_HEIGHT}{DOUBLE_WIDTH}** REPRINT **{/DOUBLE_WIDTH}{/DOUBLE_HEIGHT}{/BOLD}{/CENTER}');
-  if (biz.show_name !== false && biz.name) lines.push('{STORE_NAME}{CENTER}{BOLD}' + String(biz.name).toUpperCase() + '{/BOLD}{/CENTER}');
+  if (isReprint)
+    lines.push(
+      '{CENTER}{BOLD}{DOUBLE_HEIGHT}{DOUBLE_WIDTH}** REPRINT **{/DOUBLE_WIDTH}{/DOUBLE_HEIGHT}{/BOLD}{/CENTER}',
+    );
+  if (biz.show_name !== false && biz.name)
+    lines.push('{STORE_NAME}{CENTER}{BOLD}' + String(biz.name).toUpperCase() + '{/BOLD}{/CENTER}');
   lines.push(bar);
   lines.push(`{CENTER}${hasTax ? 'TAX INVOICE' : 'INVOICE'}{/CENTER}`);
   lines.push(bar);
   lines.push('Invoice #: ' + (bill.bill_number || order.order_number));
   lines.push('Date: ' + date.toLocaleDateString(locale + '-u-nu-latn', tzOptions));
   lines.push('Time: ' + date.toLocaleTimeString(locale + '-u-nu-latn', tzOptions));
-  if (biz.show_table_number !== false && order.table?.name) lines.push('Table: ' + order.table.name);
-  if (biz.show_customer_name !== false && biz.customer_name) lines.push('Customer: ' + biz.customer_name);
-  if (biz.show_customer_phone !== false && biz.customer_phone) lines.push('Customer No: ' + biz.customer_phone);
+  if (biz.show_table_number !== false && order.table?.name)
+    lines.push('Table: ' + order.table.name);
+  if (biz.show_customer_name !== false && biz.customer_name)
+    lines.push('Customer: ' + biz.customer_name);
+  if (biz.show_customer_phone !== false && biz.customer_phone)
+    lines.push('Customer No: ' + biz.customer_phone);
   lines.push(dash);
   lines.push(itemHeader(itemNameLen, 10));
   lines.push(dash);
@@ -1055,9 +1493,17 @@ function formatDetailedReceipt(order: any, bill: any, biz: any, cols: number = 4
   }
 
   lines.push(dash);
-  lines.push('Subtotal' + rightAlign(formatCurrency(bill.subtotal, prefix, locale, trimDecimals), cols - 8));
+  lines.push(
+    'Subtotal' + rightAlign(formatCurrency(bill.subtotal, prefix, locale, trimDecimals), cols - 8),
+  );
   if (bill.discount_amount > 0) {
-    lines.push('Discount' + rightAlign('-' + formatCurrency(bill.discount_amount, prefix, locale, trimDecimals), cols - 8));
+    lines.push(
+      'Discount' +
+        rightAlign(
+          '-' + formatCurrency(bill.discount_amount, prefix, locale, trimDecimals),
+          cols - 8,
+        ),
+    );
   }
 
   if (biz.show_tax_breakdown !== false && taxComponents.length > 0) {
@@ -1065,24 +1511,42 @@ function formatDetailedReceipt(order: any, bill: any, biz: any, cols: number = 4
       if (tax.amount === 0) continue;
       const rawLabel = tax.rate === null ? tax.title : `${tax.title} @${tax.rate}%`;
       const label = truncate(rawLabel, cols - 12);
-      lines.push(label + rightAlign(formatCurrency(tax.amount, prefix, locale, trimDecimals), cols - label.length));
+      lines.push(
+        label +
+          rightAlign(formatCurrency(tax.amount, prefix, locale, trimDecimals), cols - label.length),
+      );
     }
   } else if (bill.tax_amount) {
-    lines.push('Tax' + rightAlign(formatCurrency(bill.tax_amount, prefix, locale, trimDecimals), cols - 3));
+    lines.push(
+      'Tax' + rightAlign(formatCurrency(bill.tax_amount, prefix, locale, trimDecimals), cols - 3),
+    );
   }
 
   lines.push(bar);
-  lines.push('{BOLD}GRAND TOTAL' + rightAlign(formatCurrency(bill.total, prefix, locale, trimDecimals), cols - 12) + '{/BOLD}');
+  lines.push(
+    '{BOLD}GRAND TOTAL' +
+      rightAlign(formatCurrency(bill.total, prefix, locale, trimDecimals), cols - 12) +
+      '{/BOLD}',
+  );
 
   if (bill.payment_details) {
     lines.push(dash);
     try {
-      const payments = typeof bill.payment_details === 'string' ? JSON.parse(bill.payment_details) : bill.payment_details;
+      const payments =
+        typeof bill.payment_details === 'string'
+          ? JSON.parse(bill.payment_details)
+          : bill.payment_details;
       if (payments && Array.isArray(payments)) {
         for (const payment of payments) {
           if (payment && payment.method) {
             const methodLabel = truncate(String(payment.method), cols - 12);
-            lines.push(methodLabel + rightAlign(formatCurrency(payment.amount, prefix, locale, trimDecimals), cols - methodLabel.length));
+            lines.push(
+              methodLabel +
+                rightAlign(
+                  formatCurrency(payment.amount, prefix, locale, trimDecimals),
+                  cols - methodLabel.length,
+                ),
+            );
           }
         }
       }
@@ -1092,9 +1556,14 @@ function formatDetailedReceipt(order: any, bill: any, biz: any, cols: number = 4
   }
 
   lines.push(bar);
-  if (biz.show_address !== false && biz.address) pushWrapped(lines, 'Address: ' + biz.address, cols);
+  if (biz.show_address !== false && biz.address)
+    pushWrapped(lines, 'Address: ' + biz.address, cols);
   if (biz.show_phone !== false && biz.phone) pushWrapped(lines, 'Phone: ' + biz.phone, cols);
-  if ((biz.show_tax_id === true || (biz.show_tax_id !== false && hasTax)) && biz.taxRegistrationNumber) pushWrapped(lines, taxIdLabel + ': ' + biz.taxRegistrationNumber, cols);
+  if (
+    (biz.show_tax_id === true || (biz.show_tax_id !== false && hasTax)) &&
+    biz.taxRegistrationNumber
+  )
+    pushWrapped(lines, taxIdLabel + ': ' + biz.taxRegistrationNumber, cols);
   if (biz.footer_note) pushCenteredWrapped(lines, biz.footer_note, cols);
   else lines.push('{CENTER}Thank you for your business!{/CENTER}');
   appendPoweredByFooter(lines);
@@ -1108,18 +1577,21 @@ function formatDetailedReceipt(order: any, bill: any, biz: any, cols: number = 4
 // per-item column derived from deprecated product tax fields.
 function itemHeader(nameLen: number, amtLen: number): string {
   const qtyW = 4;
-  return (
-    'Item'.padEnd(nameLen) +
-    'Qty'.padEnd(qtyW) +
-    rightAlign('Amount', amtLen)
-  );
+  return 'Item'.padEnd(nameLen) + 'Qty'.padEnd(qtyW) + rightAlign('Amount', amtLen);
 }
 
 function itemNameWidth(cols: number, amtLen: number): number {
   return Math.max(12, cols - 4 - amtLen);
 }
 
-function itemRow(item: any, nameLen: number, amtLen: number, prefix: string, locale: string = 'en-US', trimDecimals: boolean = false): string {
+function itemRow(
+  item: any,
+  nameLen: number,
+  amtLen: number,
+  prefix: string,
+  locale: string = 'en-US',
+  trimDecimals: boolean = false,
+): string {
   const qtyW = 4;
   const name = truncate(item.product_name, nameLen).padEnd(nameLen);
   const qty = String(item.quantity).padEnd(qtyW);
@@ -1127,11 +1599,21 @@ function itemRow(item: any, nameLen: number, amtLen: number, prefix: string, loc
   return name + qty + amt;
 }
 
-function addonRow(addon: any, nameLen: number, amtLen: number, cols: number, prefix: string, locale: string = 'en-US', trimDecimals: boolean = false): string {
+function addonRow(
+  addon: any,
+  nameLen: number,
+  amtLen: number,
+  cols: number,
+  prefix: string,
+  locale: string = 'en-US',
+  trimDecimals: boolean = false,
+): string {
   const midW = cols - nameLen - amtLen;
   const label = truncate('  + ' + addon.name, nameLen).padEnd(nameLen);
   const spacer = ' '.repeat(Math.max(0, midW));
-  const price = addon.price ? rightAlign(formatCurrency(addon.price, prefix, locale, trimDecimals), amtLen) : ' '.repeat(amtLen);
+  const price = addon.price
+    ? rightAlign(formatCurrency(addon.price, prefix, locale, trimDecimals), amtLen)
+    : ' '.repeat(amtLen);
   return label + spacer + price;
 }
 
@@ -1139,13 +1621,21 @@ function parseAddons(addons: any): any[] {
   return Array.isArray(addons) ? addons : [];
 }
 
-function formatCurrency(amount: number, prefix: string, locale: string = 'en-US', trimDecimals: boolean = false): string {
+function formatCurrency(
+  amount: number,
+  prefix: string,
+  locale: string = 'en-US',
+  trimDecimals: boolean = false,
+): string {
   const numeric = Number(amount) || 0;
   const hasDecimals = Math.round(numeric * 100) % 100 !== 0;
-  return prefix + numeric.toLocaleString(locale, {
-    minimumFractionDigits: trimDecimals && !hasDecimals ? 0 : 2,
-    maximumFractionDigits: 2,
-  });
+  return (
+    prefix +
+    numeric.toLocaleString(locale, {
+      minimumFractionDigits: trimDecimals && !hasDecimals ? 0 : 2,
+      maximumFractionDigits: 2,
+    })
+  );
 }
 
 function rightAlign(text: string, width: number = 24): string {
@@ -1157,7 +1647,10 @@ function truncate(text: string, length: number): string {
 }
 
 function wrapText(text: string, cols: number): string[] {
-  const words = String(text || '').trim().split(/\s+/).filter(Boolean);
+  const words = String(text || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
   const lines: string[] = [];
   let current = '';
 
@@ -1194,7 +1687,17 @@ function pushCenteredWrapped(lines: string[], text: string, cols: number): void 
   for (const line of wrapText(text, cols)) lines.push('{CENTER}' + line + '{/CENTER}');
 }
 
-export function formatKOT(order: any, items: any[], stationName: string, cols: number = 48, useUnicode: boolean = false, cutMode: PrinterCutMode = 'full', locale: string = 'en-US', tzOptions?: any, warnings?: PrintWarning[]): Buffer {
+export function formatKOT(
+  order: any,
+  items: any[],
+  stationName: string,
+  cols: number = 48,
+  useUnicode: boolean = false,
+  cutMode: PrinterCutMode = 'full',
+  locale: string = 'en-US',
+  tzOptions?: any,
+  warnings?: PrintWarning[],
+): Buffer {
   const lines: string[] = [];
   const bar = '='.repeat(cols);
 
@@ -1206,12 +1709,21 @@ export function formatKOT(order: any, items: any[], stationName: string, cols: n
   if (order.table) {
     lines.push('Table: ' + order.table.name);
   }
-  lines.push('Time: ' + parseDbTimestamp(order.created_at).toLocaleTimeString(locale + '-u-nu-latn', tzOptions));
+  lines.push(
+    'Time: ' +
+      parseDbTimestamp(order.created_at).toLocaleTimeString(locale + '-u-nu-latn', tzOptions),
+  );
   lines.push(bar);
   lines.push('');
 
   for (const item of items) {
-    lines.push('{DOUBLE_HEIGHT}{BOLD}' + item.quantity + 'x  ' + item.product_name + '{/BOLD}{/DOUBLE_HEIGHT}');
+    lines.push(
+      '{DOUBLE_HEIGHT}{BOLD}' +
+        item.quantity +
+        'x  ' +
+        item.product_name +
+        '{/BOLD}{/DOUBLE_HEIGHT}',
+    );
     const addons = parseAddons(item.addons);
     for (const addon of addons) {
       if (addon?.name) {
@@ -1230,7 +1742,10 @@ export function formatKOT(order: any, items: any[], stationName: string, cols: n
   return buildEscPos(lines, useUnicode, { cutMode }, warnings);
 }
 
-export function buildTestPage(paperWidth: string = '80mm', cutMode: PrinterCutMode = 'full'): Buffer {
+export function buildTestPage(
+  paperWidth: string = '80mm',
+  cutMode: PrinterCutMode = 'full',
+): Buffer {
   const width = columnsForPaperWidth(paperWidth) || 48;
   const bar = '='.repeat(width);
   const ruler = Array.from({ length: width }, (_, i) => String((i + 1) % 10)).join('');
@@ -1262,10 +1777,26 @@ export function buildTestPage(paperWidth: string = '80mm', cutMode: PrinterCutMo
 // Every ASCII fallback is no wider than 3 characters, so currency labels such
 // as USD/EUR/INR have a stable reserved slot in receipt amount columns.
 const CURRENCY_ASCII_MAP: Record<string, string> = {
-  '₹': 'Rs', '₨': 'Rs', '€': 'EUR', '£': 'GBP', '¥': 'Yen',
-  '₩': 'KRW', '₺': 'TRY', '₫': 'VND', '₪': 'ILS', '₽': 'RUB',
-  '฿': 'THB', '₱': 'PHP', '₴': 'UAH', '₦': 'NGN', '₵': 'GHS',
-  '₡': 'CRC', '₲': 'PYG', 'د.إ': 'AED', '﷼': 'SAR', '৳': 'BDT',
+  '₹': 'Rs',
+  '₨': 'Rs',
+  '€': 'EUR',
+  '£': 'GBP',
+  '¥': 'Yen',
+  '₩': 'KRW',
+  '₺': 'TRY',
+  '₫': 'VND',
+  '₪': 'ILS',
+  '₽': 'RUB',
+  '฿': 'THB',
+  '₱': 'PHP',
+  '₴': 'UAH',
+  '₦': 'NGN',
+  '₵': 'GHS',
+  '₡': 'CRC',
+  '₲': 'PYG',
+  'د.إ': 'AED',
+  '﷼': 'SAR',
+  '৳': 'BDT',
   'E£': 'EGP',
 };
 
@@ -1276,40 +1807,46 @@ const CURRENCY_ASCII_MAP: Record<string, string> = {
 // pushes trailing digits onto the next line.
 function resolveCurrencyPrefix(symbol: string, useUnicode: boolean): string {
   const isAsciiSafe = /^[\x00-\x7F]+$/.test(symbol);
-  const rawPrefix = (useUnicode || isAsciiSafe)
-    ? symbol
-    : (CURRENCY_ASCII_MAP[symbol] || symbol.slice(0, 3).toUpperCase() || 'Rs');
+  const rawPrefix =
+    useUnicode || isAsciiSafe
+      ? symbol
+      : CURRENCY_ASCII_MAP[symbol] || symbol.slice(0, 3).toUpperCase() || 'Rs';
   const prefix = rawPrefix.length > 3 ? rawPrefix.slice(0, 3) : rawPrefix;
   return prefix.length >= 3 ? prefix : ' '.repeat(3 - prefix.length) + prefix;
 }
 
-export function buildEscPos(lines: string[], useUnicode: boolean = false, options: { cutMode?: PrinterCutMode } = {}, warnings?: PrintWarning[]): Buffer {
+export function buildEscPos(
+  lines: string[],
+  useUnicode: boolean = false,
+  options: { cutMode?: PrinterCutMode } = {},
+  warnings?: PrintWarning[],
+): Buffer {
   const buf: number[] = [];
 
   const resetAllStyles = () => {
-    buf.push(0x1B, 0x45, 0x00);
-    buf.push(0x1B, 0x21, 0x00);
-    buf.push(0x1B, 0x61, 0x00);
+    buf.push(0x1b, 0x45, 0x00);
+    buf.push(0x1b, 0x21, 0x00);
+    buf.push(0x1b, 0x61, 0x00);
   };
 
   for (let line of lines) {
     if (line.includes('{INIT}')) {
-      buf.push(0x1B, 0x40);
+      buf.push(0x1b, 0x40);
       resetAllStyles();
       continue;
     }
 
     if (line.includes('{FEED}')) {
-      buf.push(0x1B, 0x64, 0x05);
+      buf.push(0x1b, 0x64, 0x05);
       continue;
     }
 
     if (line.includes('{CUT}')) {
-      buf.push(0x1B, 0x64, 0x05);
+      buf.push(0x1b, 0x64, 0x05);
       if (options.cutMode === 'partial') {
-        buf.push(0x1D, 0x56, 0x42, 0x00);
+        buf.push(0x1d, 0x56, 0x42, 0x00);
       } else {
-        buf.push(0x1D, 0x56, 0x00);
+        buf.push(0x1d, 0x56, 0x00);
       }
       continue;
     }
@@ -1348,21 +1885,21 @@ export function buildEscPos(lines: string[], useUnicode: boolean = false, option
     line = line.replace(/\{DOUBLE_WIDTH\}/g, '').replace(/\{\/DOUBLE_WIDTH\}/g, '');
     line = line.replace(/\{FONT_B\}/g, '').replace(/\{\/FONT_B\}/g, '');
 
-    buf.push(0x1B, 0x61, center ? 0x01 : 0x00);
+    buf.push(0x1b, 0x61, center ? 0x01 : 0x00);
 
     let mode = 0;
     if (lineDH) mode |= 0x10;
     if (lineDW) mode |= 0x20;
     if (lineBold) mode |= 0x08;
     if (lineFontB) mode |= 0x01;
-    buf.push(0x1B, 0x21, mode);
+    buf.push(0x1b, 0x21, mode);
 
     if (lineBold) {
-      buf.push(0x1B, 0x45, 0x01);
+      buf.push(0x1b, 0x45, 0x01);
     }
 
     buf.push(...Buffer.from(line, 'utf8'));
-    buf.push(0x0A);
+    buf.push(0x0a);
   }
 
   return Buffer.from(buf);
@@ -1375,7 +1912,7 @@ export function escPosToText(data: Buffer | Uint8Array): string {
 
   for (let i = 0; i < bytes.length;) {
     const byte = bytes[i];
-    if (byte === 0x1B) {
+    if (byte === 0x1b) {
       const command = bytes[i + 1];
       if (command === 0x40) {
         i += 2;
@@ -1383,19 +1920,19 @@ export function escPosToText(data: Buffer | Uint8Array): string {
         i += 3;
       } else if (command === 0x64) {
         const feedLines = bytes[i + 2] || 0;
-        for (let line = 0; line < feedLines; line++) text.push(0x0A);
+        for (let line = 0; line < feedLines; line++) text.push(0x0a);
         i += 3;
       } else {
         i += Math.min(2, bytes.length - i);
       }
       continue;
     }
-    if (byte === 0x1D && bytes[i + 1] === 0x56) {
+    if (byte === 0x1d && bytes[i + 1] === 0x56) {
       const mode = bytes[i + 2];
       i += mode === 0x41 || mode === 0x42 ? 4 : 3;
       continue;
     }
-    if (byte === 0x0D) {
+    if (byte === 0x0d) {
       i += 1;
       continue;
     }
@@ -1406,7 +1943,11 @@ export function escPosToText(data: Buffer | Uint8Array): string {
   return Buffer.from(text).toString('utf8').replace(/\n+$/, '');
 }
 
-export async function printViaNetwork(ip: string, port: number, data: Buffer): Promise<DispatchResult> {
+export async function printViaNetwork(
+  ip: string,
+  port: number,
+  data: Buffer,
+): Promise<DispatchResult> {
   return new Promise((resolve) => {
     const client = new net.Socket();
 
@@ -1493,9 +2034,7 @@ async function printViaCups(data: Buffer, printerName?: string): Promise<Dispatc
   try {
     fs.writeFileSync(tmpFile, data);
 
-    const args = printerName
-      ? ['-d', printerName, '-o', 'raw', tmpFile]
-      : ['-o', 'raw', tmpFile];
+    const args = printerName ? ['-d', printerName, '-o', 'raw', tmpFile] : ['-o', 'raw', tmpFile];
     const { stdout } = await execFileAsync('lp', args, { encoding: 'utf8', timeout: 20000 });
 
     console.log(`[Printer] CUPS print queued for "${label}" (${stdout.trim()})`);
@@ -1505,7 +2044,9 @@ async function printViaCups(data: Buffer, printerName?: string): Promise<Dispatc
     console.error(`[Printer] CUPS print failed for "${label}": ${detail}`);
     return { ok: false, detail: detail || `CUPS print failed for "${label}"` };
   } finally {
-    try { fs.unlinkSync(tmpFile); } catch {}
+    try {
+      fs.unlinkSync(tmpFile);
+    } catch {}
   }
 }
 
@@ -1695,8 +2236,13 @@ ${WINSPOOL_HELPER_SOURCE}
 
 const execFileAsync = promisify(execFile);
 
-function parseWindowsPrintOutput(output: unknown): Pick<DispatchResult, 'jobId' | 'driverName' | 'printerStatus'> {
-  const outputLines = String(output || '').split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+function parseWindowsPrintOutput(
+  output: unknown,
+): Pick<DispatchResult, 'jobId' | 'driverName' | 'printerStatus'> {
+  const outputLines = String(output || '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
   const jobLine = outputLines.find((line) => line.startsWith('FLO_JOB_ID='));
   const infoLine = outputLines.find((line) => line.startsWith('FLO_PRINTER_INFO='));
   const parsed: Pick<DispatchResult, 'jobId' | 'driverName' | 'printerStatus'> = {};
@@ -1707,10 +2253,16 @@ function parseWindowsPrintOutput(output: unknown): Pick<DispatchResult, 'jobId' 
   }
   if (infoLine) {
     try {
-      const info = JSON.parse(infoLine.slice('FLO_PRINTER_INFO='.length)) as { DriverName?: unknown; PrinterStatus?: unknown };
-      if (typeof info.DriverName === 'string' && info.DriverName.trim()) parsed.driverName = info.DriverName.trim();
+      const info = JSON.parse(infoLine.slice('FLO_PRINTER_INFO='.length)) as {
+        DriverName?: unknown;
+        PrinterStatus?: unknown;
+      };
+      if (typeof info.DriverName === 'string' && info.DriverName.trim())
+        parsed.driverName = info.DriverName.trim();
       if (typeof info.PrinterStatus === 'number') parsed.printerStatus = info.PrinterStatus;
-    } catch { /* diagnostics metadata is best-effort */ }
+    } catch {
+      /* diagnostics metadata is best-effort */
+    }
   }
   return parsed;
 }
@@ -1742,7 +2294,9 @@ async function printViaUSBWindows(data: Buffer, printerName?: string): Promise<D
     );
 
     const metadata = parseWindowsPrintOutput(stdout);
-    console.log(`[Printer] Windows raw print accepted for "${printerName}" (${String(stdout).trim()})`);
+    console.log(
+      `[Printer] Windows raw print accepted for "${printerName}" (${String(stdout).trim()})`,
+    );
     return { ok: true, ...metadata };
   } catch (err: any) {
     const detail = String(err.stderr || err.message || '').trim();
@@ -1755,7 +2309,9 @@ async function printViaUSBWindows(data: Buffer, printerName?: string): Promise<D
       ...parseWindowsPrintOutput(err.stdout),
     };
   } finally {
-    try { fs.unlinkSync(tmpFile); } catch {}
+    try {
+      fs.unlinkSync(tmpFile);
+    } catch {}
   }
 }
 

@@ -22,16 +22,34 @@ export function createRefundIdempotencyKey(): string {
   return crypto.randomUUID();
 }
 
+export interface BillRefundResult {
+  refund: {
+    id: number;
+    bill_id: number;
+    amount: number;
+    method?: string | null;
+    reason?: string | null;
+    status?: string;
+  };
+  bill: {
+    id: number;
+    bill_number?: string;
+    paid_amount?: number;
+    payment_status?: string;
+    total?: number;
+  };
+}
+
 /** Typed wrapper for POST /bills/:id/refund. */
 export async function postBillRefund(
   billId: number,
   body: BillRefundInput,
   options: PostBillRefundOptions,
-): Promise<unknown> {
+): Promise<BillRefundResult> {
   const { data } = await api.post(`/bills/${billId}/refund`, body, {
     headers: { 'Idempotency-Key': options.idempotencyKey },
   });
-  return data;
+  return data as BillRefundResult;
 }
 
 /**

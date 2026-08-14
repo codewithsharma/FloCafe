@@ -963,8 +963,8 @@ router.post(
     try {
       const { print_type } = req.body;
 
-      if (!print_type || !['receipt', 'reprint'].includes(print_type)) {
-        return res.status(400).json({ error: 'print_type must be receipt or reprint' });
+      if (!print_type || !['receipt', 'reprint', 'refund'].includes(print_type)) {
+        return res.status(400).json({ error: 'print_type must be receipt, reprint, or refund' });
       }
 
       // User ID is set by the requireAuth middleware after JWT verification
