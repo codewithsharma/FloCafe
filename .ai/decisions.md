@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Phase 3.6D Day-Close Z Snapshot Print/Download (Accepted + Implemented)
+
+Cash Z snapshot from frozen `day_closes.summary_json` only. Download: plain-text client formatter. Print: `POST /printers/print-day-close` + thermal `formatDayCloseZ` (best-effort; does not mutate day-close). Omits Gross/Net/tenders/tax (not in day-close API). Doc: `docs/03-architecture/phase-3.6d-day-close-z-snapshot.md`.
+
 ## 2026-08-14 — Phase 3.6C Manual Stock Adjustment UI (Accepted + Implemented)
 
 Products table row action + dialog calls existing `POST /products/:id/stock` (`action` + `quantity`). No free-text reason (API has none; ledger reason = action). No schema change. Shared product/inventory modules (Restaurant + Retail). Doc: `docs/03-architecture/phase-3.6c-manual-stock-adjust-ui.md`.

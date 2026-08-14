@@ -758,6 +758,137 @@ export async function printRefundReceipt(
   }
 }
 
+/** Present day-close integer cents on slip (display only; no accounting recompute). */
+function formatDayCloseCents(cents: number | null | undefined, prefix: string): string {
+  if (cents === null || cents === undefined || !Number.isFinite(cents)) return '—';
+  const truncated = Math.trunc(cents);
+  const sign = truncated < 0 ? '-' : '';
+  const abs = Math.abs(truncated);
+  const whole = Math.floor(abs / 100);
+  const frac = abs % 100;
+  return `${prefix}${sign}${whole}.${String(frac).padStart(2, '0')}`;
+}
+
+/** Phase 3.6D — cash day-close Z snapshot (frozen summary_json fields only). */
+export function formatDayCloseZ(
+  summary: {
+    business_date: string;
+    timezone: string;
+    shift_count: number;
+    open_shift_count: number;
+    open_shifts_warning: boolean;
+    opening_float_cents_total: number;
+    expected_cash_cents_total: number;
+    counted_cash_cents_total: number | null;
+    variance_cents_total: number | null;
+    cash_payment_total_cents: number;
+    cash_payment_count: number;
+    cash_refund_total_cents: number;
+    cash_refund_count: number;
+    net_cash_movement_cents: number;
+    shifts?: Array<{ id: number; terminal_id: string; net_cash_movement_cents: number }>;
+  },
+  business?: { name?: string; currency_symbol?: string },
+  cols: number = 48,
+  useUnicode: boolean = false,
+  cutMode: PrinterCutMode = 'full',
+  warnings?: PrintWarning[],
+): Buffer {
+  const biz = business || {};
+  const lines: string[] = [];
+  const bar = '='.repeat(cols);
+  const dash = '-'.repeat(cols);
+  const prefix = resolveCurrencyPrefix(biz.currency_symbol || '₹', useUnicode);
+
+  lines.push('{INIT}');
+  lines.push(
+    '{CENTER}{BOLD}{DOUBLE_HEIGHT}{DOUBLE_WIDTH}** DAY CLOSE Z **{/DOUBLE_WIDTH}{/DOUBLE_HEIGHT}{/BOLD}{/CENTER}',
+  );
+  lines.push(bar);
+  if (biz.name) lines.push(`{CENTER}{BOLD}${biz.name}{/BOLD}{/CENTER}`);
+  lines.push(`Date: ${summary.business_date}`);
+  lines.push(`TZ: ${summary.timezone}`);
+  lines.push(dash);
+  lines.push(
+    'Opening float' +
+      rightAlign(formatDayCloseCents(summary.opening_float_cents_total, prefix), cols - 13),
+  );
+  lines.push(
+    'Expected cash' +
+      rightAlign(formatDayCloseCents(summary.expected_cash_cents_total, prefix), cols - 13),
+  );
+  lines.push(
+    'Counted cash' +
+      rightAlign(formatDayCloseCents(summary.counted_cash_cents_total, prefix), cols - 12),
+  );
+  lines.push(
+    'Cash variance' +
+      rightAlign(formatDayCloseCents(summary.variance_cents_total, prefix), cols - 13),
+  );
+  lines.push(dash);
+  lines.push(
+    'Cash In' +
+      rightAlign(
+        `${formatDayCloseCents(summary.cash_payment_total_cents, prefix)} (${summary.cash_payment_count})`,
+        cols - 7,
+      ),
+  );
+  lines.push(
+    'Cash Refunds' +
+      rightAlign(
+        `${formatDayCloseCents(summary.cash_refund_total_cents, prefix)} (${summary.cash_refund_count})`,
+        cols - 12,
+      ),
+  );
+  lines.push(
+    'Net Cash' + rightAlign(formatDayCloseCents(summary.net_cash_movement_cents, prefix), cols - 8),
+  );
+  lines.push(dash);
+  lines.push(`Shifts closed: ${summary.shift_count}`);
+  lines.push(`Open at close: ${summary.open_shift_count}`);
+  if (summary.open_shifts_warning) {
+    lines.push('{CENTER}Open shifts warning{/CENTER}');
+  }
+  if (summary.shifts && summary.shifts.length > 0) {
+    lines.push(dash);
+    for (const shift of summary.shifts) {
+      const label = truncate(`#${shift.id} ${shift.terminal_id}`, Math.max(8, cols - 12));
+      lines.push(
+        label +
+          rightAlign(
+            formatDayCloseCents(shift.net_cash_movement_cents, prefix),
+            cols - label.length,
+          ),
+      );
+    }
+  }
+  lines.push(bar);
+  lines.push('{CENTER}Cash Z snapshot{/CENTER}');
+  appendPoweredByFooter(lines);
+  lines.push('{CUT}');
+  return buildEscPos(lines, useUnicode, { cutMode }, warnings);
+}
+
+export async function printDayCloseZ(
+  summary: Parameters<typeof formatDayCloseZ>[0],
+  business?: Parameters<typeof formatDayCloseZ>[1],
+  useUnicode: boolean = false,
+): Promise<DispatchResult> {
+  try {
+    const printer = getPrinterConfig();
+    if (!printer) return { ok: false, detail: 'No printer configured' };
+    const profile = resolvePrinterProfile(printer);
+    const columns = getColumnsForPrinter(printer, profile);
+    const warnings: PrintWarning[] = [];
+    const data = formatDayCloseZ(summary, business, columns, useUnicode, profile.cutMode, warnings);
+    const dispatch = await dispatchPrint(printer, data);
+    return warnings.length > 0 ? { ...dispatch, warnings } : dispatch;
+  } catch (error: any) {
+    console.error('[Printer] Day-close Z print error:', error);
+    return { ok: false, detail: error?.message };
+  }
+}
+
 export async function printKOT(
   order: any,
   items: any[],

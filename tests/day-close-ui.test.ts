@@ -44,6 +44,8 @@ function main(): void {
   assert.ok(DAY_CLOSE_CARD.includes('dayClose.cashIn'), 'card shows Cash In');
   assert.ok(DAY_CLOSE_CARD.includes('dayClose.cashRefunds'), 'card shows Cash Refunds');
   assert.ok(DAY_CLOSE_CARD.includes('dayClose.netCash'), 'card shows Net Cash');
+  assert.ok(DAY_CLOSE_CARD.includes('downloadDayCloseZText'), 'card can download Z');
+  assert.ok(DAY_CLOSE_CARD.includes('print-day-close'), 'card can print Z');
   console.log('   ✓ DayCloseCard contract');
 
   assert.ok(OPERATIONS_PAGE.includes('DayCloseCard'), 'operations wires DayCloseCard');

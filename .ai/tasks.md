@@ -99,6 +99,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Phase 3.6A** Refund receipt printing — **COMPLETE** (`phase-3.6a-refund-receipt-printing.md`)
 - [x] **Phase 3.6B** Reports Gross/Refunds/Net Sales UI — **COMPLETE** (`phase-3.6b-reports-gross-refunds-net-ui.md`). Display-only; reuses existing report API fields.
 - [x] **Phase 3.6C** Manual Stock Adjustment UI — **COMPLETE** (`phase-3.6c-manual-stock-adjust-ui.md`). Reuses `POST /products/:id/stock`; no free-text reason (API contract).
+- [x] **Phase 3.6D** Day-Close Z Snapshot Print/Download — **COMPLETE** (`phase-3.6d-day-close-z-snapshot.md`). Cash Z from frozen summary; print best-effort.
 - [ ] **Phase 3.5** Remaining optional — packages/extraction, recipes/BOM, suppliers/PO (not authorized unless explicitly tasked). Tax cleanup stays deferred (3.5B).
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet
 - [ ] ADR-006 Multi-Location Architecture (design only; no code until approved)

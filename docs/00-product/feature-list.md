@@ -125,15 +125,15 @@ Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webus
 
 ## Reports & Analytics
 
-| Feature                       | Status      | Evidence                                                                   | Production readiness |
-| ----------------------------- | ----------- | -------------------------------------------------------------------------- | -------------------- |
-| Daily stats & sales summary   | [BUILT]     | `main/routes/reports.ts`; Home/Reports UI Gross/Refunds/Net (Phase 3.6B)   | High                 |
-| Tax component reports         | [BUILT]     | `GET /api/reports/tax-components`                                          | Medium               |
-| Top products & table stats    | [BUILT]     | reports routes                                                             | Medium               |
-| Insights dashboard            | [BUILT]     | `tests/reports-insights.test.ts`                                           | Medium               |
-| Day close / Z-report workflow | [BUILT]     | `main/services/day-close.ts`, `POST /api/reports/day-close`, Operations UI | High                 |
-| Advanced analytics / BI       | [NOT BUILT] | —                                                                          | —                    |
-| Accounting export             | [NOT BUILT] | —                                                                          | —                    |
+| Feature                       | Status      | Evidence                                                                      | Production readiness |
+| ----------------------------- | ----------- | ----------------------------------------------------------------------------- | -------------------- |
+| Daily stats & sales summary   | [BUILT]     | `main/routes/reports.ts`; Home/Reports UI Gross/Refunds/Net (Phase 3.6B)      | High                 |
+| Tax component reports         | [BUILT]     | `GET /api/reports/tax-components`                                             | Medium               |
+| Top products & table stats    | [BUILT]     | reports routes                                                                | Medium               |
+| Insights dashboard            | [BUILT]     | `tests/reports-insights.test.ts`                                              | Medium               |
+| Day close / Z-report workflow | [BUILT]     | `main/services/day-close.ts`, Operations UI; cash Z print/download Phase 3.6D | High                 |
+| Advanced analytics / BI       | [NOT BUILT] | —                                                                             | —                    |
+| Accounting export             | [NOT BUILT] | —                                                                             | —                    |
 
 ## Inventory & Supply Chain
 

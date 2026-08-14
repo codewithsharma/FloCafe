@@ -17,9 +17,11 @@ import {
   prepareReceipt,
   escPosToText,
   printRefundReceipt,
+  printDayCloseZ,
 } from '../printers/thermal';
 import { getSupportedPrinterProfiles, resolvePrinterProfile } from '../printers/profiles';
 import { requireRole } from '../middleware/security';
+import { getDayClose } from '../services/day-close';
 
 const router = Router();
 
@@ -653,6 +655,73 @@ router.post(
       }
     } catch (error: any) {
       console.error('[Print Refund] Error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+// POST /api/printers/print-day-close — cash Z from frozen day_closes.summary_json (does not mutate close)
+router.post(
+  '/print-day-close',
+  requireRole('owner', 'manager'),
+  async (req: Request, res: Response) => {
+    try {
+      const { business_date: businessDate, useUnicode = false } = req.body || {};
+      if (!businessDate || typeof businessDate !== 'string') {
+        return res.status(400).json({ error: 'business_date is required (YYYY-MM-DD)' });
+      }
+
+      const db = getDatabase();
+      const printer = db.prepare('SELECT * FROM printers WHERE is_default = 1').get();
+      if (!printer) {
+        return res
+          .status(400)
+          .json({ error: 'No default printer configured. Add a printer in Settings.' });
+      }
+
+      const record = getDayClose(businessDate);
+      if (!record) {
+        return res.status(404).json({ error: 'Day close not found for that date' });
+      }
+
+      let summary: Parameters<typeof printDayCloseZ>[0];
+      try {
+        summary = JSON.parse(record.summary_json);
+      } catch {
+        return res.status(500).json({ error: 'Day close summary is unreadable' });
+      }
+
+      const settingsRows = db.prepare('SELECT key, value FROM settings').all() as {
+        key: string;
+        value: string;
+      }[];
+      const settings: Record<string, string> = Object.fromEntries(
+        settingsRows.map((r) => [r.key, r.value]),
+      );
+
+      const business = {
+        name: settings.business_name || settings.store_name || 'Store',
+        currency_symbol: settings.currency_symbol || '₹',
+      };
+
+      const result = await printDayCloseZ(summary, business, Boolean(useUnicode));
+      if (result.ok) {
+        res.json({
+          success: true,
+          business_date: record.business_date,
+          warnings: result.warnings || [],
+        });
+      } else {
+        res.status(502).json({
+          error: result.detail || 'Day-close Z print failed. Check printer connection.',
+          detail: result.detail,
+        });
+      }
+    } catch (error: any) {
+      console.error('[Print Day Close Z] Error:', error);
+      if (error?.statusCode === 400) {
+        return res.status(400).json({ error: error.message });
+      }
       res.status(500).json({ error: 'Internal server error' });
     }
   },
