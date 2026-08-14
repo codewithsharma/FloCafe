@@ -9,7 +9,8 @@ const os = require('os');
 const path = require('path');
 const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'flo-orders-authz-'));
 Module._load = function (request: string, parent: unknown, isMain: boolean) {
-  if (request === 'electron') return { app: { isPackaged: true, getPath: () => testDir, getVersion: () => 'test' } };
+  if (request === 'electron')
+    return { app: { isPackaged: true, getPath: () => testDir, getVersion: () => 'test' } };
   return originalLoad.apply(this, arguments as any);
 };
 
@@ -19,7 +20,14 @@ const bcrypt = require('bcryptjs');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const {
-  initTestDb, startServer, api, assert, assertEqual, getResults, closeDatabase, now,
+  initTestDb,
+  startServer,
+  api,
+  assert,
+  assertEqual,
+  getResults,
+  closeDatabase,
+  now,
 } = require('./helpers/test-setup');
 const { getJWTSecret } = require('../main/routes/auth');
 const { orderRoutes } = require('../main/routes/orders');
@@ -27,24 +35,55 @@ const { registerRoutes } = require('../main/routes/index');
 
 function seedUser(db: any, id: string, role: string, pin?: string) {
   const email = `${id}@test.local`;
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO users (id, name, email, password, role, pin_hash, is_active, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)
-  `).run(id, id, email, bcrypt.hashSync('testpass123', 10), role, pin ? bcrypt.hashSync(pin, 10) : null, now(), now());
+  `,
+  ).run(
+    id,
+    id,
+    email,
+    bcrypt.hashSync('testpass123', 10),
+    role,
+    pin ? bcrypt.hashSync(pin, 10) : null,
+    now(),
+    now(),
+  );
   return {
     Authorization: `Bearer ${jwt.sign({ userId: id, email, role }, getJWTSecret(), { expiresIn: '1h' })}`,
   };
 }
 
+function seedPendingOrder(db: any, suffix: string, ownerId?: string) {
+  db.prepare(
+    `INSERT INTO orders (order_number, type, status, subtotal, total, user_id, created_at, updated_at)
+    VALUES (?, 'takeaway', 'pending', 100, 100, ?, ?, ?)`,
+  ).run(`ORD-AUTHZ-${suffix}`, ownerId || null, now(), now());
+  const orderId = (
+    db.prepare('SELECT id FROM orders WHERE order_number = ?').get(`ORD-AUTHZ-${suffix}`) as any
+  ).id;
+  db.prepare(
+    `INSERT INTO order_items (order_id, product_id, product_name, unit_price, quantity, subtotal, tax_amount, total, status, created_at, updated_at)
+    VALUES (?, 'authz-product', 'Authz item', 100, 1, 100, 0, 100, 'pending', ?, ?)`,
+  ).run(orderId, now(), now());
+  return orderId;
+}
+
 function seedOrderWithItem(db: any, suffix: string, ownerId?: string) {
-  db.prepare(`INSERT INTO orders (order_number, type, status, subtotal, total, user_id, created_at, updated_at)
-    VALUES (?, 'takeaway', 'pending', 100, 100, ?, ?, ?)`)
-    .run(`ORD-AUTHZ-${suffix}`, ownerId || null, now(), now());
-  const orderId = (db.prepare('SELECT id FROM orders WHERE order_number = ?').get(`ORD-AUTHZ-${suffix}`) as any).id;
-  db.prepare(`INSERT INTO order_items (order_id, product_id, product_name, unit_price, quantity, subtotal, tax_amount, total, status, created_at, updated_at)
-    VALUES (?, 'authz-product', 'Authz item', 100, 1, 100, 0, 100, 'preparing', ?, ?)`)
-    .run(orderId, now(), now());
-  const itemId = (db.prepare('SELECT id FROM order_items WHERE order_id = ?').get(orderId) as any).id;
+  db.prepare(
+    `INSERT INTO orders (order_number, type, status, subtotal, total, user_id, created_at, updated_at)
+    VALUES (?, 'takeaway', 'pending', 100, 100, ?, ?, ?)`,
+  ).run(`ORD-AUTHZ-${suffix}`, ownerId || null, now(), now());
+  const orderId = (
+    db.prepare('SELECT id FROM orders WHERE order_number = ?').get(`ORD-AUTHZ-${suffix}`) as any
+  ).id;
+  db.prepare(
+    `INSERT INTO order_items (order_id, product_id, product_name, unit_price, quantity, subtotal, tax_amount, total, status, created_at, updated_at)
+    VALUES (?, 'authz-product', 'Authz item', 100, 1, 100, 0, 100, 'preparing', ?, ?)`,
+  ).run(orderId, now(), now());
+  const itemId = (db.prepare('SELECT id FROM order_items WHERE order_id = ?').get(orderId) as any)
+    .id;
   return { orderId, itemId };
 }
 
@@ -53,17 +92,27 @@ async function main() {
   const managerAuth = seedUser(db, 'manager-authz', 'manager', '1234');
   const cashierAuth = seedUser(db, 'cashier-authz', 'cashier');
   const waiterAuth = seedUser(db, 'waiter-authz', 'waiter');
-  db.prepare(`INSERT INTO categories (id, name, sort_order) VALUES ('authz-category', 'Authz', 1)`).run();
-  db.prepare(`INSERT INTO products (id, category_id, name, price, is_active, sort_order)
-    VALUES ('authz-product', 'authz-category', 'Authz item', 100, 1, 1)`).run();
+  const chefAuth = seedUser(db, 'chef-authz', 'chef');
+  db.prepare(
+    `INSERT INTO categories (id, name, sort_order) VALUES ('authz-category', 'Authz', 1)`,
+  ).run();
+  db.prepare(
+    `INSERT INTO products (id, category_id, name, price, is_active, sort_order)
+    VALUES ('authz-product', 'authz-category', 'Authz item', 100, 1, 1)`,
+  ).run();
 
   const app = express();
   app.use(express.json());
   app.use((req: any, res: any, next: any) => {
     const header = req.headers.authorization;
-    if (!header?.startsWith('Bearer ')) return res.status(401).json({ error: 'Authentication required' });
-    try { req.user = jwt.verify(header.slice(7), getJWTSecret()); next(); }
-    catch { res.status(401).json({ error: 'Invalid token' }); }
+    if (!header?.startsWith('Bearer '))
+      return res.status(401).json({ error: 'Authentication required' });
+    try {
+      req.user = jwt.verify(header.slice(7), getJWTSecret());
+      next();
+    } catch {
+      res.status(401).json({ error: 'Invalid token' });
+    }
   });
   app.use('/api/orders', orderRoutes);
   registerRoutes(app);
@@ -72,40 +121,133 @@ async function main() {
   try {
     const statusOrder = seedOrderWithItem(db, 'STATUS', 'cashier-authz');
     const cashierStatus = await api(baseUrl, `/api/orders/${statusOrder.orderId}/status`, {
-      method: 'PATCH', body: { status: 'preparing' }, headers: cashierAuth,
+      method: 'PATCH',
+      body: { status: 'preparing' },
+      headers: cashierAuth,
     });
     assertEqual(cashierStatus.status, 200, 'cashier can advance an order to preparing');
 
-    for (const [role, auth] of [['cashier', cashierAuth], ['waiter', waiterAuth]] as const) {
-      const order = seedOrderWithItem(db, role.toUpperCase(), role === 'waiter' ? 'waiter-authz' : 'cashier-authz');
-      const response = await api(baseUrl, `/api/orders/${order.orderId}/items/${order.itemId}/cancel`, {
-        method: 'PATCH', body: { override_pin: '1234' }, headers: auth,
-      });
-      assertEqual(response.status, 200, `${role} can void an in-progress item with a valid manager PIN`);
-      assertEqual((db.prepare('SELECT status FROM order_items WHERE id = ?').get(order.itemId) as any).status, 'voided', `${role} void marks the original item voided`);
+    for (const [role, auth] of [
+      ['cashier', cashierAuth],
+      ['waiter', waiterAuth],
+    ] as const) {
+      const order = seedOrderWithItem(
+        db,
+        role.toUpperCase(),
+        role === 'waiter' ? 'waiter-authz' : 'cashier-authz',
+      );
+      const response = await api(
+        baseUrl,
+        `/api/orders/${order.orderId}/items/${order.itemId}/cancel`,
+        {
+          method: 'PATCH',
+          body: { override_pin: '1234' },
+          headers: auth,
+        },
+      );
+      assertEqual(
+        response.status,
+        200,
+        `${role} can void an in-progress item with a valid manager PIN`,
+      );
+      assertEqual(
+        (db.prepare('SELECT status FROM order_items WHERE id = ?').get(order.itemId) as any).status,
+        'voided',
+        `${role} void marks the original item voided`,
+      );
     }
 
     const waiterOwnOrder = seedOrderWithItem(db, 'WAITER-OWN', 'waiter-authz');
     const waiterCanAdvance = await api(baseUrl, `/api/orders/${waiterOwnOrder.orderId}/status`, {
-      method: 'PATCH', body: { status: 'preparing' }, headers: waiterAuth,
+      method: 'PATCH',
+      body: { status: 'preparing' },
+      headers: waiterAuth,
     });
     assertEqual(waiterCanAdvance.status, 200, 'waiter can advance their own order');
     const otherOrder = seedOrderWithItem(db, 'WAITER-OTHER', 'cashier-authz');
     const waiterOtherStatus = await api(baseUrl, `/api/orders/${otherOrder.orderId}/status`, {
-      method: 'PATCH', body: { status: 'cancelled', override_pin: '1234' }, headers: waiterAuth,
+      method: 'PATCH',
+      body: { status: 'cancelled', override_pin: '1234' },
+      headers: waiterAuth,
     });
-    assertEqual(waiterOtherStatus.status, 403, 'waiter cannot cancel another user\'s order');
-    const waiterOtherItem = await api(baseUrl, `/api/orders/${otherOrder.orderId}/items/${otherOrder.itemId}/cancel`, {
-      method: 'PATCH', body: { override_pin: '1234' }, headers: waiterAuth,
+    assertEqual(waiterOtherStatus.status, 403, "waiter cannot cancel another user's order");
+    const waiterOtherItem = await api(
+      baseUrl,
+      `/api/orders/${otherOrder.orderId}/items/${otherOrder.itemId}/cancel`,
+      {
+        method: 'PATCH',
+        body: { override_pin: '1234' },
+        headers: waiterAuth,
+      },
+    );
+    assertEqual(waiterOtherItem.status, 403, "waiter cannot void another user's item");
+
+    const chefPending = seedPendingOrder(db, 'CHEF-PENDING', 'chef-authz');
+    const chefNoPin = await api(baseUrl, `/api/orders/${chefPending}/status`, {
+      method: 'PATCH',
+      body: { status: 'cancelled' },
+      headers: chefAuth,
     });
-    assertEqual(waiterOtherItem.status, 403, 'waiter cannot void another user\'s item');
+    assertEqual(chefNoPin.status, 400, 'chef cannot cancel pending without PIN');
+    assert(
+      String(chefNoPin.data.error).includes('Manager PIN'),
+      'chef pending cancel asks for manager PIN',
+    );
+
+    const chefWrongPin = await api(baseUrl, `/api/orders/${chefPending}/status`, {
+      method: 'PATCH',
+      body: { status: 'cancelled', override_pin: '9999' },
+      headers: chefAuth,
+    });
+    assertEqual(chefWrongPin.status, 403, 'chef pending cancel with wrong PIN is 403');
+
+    const chefOkPin = await api(baseUrl, `/api/orders/${chefPending}/status`, {
+      method: 'PATCH',
+      body: { status: 'cancelled', override_pin: '1234', reason: 'H3' },
+      headers: chefAuth,
+    });
+    assertEqual(chefOkPin.status, 200, 'chef pending cancel with manager PIN succeeds');
+    assertEqual(
+      (db.prepare('SELECT status FROM orders WHERE id = ?').get(chefPending) as any).status,
+      'cancelled',
+      'chef PIN cancel marks order cancelled',
+    );
+
+    const cashierPending = seedPendingOrder(db, 'CASHIER-PENDING', 'cashier-authz');
+    const cashierNoPin = await api(baseUrl, `/api/orders/${cashierPending}/status`, {
+      method: 'PATCH',
+      body: { status: 'cancelled' },
+      headers: cashierAuth,
+    });
+    assertEqual(cashierNoPin.status, 200, 'cashier can still cancel pending without PIN');
+
+    const chefBump = seedPendingOrder(db, 'CHEF-BUMP', 'chef-authz');
+    const chefPreparing = await api(baseUrl, `/api/orders/${chefBump}/status`, {
+      method: 'PATCH',
+      body: { status: 'preparing' },
+      headers: chefAuth,
+    });
+    assertEqual(
+      chefPreparing.status,
+      200,
+      'chef can still advance pending to preparing without PIN',
+    );
 
     const invalidPinOrder = seedOrderWithItem(db, 'INVALID-PIN', 'cashier-authz');
-    const invalidPin = await api(baseUrl, `/api/orders/${invalidPinOrder.orderId}/items/${invalidPinOrder.itemId}/cancel`, {
-      method: 'PATCH', body: { override_pin: '9999' }, headers: cashierAuth,
-    });
+    const invalidPin = await api(
+      baseUrl,
+      `/api/orders/${invalidPinOrder.orderId}/items/${invalidPinOrder.itemId}/cancel`,
+      {
+        method: 'PATCH',
+        body: { override_pin: '9999' },
+        headers: cashierAuth,
+      },
+    );
     assertEqual(invalidPin.status, 403, 'cashier with an invalid manager PIN is denied');
-    assert(String(invalidPin.data.error).includes('Invalid manager PIN'), 'invalid PIN denial identifies the PIN, not the role');
+    assert(
+      String(invalidPin.data.error).includes('Invalid manager PIN'),
+      'invalid PIN denial identifies the PIN, not the role',
+    );
   } finally {
     server.close();
     closeDatabase();
@@ -116,4 +258,7 @@ async function main() {
   if (results.failed > 0) process.exit(1);
 }
 
-main().catch((error: any) => { console.error(error); process.exit(1); });
+main().catch((error: any) => {
+  console.error(error);
+  process.exit(1);
+});

@@ -28,6 +28,9 @@
 
 - **Pilot-readiness classification:** INTENTIONAL GAP vs ACCIDENTAL GAP vs PRODUCTION DEFECT. Frozen STRATEGY items are never P0. Unsigned artifacts and OPS-01 are human **conditions**, not product P0s. A vertical with a product P0 is **NOT PILOT READY**. Companion processes (`startKdsServer` / `startServerApp`) must be gated the same way HTTP remount is. Renderer `isModuleEnabled(id)` without composition `verticalId` is restaurant-fail-open.
 
+- **Paid-order cancel (H1):** if any bill has GROSS `payment_details` > 0, `PATCH` cancel returns 409 `ORDER_HAS_SUCCESSFUL_TENDER` before `withTxn`. Do not restock. Do not reverse money. Refund workflow owns money.
+- **FIN-02 Gross/Net:** include `partial` only when FIN-01 collectible is 0. Do not rewrite `payment_status`.
+- **Chef cancel (H3):** chef requires manager PIN for cancel; other roles keep in-progress-only PIN. Do not drop chef from KDS bump.
 - **Companion bind degrade:** after 10 `EADDRINUSE` retries, `startKdsServer` / `startServerApp` must `close()`, null the handle, and **`resolve()`** — never `reject()` into Electron `initialize()` / `app.quit()`. Billing continues without the companion.
 - **Cancel restock idempotency:** if `orders.status === 'cancelled'`, a repeat status PATCH must not call `restoreTrackedStock`. Paid-cancel policy is a separate HUMAN gate.
 - **Last-item catch-up:** remaining-to-serve excludes `cancelled` / `voided` / `void_adjustment`. Do not reuse `activeItems` (tax/totals still include voided + void_adjustment net).

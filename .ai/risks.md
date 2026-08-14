@@ -2,7 +2,7 @@
 
 ## Production blockers (P0)
 
-- ⚠️ RISK: **Post-P0 remediation (2026-08-14)** — Restaurant **80/100 PILOT READY WITH CONDITIONS**. Retail **72/100 PILOT READY WITH CONDITIONS** (isolation P0s closed). Remaining: HUMAN paid-cancel / FIN-02 / chef RBAC; OPS signed artifact / PIN escrow / drills; P1-06 unopenable DB. Renderer still restaurant-falls-back if `GET /platform/composition` fails (`verticalId` undefined) — **P2**.
+- ⚠️ RISK: **Post-P0 + H1/H2/H3 (2026-08-14)** — Restaurant **81/100 PILOT READY WITH CONDITIONS**. Retail **74/100 PILOT READY WITH CONDITIONS**. Remaining: OPS signed artifact / PIN escrow / drills; P1-06 unopenable DB; P1-05 discount-on-settled; P1-12 Drive PIN. Renderer composition fail-open **P2**. ADR-014 Proposed.
 - 🔒 SEC: **Final P0.6 audit GO WITH CONDITIONS** (score 78) — `p0.6-final-production-security-audit.md`. Electron A/B1/B2 closed. **FIN-01 CLOSED** (collectible = total − gross tender). **OPS-01:** guest Wi‑Fi + `kds_lan`/`lan` forbidden.
 - 🔒 SEC: LAN exposure is mode-gated (`network_mode`; default `localhost`). Cleartext HTTP/WS still applies on staff LAN when `kds_lan`/`lan` — guest Wi‑Fi unsupported; TLS deferred (**P1 accept with ops**).
 - 🔒 SEC: JWT in `safeStorage` (`jwt-secret.enc`). Residual: same-OS-user malware; Linux keyring (**P2**).
@@ -12,7 +12,7 @@
 - ⚠️ RISK: **Retail product gap** — Phase 4.1–4.5 closed; **ADR-013 Accepted** (Option A identity). Matrix not authorized. PO/receiving STRATEGY-frozen.
 - ⚠️ RISK: **Retail variants (4.6)** — parent+options stock ambiguity forbidden; unused `variant_selection` must not become identity; barcode lacks DB UNIQUE.
 - ⚠️ RISK: Financial audit still sparse on discounts, PIN overrides, DB import/export, Master PIN ops.
-- ⚠️ RISK: Order cancel after pay still restocks without reversing money (**HUMAN H1**). Repeat PATCH cancel restock **CLOSED**.
+- ⚠️ RISK: Order cancel after pay **409s** when GROSS tender exists (H1). Refund owns money. Repeat PATCH cancel restock **CLOSED**.
 
 ## Operational
 

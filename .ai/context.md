@@ -12,7 +12,7 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 
 Advanced single-location café POS. Executive scores (audit 2026-08-12): Product 68 · Eng 78 · Arch 70 · Sec 66 · Rel 74 · Test 84 · Prod 62 · **Overall 64/100**. CEO: GO WITH CHANGES. CTO: ARCHITECTURE READY WITH CHANGES.
 
-**Post-4.15 pilot-readiness (2026-08-14):** Restaurant **78/100 — PILOT READY WITH CONDITIONS**. Retail was **NOT PILOT READY (57/100)** until companion/Products P0s. **Retail isolation P0 remediation (2026-08-14):** KDS/Server App skip when modules off; Products/KDS/Orders pass composition `verticalId`. Doc: `docs/05-production/retail-isolation-p0-remediation.md`. **Post-P0 P1 remediation (2026-08-14):** repeat-cancel restock idempotency; INV-02 void catch-up; KDS/Server App bind degrade (POS does not quit). Restaurant **80/100**; Retail **72/100** — both **PILOT READY WITH CONDITIONS**. Paid-cancel, FIN-02, chef RBAC remain HUMAN. Doc: `docs/05-production/post-p0-pilot-remediation.md`. No Phase 4.16.
+**Post-P0 P1 remediation (2026-08-14):** repeat-cancel restock idempotency; INV-02 void catch-up; KDS/Server App bind degrade. **Human policies H1/H2/H3 implemented (2026-08-14):** paid cancel 409; FIN-02 Gross/Net includes collectible-complete `partial`; chef cancel requires PIN. Restaurant **81/100**; Retail **74/100** — both **PILOT READY WITH CONDITIONS**. ADR-014 remains Proposed. Doc: `docs/05-production/post-p0-pilot-remediation.md`. No Phase 4.16.
 
 ## Modular architecture status
 
@@ -72,9 +72,8 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Software P1s in the authorized post-P0 list are CLOSED** (repeat cancel, INV-02, KDS bind degrade). Do not invent 4.16. Do not auto-start the next feature.
+**H1/H2/H3 CLOSED.** Do not invent 4.16. Do not auto-start the next feature.
 
-- **Human:** H1 paid-cancel policy; H2 FIN-02 report-query; H3 chef pending-cancel; ADR-014 Accept/Reject.
 - **Ops:** signed artifact, OPS-01, PIN escrow, backup numbers, printer+KDS café drill, training/sign-off.
-- **Optional next software (not auto-started):** P1-06 unopenable DB → recovery UI.
+- **Optional next software (not auto-started):** P1-06 unopenable DB → recovery UI; P1-05 discount-on-settled; P1-12 Drive PIN.
 - ADR-014 remains **Proposed** (no wiring). Schema v75.

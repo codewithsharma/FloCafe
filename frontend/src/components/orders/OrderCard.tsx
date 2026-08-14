@@ -32,7 +32,7 @@ import type { Customer, Order, OrderItem } from '@/lib/types';
 import { useI18n } from '@/hooks/useI18n';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
-import { collectibleOutstanding } from '@/lib/bill-collectible';
+import { collectibleOutstanding, paymentDetailsGrossCents } from '@/lib/bill-collectible';
 
 export type PaymentStatus = 'paid' | 'partial' | 'unpaid' | 'partially_refunded' | 'refunded';
 
@@ -168,6 +168,9 @@ export function OrderCard({
   const activeItems = (order.items || []).filter((i: OrderItem) => i.status !== 'cancelled');
   const cancelledItems = (order.items || []).filter((i: OrderItem) => i.status === 'cancelled');
   const bill = order.bill;
+  const hasSuccessfulTender =
+    paymentDetailsGrossCents(bill?.payment_details) > 0 ||
+    (order.bills || []).some((row) => paymentDetailsGrossCents(row.payment_details) > 0);
   const discount = bill ? Number(bill.discount_amount) : Number(order.discount_amount);
   const tax = bill ? Number(bill.tax_amount) : Number(order.tax_amount);
   const subtotal = bill ? Number(bill.subtotal) : Number(order.subtotal);
@@ -553,7 +556,7 @@ export function OrderCard({
             {convertingOrder ? t('orders.converting') : t('orders.convertToTakeaway')}
           </Button>
         ) : null}
-        {!['completed', 'cancelled'].includes(order.status) ? (
+        {!hasSuccessfulTender && !['completed', 'cancelled'].includes(order.status) ? (
           <Button
             variant="outline"
             onClick={onCancel}

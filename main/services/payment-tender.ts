@@ -75,7 +75,7 @@ const MAX_PAYMENT_LINES = 100;
 const MAX_PAYMENT_METADATA_BYTES = 8192;
 const LOYALTY_REDEMPTION_RATE = 100;
 
-function paymentDetailsGrossCents(details: unknown): number {
+export function paymentDetailsGrossCents(details: unknown): number {
   let lines: unknown[] = [];
   if (Array.isArray(details)) {
     lines = details;
@@ -94,6 +94,16 @@ function paymentDetailsGrossCents(details: unknown): number {
     if (!Number.isFinite(amount)) return sum;
     return sum + Math.round(amount * 100);
   }, 0);
+}
+
+export function orderHasSuccessfulTender(
+  db: ReturnType<typeof getDatabase>,
+  orderId: string | number,
+): boolean {
+  const bills = db.prepare('SELECT payment_details FROM bills WHERE order_id = ?').all(orderId) as {
+    payment_details: unknown;
+  }[];
+  return bills.some((bill) => paymentDetailsGrossCents(bill.payment_details) > 0);
 }
 
 function paymentAmountCents(value: unknown, label = 'Payment amount'): number {

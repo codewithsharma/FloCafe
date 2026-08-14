@@ -128,12 +128,13 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Retail isolation P0 remediation** — KDS/Server App module-gated skip; Products/KDS/Orders composition `verticalId`; catalog fetch isolated from addon-groups. `docs/05-production/retail-isolation-p0-remediation.md`. Schema v75.
 - [x] **Post-P0 P1 software** — cancel idempotency; INV-02 void catch-up; KDS/Server App bind degrade. `docs/05-production/post-p0-pilot-remediation.md`. Schema v75.
 
+- [x] **H1 paid-cancel 409** — `ORDER_HAS_SUCCESSFUL_TENDER`; refund path owns money.
+- [x] **H2 FIN-02** — report-query includes collectible-complete `partial`.
+- [x] **H3 chef pending-cancel PIN** — chef cancel requires manager PIN; KDS bump unchanged.
+
 ## Post-audit gates (do not auto-implement)
 
 - [ ] **Restaurant café gates** — signed/notarized artifact, OPS-01, PIN escrow, backup policy, training/sign-off, printer+KDS drill (human).
-- [ ] **H1 cancel-after-pay restock** — accept with training **or** code-fix (human choice). Repeat-cancel restock **CLOSED**.
-- [ ] **H2 FIN-02** — authorize report-query change **or** accept Gross/Net hole.
-- [ ] **H3 chef pending-cancel** — drop chef / require PIN / train KDS-only.
 - [ ] **P1-06 unopenable DB recovery UI** — software, not this patch.
 - [ ] **Phase 4.6 matrix implementation** — not in this 10; blocked until ADR-013 Accepted with an implementation slice.
 - [ ] **Phase 3.5** Remaining optional — packages/extraction, recipes/BOM, suppliers/PO (not authorized unless explicitly tasked). Tax cleanup stays deferred (3.5B).

@@ -22,6 +22,7 @@ const {
   createApp,
   startServer,
   seedOwnerUser,
+  seedManagerUser,
   seedCategory,
   seedProduct,
   api,
@@ -44,6 +45,7 @@ async function main() {
 
   const db = initTestDb();
   const { authHeader } = seedOwnerUser(db);
+  const { authHeader: managerAuth } = seedManagerUser(db);
   seedCategory(db, 'cat-inv', 'Inventory Menu');
   seedProduct(db, 'prod-tracked', 'cat-inv', 'Tracked Latte', 100, {
     track_inventory: true,
@@ -197,6 +199,116 @@ async function main() {
       .prepare('SELECT stock_quantity FROM products WHERE id = ?')
       .get('prod-tracked') as any;
     assertEqual(restoredAgain.stock_quantity, 10, 'repeat cancel leaves stock at 10');
+
+    console.log('\n7c. Paid order cancel is 409; stock and tender unchanged (H1)');
+    adjustProductStock('prod-tracked', 'set', 10);
+    const paidOrder = await api(baseUrl, '/api/orders', {
+      method: 'POST',
+      body: { type: 'takeaway', items: [{ product_id: 'prod-tracked', quantity: 2 }] },
+      headers: authHeader,
+    });
+    assertEqual(paidOrder.status, 201, 'paid-cancel order created');
+    const paidOrderId = paidOrder.data.order.id;
+    const genBill = await api(baseUrl, '/api/bills/generate', {
+      method: 'POST',
+      body: { order_id: paidOrderId },
+      headers: authHeader,
+    });
+    assertEqual(genBill.status, 201, 'bill generated');
+    const paidBillId = genBill.data.bill.id;
+    const payRes = await api(baseUrl, `/api/bills/${paidBillId}/payment`, {
+      method: 'POST',
+      body: { method: 'cash', amount: genBill.data.bill.total },
+      headers: authHeader,
+    });
+    assertEqual(payRes.status, 200, 'tender applied');
+    const stockAfterPay = db
+      .prepare('SELECT stock_quantity FROM products WHERE id = ?')
+      .get('prod-tracked') as any;
+    assertEqual(stockAfterPay.stock_quantity, 8, 'stock still decremented after pay');
+    const billAfterPay = db
+      .prepare('SELECT paid_amount, payment_status, payment_details FROM bills WHERE id = ?')
+      .get(paidBillId) as any;
+    const paidCancel = await api(baseUrl, `/api/orders/${paidOrderId}/status`, {
+      method: 'PATCH',
+      body: { status: 'cancelled', reason: 'must use refund', override_pin: '1234' },
+      headers: authHeader,
+    });
+    assertEqual(paidCancel.status, 409, 'paid cancel returns 409');
+    assertEqual(
+      paidCancel.data.code,
+      'ORDER_HAS_SUCCESSFUL_TENDER',
+      '409 code is ORDER_HAS_SUCCESSFUL_TENDER',
+    );
+    const stockAfterPaidCancel = db
+      .prepare('SELECT stock_quantity FROM products WHERE id = ?')
+      .get('prod-tracked') as any;
+    assertEqual(stockAfterPaidCancel.stock_quantity, 8, 'paid cancel does not restock');
+    const billAfterCancel = db
+      .prepare('SELECT paid_amount, payment_status, payment_details FROM bills WHERE id = ?')
+      .get(paidBillId) as any;
+    assertEqual(billAfterCancel.paid_amount, billAfterPay.paid_amount, 'paid_amount unchanged');
+    assertEqual(
+      billAfterCancel.payment_status,
+      billAfterPay.payment_status,
+      'payment_status unchanged',
+    );
+    assertEqual(
+      billAfterCancel.payment_details,
+      billAfterPay.payment_details,
+      'payment_details unchanged',
+    );
+
+    console.log('\n7d. Fully refunded bill still 409s cancel (H1)');
+    const refundPaid = await api(baseUrl, `/api/bills/${paidBillId}/refund`, {
+      method: 'POST',
+      body: {
+        amount: billAfterPay.paid_amount,
+        method: 'cash',
+        reason: 'H1 refunded cancel',
+        override_pin: '1234',
+      },
+      headers: { ...managerAuth, 'Idempotency-Key': `h1-refund-${paidBillId}` },
+    });
+    assertEqual(refundPaid.status, 200, 'full refund ok');
+    const refundedCancel = await api(baseUrl, `/api/orders/${paidOrderId}/status`, {
+      method: 'PATCH',
+      body: { status: 'cancelled', reason: 'after refund', override_pin: '1234' },
+      headers: authHeader,
+    });
+    assertEqual(refundedCancel.status, 409, 'refunded bill still 409s cancel');
+    const stockAfterRefundCancel = db
+      .prepare('SELECT stock_quantity FROM products WHERE id = ?')
+      .get('prod-tracked') as any;
+    assertEqual(
+      stockAfterRefundCancel.stock_quantity,
+      8,
+      'refunded cancel does not restock via cancel path',
+    );
+
+    console.log('\n7e. Generated unpaid bill (no tender) still restocks');
+    adjustProductStock('prod-tracked', 'set', 10);
+    const unpaidBilled = await api(baseUrl, '/api/orders', {
+      method: 'POST',
+      body: { type: 'takeaway', items: [{ product_id: 'prod-tracked', quantity: 1 }] },
+      headers: authHeader,
+    });
+    const unpaidBill = await api(baseUrl, '/api/bills/generate', {
+      method: 'POST',
+      body: { order_id: unpaidBilled.data.order.id },
+      headers: authHeader,
+    });
+    assertEqual(unpaidBill.status, 201, 'unpaid bill generated');
+    const unpaidCancel = await api(baseUrl, `/api/orders/${unpaidBilled.data.order.id}/status`, {
+      method: 'PATCH',
+      body: { status: 'cancelled', reason: 'no tender' },
+      headers: authHeader,
+    });
+    assert(unpaidCancel.status < 400, `unpaid billed cancel ok (${unpaidCancel.status})`);
+    const stockUnpaidBilled = db
+      .prepare('SELECT stock_quantity FROM products WHERE id = ?')
+      .get('prod-tracked') as any;
+    assertEqual(stockUnpaidBilled.stock_quantity, 10, 'unpaid billed cancel restocks');
 
     // Silence unused var from step 1
     void orderId;

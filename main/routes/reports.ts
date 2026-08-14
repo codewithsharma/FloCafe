@@ -223,7 +223,29 @@ function daySalesSemantics(
       COALESCE(SUM(paid_amount), 0) AS netSales
     FROM bills
     WHERE created_at >= ? AND created_at < ?
-      AND payment_status IN ('paid', 'partially_refunded', 'refunded')
+      AND (
+        payment_status IN ('paid', 'partially_refunded', 'refunded')
+        OR (
+          payment_status = 'partial'
+          AND ROUND(total * 100) <= COALESCE((
+            SELECT SUM(
+              CASE
+                WHEN typeof(json_extract(je.value, '$.amount')) IN ('integer', 'real')
+                  THEN ROUND(json_extract(je.value, '$.amount') * 100)
+                ELSE 0
+              END
+            )
+            FROM json_each(CASE
+              WHEN json_valid(payment_details) AND json_type(payment_details) = 'array'
+                THEN payment_details
+              WHEN json_valid(payment_details)
+                THEN json_array(payment_details)
+              ELSE '[]'
+            END) je
+            WHERE json_type(je.value) = 'object'
+          ), 0)
+        )
+      )
   `,
     )
     .get(start, end) as { grossSales: number; netSales: number };

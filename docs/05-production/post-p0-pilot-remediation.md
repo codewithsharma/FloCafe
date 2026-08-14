@@ -8,7 +8,20 @@
 **Phase 4.16:** not created  
 **ADR-014:** still Proposed; not wired
 
-This is a **P1 classification + minimal software-fix** pass. It is not a feature phase.
+### Human policy implementation (2026-08-14)
+
+Authorized and implemented on this tree (schema v75, money writes unchanged):
+
+| Gate        | Decision               | Result                                                                                                                                                                                                         |
+| ----------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **H1**      | 409 when tender exists | `PATCH /orders/:id/status` cancelled returns **409** `ORDER_HAS_SUCCESSFUL_TENDER` if any bill has GROSS `payment_details` > 0. No restock. No money writes. Unpaid cancel still restocks. Refunded still 409. |
+| **H2**      | Reporting fix          | `daySalesSemantics` includes collectible-complete `partial` bills. Payment/refund writes and FIN-01 unchanged.                                                                                                 |
+| **H3**      | Require PIN            | Chef must supply a manager PIN to cancel pending or in-progress tickets. Cashier/waiter/owner/manager pending-cancel unchanged. KDS bump unchanged.                                                            |
+| **ADR-014** | Leave Proposed         | Not wired.                                                                                                                                                                                                     |
+
+Independent review: **APPROVE WITH NITS** ([Review](1847b55e-deac-4f4e-8321-c063ab4266f8)).
+
+---
 
 Prior Retail isolation P0s remain **CLOSED** (do not reopen unless regression):
 
@@ -24,8 +37,8 @@ Prior Retail isolation P0s remain **CLOSED** (do not reopen unless regression):
 
 | Vertical       | Previous (post-4.15)            | After this remediation             |
 | -------------- | ------------------------------- | ---------------------------------- |
-| **Restaurant** | PILOT READY WITH CONDITIONS 78  | **PILOT READY WITH CONDITIONS 80** |
-| **Retail**     | NOT PILOT READY 57 (product P0) | **PILOT READY WITH CONDITIONS 72** |
+| **Restaurant** | PILOT READY WITH CONDITIONS 78  | **PILOT READY WITH CONDITIONS 81** |
+| **Retail**     | NOT PILOT READY 57 (product P0) | **PILOT READY WITH CONDITIONS 74** |
 
 **Remaining product P0:** none.
 
@@ -41,23 +54,23 @@ Independent review of the production diff: **APPROVE WITH NITS** ([Review](f26fe
 
 Classification: **P0** pilot blocker · **P1** pilot required · **P2** post-pilot · **OPS** operational gate · **HUMAN** product/policy · **DEFERRED** not part of this pilot.
 
-| ID                              | Topic                                                                          | Class                                | Disposition                                                                                                   |
-| ------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| **P1-01a / INV-01 idempotency** | Repeat `PATCH …/status {cancelled}` restocks again                             | **P1** → **FIXED**                   | Already-cancelled no-op before `restoreTrackedStock`                                                          |
-| **P1-01b / INV-01 paid cancel** | Cancel of an already-paid order restocks and does not reverse money            | **HUMAN**                            | Not implemented. Training vs code-block vs skip-restock is a product decision                                 |
-| **P1-02 / INV-02**              | Voided siblings blocked last-item restock catch-up                             | **P1** → **FIXED**                   | Remaining-to-serve excludes `cancelled` / `voided` / `void_adjustment`                                        |
-| **P1-03 / SEC-01**              | Chef may cancel pending orders without PIN                                     | **HUMAN**                            | Accidental RBAC. KDS UI never cancels. Do not silently drop chef                                              |
-| **P1-04 / FIN-02**              | Gross/Net omit collectible-complete bills stuck at `partial`                   | **HUMAN**                            | Display/reporting hole (B+D). Money writes and FIN-01 are correct. Report-query change would change Gross/Net |
-| **P1-05 / REST-04**             | Discount API can mutate billed/refunded orders                                 | **P1** (out of this authorized list) | Still open; not in the remaining-P1 brief; not silently expanded                                              |
-| **P1-06 / REC-02**              | Unopenable SQLite can quit instead of recovery UI                              | **P1** remaining                     | Larger than a minimal patch. Missing/empty DB recovery still PASS                                             |
-| **P1-07 / REC-03**              | KDS (and Server App) bind exhaustion quit the POS                              | **P1** → **FIXED**                   | After 10 `EADDRINUSE` retries, `resolve()`; POS continues                                                     |
-| **P1-08 / ISO-03**              | Composition fetch failure fail-opens restaurant modules                        | **P2**                               | Process-level Retail skip already holds. Fail-closed-as-OFF would hide café KDS on a glitch                   |
-| **P1-09 / ISO-08**              | Server App always starts                                                       | **CLOSED in edc44d8**                | Module-gated skip when `tables` off                                                                           |
-| **P1-10 / TEST-01**             | Default `npm test` omits Phase 4 / inventory-ledger / production-retail script | **P2**                               | Bind-degrade now in `test:kds-integration`. Do not expand CI graph in this patch                              |
-| **P1-11 / HW-01**               | Café printer / drawer / KDS not verified on site                               | **OPS**                              | Software print-after-commit is correct                                                                        |
-| **P1-12 / DRV-01**              | Drive backup-now without Master PIN                                            | **P1** (out of this authorized list) | Known P0.6 residual; not in the remaining-P1 brief                                                            |
-| **OPS-01…07**                   | Signed artifact, PIN escrow, backup policy, training, drills                   | **OPS**                              | See §11                                                                                                       |
-| **ADR-014**                     | Service charge                                                                 | **DEFERRED / HUMAN**                 | Proposed; not wired                                                                                           |
+| ID                              | Topic                                                                          | Class                                | Disposition                                                                                 |
+| ------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------ | ------------------------------------------------------------------------------------------- |
+| **P1-01a / INV-01 idempotency** | Repeat `PATCH …/status {cancelled}` restocks again                             | **P1** → **FIXED**                   | Already-cancelled no-op before `restoreTrackedStock`                                        |
+| **P1-01b / INV-01 paid cancel** | Cancel of an already-paid order restocks and does not reverse money            | **P1** → **FIXED (H1)**              | 409 `ORDER_HAS_SUCCESSFUL_TENDER`; refund owns money                                        |
+| **P1-02 / INV-02**              | Voided siblings blocked last-item restock catch-up                             | **P1** → **FIXED**                   | Remaining-to-serve excludes `cancelled` / `voided` / `void_adjustment`                      |
+| **P1-03 / SEC-01**              | Chef may cancel pending orders without PIN                                     | **P1** → **FIXED (H3)**              | Chef cancel requires manager PIN; KDS bump unchanged                                        |
+| **P1-04 / FIN-02**              | Gross/Net omit collectible-complete bills stuck at `partial`                   | **P1** → **FIXED (H2)**              | Report-query only; stored `payment_status` still net-paid                                   |
+| **P1-05 / REST-04**             | Discount API can mutate billed/refunded orders                                 | **P1** (out of this authorized list) | Still open; not in the remaining-P1 brief; not silently expanded                            |
+| **P1-06 / REC-02**              | Unopenable SQLite can quit instead of recovery UI                              | **P1** remaining                     | Larger than a minimal patch. Missing/empty DB recovery still PASS                           |
+| **P1-07 / REC-03**              | KDS (and Server App) bind exhaustion quit the POS                              | **P1** → **FIXED**                   | After 10 `EADDRINUSE` retries, `resolve()`; POS continues                                   |
+| **P1-08 / ISO-03**              | Composition fetch failure fail-opens restaurant modules                        | **P2**                               | Process-level Retail skip already holds. Fail-closed-as-OFF would hide café KDS on a glitch |
+| **P1-09 / ISO-08**              | Server App always starts                                                       | **CLOSED in edc44d8**                | Module-gated skip when `tables` off                                                         |
+| **P1-10 / TEST-01**             | Default `npm test` omits Phase 4 / inventory-ledger / production-retail script | **P2**                               | Bind-degrade now in `test:kds-integration`. Do not expand CI graph in this patch            |
+| **P1-11 / HW-01**               | Café printer / drawer / KDS not verified on site                               | **OPS**                              | Software print-after-commit is correct                                                      |
+| **P1-12 / DRV-01**              | Drive backup-now without Master PIN                                            | **P1** (out of this authorized list) | Known P0.6 residual; not in the remaining-P1 brief                                          |
+| **OPS-01…07**                   | Signed artifact, PIN escrow, backup policy, training, drills                   | **OPS**                              | See §11                                                                                     |
+| **ADR-014**                     | Service charge                                                                 | **DEFERRED / HUMAN**                 | Proposed; not wired                                                                         |
 
 ---
 
@@ -69,11 +82,11 @@ Classification: **P0** pilot blocker · **P1** pilot required · **P2** post-pil
 
 **GREEN:** same step; stock stays **10**. HTTP 200 with the current cancelled order.
 
-### P1-01b — Paid-order cancel (HUMAN — not fixed)
+### P1-01b — Paid-order cancel (FIXED — H1)
 
-`main/routes/orders.ts` `case 'cancelled'` restores tracked stock for non-voided lines and stamps `cancelled_at`. It does **not** read bills, `payment_details`, or refunds. Money is left as-is.
+`PATCH /orders/:id/status` cancelled returns **409** `{ error, code: 'ORDER_HAS_SUCCESSFUL_TENDER' }` when any bill on the order has GROSS `payment_details` amount > 0. Check is **before** `withTxn`. No restock. No `paid_amount` / `payment_status` / refund writes. Already-cancelled unpaid remains 200 no-op. Unpaid (including generated bill with no tender) still restocks. Fully refunded still 409 (gross tender remains). Use the refund workflow (ADR-009 / ADR-011 restock).
 
-Frontend `OrderCard` hides **item** cancel when paid, but whole-order Cancel is shown whenever order status is not `completed`/`cancelled`. Full pay sets order `completed` (hides the button); split/uncompleted paid tickets still show Cancel. The API still accepts cancel on completed orders if a client sends PATCH.
+Frontend Cancel is hidden when any attached bill has gross tender.
 
 ### P1-02 — Void catch-up (FIXED)
 
@@ -85,25 +98,15 @@ Tax/totals still use `activeItems` (`status != 'cancelled'`). Voided + `void_adj
 
 Voiding the last remaining-to-serve line now also catch-up-cancels the order (nothing left to serve). Audit action stays `order.item_voided` (metadata `order_cancelled: true`); stock for voided lines is not restored.
 
-### P1-04 — FIN-02 Gross/Net vs stuck `partial` (HUMAN)
+### P1-04 — FIN-02 Gross/Net vs stuck `partial` (FIXED — H2)
 
-Classification **B + D** (display/reporting defect + test gap). **Not** a money-write defect.
+Reporting-only. `daySalesSemantics` includes `partial` bills whose FIN-01 collectible is 0 (`ROUND(total*100) ≤ SUM(payment_details amounts in cents)`). Open partials stay out of Gross/Net. Refunds SQL unchanged. Payment-tender / refund writes / stored `payment_status` unchanged. Day-close Z unchanged.
 
-- Tender write (`payment-tender.ts:574-579`) sets `payment_status` from **net** `paid_amount` vs total (`paid` vs `partial`).
-- FIN-01 collectible remaining is **gross** tender (`payment-tender.ts:354-368`). `BILL_NO_OUTSTANDING_BALANCE` holds.
-- `daySalesSemantics` (`reports.ts:212-226`) Gross/Net only `payment_status IN ('paid','partially_refunded','refunded')`.
-- A later collect after refund can overwrite refund-aware status back to `partial`.
-- Day-close Z is **tender-based** (`getShiftPaymentSummary` / `payment_details`), not Gross/Net. Z is not this hole.
+Stuck fixture: total 1000, pay 600, refund 200, repay 400 → Gross 1000, Refunds 200, Net 800, stored status still `partial`.
 
-Repro shape: bill total 1000, pay 600, refund 200, repay 400 → collectible 0, net `paid_amount` 800, stored `partial` → omitted from Gross/Net.
+### P1-03 — Chef pending-cancel (FIXED — H3)
 
-Changing the report filter **would change reported Gross/Net**. Stopped for human authorization.
-
-### P1-03 — Chef pending-cancel (HUMAN)
-
-`PATCH /orders/:id/status` `requireRole(..., 'chef', ...)`. Manager PIN only when in-progress. Chef on a **pending** ticket with no in-progress items can cancel without PIN.
-
-KDS UI never sends cancel (item PATCH allow-list is `pending|preparing|ready|served`). Item-cancel 403s chef. This is API RBAC policy, not a kitchen-screen bug.
+Chef remains on `PATCH /orders/:id/status`. Cancel (pending or in-progress) requires a manager PIN. Cashier/waiter/owner/manager pending cancel without PIN is unchanged. Chef can still advance to `preparing` without PIN. KDS item bump allow-list is still not `cancelled`. Item-cancel still 403s chef.
 
 ### P1-07 — KDS bind quit (FIXED)
 
@@ -140,75 +143,48 @@ Missing/empty DB → recovery UI; money APIs 503. `new Database()` throw / corru
 
 ## 5. Fixed items
 
-| Fix                                                    | Files                   | Tests                                                                                                   |
-| ------------------------------------------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------- |
-| Already-cancelled PATCH is a no-op (no second restock) | `main/routes/orders.ts` | `tests/inventory-boundary.test.ts` 7b (`npm run test:inventory-boundary`)                               |
-| Last-item catch-up ignores voided / void_adjustment    | `main/routes/orders.ts` | `tests/order-void-cancel-stock.test.ts` 5 (`npm run test:order-boundary`)                               |
-| KDS bind exhaustion degrades; POS stays up             | `main/kds-server.ts`    | `tests/kds-bind-degrade.test.ts` (`npm run test:kds-bind-degrade`, chained into `test:kds-integration`) |
-| Server App bind exhaustion degrades                    | `main/server-app.ts`    | Same pattern as KDS; no dedicated test (review nit)                                                     |
+| Fix                                                     | Files                            | Tests                                                                                                   |
+| ------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Already-cancelled PATCH is a no-op (no second restock)  | `main/routes/orders.ts`          | `tests/inventory-boundary.test.ts` 7b (`npm run test:inventory-boundary`)                               |
+| Last-item catch-up ignores voided / void_adjustment     | `main/routes/orders.ts`          | `tests/order-void-cancel-stock.test.ts` 5 (`npm run test:order-boundary`)                               |
+| KDS bind exhaustion degrades; POS stays up              | `main/kds-server.ts`             | `tests/kds-bind-degrade.test.ts` (`npm run test:kds-bind-degrade`, chained into `test:kds-integration`) |
+| Paid cancel 409 when GROSS tender exists (H1)           | `orders.ts`, `payment-tender.ts` | `tests/inventory-boundary.test.ts` 7c–7e                                                                |
+| FIN-02 collectible-complete `partial` in Gross/Net (H2) | `main/routes/reports.ts`         | `tests/financial-reporting-semantics.test.ts`                                                           |
+| Chef cancel requires manager PIN (H3)                   | `main/routes/orders.ts`          | `tests/orders-authz.test.ts`                                                                            |
 
-**Not changed:** payment-tender, refunds, reports, tax, day-close, shifts, chef roles, paid-bill 409, schema, ADR-014.
-
-TDD: characterization tests RED, then smallest production diff, then GREEN.
+**Not changed:** payment/refund writes, FIN-01, tax, day-close, shifts, schema v75, ADR-014. Chef remains on KDS.
 
 ---
 
 ## 6. Human decisions
 
-Do **not** implement until an explicit choice.
-
-### H1 — Cancel-after-pay / restock (P1-01b)
-
-**Current:** paid (or completed) order cancel restocks inventory and does **not** reverse tender. Refunds own money (ADR-009). Retail restock is a second explicit call (ADR-011).
-
-**Options (do not pick silently):**
-
-1. Train operators: never cancel a paid ticket; use refund (+ optional restock on Retail).
-2. Code: 409 cancel when a bill has successful tender; force refund.
-3. Code: allow cancel but skip restock when paid (inventory stays deducted; money stays).
-
-Training **cannot** make repeat PATCH idempotent (that is now fixed). Training **can** be accepted for paid cancel if the café SOP forbids it and staff are signed off.
-
-**Safest recommendation (not implemented):** keep refund as the money path; if a code change is later authorized, **skip restock + 409 when any successful tender exists**, rather than inventing a cancel-refund. That still needs product sign-off.
-
-### H2 — FIN-02 report inclusion (P1-04)
-
-**Current:** money writes and FIN-01 are correct. Gross/Net under-count collectible-complete `partial` bills.
-
-**Options:**
-
-1. Accept the hole for pilot; reconcile those bills from CSV / `payment_details`.
-2. Authorize a **report-query-only** change (include collectible-complete `partial`, or Gross from tender). This **changes reported Gross/Net**. Do not write `payment_status` to match (Phase 4.10 freeze).
-
-### H3 — Chef pending-cancel (P1-03)
-
-**Options:** drop chef from order-status cancel; require PIN for chef; leave as-is and train that kitchen uses KDS bump only (KDS UI already cannot cancel).
+H1, H2, and H3 were **authorized 2026-08-14 and implemented** (see addendum). Remaining:
 
 ### H4 — ADR-014 service charge
 
-Accept or reject. **Not wired.** No v76.
+**LEAVE PROPOSED.** Not wired. No v76. No service-charge implementation.
 
 ---
 
 ## 7. Restaurant readiness
 
-**Verdict: PILOT READY WITH CONDITIONS — 80/100** (was 78).
+**Verdict: PILOT READY WITH CONDITIONS — 81/100** (was 78, then 80 after software P1s).
 
 Same rubric as `post-phase-4.15-pilot-readiness-audit.md`.
 
-| Dimension     | Score | Delta                                                                       |
-| ------------- | ----: | --------------------------------------------------------------------------- |
-| Money writes  |    88 | Unchanged. FIN-01 holds. FIN-02 is reporting, not writes                    |
-| Core checkout |    85 | Unchanged. Takeaway-first; billed merge frozen                              |
-| Isolation     |    90 | Unchanged. Restaurant modules still bind                                    |
-| Inventory     |    85 | +10. Repeat-cancel and void catch-up closed. Paid-cancel policy still HUMAN |
-| Recovery      |    78 | +8. KDS/Server App bind no longer quits POS. Unopenable DB still P1-06      |
-| Hardware      |    55 | Unchanged. Café printer/KDS not on-site verified                            |
-| Security      |    80 | Unchanged. Chef pending-cancel still HUMAN                                  |
-| Tests         |    64 | +2. Bind-degrade now in default `npm test` via `test:kds-integration`       |
-| Ops / release |    60 | Unchanged. Signed artifact still missing                                    |
+| Dimension     | Score | Delta                                                                                |
+| ------------- | ----: | ------------------------------------------------------------------------------------ |
+| Money writes  |    90 | FIN-01 holds. FIN-02 Gross/Net now includes collectible-complete `partial`           |
+| Core checkout |    85 | Unchanged. Takeaway-first; billed merge frozen                                       |
+| Isolation     |    90 | Unchanged. Restaurant modules still bind                                             |
+| Inventory     |    88 | Paid cancel 409; repeat-cancel and void catch-up closed                              |
+| Recovery      |    78 | KDS/Server App bind no longer quits POS. Unopenable DB still P1-06                   |
+| Hardware      |    55 | Unchanged. Café printer/KDS not on-site verified                                     |
+| Security      |    86 | Chef pending-cancel requires PIN                                                     |
+| Tests         |    66 | H1/H2/H3 characterization in inventory-boundary / financial-reporting / orders-authz |
+| Ops / release |    60 | Unchanged. Signed artifact still missing                                             |
 
-Weighted ≈ **80**.
+Weighted ≈ **81**.
 
 **Pilot shape:** takeaway + simple dine-in (one table, no billed merge, no service charge). Keep `ACTIVE_VERTICAL_ID` unset or `restaurant`.
 
@@ -216,23 +192,23 @@ Weighted ≈ **80**.
 
 ## 8. Retail readiness
 
-**Verdict: PILOT READY WITH CONDITIONS — 72/100** (was 57, product-P0 capped).
+**Verdict: PILOT READY WITH CONDITIONS — 74/100** (was 57, then 72 after isolation + software P1s).
 
 Judge only whether the **existing** product can safely operate a controlled store. Not a competitor comparison. Not a finished ERP.
 
 | Dimension     | Score | Why                                                                                                              |
 | ------------- | ----: | ---------------------------------------------------------------------------------------------------------------- |
-| Money writes  |    82 | Shared FIN-01 / refunds. Exchange is sequential (ADR-012 residual)                                               |
+| Money writes  |    86 | Shared FIN-01 / refunds. FIN-02 Gross/Net hole closed. Exchange sequential (ADR-012)                             |
 | Core checkout |    78 | Catalog load no longer fail-opens addons. Barcode/SKU, takeaway-only UI, refund, restock, exchange exist         |
 | Isolation     |    82 | Companion KDS/Server App skip. Main remount 404. Renderer composition glitch is P2, not process leak             |
-| Inventory     |    85 | Restock/wastage/valuation + INV-01a/INV-02 closed. Paid-cancel HUMAN                                             |
+| Inventory     |    88 | Restock/wastage/valuation + INV-01a/INV-02 + paid-cancel 409                                                     |
 | Recovery      |    75 | Same POS degrade as Restaurant                                                                                   |
 | Hardware      |    50 | No retail-specific hardware drill                                                                                |
-| Security      |    78 | Companions off. Same role matrix                                                                                 |
+| Security      |    82 | Companions off. Chef cancel PIN. Same role matrix                                                                |
 | Tests         |    42 | `test:retail-isolation` in `npm test`. `test:production-retail` script still missing; Phase 4 suites still extra |
 | Ops / release |    45 | No retail install runbook; café docs assume Restaurant                                                           |
 
-Weighted ≈ **72**.
+Weighted ≈ **74**.
 
 **Must at install:** `ACTIVE_VERTICAL_ID=retail`. Confirm KDS `:3002` and Server App `:3003` are connection-refused. Exchange/restock remain available. No KDS, no Server App, no tables, takeaway-only POS.
 
@@ -242,13 +218,13 @@ Retail is **not** “ERP complete.” Suppliers/PO, BOM, variants matrix, gift c
 
 ## 9. Financial integrity status
 
-| Question                                        | Answer                                                                                                  |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Bills / payments / refunds / shifts / day-close | **YES WITH CONDITIONS** — same as post-4.15. No write-path change in this patch                         |
-| FIN-01                                          | **CLOSED / frozen.** Collectible = total − gross successful tender. Refunds never recreate capacity     |
-| FIN-02                                          | **HUMAN.** Reporting hole only. Day-close Z is tender-based and is **not** this hole                    |
-| Inventory vs money                              | Repeat cancel no longer double-restocks. Paid cancel still restocks without reversing money (**HUMAN**) |
-| Schema                                          | **v75**                                                                                                 |
+| Question                                        | Answer                                                                                                                             |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Bills / payments / refunds / shifts / day-close | **YES WITH CONDITIONS** — same as post-4.15. No write-path change in this patch                                                    |
+| FIN-01                                          | **CLOSED / frozen.** Collectible = total − gross successful tender. Refunds never recreate capacity                                |
+| FIN-02                                          | **CLOSED (H2).** Collectible-complete `partial` bills are in Gross/Net. Day-close Z is tender-based. Stored status still net-paid. |
+| Inventory vs money                              | Paid cancel 409s. Repeat cancel no longer double-restocks. Refund owns money.                                                      |
+| Schema                                          | **v75**                                                                                                                            |
 
 **No P0 double-write, replay collect, or cross-transaction corruption was introduced.** Do not redesign the money path.
 
@@ -296,16 +272,14 @@ P1-06 is a real software gap. It was **not** implemented here because it is larg
 
 **Must close or formally accept before the relevant live pilot:**
 
-1. **HUMAN H1** — paid cancel / restock policy
-2. **HUMAN H2** — FIN-02 report query (or accept the hole)
-3. **HUMAN H3** — chef pending-cancel (or train KDS-only)
-4. **OPS-02** — signed/notarized artifact
-5. **OPS-01** — staff SSID on site
-6. **OPS-03** — Master PIN escrow
-7. **OPS-04** — numeric backup policy
-8. **OPS-05** — training + `pilot-signoff.md`
-9. **P1-11** — printer + KDS café drill
-10. **P1-06** — unopenable DB → recovery UI (software, next hardening slice if authorized)
+1. **OPS-02** — signed/notarized artifact
+2. **OPS-01** — staff SSID on site
+3. **OPS-03** — Master PIN escrow
+4. **OPS-04** — numeric backup policy
+5. **OPS-05** — training + `pilot-signoff.md`
+6. **P1-11** — printer + KDS café drill
+7. **P1-06** — unopenable DB → recovery UI (software, next hardening slice if authorized)
+8. **P1-05 / P1-12** — discount-on-settled-bill; Drive backup-now PIN (not this patch)
 
 Retail additionally: set `ACTIVE_VERTICAL_ID=retail`; write/use a retail install checklist; run `node tests/run-electron-node-test.cjs tests/production-retail.test.ts` on the release candidate (script name still absent).
 

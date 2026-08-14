@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — H1/H2/H3 human policies (Implemented)
+
+H1: cancel 409 when GROSS tender exists (`ORDER_HAS_SUCCESSFUL_TENDER`); refund owns money. H2: `daySalesSemantics` includes collectible-complete `partial`; no payment writes. H3: chef cancel requires manager PIN; KDS bump unchanged. ADR-014 stays Proposed. Schema v75. Doc: `post-p0-pilot-remediation.md`.
+
 ## 2026-08-14 — Post-P0 P1 remediation (Implemented + HUMAN stop)
 
 Repeat PATCH cancel no-ops restock; last-item catch-up ignores voided lines; KDS/Server App bind exhaustion `resolve()` so POS does not quit. Schema v75. Money path untouched. Paid-cancel restock, FIN-02 Gross/Net filter, chef pending-cancel, ADR-014 **not** implemented (HUMAN). Composition fetch fail-open left P2. Doc: `docs/05-production/post-p0-pilot-remediation.md`. No Phase 4.16.

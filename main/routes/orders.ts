@@ -41,6 +41,7 @@ import { validateBody } from '../middleware/validate';
 import { DOMAIN_SPAN, withSpan } from '../lib/tracing';
 import { addOrderItemsBodySchema, createOrderBodySchema } from '../validation/orders';
 import { readTerminalIdHeaderFromRequest, resolveActiveShiftForOrder } from '../services/shift';
+import { orderHasSuccessfulTender } from '../services/payment-tender';
 // Phase 2.14 — Order ownership facade (markers; routes remain the HTTP surface).
 import { ORDER_OWNED_CONCERNS } from '../services/order';
 void ORDER_OWNED_CONCERNS;
@@ -1142,6 +1143,17 @@ router.patch(
         return res.status(403).json({ error: 'Waiters can only modify their own orders' });
       }
 
+      if (
+        status === 'cancelled' &&
+        (order as any).status !== 'cancelled' &&
+        orderHasSuccessfulTender(db, req.params.id as string)
+      ) {
+        return res.status(409).json({
+          error: 'Cannot cancel an order with successful tender; refund the bill instead',
+          code: 'ORDER_HAS_SUCCESSFUL_TENDER',
+        });
+      }
+
       // Override validation: cancelling an order in preparing+ status (or with items in preparing+) requires manager PIN
       const statusOrder = ['pending', 'preparing', 'ready', 'served', 'completed'];
       const currentStatusIndex = statusOrder.indexOf((order as any).status);
@@ -1156,7 +1168,8 @@ router.patch(
           )
           .get(req.params.id) !== undefined;
       const requiresOverride =
-        (currentStatusIndex > 0 || hasItemsInProgress) && status === 'cancelled';
+        (currentStatusIndex > 0 || hasItemsInProgress || authUser?.role === 'chef') &&
+        status === 'cancelled';
 
       if (requiresOverride) {
         if (!override_pin) {
