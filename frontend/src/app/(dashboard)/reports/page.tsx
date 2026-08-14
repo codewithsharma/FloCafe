@@ -39,6 +39,7 @@ import type { StatusBadgeVariant } from '@/lib/flo-display';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { downloadBillsCsvExport } from '@/lib/accounting-csv-export';
+import { reportsCsvRangeError } from '@/lib/reports-date-range';
 
 interface PaymentMethodBreakdown {
   method: string | null;
@@ -191,6 +192,7 @@ export default function ReportsPage() {
   const timeZone = currentTenant?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
   const todayLocal = getLocalDateString(new Date(), timeZone);
   const [selectedDate, setSelectedDate] = useState(todayLocal);
+  const [endDate, setEndDate] = useState(todayLocal);
   const isToday = selectedDate === todayLocal;
 
   useEffect(() => {
@@ -199,7 +201,7 @@ export default function ReportsPage() {
     }
   }, [currentTenant, canView, router]);
 
-  const syncKey = `${canView}:${selectedDate}`;
+  const syncKey = `${canView}:${selectedDate}:${endDate}`;
   const [syncedKey, setSyncedKey] = useState(syncKey);
   if (syncKey !== syncedKey) {
     setSyncedKey(syncKey);
@@ -217,7 +219,7 @@ export default function ReportsPage() {
             signal: controller.signal,
           }),
       api.get('/reports/topProducts', {
-        params: { start_date: selectedDate, end_date: selectedDate, limit: 5 },
+        params: { start_date: selectedDate, end_date: endDate, limit: 5 },
         signal: controller.signal,
       }),
       api.get('/reports/recentOrders', {
@@ -243,14 +245,19 @@ export default function ReportsPage() {
       });
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canView, selectedDate]);
+  }, [canView, selectedDate, endDate]);
 
   if (!canView) return null;
 
   const handleExportCsv = async () => {
+    const rangeError = reportsCsvRangeError(selectedDate, endDate);
+    if (rangeError) {
+      toast.error(t('reports.exportRangeTooLong'));
+      return;
+    }
     setExportingCsv(true);
     try {
-      await downloadBillsCsvExport(selectedDate, selectedDate);
+      await downloadBillsCsvExport(selectedDate, endDate);
       toast.success(t('reports.exportCsvSuccess'));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('reports.exportCsvFailed'));
@@ -372,9 +379,22 @@ export default function ReportsPage() {
               type="date"
               value={selectedDate}
               max={todayLocal}
-              onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+              onChange={(e) => {
+                if (!e.target.value) return;
+                setSelectedDate(e.target.value);
+                if (e.target.value > endDate) setEndDate(e.target.value);
+              }}
               className="min-h-11 w-auto border-flo-border"
-              aria-label={t('dashboard.selectDate')}
+              aria-label={t('reports.exportStartDate')}
+            />
+            <Input
+              type="date"
+              value={endDate}
+              min={selectedDate}
+              max={todayLocal}
+              onChange={(e) => e.target.value && setEndDate(e.target.value)}
+              className="min-h-11 w-auto border-flo-border"
+              aria-label={t('reports.exportEndDate')}
             />
             <Button
               type="button"

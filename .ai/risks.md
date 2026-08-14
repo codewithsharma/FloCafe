@@ -34,7 +34,7 @@
 - ⚠️ RISK: Helmet CSP still allows `'unsafe-inline'` for Next static export (Phase C CSP hardening deferred).
 - ⚠️ RISK: Void + full-order cancel stock over-restore — **CLOSED in Phase 3.4** (skip `voided` / `void_adjustment` on restore; expect stock 8).
 - 🔴 DEBT: Extraction readiness: Order LOW–MEDIUM; Payment tender MEDIUM; Inventory/Tax MEDIUM; Product HIGH; POS/KDS HIGH — see `extraction-readiness.md`. Phase 2 COMPLETE; extraction is Phase 3.
-- ⚠️ RISK: **Accounting CSV UTC boundary** — export uses UTC calendar days (same as Reports `/summary`); day-close uses tenant TZ. Multi-day range picker not yet in UI (single-day export only).
+- ⚠️ RISK: **Accounting CSV UTC boundary** — export uses UTC calendar days (same as Reports `/summary`); day-close uses tenant TZ. Phase 4.8 added start/end date UI; 93-day cap unchanged.
 - ⚠️ RISK: Inventory ledger starts at v75 with **no backfill**; product create opening uses `adjustment`+`reason=opening` (not a separate type); money refunds do not restock (ADR-009); optional Retail restock uses `adjustment`+`reference_type=refund` (ADR-011); test/seed fixtures may still INSERT stock outside Inventory. History API does not claim complete pre-v75 audit.
 - ⚠️ RISK: Tax discount scale (Math.round money path) differs from preview Decimal scale — intentional compatibility; do not unify without golden tests + product decision. Tax-packs and settings tax HTTP intentionally left outside `routes/tax.ts`. Open-order charge tax may recompute from live pack rates using frozen category IDs (paid bills unchanged — characterized in Phase 2.13).
 

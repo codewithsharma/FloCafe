@@ -135,7 +135,7 @@ Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webus
 | Insights dashboard            | [BUILT]     | `tests/reports-insights.test.ts`                                              | Medium               |
 | Day close / Z-report workflow | [BUILT]     | `main/services/day-close.ts`, Operations UI; cash Z print/download Phase 3.6D | High                 |
 | Advanced analytics / BI       | [NOT BUILT] | —                                                                             | —                    |
-| Accounting export             | [BUILT]     | `GET /api/reports/export/bills.csv`; Reports UI Export CSV (Phase 4.4)        | High                 |
+| Accounting export             | [BUILT]     | `GET /api/reports/export/bills.csv`; Reports start/end dates (Phase 4.8)      | High                 |
 
 ## Inventory & Supply Chain
 

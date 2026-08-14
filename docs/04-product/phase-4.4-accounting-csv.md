@@ -144,7 +144,7 @@ Regression: financial-reporting-semantics, day-close, phase-4.2-refund-restock, 
 
 ## 12. Known limitations
 
-- Single-day UX on Reports page (export uses selected date for both `start_date` and `end_date`); multi-day range picker deferred.
+- Reports UI start/end date (Phase 4.8); 93-day cap unchanged.
 - UTC day boundaries only (tenant-local export would need ADR).
 - Tax column is `bills.tax_amount` only — no tax-component breakdown.
 - Export includes all bills in window regardless of `payment_status` (bill-level ledger view).

@@ -116,7 +116,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Phase 4.6 / ADR-013 draft** — `docs/14-decisions/ADR-013-retail-product-variants-sku-identity.md` — drafted Proposed.
 - [x] **Phase 4.6 / ADR-013 Accept** — human gate 2026-08-14. Identity lock; no matrix; no 4.6 implementation slice. Phase 4.6 COMPLETE (ADR-only).
 - [x] **Phase 4.7** Restaurant 86 workflow — `POST /api/products/:id/availability`; Restaurant POS 86; schema v75; `npm run test:phase-4.7`
-- [ ] **Phase 4.8** Reports multi-day range picker (`prompts/phases/phase-4.8.md`)
+- [x] **Phase 4.8** Reports multi-day range picker — start/end dates; 93-day client cap; `npm run test:phase-4.8`
 - [ ] **Phase 4.9** Customer deactivate (`prompts/phases/phase-4.9.md`)
 - [ ] **Phase 4.10** FIN-01 collectible outstanding display (`prompts/phases/phase-4.10.md`)
 - [ ] **Phase 4.11** Inventory on-hand valuation report (`prompts/phases/phase-4.11.md`)

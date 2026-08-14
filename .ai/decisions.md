@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Phase 4.8 Reports multi-day export range (Implemented)
+
+Two native date inputs on Reports. CSV + topProducts use start/end. Client cap 93 days matches backend. `/summary` and `daily-stats` unchanged. Schema v75. Doc: `phase-4.8-reports-date-range.md`.
+
 ## 2026-08-14 — Phase 4.7 Restaurant 86 (Implemented)
 
 No ADR. Reuses `products.is_active`. Adapter `POST /api/products/:id/availability` (owner/manager, Zod, audit `product.availability`). Restaurant POS overflow 86 + restore strip; Retail POS has no 86 chrome. Stock unchanged. Schema v75. Tests: `npm run test:phase-4.7`. Doc: `docs/04-product/phase-4.7-menu-86.md`.
