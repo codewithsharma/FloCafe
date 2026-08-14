@@ -22,7 +22,7 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 | **retail-test** | Synthetic composition; selectable via env for validation only — not production Retail |
 | **Phase 2** | **CLOSED** — final exit + closeout gate `docs/03-architecture/phase-2-closeout-and-phase-3-gate.md` (also `phase-2-final-exit-gate.md`). **PASS WITH DOCUMENTED DEFERMENTS**. |
 | **Phase 3** | **3.1–3.4 COMPLETE**; **3.5A–3.6G COMPLETE** (3.5B DEFERRED; 3.5C no safe extraction). Deploy/start: `ACTIVE_VERTICAL_ID` env (unset→`restaurant`; empty/unknown fail-closed); `retail` = production Retail; `retail-test` = synthetic validation only. |
-| **Phase 4** | **4.1 COMPLETE**; **4.2 COMPLETE** (ADR-011 Accepted — optional Retail refund restock; schema v75 unchanged). Do not start P1.6 eng work. |
+| **Phase 4** | **4.1–4.3 COMPLETE** (floor usability; refund restock ADR-011; low-stock attention hub). Do not start P1.6 eng work. |
 
 Phase 2 delivered: registry → … → 2.14 Order → 2.15 Payment → 2.16 POS → 2.17 Restaurant isolation → 2.18 synthetic Retail → final exit → **closeout / Phase 3 gate**.
 
@@ -70,4 +70,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Phase 4.2 COMPLETE.** Next SAFE candidates: low-stock attention hub or accounting CSV. Do **not** reopen 3.5B / 3.5C / REAL→cents / P1.6.
+**Phase 4.3 COMPLETE.** Next SAFE candidate: accounting CSV export. Do **not** reopen 3.5B / 3.5C / REAL→cents / P1.6.

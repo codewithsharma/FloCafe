@@ -143,6 +143,7 @@ Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webus
 | Product stock decrement on order | [BUILT]     | `main/services/inventory.ts` via order path                                                                                        | Medium               |
 | Manual stock adjustment          | [BUILT]     | `POST /api/products/:id/stock` → Inventory service; Products UI (Phase 3.6C)                                                       | High                 |
 | Low stock filter                 | [BUILT]     | `?low_stock=true` on products                                                                                                      | Medium               |
+| Low-stock attention hub          | [BUILT]     | Phase 4.3: `/products/low-stock`, dashboard AttentionStrip, reuses existing filter; read-only + optional adjust                    | Medium               |
 | Inventory adjustment API         | [BUILT]     | `POST /api/products/:id/stock`                                                                                                     | Medium               |
 | Stock movement ledger            | [BUILT]     | Schema v75 `inventory_movements` + `GET /api/inventory/movements` + owner/manager UI at `/products/movements`; no pre-v75 backfill | Medium               |
 | Recipes / BOM                    | [FROZEN]    | STRATEGY / Phase 3.5 — not in code                                                                                                 | —                    |

@@ -59,6 +59,8 @@ export interface NavFilterContext {
   tablesRequired: boolean;
   kdsEnabled: boolean;
   whatsappEnabled: boolean;
+  /** When set (from GET /platform/composition), overrides business_type mapping. */
+  verticalId?: string;
 }
 
 /** Primary operational navigation — workflow IA. */
@@ -218,7 +220,7 @@ export function getNavItemById(id: string): FloNavItem | undefined {
 export function filterNavItems(ctx: NavFilterContext): FloNavItem[] {
   const role = (ctx.role || 'cashier') as FloNavRole;
   const businessType = ctx.businessType || 'restaurant';
-  const verticalId = verticalIdForBusinessType(businessType);
+  const verticalId = ctx.verticalId || verticalIdForBusinessType(businessType);
 
   return FLO_NAV_ITEMS.filter((item) => {
     if (!item.roles.includes(role)) return false;
@@ -233,8 +235,8 @@ export function filterNavItems(ctx: NavFilterContext): FloNavItem[] {
       return false;
     }
     if (
-      item.requiresWhatsapp
-      && !isFeatureAvailable('notification', ctx.whatsappEnabled, verticalId)
+      item.requiresWhatsapp &&
+      !isFeatureAvailable('notification', ctx.whatsappEnabled, verticalId)
     ) {
       return false;
     }
@@ -264,5 +266,7 @@ export function getRouteTitleKey(pathname: string): string {
   const match = FLO_NAV_ITEMS.find((item) => isNavItemActive(path, item));
   if (match) return match.labelKey;
   if (path === '/addon-groups') return 'flo.nav.inventory';
+  if (path === '/products/movements') return 'inventoryMovements.title';
+  if (path === '/products/low-stock') return 'lowStock.title';
   return 'flo.nav.home';
 }

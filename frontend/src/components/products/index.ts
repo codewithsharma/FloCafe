@@ -12,5 +12,6 @@ export type { AddonFormState, AddonListItem } from './AddonGroupDialog';
 export { CsvImportDialog } from './CsvImportDialog';
 export { BulkTaxDialog } from './BulkTaxDialog';
 export { StockAdjustmentDialog } from './StockAdjustmentDialog';
+export { LowStockTable } from './LowStockTable';
 export { taxCategoryOptionLabel } from './helpers';
 export { PRESET_TAGS, CATEGORY_COLORS, parseProductsTab, type ProductsTabType } from './types';

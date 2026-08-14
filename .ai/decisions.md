@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Phase 4.3 Low-Stock Attention Hub (Implemented)
+
+Read-only hub reusing `GET /api/products?low_stock=true` (`LOW_STOCK_SQL_FRAGMENT`). UI: `/products/low-stock`, dashboard AttentionStrip, Products link; owner/manager + inventory module gate; Adjust stock via Phase 3.6C. Schema v75 unchanged. Docs: `phase-4.3-low-stock-attention-hub.md`.
+
 ## 2026-08-14 — Phase 4.2 Retail Returns & Restock (Accepted + Implemented)
 
 ADR-011 Accepted: optional restock after money refund for `retail` / `retail-test` only; explicit `order_item_id` + `quantity`; T2 separate txn; L2 ledger `adjustment` + `reference_type=refund`; schema v75 unchanged. Implementation: `POST /api/refunds/:id/restock`, InventoryService `restockTrackedForRefund`, Retail Orders UI checkbox. Docs: `phase-4.2-retail-returns-restock.md`. Restaurant remains money-only.

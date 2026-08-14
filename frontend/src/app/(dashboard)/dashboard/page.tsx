@@ -15,8 +15,10 @@ import {
   ArrowRight,
   TrendingUp,
   Wallet,
+  AlertTriangle,
 } from 'lucide-react';
 import { useI18n } from '@/hooks/useI18n';
+import { usePlatformComposition } from '@/hooks/usePlatformComposition';
 import toast from 'react-hot-toast';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
@@ -28,6 +30,7 @@ import {
   type AttentionItem,
 } from '@/components/flo';
 import { isModuleEnabled } from '@/lib/modules';
+import { fetchLowStockProducts } from '@/lib/low-stock';
 
 interface DailyStats {
   sales: number;
@@ -41,9 +44,12 @@ interface DailyStats {
 
 export default function DashboardPage() {
   const { currentTenant } = useAuthStore();
+  const { data: composition } = usePlatformComposition(!!currentTenant);
+  const verticalId = composition?.verticalId;
   const { t } = useI18n();
   const router = useRouter();
   const [stats, setStats] = useState<DailyStats | null>(null);
+  const [lowStockCount, setLowStockCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const isOwner = currentTenant?.role === 'owner';
@@ -75,6 +81,21 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOwner]);
 
+  useEffect(() => {
+    if (!isOwner || !isModuleEnabled('inventory', verticalId)) {
+      setLowStockCount(0);
+      return;
+    }
+    const controller = new AbortController();
+    fetchLowStockProducts(controller.signal)
+      .then((rows) => setLowStockCount(rows.length))
+      .catch((err: unknown) => {
+        if (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))
+          return;
+      });
+    return () => controller.abort();
+  }, [isOwner, verticalId]);
+
   const attentionItems = useMemo((): AttentionItem[] => {
     if (!stats) return [];
     const items: AttentionItem[] = [];
@@ -98,7 +119,7 @@ export default function DashboardPage() {
         icon: ChefHat,
       });
     }
-    if (stats.tablesOccupied > 0 && isModuleEnabled('tables')) {
+    if (stats.tablesOccupied > 0 && isModuleEnabled('tables', verticalId)) {
       items.push({
         id: 'tables',
         label: t('dashboard.tablesOccupied'),
@@ -108,8 +129,18 @@ export default function DashboardPage() {
         icon: LayoutGrid,
       });
     }
+    if (lowStockCount > 0 && isModuleEnabled('inventory', verticalId)) {
+      items.push({
+        id: 'low-stock',
+        label: t('lowStock.attentionLabel'),
+        detail: String(lowStockCount),
+        href: '/products/low-stock',
+        variant: 'warning',
+        icon: AlertTriangle,
+      });
+    }
     return items;
-  }, [stats, t]);
+  }, [stats, t, verticalId, lowStockCount]);
 
   if (!isOwner) return null;
 
@@ -149,7 +180,7 @@ export default function DashboardPage() {
       href: '/orders',
       variant: 'warning' as const,
     },
-    ...(isModuleEnabled('tables')
+    ...(isModuleEnabled('tables', verticalId)
       ? [
           {
             label: t('dashboard.tablesOccupied'),
