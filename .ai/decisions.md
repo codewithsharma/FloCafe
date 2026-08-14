@@ -1,5 +1,17 @@
 # Decisions
 
+## 2026-08-14 — Phase 4.5 Retail Exchange (Implemented)
+
+Composition per ADR-012: `main/lib/exchange-return-value.ts`, `main/lib/exchange-idempotency.ts`, `frontend/src/lib/exchange/coordinator.ts`, `ExchangeDialog` on Orders (retail-only). Leg order refund → replacement sale → optional restock. Schema v75 unchanged. Doc: `phase-4.5-retail-exchange.md`.
+
+## 2026-08-14 — ADR-012 Retail Exchange Policy (Accepted)
+
+**Status:** Accepted + implemented. Composition (Option A): Retail-only frontend exchange coordinator orchestrates existing refund + replacement POS sale + optional ADR-011 restock. Leg order: refund → replacement → restock. Return value = `(order_items.total / quantity) × return_qty` (coordinator-computed; bill-level refund API unchanged). No store credit v1. Operational recovery idempotency via `exchange_attempt_id` + per-leg keys. Schema v75 unchanged. Doc: `docs/14-decisions/ADR-012-retail-exchange-policy.md`.
+
+## 2026-08-14 — Phase 4.5 Retail Exchange (Discovery)
+
+Discovery: `docs/04-product/phase-4.5-retail-exchange-discovery.md`. **Superseded by ADR-012 above.**
+
 ## 2026-08-14 — Phase 4.4 Accounting CSV Export (Implemented)
 
 Bill-level read-only `GET /api/reports/export/bills.csv` with required UTC `start_date`/`end_date` (half-open via `utcDayBounds()`); 93-day cap; owner/manager auth. Semantics per `reporting-financial-semantics.md`: gross=`total`, net=`paid_amount`, refunds=completed SUM, payments_received from `payment_details`. Shared `main/lib/csv.ts` + `main/services/bills-csv-export.ts`. Reports UI single-day export. Schema v75 unchanged. Doc: `docs/04-product/phase-4.4-accounting-csv.md`.

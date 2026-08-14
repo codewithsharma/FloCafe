@@ -32,12 +32,14 @@ import {
   CancelOrderDialog,
   VoidItemDialog,
   RefundDialog,
+  ExchangeDialog,
   DiscountDialog,
   AddItemsDialog,
   type OrdersFilters,
   type CancelOrderState,
   type VoidItemState,
   type RefundDialogState,
+  type ExchangeDialogState,
   type DiscountState,
   type SelectedAddItem,
 } from '@/components/orders';
@@ -48,9 +50,15 @@ import {
   postRefundRestock,
 } from '@/lib/refunds';
 import { printLatestRefundReceiptForBill, printRefundReceipt } from '@/lib/refund-receipt-print';
+import { createExchangeAttemptId } from '@exchange/idempotency';
+import { runExchange } from '@/lib/exchange/coordinator';
+import { clearExchangeAttempt, loadExchangeAttempt } from '@/lib/exchange/session';
+import type { ExchangeAttemptState } from '@/lib/exchange/types';
+import { isExchangeTerminal } from '@/lib/exchange/types';
 
 const BLOCKED_RESTOCK_STATUSES = new Set(['voided', 'void_adjustment', 'cancelled']);
 const RESTOCK_VERTICALS = new Set(['retail', 'retail-test']);
+const EXCHANGE_VERTICALS = RESTOCK_VERTICALS;
 
 type FilterType = 'all' | 'active' | 'unpaid' | 'held';
 
@@ -65,6 +73,7 @@ export default function OrdersPage() {
   const { currentTenant, user } = useAuthStore();
   const { data: composition } = usePlatformComposition(!!currentTenant);
   const restockVerticalEnabled = RESTOCK_VERTICALS.has(String(composition?.verticalId ?? ''));
+  const exchangeVerticalEnabled = EXCHANGE_VERTICALS.has(String(composition?.verticalId ?? ''));
   const { printBill } = usePrinterStore();
   const heldOrdersStore = useHeldOrdersStore();
   const router = useRouter();
@@ -105,6 +114,12 @@ export default function OrdersPage() {
   // Refund modal state (M6.1)
   const [refundModal, setRefundModal] = useState<RefundDialogState | null>(null);
   const [refunding, setRefunding] = useState(false);
+
+  // Exchange modal state (Phase 4.5)
+  const [exchangeModal, setExchangeModal] = useState<ExchangeDialogState | null>(null);
+  const [exchangeAttempt, setExchangeAttempt] = useState<ExchangeAttemptState | null>(null);
+  const [exchanging, setExchanging] = useState(false);
+  const [exchangeProductSearch, setExchangeProductSearch] = useState('');
 
   // Consolidated discount modal state
   const [discountModal, setDiscountModal] = useState<DiscountState | null>(null);
@@ -642,6 +657,131 @@ export default function OrdersPage() {
     }
   };
 
+  const buildExchangeReturnLines = (order: Order) =>
+    (order.items ?? [])
+      .filter(
+        (item) => !BLOCKED_RESTOCK_STATUSES.has(String(item.status)) && Number(item.quantity) > 0,
+      )
+      .map((item) => ({
+        orderItemId: String(item.id),
+        productName: item.product_name,
+        lineTotal: Number(item.total),
+        lineQuantity: Number(item.quantity),
+        returnQuantity: 1,
+        status: item.status,
+        selected: false,
+        restockRequested: false,
+      }));
+
+  const openExchangeModal = (order: Order) => {
+    if (!order.bill) return;
+    const saved = loadExchangeAttempt();
+    if (saved && saved.originalBillId === order.bill.id) {
+      setExchangeAttempt(saved);
+    } else {
+      setExchangeAttempt(null);
+    }
+    setExchangeProductSearch('');
+    setExchangeModal({
+      billId: order.bill.id,
+      orderId: order.id,
+      orderNumber: order.order_number,
+      customerId: order.customer_id,
+      reason: '',
+      overridePin: '',
+      paymentMethod: 'cash',
+      returnLines: buildExchangeReturnLines(order),
+      replacementLines: [],
+    });
+  };
+
+  const buildAttemptFromDialog = (
+    dialog: ExchangeDialogState,
+    attemptId: string,
+    prior: ExchangeAttemptState | null,
+  ): ExchangeAttemptState => {
+    const selectedReturns = dialog.returnLines.filter((l) => l.selected && l.returnQuantity > 0);
+    const hasRestock = selectedReturns.some((l) => l.restockRequested);
+    return {
+      exchangeAttemptId: attemptId,
+      originalBillId: dialog.billId,
+      originalOrderId: dialog.orderId,
+      refundLeg: prior?.refundLeg ?? 'refund_pending',
+      refundId: prior?.refundId,
+      refundAmount: prior?.refundAmount,
+      replacementLeg: prior?.replacementLeg ?? 'replacement_pending',
+      replacementOrderId: prior?.replacementOrderId,
+      replacementBillId: prior?.replacementBillId,
+      replacementPaymentTotal: prior?.replacementPaymentTotal,
+      restockLeg: prior?.restockLeg ?? (hasRestock ? 'restock_pending' : 'restock_skipped'),
+      returnLines: selectedReturns.map((line) => ({
+        orderItemId: line.orderItemId,
+        lineTotal: line.lineTotal,
+        lineQuantity: line.lineQuantity,
+        returnQuantity: line.returnQuantity,
+        status: line.status,
+        restockRequested: line.restockRequested,
+        restockComplete:
+          prior?.returnLines.find((p) => p.orderItemId === line.orderItemId)?.restockComplete ??
+          false,
+      })),
+      replacementLines: dialog.replacementLines.map((line) => ({
+        productId: line.productId,
+        quantity: line.quantity,
+      })),
+      lastError: prior?.lastError,
+    };
+  };
+
+  const executeExchange = async (
+    dialog: ExchangeDialogState,
+    resume: ExchangeAttemptState | null,
+  ) => {
+    if (!dialog) return;
+    setExchanging(true);
+    try {
+      const attemptId = resume?.exchangeAttemptId ?? createExchangeAttemptId();
+      let attempt = buildAttemptFromDialog(dialog, attemptId, resume);
+      if (resume) {
+        attempt = { ...attempt, lastError: undefined };
+      }
+
+      const finalState = await runExchange({
+        attemptState: attempt,
+        billId: dialog.billId,
+        refundReason: dialog.reason.trim(),
+        overridePin: dialog.overridePin,
+        refundMethod: dialog.paymentMethod,
+        paymentMethod: dialog.paymentMethod,
+        customerId: dialog.customerId,
+        onProgress: setExchangeAttempt,
+      });
+
+      setExchangeAttempt(finalState);
+      if (isExchangeTerminal(finalState)) {
+        toast.success(t('orders.exchangeSuccess'));
+        clearExchangeAttempt();
+        setExchangeModal(null);
+        setExchangeAttempt(null);
+        fetchOrders();
+      }
+    } catch (err: unknown) {
+      toast.error(extractRefundErrorMessage(err) || t('orders.exchangeFailed'));
+    } finally {
+      setExchanging(false);
+    }
+  };
+
+  const handleExchangeConfirm = () => {
+    if (!exchangeModal) return;
+    void executeExchange(exchangeModal, exchangeAttempt);
+  };
+
+  const handleExchangeRetry = () => {
+    if (!exchangeModal || !exchangeAttempt) return;
+    void executeExchange(exchangeModal, exchangeAttempt);
+  };
+
   const handlePrintRefundReceipt = async (billId: number) => {
     setPrintingRefundBillId(billId);
     try {
@@ -1084,6 +1224,9 @@ export default function OrdersPage() {
                   restockQuantity: first ? '1' : '',
                 });
               }}
+              canExchange={exchangeVerticalEnabled && canRefundOrder(order)}
+              onExchange={() => openExchangeModal(order)}
+              exchanging={exchanging && exchangeModal?.billId === order.bill?.id}
             />
           ))}
         </div>
@@ -1139,6 +1282,29 @@ export default function OrdersPage() {
         onChange={setRefundModal}
         onConfirm={handleRefund}
         refunding={refunding}
+      />
+
+      <ExchangeDialog
+        open={exchangeModal !== null}
+        onOpenChange={(open) => {
+          if (!open && !exchanging) {
+            setExchangeModal(null);
+            if (!exchangeAttempt?.lastError) {
+              clearExchangeAttempt();
+              setExchangeAttempt(null);
+            }
+          }
+        }}
+        state={exchangeModal}
+        onChange={setExchangeModal}
+        products={products}
+        productSearch={exchangeProductSearch}
+        onProductSearchChange={setExchangeProductSearch}
+        onConfirm={handleExchangeConfirm}
+        onRetry={handleExchangeRetry}
+        processing={exchanging}
+        attemptState={exchangeAttempt}
+        fmt={fmt}
       />
 
       <DiscountDialog

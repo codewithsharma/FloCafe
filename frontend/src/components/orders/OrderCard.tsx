@@ -19,6 +19,7 @@ import {
   Loader2,
   Ban,
   Undo2,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Panel } from '@/components/flo/Panel';
@@ -79,6 +80,9 @@ export interface OrderCardProps {
   canRefund?: boolean;
   onRefund?: () => void;
   refunding?: boolean;
+  canExchange?: boolean;
+  onExchange?: () => void;
+  exchanging?: boolean;
   /** Show print-refund affordance when bill has been refunded. */
   canPrintRefund?: boolean;
   onPrintRefund?: () => void;
@@ -150,6 +154,9 @@ export function OrderCard({
   canRefund = false,
   onRefund,
   refunding = false,
+  canExchange = false,
+  onExchange,
+  exchanging = false,
   canPrintRefund = false,
   onPrintRefund,
   printingRefund = false,
@@ -221,6 +228,21 @@ export function OrderCard({
               title={t('orders.refund')}
             >
               {refunding ? <Loader2 className="size-4 animate-spin" /> : <Undo2 size={14} />}
+            </button>
+          ) : null}
+          {canExchange && onExchange ? (
+            <button
+              type="button"
+              onClick={onExchange}
+              disabled={exchanging}
+              className="p-1.5 rounded-flo-md border border-flo-border text-flo-text-secondary hover:bg-flo-bg disabled:opacity-50 transition-colors min-h-11 min-w-11 inline-flex items-center justify-center"
+              title={t('orders.exchange')}
+            >
+              {exchanging ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <ArrowLeftRight size={14} />
+              )}
             </button>
           ) : null}
           {canPrintRefund && onPrintRefund ? (

@@ -27,6 +27,8 @@ const nextConfig: NextConfig = {
     resolveAlias: {
       '@countries': '../main/countries.ts',
       '@modules': '../main/modules/index.ts',
+      '@exchange/return-value': '../main/lib/exchange-return-value.ts',
+      '@exchange/idempotency': '../main/lib/exchange-idempotency.ts',
     },
   },
 };

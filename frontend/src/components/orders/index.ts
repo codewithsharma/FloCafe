@@ -11,6 +11,8 @@ export { VoidItemDialog } from './VoidItemDialog';
 export type { VoidItemState } from './VoidItemDialog';
 export { RefundDialog } from './RefundDialog';
 export type { RefundDialogState, RefundRestockLineOption } from './RefundDialog';
+export { ExchangeDialog } from './ExchangeDialog';
+export type { ExchangeDialogState, ExchangeReturnLineDraft } from './ExchangeDialog';
 export { DiscountDialog } from './DiscountDialog';
 export type { DiscountState } from './DiscountDialog';
 export { AddItemsDialog } from './AddItemsDialog';

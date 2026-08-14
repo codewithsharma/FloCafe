@@ -109,6 +109,8 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Phase 4.3 implementation** — Low-stock attention hub (`docs/04-product/phase-4.3-low-stock-attention-hub.md`; `npm run test:phase-4.3`).
 - [x] **Phase 4.4 discovery** — Accounting CSV export (`docs/04-product/phase-4.4-accounting-csv-discovery.md`). Verdict: SAFE — bill-level server CSV; no ADR unless tenant-local day boundary chosen.
 - [x] **Phase 4.4 implementation** — `GET /api/reports/export/bills.csv` + Reports UI download (`docs/04-product/phase-4.4-accounting-csv.md`; `npm run test:phase-4.4`).
+- [x] **Phase 4.5 discovery** — Retail exchange workflow (`docs/04-product/phase-4.5-retail-exchange-discovery.md`). Verdict: **ADR REQUIRED** → **ADR-012 ACCEPTED**.
+- [x] **Phase 4.5 implementation** — Retail exchange coordinator + UI (`docs/04-product/phase-4.5-retail-exchange.md`; `npm run test:phase-4.5`).
 - [ ] **Phase 3.5** Remaining optional — packages/extraction, recipes/BOM, suppliers/PO (not authorized unless explicitly tasked). Tax cleanup stays deferred (3.5B).
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet
 - [ ] ADR-006 Multi-Location Architecture (design only; no code until approved)
