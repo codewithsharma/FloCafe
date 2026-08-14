@@ -35,7 +35,7 @@ async function main() {
   db.prepare(`
     INSERT INTO customers (id, name, phone, country_code, is_active, created_at, updated_at)
     VALUES (?, ?, ?, ?, 0, datetime('now'), datetime('now'))
-  `).run('cust-soft-1', 'Old Name', '9876543210', '+91');
+  `).run('cust-soft-1', 'Old Name', '+919876543210', '+91');
 
   const before = db.prepare("SELECT * FROM customers WHERE id = 'cust-soft-1'").get();
   assertEqual(before.is_active, 0, 'precondition: row starts soft-deleted');
@@ -67,7 +67,7 @@ async function main() {
     assertEqual(after.name, 'New Name', 'name updated');
     assertEqual(after.email, 'new@example.com', 'email updated');
     assertEqual(after.address, '123 Fake St', 'address updated to its own column, not country_code');
-    assertEqual(after.country_code, '+54', 'country_code updated to Argentina dial code (not silently overwritten)');
+    assertEqual(after.country_code, '+91', 'country_code follows E.164 parse of the phone (not a free-form body override)');
     assert(after.country_code !== after.address, 'country_code and address columns hold different values');
 
     console.log('\n[DB] Database closed');

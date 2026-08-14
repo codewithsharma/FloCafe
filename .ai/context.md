@@ -21,7 +21,7 @@ Advanced single-location café POS. Executive scores (audit 2026-08-12): Product
 | **retail** | Production Retail vertical; selectable via `ACTIVE_VERTICAL_ID=retail` (shared commerce modules; no tables/kitchen/kds) |
 | **retail-test** | Synthetic composition; selectable via env for validation only — not production Retail |
 | **Phase 2** | **CLOSED** — final exit + closeout gate `docs/03-architecture/phase-2-closeout-and-phase-3-gate.md` (also `phase-2-final-exit-gate.md`). **PASS WITH DOCUMENTED DEFERMENTS**. |
-| **Phase 3** | **3.1–3.4 COMPLETE**; **3.5A–3.6C COMPLETE** (3.5B DEFERRED; 3.5C no safe extraction); **3.6D Day-Close Z Snapshot Print/Download COMPLETE**. Remaining depth work TBD. Deploy/start: `ACTIVE_VERTICAL_ID` env (unset→`restaurant`; empty/unknown fail-closed); `retail` = production Retail; `retail-test` = synthetic validation only. |
+| **Phase 3** | **3.1–3.4 COMPLETE**; **3.5A–3.6D COMPLETE** (3.5B DEFERRED; 3.5C no safe extraction); **3.6E Inactive Customer Reactivation UX COMPLETE**. Remaining depth work TBD. Deploy/start: `ACTIVE_VERTICAL_ID` env (unset→`restaurant`; empty/unknown fail-closed); `retail` = production Retail; `retail-test` = synthetic validation only. |
 
 Phase 2 delivered: registry → … → 2.14 Order → 2.15 Payment → 2.16 POS → 2.17 Restaurant isolation → 2.18 synthetic Retail → final exit → **closeout / Phase 3 gate**.
 
@@ -69,4 +69,4 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**P1.6 pilot gates / first supervised café** (human/operational; intentionally deferred for engineering). Phase **3.6D COMPLETE** (Day-Close Z Snapshot Print/Download — cash reconciliation from frozen `summary_json`). Continue authorized product-depth slices only; do not reopen 3.5B / extraction / P1.6.
+**P1.6 pilot gates / first supervised café** (human/operational; intentionally deferred for engineering). Phase **3.6E COMPLETE** (Inactive customer show + reactivate UX; POS search stays active-only). Continue authorized product-depth slices only; do not reopen 3.5B / extraction / P1.6.

@@ -28,11 +28,15 @@ export default function CustomersPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const filter = searchParams.get('filter');
+  const role = currentTenant?.role;
+  const canShowInactive = role === 'owner' || role === 'manager';
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
+  const [showInactive, setShowInactive] = useState(false);
+  const [reactivatingId, setReactivatingId] = useState<string | number | null>(null);
   const [sortField, setSortField] = useState('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showForm, setShowForm] = useState(false);
@@ -70,11 +74,15 @@ export default function CustomersPage() {
       if (filter) params.filter = filter;
       if (sortField) params.sort = sortField;
       if (sortOrder) params.order = sortOrder;
+      if (canShowInactive && showInactive) params.include_inactive = 'true';
       api
         .get('/customers', { params, signal: controller.signal })
         .then(({ data }) => setCustomers(data.data || []))
         .catch((err: unknown) => {
-          if (!(err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))) {
+          if (!(
+            err instanceof Error &&
+            (err.name === 'CanceledError' || err.name === 'AbortError')
+          )) {
             toast.error(t('customer.loadFailed'));
           }
         })
@@ -87,7 +95,7 @@ export default function CustomersPage() {
       controller.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, filter, sortField, sortOrder, refreshKey]);
+  }, [search, filter, sortField, sortOrder, refreshKey, showInactive, canShowInactive]);
 
   const openAdd = () => {
     setEditingCustomer(null);
@@ -104,6 +112,24 @@ export default function CustomersPage() {
       country_code: c.country_code || dialCode,
     });
     setShowForm(true);
+  };
+
+  const handleReactivate = async (c: Customer) => {
+    setReactivatingId(c.id);
+    try {
+      await api.post(`/customers/${c.id}/reactivate`);
+      toast.success(t('customer.reactivated'));
+      setRefreshKey((k) => k + 1);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { error?: string; message?: string } } };
+      toast.error(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          t('customer.reactivateFailed'),
+      );
+    } finally {
+      setReactivatingId(null);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -146,7 +172,10 @@ export default function CustomersPage() {
           <span className="inline-flex flex-wrap items-center gap-3">
             {t('nav.customers')}
             {filter === 'invalid_phones' ? (
-              <StatusBadge variant="danger" className="inline-flex items-center gap-1.5 normal-case tracking-normal">
+              <StatusBadge
+                variant="danger"
+                className="inline-flex items-center gap-1.5 normal-case tracking-normal"
+              >
                 <AlertCircle size={14} />
                 Action Required
                 <button
@@ -181,6 +210,11 @@ export default function CustomersPage() {
           onEdit={openEdit}
           onOpenLedger={openLedger}
           onAdd={openAdd}
+          canShowInactive={canShowInactive}
+          showInactive={showInactive}
+          onShowInactiveChange={setShowInactive}
+          onReactivate={handleReactivate}
+          reactivatingId={reactivatingId}
         />
       )}
 

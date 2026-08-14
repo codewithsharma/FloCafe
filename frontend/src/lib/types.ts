@@ -123,6 +123,8 @@ export interface Customer {
   country_code: string;
   name: string;
   email: string | null;
+  /** 1/true = active; 0/false = inactive (soft lifecycle). Omitted on older payloads → treat as active. */
+  is_active?: boolean | number;
   visits_count?: number;
   total_spent?: number;
   last_visit_at?: string | null;
@@ -198,7 +200,8 @@ export interface Bill {
   paid_amount: number;
   balance: number;
   payment_status: 'unpaid' | 'partial' | 'paid' | 'partially_refunded' | 'refunded';
-  payment_details: { method: string; payment_method_id?: number; amount: number; timestamp: string }[] | null;
+  payment_details:
+    { method: string; payment_method_id?: number; amount: number; timestamp: string }[] | null;
   split_group_id?: string | null;
   split_label?: string | null;
   tax_breakdown?: { title: string; rate: number; amount: number }[] | null;

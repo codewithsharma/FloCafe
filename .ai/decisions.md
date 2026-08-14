@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Phase 3.6E Inactive Customer Reactivation UX (Accepted + Implemented)
+
+Existing `customers.is_active` lifecycle. Owner/manager `GET /customers?include_inactive=true`; `POST /customers/:id/reactivate` flips flag only (auth matches soft-reactivate-by-phone). POS `/customers-search` stays active-only. No schema/loyalty/wallet/money-path changes. Doc: `docs/03-architecture/phase-3.6e-inactive-customer-ux.md`.
+
 ## 2026-08-14 — Phase 3.6D Day-Close Z Snapshot Print/Download (Accepted + Implemented)
 
 Cash Z snapshot from frozen `day_closes.summary_json` only. Download: plain-text client formatter. Print: `POST /printers/print-day-close` + thermal `formatDayCloseZ` (best-effort; does not mutate day-close). Omits Gross/Net/tenders/tax (not in day-close API). Doc: `docs/03-architecture/phase-3.6d-day-close-z-snapshot.md`.

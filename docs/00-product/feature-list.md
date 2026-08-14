@@ -51,14 +51,14 @@ Restaurant vertical only (`ACTIVE_VERTICAL_ID=restaurant` or unset). Not mounted
 
 ## Customers & CRM
 
-| Feature              | Status  | Evidence                                       | Production readiness |
-| -------------------- | ------- | ---------------------------------------------- | -------------------- |
-| Customer CRUD        | [BUILT] | `main/routes/customers.ts`                     | High                 |
-| Phone search (E.164) | [BUILT] | `main/lib/phone.ts`, phone tests               | High                 |
-| CRM lookup by phone  | [BUILT] | `GET /api/crm/lookup`                          | High                 |
-| Customer wallet view | [BUILT] | `GET /api/customers/:id/wallet`                | Medium               |
-| Loyalty points       | [BUILT] | `loyalty_ledger.amount`, integration tests     | High                 |
-| Loyalty redemption   | [BUILT] | `tests/integration-loyalty-redemption.test.ts` | High                 |
+| Feature              | Status  | Evidence                                                                                                       | Production readiness |
+| -------------------- | ------- | -------------------------------------------------------------------------------------------------------------- | -------------------- |
+| Customer CRUD        | [BUILT] | `main/routes/customers.ts`; inactive badge + owner/manager show-inactive + `POST /:id/reactivate` (Phase 3.6E) | High                 |
+| Phone search (E.164) | [BUILT] | `main/lib/phone.ts`, phone tests                                                                               | High                 |
+| CRM lookup by phone  | [BUILT] | `GET /api/crm/lookup`                                                                                          | High                 |
+| Customer wallet view | [BUILT] | `GET /api/customers/:id/wallet`                                                                                | Medium               |
+| Loyalty points       | [BUILT] | `loyalty_ledger.amount`, integration tests                                                                     | High                 |
+| Loyalty redemption   | [BUILT] | `tests/integration-loyalty-redemption.test.ts`                                                                 | High                 |
 
 ## Staff & Access Control
 
