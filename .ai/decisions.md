@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-08-14 — Phase 4.4 Accounting CSV Export (Implemented)
+
+Bill-level read-only `GET /api/reports/export/bills.csv` with required UTC `start_date`/`end_date` (half-open via `utcDayBounds()`); 93-day cap; owner/manager auth. Semantics per `reporting-financial-semantics.md`: gross=`total`, net=`paid_amount`, refunds=completed SUM, payments_received from `payment_details`. Shared `main/lib/csv.ts` + `main/services/bills-csv-export.ts`. Reports UI single-day export. Schema v75 unchanged. Doc: `docs/04-product/phase-4.4-accounting-csv.md`.
+
+## 2026-08-14 — Phase 4.4 Accounting CSV Export (Discovery)
+
+Discovery: `docs/04-product/phase-4.4-accounting-csv-discovery.md`. No financial CSV exists; menu-csv `toCsvRow()` pattern reusable. Authoritative semantics: `reporting-financial-semantics.md`. Recommended: bill-level read-only `GET /api/reports/export/bills.csv` with UTC `start_date`/`end_date` (same as `/summary`). No schema/money/FIN-01 changes. **Superseded by implementation record above.**
+
 ## 2026-08-14 — Phase 4.3 Low-Stock Attention Hub (Implemented)
 
 Read-only hub reusing `GET /api/products?low_stock=true` (`LOW_STOCK_SQL_FRAGMENT`). UI: `/products/low-stock`, dashboard AttentionStrip, Products link; owner/manager + inventory module gate; Adjust stock via Phase 3.6C. Schema v75 unchanged. Docs: `phase-4.3-low-stock-attention-hub.md`.

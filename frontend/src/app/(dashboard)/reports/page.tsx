@@ -18,6 +18,8 @@ import {
   Tags,
   BarChart3,
   Wallet,
+  Download,
+  Loader2,
 } from 'lucide-react';
 import { useI18n } from '@/hooks/useI18n';
 import toast from 'react-hot-toast';
@@ -35,6 +37,8 @@ import {
 } from '@/components/flo';
 import type { StatusBadgeVariant } from '@/lib/flo-display';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { downloadBillsCsvExport } from '@/lib/accounting-csv-export';
 
 interface PaymentMethodBreakdown {
   method: string | null;
@@ -176,6 +180,7 @@ export default function ReportsPage() {
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [insights, setInsights] = useState<Insights | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exportingCsv, setExportingCsv] = useState(false);
 
   const role = currentTenant?.role;
   const canView = role === 'owner' || role === 'manager';
@@ -241,6 +246,18 @@ export default function ReportsPage() {
   }, [canView, selectedDate]);
 
   if (!canView) return null;
+
+  const handleExportCsv = async () => {
+    setExportingCsv(true);
+    try {
+      await downloadBillsCsvExport(selectedDate, selectedDate);
+      toast.success(t('reports.exportCsvSuccess'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('reports.exportCsvFailed'));
+    } finally {
+      setExportingCsv(false);
+    }
+  };
 
   const paymentMethods = isToday
     ? (stats?.paymentMethods ?? [])
@@ -350,14 +367,35 @@ export default function ReportsPage() {
             : t('flo.reports.dateDescription', { date: selectedDate })
         }
         actions={
-          <Input
-            type="date"
-            value={selectedDate}
-            max={todayLocal}
-            onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-            className="min-h-11 w-auto border-flo-border"
-            aria-label={t('dashboard.selectDate')}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              type="date"
+              value={selectedDate}
+              max={todayLocal}
+              onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+              className="min-h-11 w-auto border-flo-border"
+              aria-label={t('dashboard.selectDate')}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleExportCsv()}
+              disabled={exportingCsv || loading}
+              className="min-h-11"
+            >
+              {exportingCsv ? (
+                <>
+                  <Loader2 className="size-4 animate-spin mr-2" aria-hidden />
+                  {t('reports.exportingCsv')}
+                </>
+              ) : (
+                <>
+                  <Download className="size-4 mr-2" aria-hidden />
+                  {t('reports.exportCsv')}
+                </>
+              )}
+            </Button>
+          </div>
         }
       />
 
