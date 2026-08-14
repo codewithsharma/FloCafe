@@ -81,7 +81,7 @@ async function main() {
       body: { type: 'takeaway', items: [{ product_id: 'prod-tracked', quantity: 100 }] },
       headers: authHeader,
     });
-    assert(failRes.status >= 400, `insufficient stock rejected (${failRes.status})`);
+    assertEqual(failRes.status, 400, 'insufficient stock returns HTTP 400');
     const unchanged = db.prepare('SELECT stock_quantity FROM products WHERE id = ?').get('prod-tracked') as any;
     assertEqual(unchanged.stock_quantity, 7, 'stock unchanged after reject');
 

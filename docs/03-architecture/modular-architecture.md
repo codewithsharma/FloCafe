@@ -71,7 +71,7 @@ Composition flows **upward**: Core enables Modules; Verticals select and configu
 - INTERIM 2.14 catalog exit (preserved)
 - CURRENT 2.14 Order · 2.15 Payment · 2.16 POS · 2.17 Restaurant isolation · 2.18 synthetic Retail
 
-**Phase 3 (gate ready, not started):** see [phase-2-closeout-and-phase-3-gate.md](phase-2-closeout-and-phase-3-gate.md) — 3.1 fail-closed remount → 3.2 config → 3.3 production Retail → 3.4 residuals → 3.5 optional. Do not start without explicit kickoff.
+**Phase 3:** 3.1–3.4 **COMPLETE**; 3.5 optional. Ordered plan: [phase-2-closeout-and-phase-3-gate.md](phase-2-closeout-and-phase-3-gate.md).
 
 ## Explicit non-goals (now)
 
@@ -83,6 +83,10 @@ Composition flows **upward**: Core enables Modules; Verticals select and configu
 ## Related
 
 - [phase-2-closeout-and-phase-3-gate.md](phase-2-closeout-and-phase-3-gate.md)
+- [phase-3.1-fail-closed-remount.md](phase-3.1-fail-closed-remount.md)
+- [phase-3.2-capability-configuration.md](phase-3.2-capability-configuration.md)
+- [phase-3.3-production-retail.md](phase-3.3-production-retail.md)
+- [phase-3.4-correctness-residuals.md](phase-3.4-correctness-residuals.md)
 - [phase-2-final-exit-gate.md](phase-2-final-exit-gate.md)
 - [phase-2-exit-gate.md](phase-2-exit-gate.md)
 - [module-system.md](module-system.md)

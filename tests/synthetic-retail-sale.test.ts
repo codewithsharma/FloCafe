@@ -282,8 +282,8 @@ async function main() {
       },
       headers: authHeader,
     });
-    // Characterize existing behavior (inventory-boundary uses status >= 400).
-    assert(over.status >= 400, `oversell rejected (${over.status})`);
+    // Phase 3.4 — oversell must be client error 400 (not 500).
+    assertEqual(over.status, 400, 'oversell returns HTTP 400');
     const stockAfterOver = db
       .prepare('SELECT stock_quantity FROM products WHERE id = ?')
       .get(productId) as any;

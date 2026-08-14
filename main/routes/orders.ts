@@ -1226,6 +1226,7 @@ router.patch(
               .prepare('SELECT * FROM order_items WHERE order_id = ?')
               .all(req.params.id) as any[];
             for (const item of items) {
+              if (item.status === 'voided' || item.status === 'void_adjustment') continue;
               const product = db
                 .prepare('SELECT * FROM products WHERE id = ?')
                 .get(item.product_id) as any;
@@ -2198,6 +2199,7 @@ router.patch('/:orderId/items/:itemId/cancel', async (req, res) => {
             .prepare('SELECT * FROM order_items WHERE order_id = ?')
             .all(orderId) as any[];
           for (const i of allItems) {
+            if (i.status === 'voided' || i.status === 'void_adjustment') continue;
             const product = db
               .prepare('SELECT * FROM products WHERE id = ?')
               .get(i.product_id) as any;

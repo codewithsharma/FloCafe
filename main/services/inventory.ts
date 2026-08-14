@@ -82,12 +82,12 @@ function isTracking(product: StockTrackedProduct | null | undefined): boolean {
 }
 
 /**
- * Throws Error (not InventoryServiceError) with the historical message so
- * order-route catch blocks that map Error → 400 keep working unchanged.
+ * Reject oversell for tracked products.
+ * Throws InventoryServiceError(400) so order-route catch (`statusCode || 500`) returns HTTP 400.
  */
 export function assertStockAvailable(product: StockTrackedProduct, quantity: number): void {
   if (isTracking(product) && Number(product.stock_quantity ?? 0) < quantity) {
-    throw new Error(`Insufficient stock for ${product.name}`);
+    throw new InventoryServiceError(400, `Insufficient stock for ${product.name}`);
   }
 }
 

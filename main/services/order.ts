@@ -16,7 +16,9 @@
  *   cancel/restore/add-items remains in routes until a safe no-behavior-change
  *   extract is characterized).
  * - Full facade extraction of create / addItems.
- * - Void×cancel restock semantic fix (pinned in order-void-cancel-stock.test.ts).
+ *
+ * Phase 3.4: void×cancel restock skips voided / void_adjustment lines
+ * (see order-void-cancel-stock.test.ts — expect stock 8).
  */
 
 /** Concerns Order is responsible for coordinating / persisting. */

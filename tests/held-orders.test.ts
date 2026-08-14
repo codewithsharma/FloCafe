@@ -23,12 +23,17 @@ Module._load = function (request: string, parent: unknown, isMain: boolean) {
 
 const {
   initTestDb, createApp, startServer,
-  seedOwnerUser,
+  seedOwnerUser, seedTable,
   api, assert, assertEqual,
   closeDatabase, getDatabase, now,
 } = require('./helpers/test-setup');
 
 const { heldOrderRoutes } = require('../main/routes/held-orders');
+const {
+  ACTIVE_VERTICAL_ENV_KEY,
+  commitActiveVerticalFromEnv,
+  resetActiveVerticalResolutionForTests,
+} = require('../main/modules');
 
 async function main() {
   console.log('Integration Test: Held Orders API');
@@ -36,6 +41,7 @@ async function main() {
 
   const db = initTestDb();
   const { authHeader } = seedOwnerUser(db);
+  seedTable(db, 'tbl-test-123', 101, 2);
 
   const app = createApp({
     '/api/held-orders': heldOrderRoutes,
@@ -69,6 +75,8 @@ async function main() {
     
     assertEqual(postRes.status, 200, 'POST /held-orders returns 200');
     assertEqual(postRes.data.success, true, 'Returns success: true');
+    const afterHold = db.prepare('SELECT status FROM tables WHERE id = ?').get(tableId) as { status: string };
+    assertEqual(afterHold.status, 'held', 'tables ON: hold sets table status to held');
     console.log('  ✓ POST /held-orders creates successfully');
 
     // ═══════════════════════════════════════════════════════════════════
@@ -112,6 +120,8 @@ async function main() {
     
     const verifyRes = await api(baseUrl, '/api/held-orders', { headers: authHeader });
     assertEqual(verifyRes.data.orders.length, 0, 'Held orders list is empty after deletion');
+    const afterDelete = db.prepare('SELECT status FROM tables WHERE id = ?').get(tableId) as { status: string };
+    assertEqual(afterDelete.status, 'available', 'tables ON: delete frees held table to available');
     console.log('  ✓ DELETE /held-orders removes order correctly');
 
     // A stale screen or another terminal may send the same delete after the
@@ -139,6 +149,38 @@ async function main() {
     assertEqual(malformedRes.data.skippedCount, 1, 'Malformed row count is reported');
     assert(!JSON.stringify(malformedRes.data).includes('JSON'), 'Parser details are not exposed');
     console.log('  ✓ Malformed held orders are isolated');
+
+    // Phase 3.4 — tables module off must not mutate tables.status
+    console.log('\n─── Scenario F: tables module off skips table status writes ───');
+    const envKey = ACTIVE_VERTICAL_ENV_KEY as string;
+    const prev = process.env[envKey];
+    const had = Object.prototype.hasOwnProperty.call(process.env, envKey);
+    seedTable(db, 'tbl-retail-hold', 202, 2);
+    db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?").run(now(), 'tbl-retail-hold');
+    try {
+      resetActiveVerticalResolutionForTests();
+      process.env[envKey] = 'retail';
+      commitActiveVerticalFromEnv();
+      const retailHold = await api(baseUrl, '/api/held-orders', {
+        method: 'POST',
+        body: {
+          tableId: 'tbl-retail-hold',
+          items: mockItems,
+          guestCount: 1,
+        },
+        headers: authHeader,
+      });
+      assertEqual(retailHold.status, 200, 'hold still succeeds when tables module off');
+      const statusOff = db.prepare('SELECT status FROM tables WHERE id = ?').get('tbl-retail-hold') as { status: string };
+      assertEqual(statusOff.status, 'available', 'tables OFF: hold does not set status held');
+      await api(baseUrl, '/api/held-orders/tbl-retail-hold', { method: 'DELETE', headers: authHeader });
+      console.log('  ✓ tables module off leaves table status untouched');
+    } finally {
+      resetActiveVerticalResolutionForTests();
+      if (had) process.env[envKey] = prev;
+      else delete process.env[envKey];
+      commitActiveVerticalFromEnv();
+    }
 
     console.log('\n✅ All held orders tests passed');
   } finally {

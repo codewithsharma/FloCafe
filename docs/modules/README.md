@@ -1,6 +1,6 @@
 # Opervia Modules
 
-**Status:** Phase 2 foundation **COMPLETE** ([phase-2-final-exit-gate.md](../03-architecture/phase-2-final-exit-gate.md)). INTERIM exit preserved. Phase 3.1 fail-closed remount **done**; remaining Phase 3 = capability config / production Retail / extraction.
+**Status:** Phase 2 foundation **COMPLETE** ([phase-2-final-exit-gate.md](../03-architecture/phase-2-final-exit-gate.md)). Phase 3.1–3.4 **done** ([phase-3.4-correctness-residuals.md](../03-architecture/phase-3.4-correctness-residuals.md)). Phase 3.5 optional.
 **Contract:** [module-system.md](../03-architecture/module-system.md)
 **Platform:** [opervia-platform.md](../00-product/opervia-platform.md)
 
@@ -90,9 +90,12 @@ Modules are reusable business capabilities. Phase 2 ships a **lightweight regist
 19. ~~Synthetic Retail validation~~ — **Phase 2.18 done** ([phase-2.18-synthetic-retail-validation.md](../03-architecture/phase-2.18-synthetic-retail-validation.md)) — retail-test stronger; not production
 20. ~~Phase 2 final exit gate~~ — **done** ([phase-2-final-exit-gate.md](../03-architecture/phase-2-final-exit-gate.md))
 21. ~~Fail-closed remount~~ — **Phase 3.1 done** ([phase-3.1-fail-closed-remount.md](../03-architecture/phase-3.1-fail-closed-remount.md))
-22. Inventory UI / legacy tax column cleanup — **Phase 3**
-23. Formal events bus for modules — **Phase 3**
-24. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — **Phase 3**
+22. ~~Capability config~~ — **Phase 3.2 done** ([phase-3.2-capability-configuration.md](../03-architecture/phase-3.2-capability-configuration.md))
+23. ~~Production Retail~~ — **Phase 3.3 done** ([phase-3.3-production-retail.md](../03-architecture/phase-3.3-production-retail.md))
+24. ~~Correctness residuals~~ — **Phase 3.4 done** ([phase-3.4-correctness-residuals.md](../03-architecture/phase-3.4-correctness-residuals.md))
+25. Inventory UI / legacy tax column cleanup — **Phase 3**
+26. Formal events bus for modules — **Phase 3**
+27. Additional verticals’ module sets ([verticals.md](../00-product/verticals.md)) — **Phase 3**
 
 **Do not** create Opervia Custom or extract every folder into packages yet.
 

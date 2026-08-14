@@ -1,9 +1,8 @@
 /**
- * Phase 2.14 (CURRENT) — Pin void × cancel stock quirk (do NOT "fix").
+ * Phase 3.4 — Void × cancel restock correctness.
  *
- * Documents ACTUAL inventory outcome when an in-progress item is voided
- * (no restock) and the whole order is later cancelled (may over-restore).
- * Product fix is deferred — characterization only.
+ * Void of preparing/ready does not restock (write-off). Later full-order
+ * cancel must NOT restore voided or void_adjustment lines (stock stays 8).
  *
  * Usage: node tests/run-electron-node-test.cjs tests/order-void-cancel-stock.test.ts
  */
@@ -32,7 +31,7 @@ const { orderRoutes } = require('../main/routes/orders');
 const { registerRoutes } = require('../main/routes/index');
 
 async function main() {
-  console.log('Phase 2.14 Void × Cancel Stock Characterization');
+  console.log('Phase 3.4 Void × Cancel Stock Correctness');
   console.log('='.repeat(60));
 
   const db = initTestDb();
@@ -97,15 +96,12 @@ async function main() {
     stock = db.prepare('SELECT stock_quantity FROM products WHERE id = ?').get('prod-void-tracked') as any;
     assertEqual(stock.stock_quantity, 8, 'void deliberately does not restock (stock still 8)');
 
-    // PIN CURRENT quirks — do not "fix". Full-order cancel restores every
-    // order_items row (including voided + void_adjustment), which over-restores.
-    // Product fix deferred to a later milestone.
-    console.log('\n4. Cancel whole order → pin ACTUAL stock (over-restore quirk)');
+    console.log('\n4. Cancel whole order → stock stays 8 (voided/void_adjustment skipped)');
     const cancelRes = await api(baseUrl, `/api/orders/${orderId}/status`, {
       method: 'PATCH',
       body: {
         status: 'cancelled',
-        reason: 'void×cancel characterization',
+        reason: 'void×cancel correctness',
         override_pin: '1234',
       },
       headers: authHeader,
@@ -113,22 +109,19 @@ async function main() {
     assert(cancelRes.status < 400, `order cancel ok (${cancelRes.status})`);
 
     stock = db.prepare('SELECT stock_quantity FROM products WHERE id = ?').get('prod-void-tracked') as any;
-    // Observed CURRENT behavior: restoreTrackedStock for voided qty (2) AND
-    // void_adjustment qty (2) → 8 + 2 + 2 = 12 (over-restore vs opening 10).
-    // DEFERRED: product fix must not be attempted in Phase 2.14.
     assertEqual(
       stock.stock_quantity,
-      12,
-      'ACTUAL after void×cancel: stock=12 (over-restore; product fix deferred)',
+      8,
+      'after void×cancel: stock stays 8 (voided/void_adjustment not restored)',
     );
-    console.log('   Documented: void leaves stock alone; later cancel over-restores (+voided +void_adjustment).');
+    console.log('   Correct: void leaves stock alone; later cancel does not over-restore.');
 
     const { failed } = getResults();
     if (failed > 0) {
       console.error(`\nFAILED: ${failed} assertion(s)`);
       process.exit(1);
     }
-    console.log('\nAll void×cancel stock checks passed (quirks pinned).');
+    console.log('\nAll void×cancel stock checks passed.');
   } finally {
     server.close();
     closeDatabase();

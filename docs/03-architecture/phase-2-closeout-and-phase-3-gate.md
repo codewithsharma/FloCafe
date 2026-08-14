@@ -153,13 +153,14 @@ Rationale: Production Retail without fail-closed remount would ship “Restauran
 
 ### Phase 3.4 — Correctness & soft-gate residuals
 
-|                  |                                                                                                                                                                                |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Objective**    | Close known isolation/correctness holes without redesign.                                                                                                                      |
-| **Why**          | Documented residuals from 2.14/2.17/2.18.                                                                                                                                      |
-| **Depends on**   | Can parallel after 3.1; preferred before/alongside 3.3                                                                                                                         |
-| **Items**        | Gate `notifyOrderUpdated`; held-orders `tables` gate; void×cancel restock fix (pinned tests updated carefully); stock-reject `statusCode` 400; optional restart/userdata proof |
-| **NOT included** | POS page mega-extract; full i18n unification; OTel exporter                                                                                                                    |
+|                  |                                                                                                                                                                                                      |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Objective**    | Close known isolation/correctness holes without redesign.                                                                                                                                            |
+| **Why**          | Documented residuals from 2.14/2.17/2.18.                                                                                                                                                            |
+| **Depends on**   | Can parallel after 3.1; preferred before/alongside 3.3                                                                                                                                               |
+| **Items**        | Gate `notifyOrderUpdated`; held-orders `tables` gate; void×cancel restock fix (pinned tests updated carefully); stock-reject `statusCode` 400; optional restart/userdata proof                       |
+| **NOT included** | POS page mega-extract; full i18n unification; OTel exporter                                                                                                                                          |
+| **Status**       | **COMPLETE** — [phase-3.4-correctness-residuals.md](phase-3.4-correctness-residuals.md); plan [phase-3.4-implementation-plan.md](phase-3.4-implementation-plan.md). Scope B delivered; ALS rejected. |
 
 ### Phase 3.5 — Platform depth (optional / later)
 

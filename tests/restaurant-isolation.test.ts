@@ -67,6 +67,27 @@ async function main() {
     || [];
   assert(gatedNotify.length >= 6, `at least 6 KDS soft-gates (found ${gatedNotify.length})`);
 
+  // Phase 3.4 — kds.ts gates notify entry points (alias + call-site defense-in-depth)
+  console.log('\n1b. Source contract: kds.ts soft-gates notifyKdsUpdate/notifyOrderUpdated');
+  const kdsSrc = fs.readFileSync(path.join(__dirname, '../main/services/kds.ts'), 'utf8');
+  assert(
+    /isModuleEnabled\(\s*['"]kds['"]\s*\)/.test(kdsSrc),
+    "kds.ts soft-gates notify with isModuleEnabled('kds')",
+  );
+  assert(
+    /export function notifyKdsUpdate\(/.test(kdsSrc) &&
+      /export function notifyOrderUpdated\(/.test(kdsSrc),
+    'notifyKdsUpdate and notifyOrderUpdated remain exported',
+  );
+
+  // Phase 3.4 — held-orders soft-gates tables side effects
+  console.log('\n1c. Source contract: held-orders.ts soft-gates tables status writes');
+  const heldSrc = fs.readFileSync(path.join(__dirname, '../main/routes/held-orders.ts'), 'utf8');
+  assert(
+    /isModuleEnabled\(\s*['"]tables['"]\s*\)/.test(heldSrc),
+    "held-orders.ts soft-gates tables with isModuleEnabled('tables')",
+  );
+
   // Shared modules must not declare restaurant deps (catalog contract).
   console.log('\n2. Catalog: shared modules do not depend on restaurant modules');
   const restaurantIds = new Set(

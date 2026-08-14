@@ -1,8 +1,16 @@
 # Decisions
 
+## 2026-08-14 — Phase 3.4 Correctness Residuals (Accepted + Implemented)
+
+Scope **B** delivered: process-locked vertical unchanged; `notifyKdsUpdate`/`notifyOrderUpdated` gated with `isModuleEnabled('kds')`; held-orders table UPDATEs gated with `isModuleEnabled('tables')`; cancel restore skips `voided`/`void_adjustment` (stock stays 8); `assertStockAvailable` → `InventoryServiceError(400)`. No ALS, no schema change. Doc: `phase-3.4-correctness-residuals.md`. Plan: `docs/superpowers/plans/2026-08-14-phase-3.4-correctness-residuals.md`.
+
+## 2026-08-13 — Phase 3.3 Production Retail (Accepted + Implemented)
+
+Production `retail` vertical in `VERTICALS`; shared commerce via `OPERVIA_SHARED_COMMERCE_MODULES`; fail-closed remount for retail; minimal frontend composition alignment (`verticalId` from platform composition). No schema change. Doc: `docs/03-architecture/phase-3.3-production-retail.md`. Phase 3.4 completed 2026-08-14.
+
 ## 2026-08-13 — Phase 3.2 Deploy/start vertical configuration (Accepted + Implemented)
 
-Env `ACTIVE_VERTICAL_ID`; unset→`restaurant`; empty/unknown fail-closed; commit once in `startServer` before remount; `retail-test` allowed as synthetic selection not production Retail; no runtime switch. Doc: `docs/03-architecture/phase-3.2-capability-configuration.md`. Phase 3.3 not started.
+Env `ACTIVE_VERTICAL_ID`; unset→`restaurant`; empty/unknown fail-closed; commit once in `startServer` before remount; `retail-test` allowed as synthetic selection; production Retail delivered in Phase 3.3. No runtime switch. Doc: `docs/03-architecture/phase-3.2-capability-configuration.md`.
 
 ## 2026-08-13 — Phase 3.1 Fail-closed vertical remount (Accepted + Implemented)
 

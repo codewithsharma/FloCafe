@@ -92,8 +92,8 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] **Phase 2 closeout & Phase 3 architecture gate** (2026-08-13) — `phase-2-closeout-and-phase-3-gate.md`; Phase 2 **CLOSED**; Phase 3 plan ordered
 - [x] **Phase 3.1** Fail-closed remount + startup composition validation (2026-08-13) — `registerRoutes` capability-aware; Outcome A; `phase-3.1-fail-closed-remount.md`
 - [x] **Phase 3.2** Vertical / capability configuration (2026-08-13) — `ACTIVE_VERTICAL_ID` env at deploy/start; `commitActiveVerticalFromEnv`; `phase-3.2-capability-configuration.md`
-- [ ] **Phase 3.3** Production Retail vertical (depends on 3.1+3.2; not retail-test)
-- [ ] **Phase 3.4** Correctness residuals — `notifyOrderUpdated` gate, held-orders `tables` gate, void×cancel restock, stock-reject HTTP status
+- [x] **Phase 3.3** Production Retail vertical (2026-08-13) — `retail` in `VERTICALS`; shared commerce modules; fail-closed remount; minimal frontend composition; no schema; `phase-3.3-production-retail.md`
+- [x] **Phase 3.4** Correctness residuals — **COMPLETE** (`phase-3.4-correctness-residuals.md`). KDS notify internal soft-gate; held-orders `tables` gate; void×cancel restock (stock→8); stock-reject HTTP 400; no ALS.
 - [ ] **Phase 3.5** Optional — Inventory ledger UI, legacy tax columns, packages/extraction, recipes/BOM, suppliers/PO (after 3.1–3.4 + pilots)
 - [ ] Cloud ops (non-blocking billing): config, health, webhooks, fleet
 - [ ] ADR-006 Multi-Location Architecture (design only; no code until approved)
