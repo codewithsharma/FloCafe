@@ -800,7 +800,9 @@ export function startKdsServer(): Promise<void> {
         if (attempts >= 10) {
           const errorMsg = `[KDS Server] Failed to bind to any port after 10 attempts starting from ${KDS_PORT}`;
           console.error(errorMsg);
-          reject(new Error(errorMsg));
+          kdsServer?.close();
+          kdsServer = null;
+          resolve();
           return;
         }
         currentKdsPort++;

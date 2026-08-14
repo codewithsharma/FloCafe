@@ -332,7 +332,9 @@ export function startServerApp(): Promise<void> {
           if (attempts >= 10) {
             const errorMsg = `[Server App] Failed to bind to any port after 10 attempts starting from ${SERVER_APP_PORT}`;
             console.error(errorMsg);
-            reject(new Error(errorMsg));
+            serverApp?.close();
+            serverApp = null;
+            resolve();
             return;
           }
           currentPort++;

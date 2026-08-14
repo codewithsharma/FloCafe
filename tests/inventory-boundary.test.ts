@@ -18,10 +18,19 @@ Module._load = function (request: string, parent: unknown, isMain: boolean) {
 };
 
 const {
-  initTestDb, createApp, startServer,
-  seedOwnerUser, seedCategory, seedProduct,
-  api, assert, assertEqual,
-  getResults, closeDatabase, getDatabase, now,
+  initTestDb,
+  createApp,
+  startServer,
+  seedOwnerUser,
+  seedCategory,
+  seedProduct,
+  api,
+  assert,
+  assertEqual,
+  getResults,
+  closeDatabase,
+  getDatabase,
+  now,
 } = require('./helpers/test-setup');
 
 const { orderRoutes } = require('../main/routes/orders');
@@ -62,7 +71,9 @@ async function main() {
   try {
     // 1. Sale decrements tracked stock
     console.log('\n1. Order create decrements tracked stock');
-    const before = db.prepare('SELECT stock_quantity FROM products WHERE id = ?').get('prod-tracked') as any;
+    const before = db
+      .prepare('SELECT stock_quantity FROM products WHERE id = ?')
+      .get('prod-tracked') as any;
     assertEqual(before.stock_quantity, 10, 'starting stock 10');
     const createRes = await api(baseUrl, '/api/orders', {
       method: 'POST',
@@ -70,7 +81,9 @@ async function main() {
       headers: authHeader,
     });
     assertEqual(createRes.status, 201, 'order created');
-    const after = db.prepare('SELECT stock_quantity FROM products WHERE id = ?').get('prod-tracked') as any;
+    const after = db
+      .prepare('SELECT stock_quantity FROM products WHERE id = ?')
+      .get('prod-tracked') as any;
     assertEqual(after.stock_quantity, 7, 'stock decremented by 3');
     const orderId = createRes.data.order.id;
 
@@ -82,19 +95,25 @@ async function main() {
       headers: authHeader,
     });
     assertEqual(failRes.status, 400, 'insufficient stock returns HTTP 400');
-    const unchanged = db.prepare('SELECT stock_quantity FROM products WHERE id = ?').get('prod-tracked') as any;
+    const unchanged = db
+      .prepare('SELECT stock_quantity FROM products WHERE id = ?')
+      .get('prod-tracked') as any;
     assertEqual(unchanged.stock_quantity, 7, 'stock unchanged after reject');
 
     // 3. Untracked ignores stock
     console.log('\n3. Untracked product ignores stock check');
-    const utBefore = db.prepare('SELECT stock_quantity FROM products WHERE id = ?').get('prod-untracked') as any;
+    const utBefore = db
+      .prepare('SELECT stock_quantity FROM products WHERE id = ?')
+      .get('prod-untracked') as any;
     const utRes = await api(baseUrl, '/api/orders', {
       method: 'POST',
       body: { type: 'takeaway', items: [{ product_id: 'prod-untracked', quantity: 50 }] },
       headers: authHeader,
     });
     assertEqual(utRes.status, 201, 'untracked order ok');
-    const utAfter = db.prepare('SELECT stock_quantity FROM products WHERE id = ?').get('prod-untracked') as any;
+    const utAfter = db
+      .prepare('SELECT stock_quantity FROM products WHERE id = ?')
+      .get('prod-untracked') as any;
     assertEqual(utAfter.stock_quantity, utBefore.stock_quantity, 'untracked stock unchanged');
 
     // 4. Manual adjust via service + HTTP
@@ -131,7 +150,10 @@ async function main() {
 
     // 6. Low stock filter
     console.log('\n6. GET products?low_stock=true');
-    assert(LOW_STOCK_SQL_FRAGMENT.includes('track_inventory'), 'low-stock fragment owned by inventory');
+    assert(
+      LOW_STOCK_SQL_FRAGMENT.includes('track_inventory'),
+      'low-stock fragment owned by inventory',
+    );
     const low = await api(baseUrl, '/api/products?low_stock=true', { headers: authHeader });
     assertEqual(low.status, 200, 'low stock list');
     const products = low.data.products || low.data;
@@ -149,7 +171,9 @@ async function main() {
     });
     assertEqual(o2.status, 201, 'order2 created');
     const oid = o2.data.order.id;
-    const mid = db.prepare('SELECT stock_quantity FROM products WHERE id = ?').get('prod-tracked') as any;
+    const mid = db
+      .prepare('SELECT stock_quantity FROM products WHERE id = ?')
+      .get('prod-tracked') as any;
     assertEqual(mid.stock_quantity, 8, 'after sale 8');
     const cancel = await api(baseUrl, `/api/orders/${oid}/status`, {
       method: 'PATCH',
@@ -157,8 +181,22 @@ async function main() {
       headers: authHeader,
     });
     assert(cancel.status < 400, `cancel ok (${cancel.status})`);
-    const restored = db.prepare('SELECT stock_quantity FROM products WHERE id = ?').get('prod-tracked') as any;
+    const restored = db
+      .prepare('SELECT stock_quantity FROM products WHERE id = ?')
+      .get('prod-tracked') as any;
     assertEqual(restored.stock_quantity, 10, 'cancel restored to 10');
+
+    console.log('\n7b. Repeat cancel must not restock again');
+    const cancelAgain = await api(baseUrl, `/api/orders/${oid}/status`, {
+      method: 'PATCH',
+      body: { status: 'cancelled', reason: 'repeat cancel' },
+      headers: authHeader,
+    });
+    assert(cancelAgain.status < 400, `repeat cancel ok (${cancelAgain.status})`);
+    const restoredAgain = db
+      .prepare('SELECT stock_quantity FROM products WHERE id = ?')
+      .get('prod-tracked') as any;
+    assertEqual(restoredAgain.stock_quantity, 10, 'repeat cancel leaves stock at 10');
 
     // Silence unused var from step 1
     void orderId;

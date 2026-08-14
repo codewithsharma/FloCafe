@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-14 — Post-P0 P1 remediation (Implemented + HUMAN stop)
+
+Repeat PATCH cancel no-ops restock; last-item catch-up ignores voided lines; KDS/Server App bind exhaustion `resolve()` so POS does not quit. Schema v75. Money path untouched. Paid-cancel restock, FIN-02 Gross/Net filter, chef pending-cancel, ADR-014 **not** implemented (HUMAN). Composition fetch fail-open left P2. Doc: `docs/05-production/post-p0-pilot-remediation.md`. No Phase 4.16.
+
 ## 2026-08-14 — Retail isolation P0 remediation (Implemented)
 
 Gate `startKdsServer` on `isModuleEnabled('kds')` and `startServerApp` on `isModuleEnabled('tables')`; skip must resolve. Products/KDS/Orders pass composition `verticalId`; catalog `Promise.all` excludes addon-groups. Schema v75. Money path untouched. Doc: `retail-isolation-p0-remediation.md`. No Phase 4.16.

@@ -2,7 +2,7 @@
 
 ## Production blockers (P0)
 
-- ⚠️ RISK: **Post-4.15 audit (2026-08-14)** — Restaurant **PILOT READY WITH CONDITIONS**. Retail product P0s (KDS `:3002` always up; Products addon fail-open) **CLOSED** in `docs/05-production/retail-isolation-p0-remediation.md`. Residual: renderer still restaurant-falls-back if `GET /platform/composition` fails (`verticalId` undefined).
+- ⚠️ RISK: **Post-P0 remediation (2026-08-14)** — Restaurant **80/100 PILOT READY WITH CONDITIONS**. Retail **72/100 PILOT READY WITH CONDITIONS** (isolation P0s closed). Remaining: HUMAN paid-cancel / FIN-02 / chef RBAC; OPS signed artifact / PIN escrow / drills; P1-06 unopenable DB. Renderer still restaurant-falls-back if `GET /platform/composition` fails (`verticalId` undefined) — **P2**.
 - 🔒 SEC: **Final P0.6 audit GO WITH CONDITIONS** (score 78) — `p0.6-final-production-security-audit.md`. Electron A/B1/B2 closed. **FIN-01 CLOSED** (collectible = total − gross tender). **OPS-01:** guest Wi‑Fi + `kds_lan`/`lan` forbidden.
 - 🔒 SEC: LAN exposure is mode-gated (`network_mode`; default `localhost`). Cleartext HTTP/WS still applies on staff LAN when `kds_lan`/`lan` — guest Wi‑Fi unsupported; TLS deferred (**P1 accept with ops**).
 - 🔒 SEC: JWT in `safeStorage` (`jwt-secret.enc`). Residual: same-OS-user malware; Linux keyring (**P2**).
@@ -12,11 +12,11 @@
 - ⚠️ RISK: **Retail product gap** — Phase 4.1–4.5 closed; **ADR-013 Accepted** (Option A identity). Matrix not authorized. PO/receiving STRATEGY-frozen.
 - ⚠️ RISK: **Retail variants (4.6)** — parent+options stock ambiguity forbidden; unused `variant_selection` must not become identity; barcode lacks DB UNIQUE.
 - ⚠️ RISK: Financial audit still sparse on discounts, PIN overrides, DB import/export, Master PIN ops.
-- ⚠️ RISK: Order cancel after pay still lacks refund interaction (P1).
+- ⚠️ RISK: Order cancel after pay still restocks without reversing money (**HUMAN H1**). Repeat PATCH cancel restock **CLOSED**.
 
 ## Operational
 
-- ⚠️ RISK: **P1.5 DR PASS**; **P1.6 READY WITH CONDITIONS**; **post-4.15 supersedes P1.6 for vertical split** (Restaurant conditional go; Retail no-go). Remaining café go-live: production **signed/notarized** artifact, Master PIN escrow, OPS-01 on site, numeric backup policy **PENDING APPROVAL**, CEO/CTO/pilot sign-off, café training. Printer/new-machine JWT not café-verified. Cancel-after-pay restock is P1 (train or fix).
+- ⚠️ RISK: **P1.5 DR PASS**; **P1.6 READY WITH CONDITIONS**; **post-P0 supersedes vertical split** (Restaurant 80 / Retail 72, both conditional). Remaining café go-live: production **signed/notarized** artifact, Master PIN escrow, OPS-01 on site, numeric backup policy **PENDING APPROVAL**, CEO/CTO/pilot sign-off, café training. Printer/new-machine JWT not café-verified. Paid cancel-after-pay restock is **HUMAN H1**.
 - ⚠️ RISK: **QA-INV-TAGS-01** — fixed and verified on rebuilt TRAINING package (Inventory no longer crashes on double-encoded tags). Source + regression test still need commit into the release branch.
 - ⚠️ RISK: **QA-FIN01-OVERPAY-01** — **closed as false positive** (2026-08-13 pending-complete). Cash over-tender is intentional change; non-cash over remaining correctly 400.
 - ⚠️ RISK: **QA-FIN01-STATUS-01 (P2, display closed in 4.10)** — stored `payment_status`/`balance` may still be net-after-refund; Orders/Pay now use collectible outstanding. Do not “fix” by writing bill status. Rejection (`BILL_NO_OUTSTANDING_BALANCE`) must stay.

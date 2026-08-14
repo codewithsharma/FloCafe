@@ -1226,6 +1226,9 @@ router.patch(
             break;
 
           case 'cancelled': {
+            if ((order as any).status === 'cancelled') {
+              break;
+            }
             const items = db
               .prepare('SELECT * FROM order_items WHERE order_id = ?')
               .all(req.params.id) as any[];
@@ -2196,7 +2199,17 @@ router.patch('/:orderId/items/:itemId/cancel', async (req, res) => {
         // restore tracked inventory, and stamp cancelled_at/cancellation_reason.
         // Without this the order silently stayed "active" with zero items,
         // cluttering the Active list and permanently holding its table.
-        const orderCancelled = activeItems.length === 0 && order.status !== 'cancelled';
+        const remainingToServe = db
+          .prepare(
+            `
+          SELECT 1 FROM order_items
+          WHERE order_id = ?
+            AND status NOT IN ('cancelled', 'voided', 'void_adjustment')
+          LIMIT 1
+        `,
+          )
+          .get(orderId);
+        const orderCancelled = remainingToServe === undefined && order.status !== 'cancelled';
 
         if (orderCancelled) {
           const allItems = db
@@ -2291,10 +2304,10 @@ router.patch('/:orderId/items/:itemId/cancel', async (req, res) => {
 
         logAuditEvent({
           actorUserId,
-          action: orderCancelled
-            ? 'order.cancelled'
-            : isInProgressVoid
-              ? 'order.item_voided'
+          action: isInProgressVoid
+            ? 'order.item_voided'
+            : orderCancelled
+              ? 'order.cancelled'
               : 'order.item_cancelled',
           entityType: 'order_item',
           entityId: itemId,
