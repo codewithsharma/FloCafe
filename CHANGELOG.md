@@ -17,11 +17,13 @@ All notable changes to Opervia (repo/package legacy: Flo Cafe / flo-desktop) are
 - H4 restore/conflict: create-time backup integrity, backup/restore audit, cancel TOCTOU + item cancel/restore conflict guards (`docs/05-production/h4-restore-conflict-hardening.md`).
 - OPS-01 pilot release/ops closure: baseline `24966ba`, configuration, runbook/checklist/gates, drill evidence (`docs/05-production/ops-01-pilot-release-operations-closure.md`).
 - OPS-02 live RC / site readiness audit: signed artifact missing; café gates PENDING; live verdict NO-GO (`docs/05-production/ops-02-live-pilot-rc-site-readiness.md`).
+- R0 Restaurant OS product blueprint: complete OS map, R0–R16 roadmap, architecture/offline/financial contracts, simulation design (`docs/00-product/restaurant-os-blueprint.md`).
 
 ### Changed
 
 - Modular platform Phase 2 closed; Phase 3.1–3.4 composition/correctness work landed in tree (see `docs/03-architecture/`).
 - Pilot ops docs refreshed from stale `0200cae` baseline to H1–H4 `24966ba`.
+- STRATEGY / AGENTS / roadmap point at Restaurant OS R-waves; Restaurant is sole active development vertical.
 
 ## [3.0.5] - 2026-08-12
 

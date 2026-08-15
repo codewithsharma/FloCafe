@@ -38,7 +38,7 @@ Do not add the private `specs` repository as a submodule, build dependency, CI d
 
 ## Product plan
 
-Canonical Restaurant capability matrix: `docs/00-product/capability-matrix.md` (Existing / Hardening / Planned / Later / Frozen). Code evidence: `docs/00-product/feature-list.md`. Do not auto-start Planned items or invent Phase 4.16. Prefer Hardening. Frozen (terminals, gateways, online payment, multi-location, payroll) stays frozen.
+Canonical Restaurant capability matrix: `docs/00-product/capability-matrix.md` (Existing / Hardening / Planned / Later / Frozen). Complete OS blueprint (R0): `docs/00-product/restaurant-os-blueprint.md` · waves `docs/00-product/restaurant-os-roadmap.md`. Code evidence: `docs/00-product/feature-list.md`. Do not auto-start Planned items or invent Phase 4.16 (use R-waves). Prefer Hardening. Frozen (terminals, gateways, online payment, multi-location, payroll) stays frozen. **Active development vertical: Restaurant only.**
 
 ## Working conventions
 

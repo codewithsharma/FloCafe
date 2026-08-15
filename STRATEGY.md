@@ -1,6 +1,6 @@
 ---
 name: Operavia
-last_updated: 2026-08-14
+last_updated: 2026-08-15
 ---
 
 # Operavia Strategy
@@ -17,9 +17,12 @@ last_updated: 2026-08-14
 
 **Future verticals (PLANNED):** Grocery, Salon, Health & Beauty, Pharmacy, Hospitality, Custom. **Retail** is a production-selectable composition (`ACTIVE_VERTICAL_ID=retail`) with partial UX — see [`docs/00-product/verticals.md`](docs/00-product/verticals.md).
 
-**Restaurant capability plan:** [`docs/00-product/capability-matrix.md`](docs/00-product/capability-matrix.md) (Existing / Hardening / Planned / Later / Frozen). Does not authorize implementation.
-**Architecture vision:** [`docs/00-product/opervia-platform.md`](docs/00-product/opervia-platform.md) · ADR-010 · gap report in `docs/03-architecture/architecture-gap-report.md`.
-**Do not** rewrite Phase 1 into packages/microservices before pilot reliability is proven.
+**Restaurant capability plan:** [`docs/00-product/capability-matrix.md`](docs/00-product/capability-matrix.md) (Existing / Hardening / Planned / Later / Frozen). Does not authorize implementation.  
+**Complete Restaurant OS blueprint (R0):** [`docs/00-product/restaurant-os-blueprint.md`](docs/00-product/restaurant-os-blueprint.md) · [`docs/00-product/restaurant-os-roadmap.md`](docs/00-product/restaurant-os-roadmap.md) (R0–R16). Docs only until an R-wave is authorized.  
+**Architecture vision:** [`docs/00-product/opervia-platform.md`](docs/00-product/opervia-platform.md) · ADR-010 · gap report in `docs/03-architecture/architecture-gap-report.md`.  
+**Active development vertical:** **Operavia Restaurant only.** Retail and other verticals are deferred (maintenance isolation only unless critically broken).  
+**Do not** rewrite Phase 1 into packages/microservices before pilot reliability is proven.  
+**Do not** invent Phase 4.16 — use R-waves for sequencing.
 
 ## Target problem
 
@@ -81,8 +84,9 @@ _Why it serves the approach:_ Avoids building impressive surfaces on untrusted m
 - ERP inventory / full procurement until an authorized `capability-matrix.md` slice (recipes/BOM/PO are Planned there, not auto-started)
 - Bluetooth printing, payment terminals, microservices, Kubernetes, architecture rewrites
 - Building Operavia Custom or additional verticals before Restaurant pilot success
-- Describing Phase 1 as a finished multi-vertical platform or as “RestaurantOS” product you install today
-- Keeping **Operavia** as an active product name (retired; historical audits may still say Operavia)
+- Describing an unfinished build as a finished multi-vertical platform you install today
+- Keeping **Nexora** / **FloCafe** as active product names (retired; historical audits may still say them)
+- Auto-starting R1+ or inventing Phase 4.16 without authorization
 
 ## Marketing
 

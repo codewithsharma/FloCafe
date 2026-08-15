@@ -4,15 +4,19 @@ Canonical strategy / freeze list: [`STRATEGY.md`](../../STRATEGY.md)
 
 Canonical product plan: [`capability-matrix.md`](capability-matrix.md) (Existing / Hardening / Planned / Later / Frozen, adopted 2026-08-14)
 
+Complete Restaurant OS blueprint (R0): [`restaurant-os-blueprint.md`](restaurant-os-blueprint.md) · waves [`restaurant-os-roadmap.md`](restaurant-os-roadmap.md)
+
 Code evidence: [`feature-list.md`](feature-list.md)
 
 Execution backlog: [`.ai/tasks.md`](../../.ai/tasks.md)
 
-Prompt pipeline 4.6–4.15: **COMPLETE** (`prompts/STATE.md`). Do not invent Phase 4.16.
+Prompt pipeline 4.6–4.15: **COMPLETE** (`prompts/STATE.md`). Do not invent Phase 4.16. Post-4.15 sequencing uses **R0–R16** (Restaurant OS roadmap), not 4.16+.
 
 Historical plan: [`15-project-management/master-implementation-plan.md`](../15-project-management/master-implementation-plan.md)
 
 **North-star KPI:** 3 cafés × 30 days × zero critical failures.
+
+**Development target:** Operavia Restaurant only (Retail/other verticals deferred).
 
 Priorities: **P0** production/pilot human gates · **P1** 🟡 Hardening · **P2** 🔵 Planned slices (authorized only) · **P3** ⚪ Later / 🔴 Frozen.
 
@@ -20,10 +24,11 @@ Priorities: **P0** production/pilot human gates · **P1** 🟡 Hardening · **P2
 
 ## Now (do not skip)
 
-Live café remains **NO-GO** until human gates: signed/notarized RC (bump past 3.0.5), OPS-01, PIN escrow, backup policy, printer/KDS/restore drills, training/sign-off. Sheet: `docs/05-production/first-cafe-dry-run-result.md`.
+Live café remains **NO-GO** until human gates: signed/notarized RC, OPS-01/OPS-02 site checklist, PIN escrow, backup policy, printer/KDS/restore drills, training/sign-off. OPS-02 audit: `docs/05-production/ops-02-live-pilot-rc-site-readiness.md`.
 
-Software bar: Restaurant / Retail **PILOT READY WITH CONDITIONS**. Schema **v75**. ADR-014 still **Proposed**.
+Software bar: Restaurant **PILOT READY WITH CONDITIONS** (engineering). Schema **v75**. ADR-014 still **Proposed**. **R0 blueprint COMPLETE** — do not auto-start **R1**.
 
+Retail store pilot is **not** the current development target.
 ---
 
 ## Next software (🟡 Hardening — prefer before new surfaces)

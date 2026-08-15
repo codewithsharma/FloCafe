@@ -11,7 +11,10 @@
 
 Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v75**) + statically exported Next.js (`frontend/`).
 
-**Canonical product plan:** `docs/00-product/capability-matrix.md` (Existing / Hardening / Planned / Later / Frozen, 2026-08-14). Code evidence: `docs/00-product/feature-list.md`.
+**Canonical product plan:** `docs/00-product/capability-matrix.md` (Existing / Hardening / Planned / Later / Frozen, 2026-08-14).  
+**Complete Restaurant OS (R0):** `docs/00-product/restaurant-os-blueprint.md` · `restaurant-os-roadmap.md` (R0–R16). Docs only until R1+ authorized.  
+**Code evidence:** `docs/00-product/feature-list.md`.  
+**Active development vertical:** Restaurant only (Retail deferred).
 
 ## Stage
 
@@ -77,18 +80,17 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
-**Product plan (2026-08-14):** Canonical matrix `docs/00-product/capability-matrix.md`. Prefer 🟡 Hardening over 🔵 Planned. Do not invent 4.16. Do not auto-start.
+**Product plan:** Canonical matrix `docs/00-product/capability-matrix.md` + R0 blueprint `docs/00-product/restaurant-os-blueprint.md`. Prefer Hardening / authorized R-waves. Do not invent 4.16. Do not auto-start R1.
 
-**OPS-01 (2026-08-15): CLOSED (docs/ops).** Baseline `24966ba` (H1–H4). Engineering verdict **PILOT READY WITH CONDITIONS**. Closure: `docs/05-production/ops-01-pilot-release-operations-closure.md`.
+**OPS-01 (2026-08-15): CLOSED.** Engineering **PILOT READY WITH CONDITIONS**.
 
-**OPS-02 (2026-08-15): CLOSED (audit).** Live café go-live **NO-GO** — no signed/notarized RC on this host; site/hardware/escrow/operator drills PENDING. Doc: `docs/05-production/ops-02-live-pilot-rc-site-readiness.md`. Checklist: `docs/13-operations/ops-02-site-readiness-checklist.md`.
+**OPS-02 (2026-08-15): CLOSED.** Live go-live **NO-GO** until signed RC + site checklist.
 
-**First café dry run (2026-08-14): NO-GO for live.** Signing still required. Sheet: `docs/05-production/first-cafe-dry-run-result.md` (historical; prefer OPS-01/OPS-02).
+**R0 (2026-08-15): CLOSED.** Complete Restaurant OS blueprint + R0–R16 roadmap + contracts + simulation. **Do not start R1** without authorization.
 
-Do not invent 4.16. Do not auto-start features. Do not push. Do not fake signing. Do not start H5 unless authorized.
+Do not invent 4.16. Do not push. Do not start H5/R1 unless authorized.
 
-- **Human/RELEASE:** signed/notarized RC from `24966ba` (or approved clean descendant); do not retag unrelated older `3.0.5` builds.
-- **Human/OPS on site:** complete `ops-02-site-readiness-checklist.md` + `pilot-signoff.md`.
-- **If software slice authorized next:** Prefer remaining Hardening (audit trail; reliability error handling depth; data integrity validation). **H1–H4 CLOSED**; **OPS-01 CLOSED**; **OPS-02 audit CLOSED (NO-GO live)**.
-- ADR-014 remains **Proposed**. Schema v75. Engineering baseline **`24966ba`**. Docs HEAD may include OPS-01/OPS-02.
-- **Test debt (not blocker):** `security-hardening.test.ts` rate-limit/orders 401 after password-change JWT invalidation — isolation only.
+- **Human/RELEASE + OPS:** signed RC + `ops-02-site-readiness-checklist.md` + `pilot-signoff.md`.
+- **Next software (if authorized):** **R1 POS Core Completion** (`restaurant-os-roadmap.md`) or remaining Hardening audit-trail depth.
+- ADR-014 Proposed. Schema v75. Engineering baseline `24966ba`. R0 closed.
+- Test debt: `security-hardening.test.ts` isolation only (not live blocker).

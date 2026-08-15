@@ -1,15 +1,17 @@
-<!-- Last updated: 2026-08-14, schema v75 -->
+<!-- Last updated: 2026-08-15, schema v75 -->
 
 # Operavia Restaurant — capability matrix
 
-**Canonical product plan** for Operavia Restaurant (repo: FloCafe). Adopted 2026-08-14.
+**Canonical product plan** for Operavia Restaurant (repo: FloCafe). Adopted 2026-08-14.  
+**Complete Restaurant OS blueprint (R0):** [`restaurant-os-blueprint.md`](restaurant-os-blueprint.md) · roadmap [`restaurant-os-roadmap.md`](restaurant-os-roadmap.md) · architecture [`restaurant-os-architecture.md`](restaurant-os-architecture.md). R-waves do **not** replace this matrix’s status column.
 
-This matrix is the backlog and posture for what we keep, harden, build, defer, or freeze. It does **not** authorize implementation. Do not invent Phase 4.16. Execute only an explicitly authorized slice.
+This matrix is the backlog and posture for what we keep, harden, build, defer, or freeze. It does **not** authorize implementation. Do not invent Phase 4.16. Prefer **R0–R16** sequencing in the Restaurant OS roadmap for post-4.15 work. Execute only an explicitly authorized slice.
 
 **Code evidence** (what is actually in the tree) remains [`feature-list.md`](feature-list.md). If this plan and the code disagree, **do not rebuild** a shipped slice — deepen it, or update this matrix.
 
-**Strategy freeze** still applies: [`STRATEGY.md`](../../STRATEGY.md). Frozen rows here match that freeze.
+**Strategy freeze** still applies: [`STRATEGY.md`](../../STRATEGY.md). Frozen rows here match that freeze. **Active development vertical:** Restaurant only (Retail/other verticals deferred).
 
+**R0 note (2026-08-15):** Blueprint documents the complete Restaurant OS. **No row statuses were promoted** to Existing solely because of R0. H1–H4 remain Hardening depth where listed. Live pilot remains OPS-02 **NO-GO** until signed RC + site gates.
 ---
 
 ## Legend
@@ -535,6 +537,10 @@ Pilot **release/ops documentation** closed for baseline `24966ba` (config, runbo
 
 Go-live audit: source RC = `24966ba`; installable signed/notarized artifact **missing** on audit host; café hardware/LAN/escrow/operator drills **PENDING**. Verdict **🔴 NO-GO** for first live transaction. Docs: `docs/05-production/ops-02-live-pilot-rc-site-readiness.md`, `docs/13-operations/ops-02-site-readiness-checklist.md`. No H5 / Phase 4.16.
 
+### R0 Restaurant OS blueprint (2026-08-15)
+
+Complete-product blueprint (docs only): [`restaurant-os-blueprint.md`](restaurant-os-blueprint.md), [`restaurant-os-roadmap.md`](restaurant-os-roadmap.md) (R0–R16), architecture / offline / financial contracts, [`restaurant-simulation.md`](restaurant-simulation.md). Does **not** promote Hardening→Existing. Does **not** authorize R1. Retail/other verticals deferred for development. No Phase 4.16.
+
 ### Frozen (do not start)
 
 Card terminal, payment gateway, online payment, multi-location (central menu/inventory/transfers/reporting/franchise), payroll.
@@ -570,6 +576,9 @@ Recipe/BOM and procurement moving from STRATEGY freeze to Planned is a **product
 
 ## Related docs
 
+- Complete OS blueprint (R0): [`restaurant-os-blueprint.md`](restaurant-os-blueprint.md)
+- R-waves: [`restaurant-os-roadmap.md`](restaurant-os-roadmap.md)
+- Architecture / offline / financial / simulation: `restaurant-os-architecture.md`, `restaurant-os-offline-contract.md`, `restaurant-os-financial-contract.md`, `restaurant-simulation.md`
 - Code truth: [`feature-list.md`](feature-list.md)
 - Living roadmap: [`roadmap.md`](roadmap.md)
 - Prompt pipeline (4.6–4.15 **COMPLETE**): [`prompts/STATE.md`](../../prompts/STATE.md)

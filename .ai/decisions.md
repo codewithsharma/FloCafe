@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — R0 Operavia Restaurant OS Product Blueprint (Docs)
+
+Authorized complete-product blueprint for Operavia Restaurant OS. Delivered: capability hierarchy A–N, dependency graph, domain boundaries, offline + financial contracts, role model, R0–R16 roadmap, simulation environment design, competitive/differentiator/risk notes. Capability matrix remains canonical for status marks — no Hardening→Existing promotions in R0. Retail/other verticals deferred. No production code, schema, APIs, UI. Do not invent Phase 4.16; use R-waves. Do not auto-start R1. Docs: `restaurant-os-blueprint.md` and companions under `docs/00-product/`. STOP after R0.
+
 ## 2026-08-15 — OPS-02 Live Pilot RC / Site Readiness (Audit)
 
 Authorized go-live audit after OPS-01. Source RC = H4 `24966ba`; docs HEAD OPS-01+. Installable signed/notarized artifact absent (0 codesign identities; adhoc `Nexora.app` TRAINING only). Café POS/printer/KDS/LAN/escrow/operator acceptance PENDING — not fabricated PASS. Verdict **🔴 NO-GO** for first live transaction. Engineering remains ready with conditions. No production code, schema, H5, Phase 4.16. Docs: `ops-02-live-pilot-rc-site-readiness.md`, `ops-02-site-readiness-checklist.md`. STOP after OPS-02.
