@@ -1,5 +1,11 @@
 # Decisions
 
+## 2026-08-15 — R9 Slice 4 Day-close / Z Polish (Proposed — Awaiting Authorization)
+
+**Status:** NOT AUTHORIZED. Definition complete in `prompts/r9/R9-S4-day-close-z-polish-authorization.md`; gated implementation draft in `prompts/r9/R9-S4-day-close-z-polish-implementation.md`.
+
+Proposed formula-preserving polish only: close confirmation, cash-vs-sales clarity, historical frozen reprint, display of existing summary fields, optional Z print/download audits, i18n, `test:r9.4`. Schema tip expected **v83**. **Do not implement** until this entry is replaced by an **Authorized** decision (or equivalent project instruction) with checklist complete. Does **not** authorize Slice 5/6, Gross/Net-in-Z, formula changes, or live go-live.
+
 ## 2026-08-15 — R9 Slice 3 Tax Reporting Depth + Accountant Export (Implemented)
 
 Authorized read-only deepen: shared `queryTaxComponentsReport` for JSON + `GET /api/reports/export/tax-components.csv`; Reports UI panel; `tax.exported` audit; Owner/Manager only. Schema tip remains **v83**. No tax-engine/filing/UTC change. Suite `npm run test:r9.3`. Doc: `docs/05-production/r9-tax-export-slice-3.md`. **Do not start R9 Slice 4+ / Z polish / food-cost without slice auth.**
