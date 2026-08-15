@@ -2281,5 +2281,22 @@
   "reports.foodCostColRecipe": "Recipe",
   "reports.foodCostColCount": "Count",
   "reports.foodCostColCogs": "COGS",
-  "reports.foodCostNoRows": "No recipe consumptions in this date range."
+  "reports.foodCostNoRows": "No recipe consumptions in this date range.",
+  "reports.voidsTitle": "Voids & cancels",
+  "reports.voidsEmpty": "Could not load void/cancel report.",
+  "reports.voidsClarity": "From audit trail: order cancels and item cancel/void events in this date range.",
+  "reports.voidsTotal": "Total events",
+  "reports.voidsOrderCancelled": "Orders cancelled",
+  "reports.voidsItemCancelled": "Items cancelled",
+  "reports.voidsItemVoided": "Items voided",
+  "reports.voidsColWhen": "When",
+  "reports.voidsColAction": "Action",
+  "reports.voidsColActor": "Actor",
+  "reports.voidsColDetail": "Detail",
+  "reports.voidsNoRows": "No void or cancel events in this date range.",
+  "reports.voidsShowingFirst": "Showing first {count} events — export CSV for the full list.",
+  "reports.voidsExportCsv": "Export voids CSV",
+  "reports.voidsExporting": "Exporting voids…",
+  "reports.voidsExportSuccess": "Voids CSV downloaded",
+  "reports.voidsExportFailed": "Could not export voids report"
 }

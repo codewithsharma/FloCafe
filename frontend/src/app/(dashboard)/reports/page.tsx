@@ -51,6 +51,11 @@ import {
   type OpsFinancePayload,
 } from '@/lib/ops-finance-report';
 import { fetchFoodCostReport, type FoodCostPayload } from '@/lib/food-cost-report';
+import {
+  downloadVoidsCsv,
+  fetchVoidCancelReport,
+  type VoidCancelPayload,
+} from '@/lib/void-cancel-report';
 
 interface PaymentMethodBreakdown {
   method: string | null;
@@ -194,10 +199,12 @@ export default function ReportsPage() {
   const [taxComponents, setTaxComponents] = useState<TaxComponentsPayload | null>(null);
   const [opsFinance, setOpsFinance] = useState<OpsFinancePayload | null>(null);
   const [foodCost, setFoodCost] = useState<FoodCostPayload | null>(null);
+  const [voidsReport, setVoidsReport] = useState<VoidCancelPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [exportingCsv, setExportingCsv] = useState(false);
   const [exportingTaxCsv, setExportingTaxCsv] = useState(false);
   const [exportingExpensesCsv, setExportingExpensesCsv] = useState(false);
+  const [exportingVoidsCsv, setExportingVoidsCsv] = useState(false);
 
   const role = currentTenant?.role;
   const canView = role === 'owner' || role === 'manager';
@@ -246,8 +253,9 @@ export default function ReportsPage() {
       fetchTaxComponents(selectedDate, endDate),
       fetchOpsFinance(selectedDate, endDate),
       fetchFoodCostReport(selectedDate, endDate),
+      fetchVoidCancelReport(selectedDate, endDate),
     ])
-      .then(([statsRes, topRes, recentRes, insightsRes, taxRes, opsRes, foodRes]) => {
+      .then(([statsRes, topRes, recentRes, insightsRes, taxRes, opsRes, foodRes, voidsRes]) => {
         setStats(isToday ? statsRes.data : null);
         setDaySummary(isToday ? null : statsRes.data.summary);
         setTopProducts(topRes.data.topProducts || []);
@@ -256,6 +264,7 @@ export default function ReportsPage() {
         setTaxComponents(taxRes);
         setOpsFinance(opsRes);
         setFoodCost(foodRes);
+        setVoidsReport(voidsRes);
       })
       .catch((err: unknown) => {
         if (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))
@@ -309,6 +318,18 @@ export default function ReportsPage() {
       toast.error(err instanceof Error ? err.message : t('reports.expensesExportFailed'));
     } finally {
       setExportingExpensesCsv(false);
+    }
+  };
+
+  const handleExportVoidsCsv = async () => {
+    setExportingVoidsCsv(true);
+    try {
+      await downloadVoidsCsv(selectedDate, endDate);
+      toast.success(t('reports.voidsExportSuccess'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('reports.voidsExportFailed'));
+    } finally {
+      setExportingVoidsCsv(false);
     }
   };
 
@@ -647,6 +668,105 @@ export default function ReportsPage() {
                     <p className="text-body text-flo-text-secondary">
                       {t('reports.foodCostNoRows')}
                     </p>
+                  )}
+                </div>
+              )}
+            </Panel>
+          </section>
+
+          <section className="mb-6" aria-label={t('reports.voidsTitle')}>
+            <Panel
+              title={t('reports.voidsTitle')}
+              actions={
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleExportVoidsCsv()}
+                  disabled={exportingVoidsCsv || loading}
+                  className="min-h-11"
+                >
+                  {exportingVoidsCsv ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin mr-2" aria-hidden />
+                      {t('reports.voidsExporting')}
+                    </>
+                  ) : (
+                    <>
+                      <Download className="size-4 mr-2" aria-hidden />
+                      {t('reports.voidsExportCsv')}
+                    </>
+                  )}
+                </Button>
+              }
+            >
+              {!voidsReport ? (
+                <EmptyState title={t('reports.voidsEmpty')} className="min-h-[120px] py-6" />
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-caption text-flo-text-muted">{t('reports.voidsClarity')}</p>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div>
+                      <p className="text-caption text-flo-text-muted mb-1">
+                        {t('reports.voidsTotal')}
+                      </p>
+                      <p className="text-numeric-lg">{voidsReport.total_count}</p>
+                    </div>
+                    <div>
+                      <p className="text-caption text-flo-text-muted mb-1">
+                        {t('reports.voidsOrderCancelled')}
+                      </p>
+                      <p className="text-numeric-lg">{voidsReport.order_cancelled_count}</p>
+                    </div>
+                    <div>
+                      <p className="text-caption text-flo-text-muted mb-1">
+                        {t('reports.voidsItemCancelled')}
+                      </p>
+                      <p className="text-numeric-lg">{voidsReport.item_cancelled_count}</p>
+                    </div>
+                    <div>
+                      <p className="text-caption text-flo-text-muted mb-1">
+                        {t('reports.voidsItemVoided')}
+                      </p>
+                      <p className="text-numeric-lg">{voidsReport.item_voided_count}</p>
+                    </div>
+                  </div>
+                  {voidsReport.events.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead>
+                          <tr className="border-b text-muted-foreground">
+                            <th className="py-2 pr-3">{t('reports.voidsColWhen')}</th>
+                            <th className="py-2 pr-3">{t('reports.voidsColAction')}</th>
+                            <th className="py-2 pr-3">{t('reports.voidsColActor')}</th>
+                            <th className="py-2">{t('reports.voidsColDetail')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {voidsReport.events.slice(0, 25).map((row) => (
+                            <tr key={row.id} className="border-b border-border/60">
+                              <td className="py-2 pr-3 whitespace-nowrap">
+                                {new Date(row.created_at).toLocaleString(locale, { timeZone })}
+                              </td>
+                              <td className="py-2 pr-3">{row.action}</td>
+                              <td className="py-2 pr-3">{row.actor_name || '—'}</td>
+                              <td className="py-2">
+                                {row.product_name ||
+                                  (row.order_id ? `Order ${row.order_id}` : row.entity_id) ||
+                                  '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {voidsReport.events.length > 25 ? (
+                        <p className="text-caption text-flo-text-muted mt-2">
+                          {t('reports.voidsShowingFirst', { count: '25' })}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <p className="text-body text-flo-text-secondary">{t('reports.voidsNoRows')}</p>
                   )}
                 </div>
               )}

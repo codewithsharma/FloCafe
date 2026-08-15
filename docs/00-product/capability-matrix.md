@@ -21,6 +21,8 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 **R9 Slice 5 note (2026-08-15):** Operations Finance Reports v1 **COMPLETE** — schema tip remains **v83**.
 **R9 Slice 6 note (2026-08-15):** Food-cost Report v1 **COMPLETE** — schema tip remains **v83**.
 **R9 COMPLETE (2026-08-15).** Live go-live still **NO-GO** (OPS-02). ADR-014 service charge remains out. **R10 Online / QR COMPLETE (2026-08-15)** — schema v84; pay-at-counter only.
+**R11 note (2026-08-15):** Coupon codes thin deepen **COMPLETE** — schema **v85**; `npm run test:r11`. Marketing campaigns remain Later.
+**R12 note (2026-08-15):** Void/Cancel report thin deepen **COMPLETE** — no schema bump; `npm run test:r12`. Advanced BI warehouse remains Later.
 ---
 
 ## Legend
@@ -62,7 +64,7 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | Void item                  | 🔵 Planned   |
 | Void order                 | 🟡 Hardening |
 | Discounts                  | 🟡 Hardening |
-| Coupons                    | 🔵 Planned   |
+| Coupons                    | 🟢 Existing  |
 | Promotions                 | 🔵 Planned   |
 | Tax calculation            | 🟢 Existing  |
 | Service charge             | 🔵 Planned   |
@@ -243,7 +245,7 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | Redemption rules    | 🔵 Planned  |
 | Gift cards          | 🔵 Planned  |
 | Digital gift cards  | 🔵 Planned  |
-| Coupons             | 🔵 Planned  |
+| Coupons             | 🟢 Existing |
 | Promotions          | 🔵 Planned  |
 | Happy-hour pricing  | ⚪ Later    |
 | Marketing campaigns | ⚪ Later    |
@@ -315,12 +317,12 @@ R8 (2026-08-15) deepened Existing staff management (search/filter, detail, shift
 | Product performance  | 🔵 Planned  |
 | Category performance | 🔵 Planned  |
 | Discount report      | 🔵 Planned  |
-| Void report          | 🔵 Planned  |
+| Void report          | 🟢 Existing |
 | Staff report         | 🔵 Planned  |
 | Shift report         | 🟢 Existing |
 | Cash reconciliation  | 🟢 Existing |
 | Inventory report     | 🟢 Existing |
-| Food-cost report     | 🔵 Planned  |
+| Food-cost report     | 🟢 Existing |
 | Profitability        | 🔵 Planned  |
 | KDS performance      | 🔵 Planned  |
 | Customer analytics   | 🔵 Planned  |

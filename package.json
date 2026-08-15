@@ -232,7 +232,9 @@
     "test:r9.4": "node tests/run-electron-node-test.cjs tests/r9-day-close-z-polish.test.ts",
     "test:r9.5": "node tests/run-electron-node-test.cjs tests/r9-ops-finance-reports.test.ts",
     "test:r9.6": "node tests/run-electron-node-test.cjs tests/r9-food-cost-report.test.ts",
-    "test:r10": "node tests/run-electron-node-test.cjs tests/r10-online-qr-ordering.test.ts"
+    "test:r10": "node tests/run-electron-node-test.cjs tests/r10-online-qr-ordering.test.ts",
+    "test:r11": "node tests/run-electron-node-test.cjs tests/r11-coupons.test.ts",
+    "test:r12": "node tests/run-electron-node-test.cjs tests/r12-void-report.test.ts"
   },
   "author": {
     "name": "OPERAVIA",

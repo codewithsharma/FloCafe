@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-08-15 — R12 Void / Cancel Report (Implemented)
+
+Authorized thin Reporting/BI deepen. No schema bump. Reads `audit_logs` actions `order.cancelled` / `order.item_cancelled` / `order.item_voided`. JSON `GET /api/reports/voids` + CSV `export/voids.csv` + `report.voids_exported`. Owner/Manager only. Suite `npm run test:r12`. Doc: `docs/05-production/r12-void-cancel-report.md`. **Do not rebuild food-cost (R9.6) or invent Advanced BI warehouse. Do not touch coupons/migrations (R11).**
+
+## 2026-08-15 — R11 Coupon codes / Marketing thin slice (COMPLETE)
+
+Authorized R11 deepen: schema **v85** `coupons` (percent XOR amount_cents); Owner/Manager create/list/deactivate; `POST /api/orders/:id/apply-coupon` reuses order discount apply + post-tender 409 + Idempotency-Key; cashier may apply only; audit includes `coupon_code`. Suite `npm run test:r11`. Doc: `docs/05-production/r11-coupons.md`. **No WhatsApp campaigns / Frozen features.**
+
 ## 2026-08-15 — R10 Online / QR Ordering (COMPLETE)
 
 Canonical roadmap R10 = Online / QR (not Workforce). Schema **v84**. Pay-at-counter only; online payment remains Frozen. Suite `npm run test:r10`. Doc: `docs/05-production/r10-online-qr-ordering.md`. Misnamed Workforce planning relocated to `prompts/later/workforce-os-planning.md`.

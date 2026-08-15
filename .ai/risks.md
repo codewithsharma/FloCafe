@@ -2,6 +2,7 @@
 
 ## Active program notes (2026-08-15)
 
+- ⚠️ RISK: **R12 void report** is audit-derived (not a second money ledger). Incomplete historical audits before H1/R1 audit coverage will under-count. Prefer CSV for full periods; UI shows first 25 rows.
 - ⚠️ RISK: **R10 guest QR** expands unauthenticated LAN surface to `/api/public/qr/*` (token-scoped). Mitigations: opaque tokens, rotate, inactive system user, no cost exposure, pay-at-counter only. Keep guest Wi‑Fi unsupported; use staff LAN / kiosk.
 - ⚠️ RISK: **R16 live Go-Live** remains **NO-GO** until signed/notarized RC + OPS-02 human/site gates — engineering completion of R-waves ≠ production PASS.
 

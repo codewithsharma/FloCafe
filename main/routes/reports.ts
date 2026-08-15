@@ -14,6 +14,7 @@ import {
   queryOpsFinanceReport,
 } from '../services/ops-finance-report';
 import { queryFoodCostReport } from '../services/food-cost-report';
+import { queryVoidCancelReport, voidCancelReportToCsv } from '../services/void-cancel-report';
 import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
 import { toCsvRow } from '../lib/csv';
@@ -563,6 +564,67 @@ router.get('/food-cost', requireRole('owner', 'manager'), (req: Request, res: Re
     res.json({ foodCost: report });
   } catch (error: unknown) {
     console.error('[API] Food-cost report failed:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// R12 — Void / Cancel report from audit_logs (no schema change).
+router.get('/voids', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const today = utcTodayDate();
+    const startDate = reportDate(req.query.start_date, today);
+    const endDate = reportDate(req.query.end_date, today);
+    if (startDate > endDate) {
+      return res.status(400).json({ error: 'start_date must be on or before end_date' });
+    }
+    const report = queryVoidCancelReport(db, startDate, endDate);
+    res.json({ voids: report });
+  } catch (error: unknown) {
+    console.error('[API] Void/cancel report failed:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/export/voids.csv', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const today = utcTodayDate();
+    const startDate = reportDate(req.query.start_date, today);
+    const endDate = reportDate(req.query.end_date, today);
+    if (startDate > endDate) {
+      return res.status(400).json({ error: 'start_date must be on or before end_date' });
+    }
+
+    const report = queryVoidCancelReport(db, startDate, endDate);
+    const csv = voidCancelReportToCsv(report);
+
+    logAuditEvent({
+      actorUserId: (req as { user?: { userId?: string } }).user?.userId ?? null,
+      action: 'report.voids_exported',
+      entityType: 'void_report',
+      entityId: `${startDate}_${endDate}`,
+      result: 'success',
+      metadata: {
+        format: 'csv',
+        start_date: startDate,
+        end_date: endDate,
+        row_count: report.events.length,
+        total_count: report.total_count,
+        order_cancelled_count: report.order_cancelled_count,
+        item_cancelled_count: report.item_cancelled_count,
+        item_voided_count: report.item_voided_count,
+      },
+    });
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="operavia-voids-${startDate}-to-${endDate}.csv"`,
+    );
+    res.status(200).send(csv);
+  } catch (error: unknown) {
+    console.error('[API] Voids CSV export failed:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

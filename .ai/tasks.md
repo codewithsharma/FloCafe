@@ -39,16 +39,16 @@ Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `
 - [x] **R9 Slice 6 Food-cost Report GREEN (2026-08-15):** schema tip **v83**; theoretical COGS + Reports UI; `npm run test:r9.6`. Live **NO-GO**.
 - [x] **R9 COMPLETE (2026-08-15):** S1–S6 green; completion doc `r9-completion.md`.
 - [x] **R10 Online / QR Ordering GREEN (2026-08-15):** schema **v84**; public QR menu + create dine_in; pay-at-counter; rotate; `npm run test:r10`. Doc: `r10-online-qr-ordering.md`. Workforce OS ≠ R10.
-- [ ] **R11 Marketing** — Planned coupons/offers deepen (no campaign blasts / WhatsApp marketing Later).
-- [ ] **R12 Reporting / BI** — Planned deepen (void/cancel report; no Advanced BI warehouse).
+- [x] **R11 Marketing coupons GREEN (2026-08-15):** schema **v85**; `/api/coupons` + apply-coupon via discount path; `npm run test:r11`. Doc: `r11-coupons.md`. No campaign blasts.
+- [x] **R12 Reporting / BI thin deepen GREEN (2026-08-15):** Void/Cancel report from `audit_logs`; JSON+CSV; `report.voids_exported`; Reports UI; no schema bump; `npm run test:r12`. Doc: `r12-void-cancel-report.md`. Advanced BI warehouse remains Later.
 - [ ] **R13 Integrations / Hardware** — Planned print queue/retry (terminals Frozen).
 - [ ] **R14 Reliability / DR** — Hardening corrupt-DB fail-closed deepen.
 - [ ] **R15 Simulation** — S1 sim pack foundation.
 - [ ] **R16 Production Release** — **HUMAN BLOCKED** (signed RC + OPS-02 site gates).
-- [ ] **Next program:** R10 Workforce OS — planning prompt only (`prompts/r10/R10-workforce-os-planning.md`); requires new program authorization. Or OPS-02 signed RC when credentials available.
-- [ ] **Hardening (prefer next, authorized slice only):** REAL money cutover (drop REAL); residual Zod; durable KDS ticket outbox (still deferred) — or next authorized R-wave. R0–R8 closed.
-- [ ] **Planned (not started):** see matrix — expediter, QR, marketing (R11), full BI (R12), gift cards, etc. Reuse shipped slices; do not rebuild.
-- [ ] **Frozen / later / out of scope:** terminals, gateways, online payment, multi-location, payroll, aggregators, AI — do not start.
+- [ ] **Next program:** R13 Integrations / Hardware (if authorized) — or OPS-02 signed RC when credentials available.
+- [ ] **Hardening (prefer next, authorized slice only):** REAL money cutover (drop REAL); residual Zod; durable KDS ticket outbox (still deferred) — or next authorized R-wave. R0–R12 closed.
+- [ ] **Planned (not started):** see matrix — expediter, promotions, gift cards, Advanced BI warehouse, etc. Reuse shipped slices; do not rebuild.
+- [ ] **Frozen / later / out of scope:** terminals, gateways, online payment, multi-location, payroll, aggregators, AI, WhatsApp marketing campaigns — do not start.
 
 ## Completed (M4–M5 + UI)
 

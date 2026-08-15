@@ -2109,5 +2109,22 @@
   "reports.foodCostColRecipe": "Receta",
   "reports.foodCostColCount": "Cantidad",
   "reports.foodCostColCogs": "COGS",
-  "reports.foodCostNoRows": "No hay consumos de receta en este rango."
+  "reports.foodCostNoRows": "No hay consumos de receta en este rango.",
+  "reports.voidsTitle": "Anulaciones y cancelaciones",
+  "reports.voidsEmpty": "No se pudo cargar el reporte de anulaciones.",
+  "reports.voidsClarity": "Desde auditoría: cancelaciones de pedido y cancelación/anulación de ítems en este rango.",
+  "reports.voidsTotal": "Eventos totales",
+  "reports.voidsOrderCancelled": "Pedidos cancelados",
+  "reports.voidsItemCancelled": "Ítems cancelados",
+  "reports.voidsItemVoided": "Ítems anulados",
+  "reports.voidsColWhen": "Cuándo",
+  "reports.voidsColAction": "Acción",
+  "reports.voidsColActor": "Actor",
+  "reports.voidsColDetail": "Detalle",
+  "reports.voidsNoRows": "No hay anulaciones ni cancelaciones en este rango.",
+  "reports.voidsShowingFirst": "Mostrando los primeros {count} eventos — exporte CSV para la lista completa.",
+  "reports.voidsExportCsv": "Exportar CSV de anulaciones",
+  "reports.voidsExporting": "Exportando anulaciones…",
+  "reports.voidsExportSuccess": "CSV de anulaciones descargado",
+  "reports.voidsExportFailed": "No se pudo exportar el reporte de anulaciones"
 }
