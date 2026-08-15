@@ -69,8 +69,7 @@ export default function ProductsPage() {
   const [stockAdjustProduct, setStockAdjustProduct] = useState<Product | null>(null);
   const [stockAdjustAction, setStockAdjustAction] = useState<StockAdjustAction>('increase');
   const [stockAdjustQuantity, setStockAdjustQuantity] = useState('');
-  const [stockAdjustWastageReason, setStockAdjustWastageReason] =
-    useState<WastageReason>('OTHER');
+  const [stockAdjustWastageReason, setStockAdjustWastageReason] = useState<WastageReason>('OTHER');
   const [stockAdjusting, setStockAdjusting] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const { confirm, ConfirmDialog } = useConfirm();
@@ -375,9 +374,7 @@ export default function ProductsPage() {
       await postProductStockAdjust(stockAdjustProduct.id, {
         action: stockAdjustAction,
         quantity,
-        ...(stockAdjustAction === 'wastage'
-          ? { wastage_reason: stockAdjustWastageReason }
-          : {}),
+        ...(stockAdjustAction === 'wastage' ? { wastage_reason: stockAdjustWastageReason } : {}),
       });
       toast.success(t('stockAdjust.success'));
       setStockAdjustProduct(null);
@@ -669,6 +666,11 @@ export default function ProductsPage() {
           <div className="flex justify-end gap-2 mb-4">
             {isOwnerOrManager && isModuleEnabled('inventory', verticalId) && (
               <>
+                <Button variant="outline" asChild>
+                  <Link href="/products/recipes">
+                    <ClipboardList size={16} className="mr-1" /> {t('recipes.title')}
+                  </Link>
+                </Button>
                 <Button variant="outline" asChild>
                   <Link href="/products/low-stock">
                     <AlertTriangle size={16} className="mr-1" /> {t('lowStock.title')}

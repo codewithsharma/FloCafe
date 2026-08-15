@@ -27,6 +27,7 @@ import { menuCsvRoutes } from './menu-csv';
 import { taxPackRoutes } from './tax-packs';
 import { taxRoutes } from './tax';
 import { inventoryRoutes } from './inventory';
+import { recipeRoutes } from './recipes';
 import { heldOrderRoutes } from './held-orders';
 import { whatsappRoutes } from './whatsapp';
 import { supportTicketRoutes } from './support-ticket';
@@ -124,6 +125,7 @@ export function registerRoutes(app: Express, options: RegisterRoutesOptions = {}
   mount('/api/tax-packs', taxPackRoutes, 'tax');
   mount('/api/tax', taxRoutes, 'tax');
   mount('/api/inventory', inventoryRoutes, 'inventory');
+  mount('/api/recipes', recipeRoutes, 'inventory');
   mount('/api/whatsapp', whatsappRoutes, 'notification');
   mount('/api/shifts', shiftRoutes, 'shift');
 

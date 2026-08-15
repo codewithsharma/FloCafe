@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — R5 BOM / Recipes / Food Cost (Implemented)
+
+Authorized R5 deepen (not purchasing). Schema **v79**: `recipes`, `recipe_ingredients`, `recipe_consumptions`, `recipe_consumption_lines`. **Ingredients = existing `products` SKUs** (no separate catalog). Consumption at order create/add-items via Inventory `applyRecipeStockDelta`; ledger `adjustment` + reason `recipe_consumption`; **BLOCK** on insufficient stock; cancel reverses; refund restaurant restock remains a gap; **no addon BOM**. Food cost = integer cents theoretical. Suite `npm run test:r5`. Doc: `docs/05-production/r5-bom-recipes-food-cost.md`. **Do not start R6.**
+
 ## 2026-08-15 — R4 Inventory UI minimal deepen (Implemented)
 
 Authorized UI deepen only (no purchasing/BOM). `StockAdjustmentDialog` optional wastage_reason (SPOILAGE|DAMAGED|EXPIRED|SPILLAGE|OTHER, default OTHER) + read-only `inventory_unit`; wired through products + low-stock hubs via `postProductStockAdjust`. New `/products/counts` owner/manager page (fail-closed when inventory module off) + `frontend/src/lib/inventory-counts.ts`. Products hub link; `getRouteTitleKey` for counts. No nav children invented (navigation has none). Suites: `test:stock-adjust-ui`, `test:inventory-counts-ui`.

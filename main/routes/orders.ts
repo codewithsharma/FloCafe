@@ -30,6 +30,11 @@ import {
   decrementTrackedStock,
   restoreTrackedStock,
 } from '../services/inventory';
+import {
+  consumeRecipeForOrderItem,
+  reverseRecipeConsumptionForOrder,
+  reverseRecipeConsumptionForOrderItem,
+} from '../services/recipe-consumption';
 import { notifyKdsUpdate, notifyOrderUpdated } from '../services/kds';
 import { isModuleEnabled } from '../modules';
 import { cloudSync } from '../services/cloud-sync';
@@ -716,6 +721,14 @@ router.post(
               referenceType: 'order',
               referenceId: orderId,
             });
+            // R5: BOM ingredient consumption (idempotent per order_item_id).
+            consumeRecipeForOrderItem(db, {
+              orderId,
+              orderItemId: Number(insertItemResult.lastInsertRowid),
+              menuProductId: String(product.id),
+              portions: quantity,
+              actorUserId: authenticatedUserId ?? null,
+            });
           }
 
           const chargeTaxes = calculateConfiguredChargeTaxes(tenantInfo, chargeContext, customer);
@@ -1019,6 +1032,13 @@ router.post(
           decrementTrackedStock(db, product, quantity, now(), {
             referenceType: 'order',
             referenceId: req.params.id as string,
+          });
+          consumeRecipeForOrderItem(db, {
+            orderId: String(req.params.id),
+            orderItemId: Number(insertItemResult.lastInsertRowid),
+            menuProductId: String(product.id),
+            portions: quantity,
+            actorUserId: authUser?.userId ?? null,
           });
         }
 
@@ -1380,7 +1400,17 @@ router.patch(
                 referenceId: req.params.id as string,
                 reason: 'order_cancelled',
               });
+              reverseRecipeConsumptionForOrderItem(db, {
+                orderItemId: Number(item.id),
+                actorUserId: authUser?.userId ?? null,
+                reason: 'order_cancelled',
+              });
             }
+            reverseRecipeConsumptionForOrder(db, {
+              orderId: String(req.params.id),
+              actorUserId: authUser?.userId ?? null,
+              reason: 'order_cancelled',
+            });
             db.prepare(
               'UPDATE orders SET status = ?, cancelled_at = ?, cancellation_reason = ?, updated_at = ? WHERE id = ?',
             ).run(status, nowStr, reason, nowStr, req.params.id);
@@ -2512,7 +2542,17 @@ router.patch(
                 referenceId: orderId,
                 reason: 'all_items_cancelled',
               });
+              reverseRecipeConsumptionForOrderItem(db, {
+                orderItemId: Number(i.id),
+                actorUserId: (req as any).user?.userId ?? null,
+                reason: 'all_items_cancelled',
+              });
             }
+            reverseRecipeConsumptionForOrder(db, {
+              orderId: String(orderId),
+              actorUserId: (req as any).user?.userId ?? null,
+              reason: 'all_items_cancelled',
+            });
             db.prepare(
               `
           UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?,

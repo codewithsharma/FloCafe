@@ -4957,6 +4957,79 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       `);
     },
   },
+  {
+    version: 79,
+    name: 'r5_bom_recipes_food_cost',
+    up: () => {
+      // R5 BOM / Recipes / Food Cost. Inventory movements CHECK unchanged —
+      // recipe consume/restore use movement_type=adjustment + reason.
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS recipes (
+          id TEXT PRIMARY KEY,
+          product_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          yield_qty REAL NOT NULL DEFAULT 1,
+          yield_unit TEXT NOT NULL DEFAULT 'pcs',
+          is_active INTEGER NOT NULL DEFAULT 1,
+          created_by TEXT,
+          updated_by TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_recipes_one_active_per_product
+          ON recipes(product_id) WHERE is_active = 1;
+        CREATE INDEX IF NOT EXISTS idx_recipes_product ON recipes(product_id);
+
+        CREATE TABLE IF NOT EXISTS recipe_ingredients (
+          id TEXT PRIMARY KEY,
+          recipe_id TEXT NOT NULL,
+          ingredient_product_id TEXT NOT NULL,
+          quantity REAL NOT NULL,
+          unit TEXT NOT NULL,
+          prep_loss_bps INTEGER NOT NULL DEFAULT 0,
+          position INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          UNIQUE(recipe_id, ingredient_product_id),
+          FOREIGN KEY (recipe_id) REFERENCES recipes(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_recipe
+          ON recipe_ingredients(recipe_id);
+
+        CREATE TABLE IF NOT EXISTS recipe_consumptions (
+          id TEXT PRIMARY KEY,
+          order_id TEXT NOT NULL,
+          order_item_id INTEGER NOT NULL UNIQUE,
+          recipe_id TEXT NOT NULL,
+          recipe_name TEXT NOT NULL,
+          menu_product_id TEXT NOT NULL,
+          portions REAL NOT NULL,
+          yield_qty REAL NOT NULL,
+          status TEXT NOT NULL DEFAULT 'consumed',
+          actor_user_id TEXT,
+          created_at TEXT NOT NULL,
+          reversed_at TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_recipe_consumptions_order
+          ON recipe_consumptions(order_id);
+
+        CREATE TABLE IF NOT EXISTS recipe_consumption_lines (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          consumption_id TEXT NOT NULL,
+          ingredient_product_id TEXT NOT NULL,
+          ingredient_name TEXT,
+          quantity_delta REAL NOT NULL,
+          unit TEXT NOT NULL,
+          unit_cost_cents INTEGER,
+          line_cost_cents INTEGER,
+          inventory_movement_id INTEGER,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (consumption_id) REFERENCES recipe_consumptions(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_recipe_consumption_lines_consumption
+          ON recipe_consumption_lines(consumption_id);
+      `);
+    },
+  },
 ];
 
 function syncBackupBeforeMigration(fromVersion: number, toVersion: number): void {
@@ -5527,6 +5600,71 @@ function createSchema(): void {
       ON inventory_count_lines(count_id);
     CREATE INDEX IF NOT EXISTS idx_stock_adjust_idempotency_product
       ON stock_adjust_idempotency(product_id);
+
+    -- R5 BOM / Recipes / Food Cost (migration v79 also creates these for upgrades)
+    CREATE TABLE IF NOT EXISTS recipes (
+      id TEXT PRIMARY KEY,
+      product_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      yield_qty REAL NOT NULL DEFAULT 1,
+      yield_unit TEXT NOT NULL DEFAULT 'pcs',
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_by TEXT,
+      updated_by TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_recipes_one_active_per_product
+      ON recipes(product_id) WHERE is_active = 1;
+    CREATE INDEX IF NOT EXISTS idx_recipes_product ON recipes(product_id);
+
+    CREATE TABLE IF NOT EXISTS recipe_ingredients (
+      id TEXT PRIMARY KEY,
+      recipe_id TEXT NOT NULL,
+      ingredient_product_id TEXT NOT NULL,
+      quantity REAL NOT NULL,
+      unit TEXT NOT NULL,
+      prep_loss_bps INTEGER NOT NULL DEFAULT 0,
+      position INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      UNIQUE(recipe_id, ingredient_product_id),
+      FOREIGN KEY (recipe_id) REFERENCES recipes(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_recipe
+      ON recipe_ingredients(recipe_id);
+
+    CREATE TABLE IF NOT EXISTS recipe_consumptions (
+      id TEXT PRIMARY KEY,
+      order_id TEXT NOT NULL,
+      order_item_id INTEGER NOT NULL UNIQUE,
+      recipe_id TEXT NOT NULL,
+      recipe_name TEXT NOT NULL,
+      menu_product_id TEXT NOT NULL,
+      portions REAL NOT NULL,
+      yield_qty REAL NOT NULL,
+      status TEXT NOT NULL DEFAULT 'consumed',
+      actor_user_id TEXT,
+      created_at TEXT NOT NULL,
+      reversed_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_recipe_consumptions_order
+      ON recipe_consumptions(order_id);
+
+    CREATE TABLE IF NOT EXISTS recipe_consumption_lines (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      consumption_id TEXT NOT NULL,
+      ingredient_product_id TEXT NOT NULL,
+      ingredient_name TEXT,
+      quantity_delta REAL NOT NULL,
+      unit TEXT NOT NULL,
+      unit_cost_cents INTEGER,
+      line_cost_cents INTEGER,
+      inventory_movement_id INTEGER,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (consumption_id) REFERENCES recipe_consumptions(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_recipe_consumption_lines_consumption
+      ON recipe_consumption_lines(consumption_id);
   `);
 }
 

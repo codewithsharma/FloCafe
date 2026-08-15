@@ -1,4 +1,4 @@
-<!-- Last updated: 2026-08-15, schema v75 -->
+<!-- Last updated: 2026-08-15, schema v79 -->
 
 # Operavia Restaurant OS — Roadmap (R0–R16)
 
@@ -20,7 +20,7 @@ North-star KPI unchanged: **3 cafés × 30 days × zero critical failures** ([`S
 | **R2**  | Tables / Floor Operations         | Planned floor depth                          | R1 money/order stable        |
 | **R3**  | Kitchen OS                        | Hardening residual + Planned stations        | R1; KDS SoR rule             |
 | **R4**  | Inventory depth                   | Planned inventory                            | R1 stock guards              |
-| **R5**  | Recipes / BOM / Food Cost         | Planned + **ADR**                            | R4 ingredients               |
+| **R5**  | Recipes / BOM / Food Cost         | **COMPLETE** (Existing depth)                | R4 ingredients               |
 | **R6**  | Purchasing                        | Planned + **ADR**                            | R4/R5                        |
 | **R7**  | Customer / CRM / Loyalty          | Planned deepen                               | R1 payments                  |
 | **R8**  | Staff / Shift / Attendance        | Planned staff depth                          | R1 RBAC                      |
@@ -83,15 +83,21 @@ Ingredient model (if not only SKU), unit conversion, stock count, spoilage, tran
 
 ## R5 — Recipes / BOM / Food Cost
 
-Recipes, BOM, yield, loss, versions, theoretical vs actual cost, menu margin.  
-**Requires ADR** before schema. Depends on R4.
+**Status:** COMPLETE (2026-08-15) — depth closed per [`docs/05-production/r5-bom-recipes-food-cost.md`](../05-production/r5-bom-recipes-food-cost.md).  
+**Suite:** `npm run test:r5`. Schema **v79**.
+
+**Delivered:** recipes/BOM linked to menu products; ingredients = product SKUs; deduction at order create/add-items; theoretical food cost (integer cents) + basic food-cost %; cancel reverse; BLOCK on insufficient stock.
+
+**Exclude / remaining:** PO, receiving, suppliers (R6); full consumption/food-cost BI; auto-86; expiry; stock transfer; addon BOM; refund restock gap.
+
+**Next (if authorized):** R6 Purchasing — do not start without explicit authorization.
 
 ---
 
 ## R6 — Purchasing
 
 Suppliers, PO, receiving (incl. partial), invoices, returns, stock impact.  
-**Requires ADR.** Depends on R4/R5.
+**Requires ADR.** Depends on R4/R5. **Not started** — next only if authorized.
 
 ---
 

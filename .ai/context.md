@@ -9,7 +9,7 @@
 **Canonical strategy:** `STRATEGY.md` (pilot KPI unchanged).
 **Branding audit:** `docs/05-production/operavia-branding-normalization-audit.md`.
 
-Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v78**) + statically exported Next.js (`frontend/`).
+Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v79**) + statically exported Next.js (`frontend/`).
 
 **Canonical product plan:** `docs/00-product/capability-matrix.md` (Existing / Hardening / Planned / Later / Frozen, 2026-08-14).  
 **Complete Restaurant OS (R0):** `docs/00-product/restaurant-os-blueprint.md` · `restaurant-os-roadmap.md` (R0–R16). Docs only until R1+ authorized.  
@@ -49,7 +49,7 @@ Phase 2 delivered: registry → … → 2.14 Order → 2.15 Payment → 2.16 POS
 6. Electron sandbox / process security — **Phase A/B1/B2 GREEN WITH HARDENING**; **Final P0.6 audit: GO WITH CONDITIONS** (`p0.6-final-production-security-audit.md`, score **78/100** after FIN-01). Phase C deferred.
 7. **FIN-01** — prevent over-collection after partial pay + refund — **CLOSED** (gross-tender outstanding)
 
-**Frozen until pilots prove reliability:** AI, aggregators (Swiggy/Zomato/ONDC), multi-tenant SaaS, multi-location implementation, payment terminals / gateways / online payment, Bluetooth print, microservices. **ERP inventory (recipes/BOM/PO)** is 🔵 Planned in `capability-matrix.md` but still needs an authorized slice — do not start from this sentence.
+**Frozen until pilots prove reliability:** AI, aggregators (Swiggy/Zomato/ONDC), multi-tenant SaaS, multi-location implementation, payment terminals / gateways / online payment, Bluetooth print, microservices. **R5 BOM/recipes/food-cost is Existing** (schema v79). **R6 purchasing (PO/suppliers/receiving)** remains Planned — do not start without authorization.
 
 **Already shipped (do not rebuild)**
 
@@ -94,11 +94,13 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 **R3 (2026-08-15): CLOSED.** Kitchen OS — `docs/05-production/r3-kitchen-os.md`. Schema **v77**. `kitchen-status` service (CAS + timestamps + audit + priority); companion + main KDS paths; UI aging/rush/station/bump/addons. Suite `npm run test:r3` 70/70. Durable outbox / expediter / analytics remain gaps.
 
-**R4 (2026-08-15): CLOSED.** Inventory OS — `docs/05-production/r4-inventory-os.md`. Schema **v78**. Idempotent adjust, units, counts, ledger reconstruct, wastage reasons, counts UI. No BOM/purchasing. Suite `npm run test:r4` 53/53. **Do not start R5.**
+**R4 (2026-08-15): CLOSED.** Inventory OS — `docs/05-production/r4-inventory-os.md`. Schema **v78**. Idempotent adjust, units, counts, ledger reconstruct, wastage reasons, counts UI. Suite `npm run test:r4` 53/53.
+
+**R5 (2026-08-15): CLOSED.** BOM / Recipes / Food Cost — `docs/05-production/r5-bom-recipes-food-cost.md`. Schema **v79**. Ingredients = product SKUs; consume at order create/add-items; theoretical cost cents; BLOCK insufficient; cancel reverse. Suite `npm run test:r5`. **Do not start R6.**
 
 Do not invent 4.16. Do not push.
 
 - **Human/RELEASE + OPS:** signed RC + `ops-02-site-readiness-checklist.md` + `pilot-signoff.md`.
-- **Next software (if authorized):** **R5 BOM/Recipes** or Hardening — only with explicit authorization.
-- ADR-014 Proposed. Schema v78. Engineering baseline includes R1–R4 on `restaurant-vertical`.
+- **Next software (if authorized):** **R6 Purchasing** or Hardening — only with explicit authorization. Do not start R6.
+- ADR-014 Proposed. Schema v79. Engineering baseline includes R1–R5 on `restaurant-vertical`.
 - Test debt: `security-hardening.test.ts` isolation only (not live blocker).

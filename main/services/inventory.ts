@@ -105,24 +105,27 @@ export function recordMovement(
     reason?: string | null;
     createdAt?: string;
   },
-): void {
-  db.prepare(
-    `
+): number {
+  const result = db
+    .prepare(
+      `
     INSERT INTO inventory_movements (
       product_id, quantity_delta, movement_type, reference_type, reference_id,
       reason, stock_after, created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `,
-  ).run(
-    String(args.productId),
-    args.quantityDelta,
-    args.movementType,
-    args.referenceType ?? null,
-    args.referenceId != null ? String(args.referenceId) : null,
-    args.reason ?? null,
-    args.stockAfter,
-    args.createdAt ?? now(),
-  );
+    )
+    .run(
+      String(args.productId),
+      args.quantityDelta,
+      args.movementType,
+      args.referenceType ?? null,
+      args.referenceId != null ? String(args.referenceId) : null,
+      args.reason ?? null,
+      args.stockAfter,
+      args.createdAt ?? now(),
+    ) as { lastInsertRowid: number | bigint };
+  return Number(result.lastInsertRowid);
 }
 
 function readStockAfter(db: any, productId: string | number): number {
@@ -180,6 +183,44 @@ export function applyAbsoluteStockChange(
   });
 
   return { changed: true, delta, stockAfter };
+}
+
+/**
+ * R5 recipe consume/restore stock delta via adjustment movements.
+ * Negative delta consumes (BLOCK on insufficient when tracking).
+ * Callers MUST be inside withTxn with the consumption snapshot write.
+ */
+export function applyRecipeStockDelta(
+  db: any,
+  product: StockTrackedProduct,
+  quantityDelta: number,
+  updatedAt: string,
+  ref: InventoryMovementRef & { reason: string },
+): { movementId: number | null; stockAfter: number } {
+  if (!Number.isFinite(quantityDelta) || quantityDelta === 0) {
+    return { movementId: null, stockAfter: readStockAfter(db, product.id) };
+  }
+  if (quantityDelta < 0) {
+    assertStockAvailable(product, Math.abs(quantityDelta));
+  }
+  if (!isTracking(product)) {
+    throw new InventoryServiceError(400, `Ingredient does not track inventory: ${product.name}`);
+  }
+  db.prepare(
+    'UPDATE products SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?',
+  ).run(quantityDelta, updatedAt, product.id);
+  const stockAfter = readStockAfter(db, product.id);
+  const movementId = recordMovement(db, {
+    productId: product.id,
+    quantityDelta,
+    movementType: 'adjustment',
+    stockAfter,
+    referenceType: ref.referenceType ?? 'order_item',
+    referenceId: ref.referenceId ?? null,
+    reason: ref.reason,
+    createdAt: updatedAt,
+  });
+  return { movementId, stockAfter };
 }
 
 /** Sale / add-items path: check then decrement when tracking. No floor on UPDATE. */

@@ -18,9 +18,11 @@ Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `
 - [x] **R1 POS Core Completion GREEN (2026-08-15):** illegal status transitions; cancel/discount Idempotency-Key; required addon groups; reprint coerce; preview `bill_id`; `order.created` + item discount audits; WebUSB/local print log. Suite: `tests/r1-pos-core-completion.test.ts` (34/34). Do not start R2 / service charge / FIN-01 reopen.
 - [x] **R2 Floor Operations GREEN (2026-08-15):** occupy CAS; transfer harden + UI; unpaid merge/split; waiter assign; section UI; audits; schema v76. Suite: `npm run test:r2` (62/62). Doc: `docs/05-production/r2-floor-operations.md`. Do not start R3 / Kitchen OS / inventory.
 - [x] **R3 Kitchen OS GREEN (2026-08-15):** `kitchen-status` CAS + timestamps + audit + priority; schema v77; companion wired; UI aging/rush/station/bump/addons; `npm run test:r3` 70/70. Doc: `docs/05-production/r3-kitchen-os.md`. Do not start BOM.
-- [x] **R4 Inventory OS GREEN (2026-08-15):** schema v78; units; idempotent stock adjust; stock counts; ledger reconstruct; wastage reasons; counts UI. `npm run test:r4` 53/53. Doc: `docs/05-production/r4-inventory-os.md`. Do not start R5 / BOM / purchasing.
-- [ ] **Hardening (prefer next, authorized slice only):** durable KDS outbox residual; audit trail depth — or next authorized R-wave. R0–R4 closed.
-- [ ] **Planned (not started):** see matrix — BOM/recipes (R5), PO/suppliers (R6), expediter, QR, etc. Reuse shipped slices; do not rebuild.
+- [x] **R4 Inventory OS GREEN (2026-08-15):** schema v78; units; idempotent stock adjust; stock counts; ledger reconstruct; wastage reasons; counts UI. `npm run test:r4` 53/53. Doc: `docs/05-production/r4-inventory-os.md`.
+- [x] **R5 BOM / Recipes / Food Cost GREEN (2026-08-15):** schema v79; recipes + ingredients (product SKUs); deduction at order create/add-items; theoretical food cost cents + basic %; BLOCK insufficient; cancel reverse. `npm run test:r5`. Doc: `docs/05-production/r5-bom-recipes-food-cost.md`. Do not start R6.
+- [ ] **Hardening (prefer next, authorized slice only):** durable KDS outbox residual; audit trail depth — or next authorized R-wave. R0–R5 closed.
+- [ ] **R6 Purchasing (planned, not started):** PO, goods receiving, supplier management — only if authorized.
+- [ ] **Planned (not started):** see matrix — expediter, QR, consumption/food-cost full BI, auto-86, expiry, stock transfer, etc. Reuse shipped slices; do not rebuild.
 - [ ] **Frozen / later / out of scope:** terminals, gateways, online payment, multi-location, payroll, aggregators, AI — do not start.
 
 ## Completed (M4–M5 + UI)
