@@ -29,9 +29,9 @@ North-star KPI unchanged: **3 cafés × 30 days × zero critical failures** ([`S
 | **R11** | Marketing                         | **COMPLETE** thin slice (2026-08-15); campaigns Later              | R7                           |
 | **R12** | Reporting / BI                    | Planned deepen (void report thin slice COMPLETE 2026-08-15)        | R1–R9 data                   |
 | **R13** | Integrations / Hardware           | **COMPLETE** print queue thin slice (2026-08-15); Frozen terminals | R1–R3                        |
-| **R14** | Reliability / Backup / DR         | Hardening + Planned DR                                             | Continuous; parallel         |
-| **R15** | Restaurant Simulation Environment | Testing                                                            | Parallel from R1             |
-| **R16** | Production Release                | Ops + signed RC                                                    | Pilot gates + chosen R-waves |
+| **R14** | Reliability / Backup / DR         | **COMPLETE** fail-closed thin (2026-08-15)                         | Continuous; parallel         |
+| **R15** | Restaurant Simulation Environment | **COMPLETE** S1 foundation (2026-08-15)                            | Parallel from R1             |
+| **R16** | Production Release                | **BLOCKED (human)** signed RC + OPS-02                             | Pilot gates + chosen R-waves |
 
 Human pilot gates (signed RC, escrow, site drills) sit **across** R0/R14/R16 — they are not optional “later features.”
 
@@ -198,7 +198,9 @@ Virtual café: seeds, scenarios, Playwright, failure injection. See [`restaurant
 
 ## R16 — Production Release
 
-Signed/notarized RC, café install, OPS-02 checklist PASS, pilot KPI tracking. May ship a **supervised pilot** before complete OS (R5–R12) — completeness ≠ blocking first café once gates pass.
+**Status:** BLOCKED (human-only, 2026-08-15) — [`r16-production-release-blocker.md`](../05-production/r16-production-release-blocker.md).
+
+Signed/notarized RC, café install, OPS-02 checklist PASS, pilot KPI tracking. May ship a **supervised pilot** before complete OS depth — completeness ≠ blocking first café once gates pass. Engineering R1–R15 deepen is COMPLETE; live **NO-GO** until humans clear R16.
 
 ---
 

@@ -44,7 +44,8 @@ Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `
 - [x] **R13 Integrations / Hardware GREEN (2026-08-15):** schema **v86** `print_jobs`; failed print-bill outbox; `GET /api/printers/jobs` + retry; `npm run test:r13`. Doc: `r13-print-queue.md`. Terminals/aggregators Frozen.
 - [x] **R14 Reliability / DR thin deepen GREEN (2026-08-15):** Corrupt-openable live DB fail-closed — `checkSqliteIntegrity` + install-state `corrupt_database`; health/money 503; good restore clears latch; `npm run test:r14`. Doc: `r14-corrupt-db-fail-closed.md`. Full DR product / live drill still open. No schema bump.
 - [x] **R15 Simulation S1 foundation GREEN (2026-08-15):** test/fixture/docs only; `npm run test:r15` 27/27; open shift → order → pay → close → day-close/Z → local backup; fixtures `tests/fixtures/restaurant-sim/`; banner simulation ≠ OPS-02. Doc: `r15-simulation-s1.md`. KDS/receipt/S2–S10 later.
-- [ ] **R16 Production Release** — **HUMAN BLOCKED** (signed RC + OPS-02 site gates).
+- [x] **R15 Simulation S1 GREEN (2026-08-15):** sim pack order→pay→Z→backup; `npm run test:r15`. Doc: `r15-simulation-s1.md`. Sim ≠ OPS-02.
+- [ ] **R16 Production Release** — **HUMAN BLOCKED** (signed RC + OPS-02 site gates). Doc: `r16-production-release-blocker.md`. Live **NO-GO**.
 - [ ] **Next program:** residual Hardening / OPS-02 signed RC when credentials available.
 - [ ] **Hardening (prefer next, authorized slice only):** REAL money cutover (drop REAL); residual Zod; durable KDS ticket outbox (still deferred) — or next authorized R-wave. R0–R12 + R14 thin + R15 S1 closed.
 - [ ] **Planned (not started):** see matrix — expediter, promotions, gift cards, Advanced BI warehouse, etc. Reuse shipped slices; do not rebuild.

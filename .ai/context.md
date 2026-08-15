@@ -22,6 +22,7 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 **R13 Print queue / retry (2026-08-15):** COMPLETE — schema **v86** `print_jobs`; failed print-bill outbox + Owner/Manager list/retry; `npm run test:r13`. Doc: `docs/05-production/r13-print-queue.md`. Terminals/aggregators Frozen.
 **R14 Corrupt-DB fail-closed thin deepen (2026-08-15):** COMPLETE — no schema bump; `checkSqliteIntegrity` + install-state `corrupt_database` latch; `/api/health` + money APIs 503; good restore clears latch; `npm run test:r14`. Doc: `docs/05-production/r14-corrupt-db-fail-closed.md`. Live DR drill **NOT CLAIMED**. Live Go-Live **NO-GO**.
 **R15 Simulation S1 foundation (2026-08-15):** COMPLETE — test/fixture/docs only; `npm run test:r15` (27/27): open shift → order → pay → close → day-close/Z → local backup. Banner: simulation ≠ OPS-02 signed café pilot. Doc: `docs/05-production/r15-simulation-s1.md`. KDS/receipt thermal/S2–S10 remain later.
+**R16 Production Release (2026-08-15):** **HUMAN BLOCKED** — signed/notarized RC + OPS-02 site gates. Doc: `docs/05-production/r16-production-release-blocker.md`. Engineering roadmap report: `docs/05-production/roadmap-engineering-completion-r0-r16.md`. Live Go-Live **NO-GO**.
 
 **Foundation Phase 2 (2026-08-15):** COMPLETE — prefer-cents readers + dual-write writers; process-kill harness; Zod expansion; `any` main&lt;600 / orders&lt;50. Doc: `docs/05-production/foundation-priority-deepen-phase2.md`.
 
