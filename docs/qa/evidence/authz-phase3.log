@@ -1,0 +1,474 @@
+
+> flo-desktop@3.0.5 test:authz-phase3
+> node tests/run-electron-node-test.cjs tests/authz-matrix-phase3.test.ts
+
+Phase 3 Authorization Matrix & Security Verification
+============================================================
+[DB] Opening database at: /var/folders/w6/1nh952hn7kl5pl6t_7_npw7h0000gn/T/flo-phase3-authz-hIO8sO/flo.db
+[DB] Schema: v0 → v86
+[DB] Triggering auto-backup before migrating v0 → v86...
+[DB] Auto-backup before migrating v0 → v86 created at /var/folders/w6/1nh952hn7kl5pl6t_7_npw7h0000gn/T/flo-phase3-authz-hIO8sO/backups/flo-backup-2026-08-15T08-04-59-356Z-pre-v0-to-v86.db
+[DB] Applying migration v1: initial_schema
+[DB] Install defaults loaded; first-run setup pending
+[DB] Migration v1 complete
+[DB] Applying migration v2: hash_plaintext_pins
+[DB] Migration v2 complete
+[DB] Applying migration v3: cloud_identity_and_outbox
+[DB] Migration v3 complete
+[DB] Applying migration v4: add_notes_limits_settings
+[DB] Migration v4 complete
+[DB] Applying migration v5: add_print_logs_table
+[DB] Migration v5 complete
+[DB] Applying migration v6: add_loyalty_settings
+[DB] Migration v6 complete
+[DB] Applying migration v7: add_discount_settings
+[DB] Migration v7 complete
+[DB] Applying migration v8: add_loyalty_index
+[DB] Migration v8 complete
+[DB] Applying migration v9: add_sequences_table
+[DB] Migration v9 complete
+[DB] Applying migration v10: fix_sequences_composite_key
+[DB] Migration v10 complete
+[DB] Applying migration v11: first_run_setup_uses_welcome_form
+[DB] Migration v11 complete
+[DB] Applying migration v12: fix_table_integer_ids
+[DB] Migration v12 complete
+[DB] Applying migration v13: fix_null_table_ids
+[DB] Migration v13 complete
+[DB] Applying migration v14: simplify_loyalty_settings
+[DB] Migration v14 complete
+[DB] Applying migration v15: add_instagram_handle_setting
+[DB] Migration v15 complete
+[DB] Applying migration v16: add_terms_accepted_at_to_users
+[DB] Migration v16 complete
+[DB] Applying migration v17: add_held_orders_table
+[DB] Migration v17 complete
+[DB] Applying migration v18: fix_null_category_ids
+[DB] Migration v18 complete
+[DB] Applying migration v19: backfill_product_cb_percent_and_tags
+[DB] Migration v19 complete
+[DB] Applying migration v20: add_tables_is_active
+[DB] Migration v20 complete
+[DB] Applying migration v21: clear_legacy_loyalty_expiry
+[DB] Migration v21 complete
+[DB] Applying migration v22: add_customers_phone_digits
+[DB] Migration v22 complete
+[DB] Applying migration v23: normalize_customer_phones
+[MIGRATION v23] normalized: 0, unparseable: 0
+[MIGRATION v23] merged 0 duplicate customer(s)
+[MIGRATION v23] verification: 0 customers, 0 still non-E.164
+[DB] Migration v23 complete
+[DB] Applying migration v24: normalize_customer_phones_retry
+[MIGRATION v24] normalized: 0, unparseable: 0
+[DB] Migration v24 complete
+[DB] Applying migration v25: add_order_item_addons_table
+[MIGRATION v25] backfilled addons for 0 order items (0 unparseable, skipped)
+[DB] Migration v25 complete
+[DB] Applying migration v26: add_kds_default_view
+[DB] Migration v26 complete
+[DB] Applying migration v27: add_station_printer_link_and_user_stations
+[DB] Migration v27 complete
+[DB] Applying migration v28: seed_telemetry_settings
+[DB] Migration v28 complete
+[DB] Applying migration v29: whatsapp_messaging
+[DB] Migration v29 complete
+[DB] Applying migration v30: drop_order_items_addons_json_column
+[MIGRATION v30] backfilled 0 order_item(s) still missing a normalized addons snapshot
+[MIGRATION v30] Dropped order_items.addons — order_item_addons is now the only place selected addons live.
+[DB] Migration v30 complete
+[DB] Applying migration v31: add_customers_tag_counts_column
+[DB] Migration v31 complete
+[DB] Applying migration v32: add_kds_and_kot_printing_toggles
+[DB] Migration v32 complete
+[DB] Applying migration v33: add_addon_groups_allow_multiple_quantities
+[DB] Migration v33 complete
+[DB] Applying migration v34: add_order_items_voided_at
+[DB] Migration v34 complete
+[DB] Applying migration v35: add_tax_pack_configuration_tables
+[DB] Migration v35 complete
+[DB] Applying migration v36: add_product_and_addon_tax_categories
+[DB] Migration v36 complete
+[DB] Applying migration v37: add_transaction_tax_snapshots_and_charge_categories
+[DB] Migration v37 complete
+[DB] Applying migration v38: register_bundled_tax_pack_versions
+[DB] Migration v38 complete
+[DB] Applying migration v39: add_users_tokens_valid_after
+[DB] Migration v39 complete
+[DB] Applying migration v40: v2_cloud_defaults_and_tax_toggle
+[DB] Migration v40 complete
+[DB] Applying migration v41: support_ticket_outbox
+[DB] Migration v41 complete
+[DB] Applying migration v42: add_global_cashback_percent
+[DB] Migration v42 complete
+[DB] Applying migration v43: telemetry_default_on_for_new_installs
+[DB] Migration v43 complete
+[DB] Applying migration v44: store_diagnostics_outbox
+[DB] Migration v44 complete
+[DB] Applying migration v45: add_performance_indexes_and_normalize_timestamps
+[DB] Migration v45 complete
+[DB] Applying migration v46: normalize_cloud_enabled_flags_to_01
+[DB] Migration v46 complete
+[DB] Applying migration v47: store_diagnostics_enabled_by_default
+[DB] Migration v47 complete
+[DB] Applying migration v48: deactivate_reusable_demo_credentials
+[DB] Migration v48 complete
+[DB] Applying migration v49: add_payment_idempotency_records
+[DB] Migration v49 complete
+[DB] Applying migration v50: add_order_idempotency_records
+[DB] Migration v50 complete
+[DB] Applying migration v51: enforce_global_payment_transaction_refs
+[DB] Migration v51 complete
+[DB] Applying migration v52: restore_method_scoped_transaction_refs
+[DB] Migration v52 complete
+[DB] Applying migration v53: scope_idempotency_records_to_user
+[DB] Migration v53 complete
+[DB] Applying migration v54: repair_retry_ownership_and_payment_reference_history
+[DB] Migration v54 complete
+[DB] Applying migration v55: durable_token_revocations
+[DB] Migration v55 complete
+[DB] Applying migration v56: persist_station_assignment_scope
+[DB] Migration v56 complete
+[DB] Applying migration v57: rename_gstin_to_generic_tax_registration_number
+[DB] Migration v57 complete
+[DB] Applying migration v58: configurable_manual_payment_methods
+[DB] Migration v58 complete
+[DB] Applying migration v59: split_checks_by_item_quantity
+[DB] Migration v59 complete
+[DB] Applying migration v60: seed_split_checks_disabled_setting
+[DB] Migration v60 complete
+[DB] Applying migration v61: seed_server_app_enabled_setting
+[DB] Migration v61 complete
+[DB] Applying migration v62: normalize_cloud_last_error
+[DB] Migration v62 complete
+[DB] Applying migration v63: seed_printer_trim_decimals_setting
+[DB] Migration v63 complete
+[DB] Applying migration v64: drop_unused_printer_usb_device_path
+[DB] Migration v64 complete
+[DB] Applying migration v65: seed_bill_content_visibility_settings
+[DB] Migration v65 complete
+[DB] Applying migration v66: seed_bill_template_settings
+[DB] Migration v66 complete
+[DB] Applying migration v67: m2_explicit_privacy_consent_defaults
+[DB] Migration v67 complete
+[DB] Applying migration v68: m3_audit_logs_table
+[DB] Migration v68 complete
+[DB] Applying migration v69: m4_shift_foundation
+[DB] Migration v69 complete
+[DB] Applying migration v70: m5_cash_reconciliation_columns
+[DB] Migration v70 complete
+[DB] Applying migration v71: m5_day_closes
+[DB] Migration v71 complete
+[DB] Applying migration v72: m6_refunds
+[DB] Migration v72 complete
+[DB] Applying migration v73: p0_1_network_mode
+[DB] Migration v73 complete
+[DB] Applying migration v74: p0_2_jwt_secret_storage_marker
+[DB] Migration v74 complete
+[DB] Applying migration v75: p2_8_inventory_movements_ledger
+[DB] Migration v75 complete
+[DB] Applying migration v76: r2_table_assigned_waiter
+[DB] Migration v76 complete
+[DB] Applying migration v77: r3_kitchen_item_timestamps_and_priority
+[DB] Migration v77 complete
+[DB] Applying migration v78: r4_inventory_os_units_idempotency_counts
+[DB] Migration v78 complete
+[DB] Applying migration v79: r5_bom_recipes_food_cost
+[DB] Migration v79 complete
+[DB] Applying migration v80: r6_purchasing_supplier_os
+[DB] Migration v80 complete
+[DB] Applying migration v81: p0_3_money_dual_write_cents_phase1
+[DB] Migration v81 complete
+[DB] Applying migration v82: r7_customer_crm_notes_and_segment_defaults
+[DB] Migration v82 complete
+[DB] Applying migration v83: r9_expenses_os
+[DB] Migration v83 complete
+[DB] Applying migration v84: r10_table_qr_ordering
+[DB] Migration v84 complete
+[DB] Applying migration v85: r11_coupons
+[DB] Migration v85 complete
+[DB] Applying migration v86: r13_print_jobs
+[DB] Migration v86 complete
+[DB] integrity_check: ok
+[DB] foreign_key_check: clean
+[DB] Backfilled installation marker for existing café
+[Operavia Composition]
+Vertical: OPERAVIA Restaurant
+Modules: 22
+Dependencies: valid
+Diagnostics: none
+
+── 1. Unauthenticated Request Denials ───────────────────────
+  ✓ Unauthenticated GET /api/orders returns 401
+  ✓ Unauthenticated GET /api/bills returns 401
+  ✓ Unauthenticated GET /api/customers returns 401
+  ✓ Unauthenticated GET /api/staff returns 401
+  ✓ Unauthenticated GET /api/settings returns 401
+  ✓ Unauthenticated GET /api/reports/sales returns 401
+  ✓ Unauthenticated GET /api/printers returns 401
+  ✓ Unauthenticated GET /api/db/export returns 401
+  ✓ Unauthenticated GET /api/database-tools/health-check returns 401
+  ✓ Unauthenticated GET /api/mobile/pairing-code returns 401
+
+── 2. Deactivated User Token Rejection ─────────────────────
+  ✓ Deactivated user with unexpired JWT token is denied with 401
+
+── 3. Role Boundary Enforcement ──────────────────────────────
+  ✓ p3-manager denied 403 on owner-only route /api/db/export
+  ✓ p3-cashier denied 403 on owner-only route /api/db/export
+  ✓ p3-waiter denied 403 on owner-only route /api/db/export
+  ✓ p3-chef denied 403 on owner-only route /api/db/export
+  ✓ Owner is allowed on /api/db/export (status: 200)
+  ✓ p3-manager denied 403 on owner-only route /api/db-tools/health-check
+  ✓ p3-cashier denied 403 on owner-only route /api/db-tools/health-check
+  ✓ p3-waiter denied 403 on owner-only route /api/db-tools/health-check
+  ✓ p3-chef denied 403 on owner-only route /api/db-tools/health-check
+[DB] Schema: v0 → v86
+[DB] Triggering auto-backup before migrating v0 → v86...
+[DB] Applying migration v1: initial_schema
+[DB] Install defaults loaded; first-run setup pending
+[DB] Migration v1 complete
+[DB] Applying migration v2: hash_plaintext_pins
+[DB] Migration v2 complete
+[DB] Applying migration v3: cloud_identity_and_outbox
+[DB] Migration v3 complete
+[DB] Applying migration v4: add_notes_limits_settings
+[DB] Migration v4 complete
+[DB] Applying migration v5: add_print_logs_table
+[DB] Migration v5 complete
+[DB] Applying migration v6: add_loyalty_settings
+[DB] Migration v6 complete
+[DB] Applying migration v7: add_discount_settings
+[DB] Migration v7 complete
+[DB] Applying migration v8: add_loyalty_index
+[DB] Migration v8 complete
+[DB] Applying migration v9: add_sequences_table
+[DB] Migration v9 complete
+[DB] Applying migration v10: fix_sequences_composite_key
+[DB] Migration v10 complete
+[DB] Applying migration v11: first_run_setup_uses_welcome_form
+[DB] Migration v11 complete
+[DB] Applying migration v12: fix_table_integer_ids
+[DB] Migration v12 complete
+[DB] Applying migration v13: fix_null_table_ids
+[DB] Migration v13 complete
+[DB] Applying migration v14: simplify_loyalty_settings
+[DB] Migration v14 complete
+[DB] Applying migration v15: add_instagram_handle_setting
+[DB] Migration v15 complete
+[DB] Applying migration v16: add_terms_accepted_at_to_users
+[DB] Migration v16 complete
+[DB] Applying migration v17: add_held_orders_table
+[DB] Migration v17 complete
+[DB] Applying migration v18: fix_null_category_ids
+[DB] Migration v18 complete
+[DB] Applying migration v19: backfill_product_cb_percent_and_tags
+[DB] Migration v19 complete
+[DB] Applying migration v20: add_tables_is_active
+[DB] Migration v20 complete
+[DB] Applying migration v21: clear_legacy_loyalty_expiry
+[DB] Migration v21 complete
+[DB] Applying migration v22: add_customers_phone_digits
+[DB] Migration v22 complete
+[DB] Applying migration v23: normalize_customer_phones
+[MIGRATION v23] normalized: 0, unparseable: 0
+[MIGRATION v23] merged 0 duplicate customer(s)
+[MIGRATION v23] verification: 0 customers, 0 still non-E.164
+[DB] Migration v23 complete
+[DB] Applying migration v24: normalize_customer_phones_retry
+[MIGRATION v24] normalized: 0, unparseable: 0
+[DB] Migration v24 complete
+[DB] Applying migration v25: add_order_item_addons_table
+[MIGRATION v25] backfilled addons for 0 order items (0 unparseable, skipped)
+[DB] Migration v25 complete
+[DB] Applying migration v26: add_kds_default_view
+[DB] Migration v26 complete
+[DB] Applying migration v27: add_station_printer_link_and_user_stations
+[DB] Migration v27 complete
+[DB] Applying migration v28: seed_telemetry_settings
+[DB] Migration v28 complete
+[DB] Applying migration v29: whatsapp_messaging
+[DB] Migration v29 complete
+[DB] Applying migration v30: drop_order_items_addons_json_column
+[MIGRATION v30] backfilled 0 order_item(s) still missing a normalized addons snapshot
+[MIGRATION v30] Dropped order_items.addons — order_item_addons is now the only place selected addons live.
+[DB] Migration v30 complete
+[DB] Applying migration v31: add_customers_tag_counts_column
+[DB] Migration v31 complete
+[DB] Applying migration v32: add_kds_and_kot_printing_toggles
+[DB] Migration v32 complete
+[DB] Applying migration v33: add_addon_groups_allow_multiple_quantities
+[DB] Migration v33 complete
+[DB] Applying migration v34: add_order_items_voided_at
+[DB] Migration v34 complete
+[DB] Applying migration v35: add_tax_pack_configuration_tables
+[DB] Migration v35 complete
+[DB] Applying migration v36: add_product_and_addon_tax_categories
+[DB] Migration v36 complete
+[DB] Applying migration v37: add_transaction_tax_snapshots_and_charge_categories
+[DB] Migration v37 complete
+[DB] Applying migration v38: register_bundled_tax_pack_versions
+[DB] Migration v38 complete
+[DB] Applying migration v39: add_users_tokens_valid_after
+[DB] Migration v39 complete
+[DB] Applying migration v40: v2_cloud_defaults_and_tax_toggle
+[DB] Migration v40 complete
+[DB] Applying migration v41: support_ticket_outbox
+[DB] Migration v41 complete
+[DB] Applying migration v42: add_global_cashback_percent
+[DB] Migration v42 complete
+[DB] Applying migration v43: telemetry_default_on_for_new_installs
+[DB] Migration v43 complete
+[DB] Applying migration v44: store_diagnostics_outbox
+[DB] Migration v44 complete
+[DB] Applying migration v45: add_performance_indexes_and_normalize_timestamps
+[DB] Migration v45 complete
+[DB] Applying migration v46: normalize_cloud_enabled_flags_to_01
+[DB] Migration v46 complete
+[DB] Applying migration v47: store_diagnostics_enabled_by_default
+[DB] Migration v47 complete
+[DB] Applying migration v48: deactivate_reusable_demo_credentials
+[DB] Migration v48 complete
+[DB] Applying migration v49: add_payment_idempotency_records
+[DB] Migration v49 complete
+[DB] Applying migration v50: add_order_idempotency_records
+[DB] Migration v50 complete
+[DB] Applying migration v51: enforce_global_payment_transaction_refs
+[DB] Migration v51 complete
+[DB] Applying migration v52: restore_method_scoped_transaction_refs
+[DB] Migration v52 complete
+[DB] Applying migration v53: scope_idempotency_records_to_user
+[DB] Migration v53 complete
+[DB] Applying migration v54: repair_retry_ownership_and_payment_reference_history
+[DB] Migration v54 complete
+[DB] Applying migration v55: durable_token_revocations
+[DB] Migration v55 complete
+[DB] Applying migration v56: persist_station_assignment_scope
+[DB] Migration v56 complete
+[DB] Applying migration v57: rename_gstin_to_generic_tax_registration_number
+[DB] Migration v57 complete
+[DB] Applying migration v58: configurable_manual_payment_methods
+[DB] Migration v58 complete
+[DB] Applying migration v59: split_checks_by_item_quantity
+[DB] Migration v59 complete
+[DB] Applying migration v60: seed_split_checks_disabled_setting
+[DB] Migration v60 complete
+[DB] Applying migration v61: seed_server_app_enabled_setting
+[DB] Migration v61 complete
+[DB] Applying migration v62: normalize_cloud_last_error
+[DB] Migration v62 complete
+[DB] Applying migration v63: seed_printer_trim_decimals_setting
+[DB] Migration v63 complete
+[DB] Applying migration v64: drop_unused_printer_usb_device_path
+[DB] Migration v64 complete
+[DB] Applying migration v65: seed_bill_content_visibility_settings
+[DB] Migration v65 complete
+[DB] Applying migration v66: seed_bill_template_settings
+[DB] Migration v66 complete
+[DB] Applying migration v67: m2_explicit_privacy_consent_defaults
+[DB] Migration v67 complete
+[DB] Applying migration v68: m3_audit_logs_table
+[DB] Migration v68 complete
+[DB] Applying migration v69: m4_shift_foundation
+[DB] Migration v69 complete
+[DB] Applying migration v70: m5_cash_reconciliation_columns
+[DB] Migration v70 complete
+[DB] Applying migration v71: m5_day_closes
+[DB] Migration v71 complete
+[DB] Applying migration v72: m6_refunds
+[DB] Migration v72 complete
+[DB] Applying migration v73: p0_1_network_mode
+[DB] Migration v73 complete
+[DB] Applying migration v74: p0_2_jwt_secret_storage_marker
+[DB] Migration v74 complete
+[DB] Applying migration v75: p2_8_inventory_movements_ledger
+[DB] Migration v75 complete
+[DB] Applying migration v76: r2_table_assigned_waiter
+[DB] Migration v76 complete
+[DB] Applying migration v77: r3_kitchen_item_timestamps_and_priority
+[DB] Migration v77 complete
+[DB] Applying migration v78: r4_inventory_os_units_idempotency_counts
+[DB] Migration v78 complete
+[DB] Applying migration v79: r5_bom_recipes_food_cost
+[DB] Migration v79 complete
+[DB] Applying migration v80: r6_purchasing_supplier_os
+[DB] Migration v80 complete
+[DB] Applying migration v81: p0_3_money_dual_write_cents_phase1
+[DB] Migration v81 complete
+[DB] Applying migration v82: r7_customer_crm_notes_and_segment_defaults
+[DB] Migration v82 complete
+[DB] Applying migration v83: r9_expenses_os
+[DB] Migration v83 complete
+[DB] Applying migration v84: r10_table_qr_ordering
+[DB] Migration v84 complete
+[DB] Applying migration v85: r11_coupons
+[DB] Migration v85 complete
+[DB] Applying migration v86: r13_print_jobs
+[DB] Migration v86 complete
+  ✓ Owner is allowed on /api/db-tools/health-check (status: 200)
+  ✓ p3-manager denied 403 on owner-only route /api/mobile/pairing-code
+  ✓ p3-cashier denied 403 on owner-only route /api/mobile/pairing-code
+  ✓ p3-waiter denied 403 on owner-only route /api/mobile/pairing-code
+  ✓ p3-chef denied 403 on owner-only route /api/mobile/pairing-code
+  ✓ Owner is allowed on /api/mobile/pairing-code (status: 409)
+  ✓ p3-manager denied 403 on owner-only route /api/mobile/devices
+  ✓ p3-cashier denied 403 on owner-only route /api/mobile/devices
+  ✓ p3-waiter denied 403 on owner-only route /api/mobile/devices
+  ✓ p3-chef denied 403 on owner-only route /api/mobile/devices
+[API] FloAdmin request failed: Error: Cloud POS is not registered
+    at CloudSyncService.signedFetch (/Users/devrajsharma/Projects/FloCafe/main/services/cloud-sync.ts:1670:30)
+    at CloudSyncService.listPairedDevices (/Users/devrajsharma/Projects/FloCafe/main/services/cloud-sync.ts:935:28)
+    at /Users/devrajsharma/Projects/FloCafe/main/routes/index.ts:202:39
+    at Layer.handleRequest (/Users/devrajsharma/Projects/FloCafe/node_modules/router/lib/layer.js:152:17)
+    at next (/Users/devrajsharma/Projects/FloCafe/node_modules/router/lib/route.js:157:13)
+    at /Users/devrajsharma/Projects/FloCafe/main/middleware/security.ts:285:5
+    at Layer.handleRequest (/Users/devrajsharma/Projects/FloCafe/node_modules/router/lib/layer.js:152:17)
+    at next (/Users/devrajsharma/Projects/FloCafe/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/Users/devrajsharma/Projects/FloCafe/node_modules/router/lib/route.js:117:3)
+    at handle (/Users/devrajsharma/Projects/FloCafe/node_modules/router/index.js:435:11)
+  ✓ Owner is allowed on /api/mobile/devices (status: 502)
+  ✓ p3-manager denied 403 on owner-only route /api/mobile/rotate-code
+  ✓ p3-cashier denied 403 on owner-only route /api/mobile/rotate-code
+  ✓ p3-waiter denied 403 on owner-only route /api/mobile/rotate-code
+  ✓ p3-chef denied 403 on owner-only route /api/mobile/rotate-code
+  ✓ Owner is allowed on /api/mobile/rotate-code (status: 409)
+  ✓ p3-cashier denied 403 on manager/owner route /api/categories
+  ✓ p3-waiter denied 403 on manager/owner route /api/categories
+  ✓ p3-chef denied 403 on manager/owner route /api/categories
+  ✓ p3-cashier denied 403 on manager/owner route /api/tax/categories
+  ✓ p3-waiter denied 403 on manager/owner route /api/tax/categories
+  ✓ p3-chef denied 403 on manager/owner route /api/tax/categories
+  ✓ p3-cashier denied 403 on manager/owner route /api/bills/1/applyDiscount
+  ✓ p3-waiter denied 403 on manager/owner route /api/bills/1/applyDiscount
+  ✓ p3-chef denied 403 on manager/owner route /api/bills/1/applyDiscount
+
+── 4. Sensitive Data Exposure Verification ─────────────────
+  ✓ Owner can fetch staff list
+  ✓ Staff response is an array
+  ✓ Staff record does not expose password hash
+  ✓ Staff record does not expose PIN hash
+  ✓ Staff record does not expose password hash
+  ✓ Staff record does not expose PIN hash
+  ✓ Staff record does not expose password hash
+  ✓ Staff record does not expose PIN hash
+  ✓ Staff record does not expose password hash
+  ✓ Staff record does not expose PIN hash
+  ✓ Staff record does not expose password hash
+  ✓ Staff record does not expose PIN hash
+  ✓ Staff record does not expose password hash
+  ✓ Staff record does not expose PIN hash
+  ✓ Staff record does not expose password hash
+  ✓ Staff record does not expose PIN hash
+  ✓ Owner can fetch customer records
+  ✓ Customer response is an array
+  ✓ Customer record does not expose password hash
+  ✓ Customer record does not expose PIN hash
+
+── 5. Cross-Resource / Object-Level Access ────────────────
+  ✓ Cross-order item access returns 404
+  ✓ Mismatched or invalid order-item returns 404
+
+Results: 67/67 passed
+[DB] Database closed
+
+Phase 3 Authorization Matrix tests completed successfully
+EXIT=0 DURATION_SEC=4

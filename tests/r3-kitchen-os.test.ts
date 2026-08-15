@@ -200,7 +200,7 @@ async function apiMaybeHtml(
 async function main() {
   console.log('\nR3 — Kitchen OS\n' + '='.repeat(60));
   // Expected: R3 migration adds item kitchen timestamps + order priority.
-  assertEqual(getSupportedSchemaVersion(), 83, 'schema version is 83 (R5 recipes + R4 inventory + kitchen)');
+  assertEqual(getSupportedSchemaVersion(), 86, 'schema version is 86 (tip after R10–R14)');
 
   const db = initTestDb();
   const owner = seedOwnerUser(db);
@@ -412,8 +412,10 @@ async function main() {
       const hook = readFe('hooks/useKdsConnection.ts');
       assert(hook.includes('dataStale'), 'useKdsConnection exposes dataStale');
       assert(
-        hook.includes('pendingRetryRef') || hook.includes('pendingStatusRetry'),
-        'useKdsConnection has pendingRetryRef/pendingStatusRetry',
+        hook.includes('pendingRetriesRef') ||
+          hook.includes('flushPendingStatusRetry') ||
+          hook.includes('PendingStatusRetry'),
+        'useKdsConnection has pendingRetriesRef / flushPendingStatusRetry (H2)',
       );
       assert(
         hook.includes('connectionStale')

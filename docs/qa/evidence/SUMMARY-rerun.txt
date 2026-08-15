@@ -1,0 +1,23 @@
+=== Test rerun 2026-08-15T08:10:26Z ===
+
+SUITE        RESULT ASSERTIONS
+------------ ------ ---------------------------
+r2           PASS   62/62 passed, 0 failed
+r3           PASS   70/70 passed, 0 failed
+r4           FAIL   52/53 passed, 1 failed
+r5           FAIL   56/57 passed, 1 failed
+r6           FAIL   72/73 passed, 1 failed
+r7           PASS   46/46 passed, 0 failed
+r8           PASS   57/57 passed, 0 failed
+r9           PASS   38/38 passed, 0 failed
+r9.2         FAIL   52/53 passed, 1 failed
+r9.3         FAIL   36/38 passed, 2 failed
+r9.4         FAIL   32/34 passed, 2 failed
+r9.5         PASS   21/21 passed, 0 failed
+h2           PASS   34/34 passed, 0 failed
+
+Suites: 7 PASS, 6 FAIL (13 total)
+Completed at 2026-08-15T08:10:50Z
+Logs: docs/qa/evidence/rerun-<suite>.log
+RESULT = npm script exit code. ASSERTIONS from suite summary line when present, else ✓/✗ counts.
+Context: post schema-tip test fixes (expected tip v86).

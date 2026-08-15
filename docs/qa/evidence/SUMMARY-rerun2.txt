@@ -1,0 +1,16 @@
+=== Test rerun2 2026-08-15T08:15:06Z ===
+
+SUITE        RESULT ASSERTIONS
+------------ ------ ---------------------------
+r4           PASS   53/53 passed, 0 failed
+r5           PASS   57/57 passed, 0 failed
+r6           PASS   73/73 passed, 0 failed
+r9.2         PASS   53/53 passed, 0 failed
+r9.3         PASS   38/38 passed, 0 failed
+r9.4         PASS   34/34 passed, 0 failed
+
+Suites: 6 PASS, 0 FAIL (6 total)
+Completed at 2026-08-15T08:15:44Z
+Logs: docs/qa/evidence/rerun2-<suite>.log
+RESULT = npm script exit code. ASSERTIONS from suite summary line when present, else ✓/✗ counts.
+Context: post second schema tip fix (expected tip v86).

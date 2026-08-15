@@ -87,13 +87,13 @@ function countAction(action: string): number {
 async function main() {
   console.log('\nR9 Slice 2 — Financial Audit-Trail Hardening\n' + '='.repeat(60));
 
-  assertEqual(getSupportedSchemaVersion(), 83, 'schema tip remains v83 (no migration)');
+  assertEqual(getSupportedSchemaVersion(), 86, 'schema tip is v86');
 
   const db = initTestDb();
   assertEqual(
     Number(db.pragma('user_version', { simple: true })),
-    83,
-    'fresh DB at user_version 83',
+    86,
+    'fresh DB at user_version 86',
   );
   assert(
     !!db.prepare(`SELECT name FROM sqlite_master WHERE name='audit_logs'`).get(),
@@ -319,7 +319,7 @@ async function main() {
       .prepare(`SELECT action FROM audit_logs WHERE action = 'payment.received'`)
       .get();
     assert(!!payment, 'payment.received survives restart');
-    assertEqual(getSupportedSchemaVersion(), 83, 'tip still 83 after reopen');
+    assertEqual(getSupportedSchemaVersion(), 86, 'tip still 86 after reopen');
     closeDb2();
   }
 

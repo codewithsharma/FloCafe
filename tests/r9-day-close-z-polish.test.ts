@@ -131,14 +131,14 @@ async function main(): Promise<void> {
   console.log('\nR9 Slice 4 — Day-close / Z Polish');
   console.log('='.repeat(60));
 
-  assertEqual(getSupportedSchemaVersion(), 83, 'schema tip remains v83');
+  assertEqual(getSupportedSchemaVersion(), 86, 'schema tip is v86');
 
   initTestDb();
   const db = getDatabase();
   assertEqual(
     Number(db.pragma('user_version', { simple: true })),
-    83,
-    'fresh DB at user_version 83',
+    86,
+    'fresh DB at user_version 86',
   );
 
   const owner = seedOwnerUser(db);
@@ -252,8 +252,8 @@ async function main(): Promise<void> {
     console.log('\nAC — no payment schema side effects');
     assertEqual(
       Number(db.pragma('user_version', { simple: true })),
-      83,
-      'schema tip still 83 after Z export',
+      86,
+      'schema tip still 86 after Z export',
     );
   } finally {
     server.close();

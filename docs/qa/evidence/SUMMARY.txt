@@ -1,0 +1,51 @@
+# FloCafe QA Evidence Summary
+Captured: 2026-08-15T13:35:39
+
+## Environment
+=== ENVIRONMENT ===
+uname: Darwin 192.168.1.3 25.5.0 Darwin Kernel Version 25.5.0: Mon Apr 27 20:38:00 PDT 2026; root:xnu-12377.121.6~2/RELEASE_ARM64_T8103 arm64
+node: v24.18.0
+npm: 11.16.0
+git HEAD: b996b9806d3075b852895273ca4eda2289a143a8
+git status:
+## restaurant-vertical...origin/restaurant-vertical
+?? docs/qa/
+?? index.js
+date: Sat Aug 15 13:33:50 IST 2026
+cwd: /Users/devrajsharma/Projects/FloCafe
+
+## Build / Lint
+- build: PASS exit=0 duration=21s → docs/qa/evidence/build.log
+- lint:backend: PASS exit=0 duration=6s; 903 problems (0 errors, 903 warnings) → docs/qa/evidence/lint-backend.log
+
+## Critical suites
+- test:h1: PASS | 37/37 passed, 0 failed | 3s | docs/qa/evidence/h1.log
+- test:h2: PASS | 34/34 passed, 0 failed | 5s | docs/qa/evidence/h2.log
+- test:h3: PASS | 33/33 passed, 0 failed | 2s | docs/qa/evidence/h3.log
+- test:r1: PASS | 34/34 passed, 0 failed | 2s | docs/qa/evidence/r1.log
+- test:r15: PASS | 27/27 passed, 0 failed | 3s | docs/qa/evidence/r15.log
+- test:authz-phase3: PASS | 67/67 passed, 0 failed | 4s | docs/qa/evidence/authz-phase3.log
+- test:staff-authz: PASS | 36/36 passed, 0 failed | 4s | docs/qa/evidence/staff-authz.log
+- test:orders-authz: PASS | 17/17 passed, 0 failed | 6s | docs/qa/evidence/orders-authz.log
+- test:smoke: PASS | suite exit 0 | 6s | docs/qa/evidence/smoke.log (log reports suite pass; source has 6 assert() calls — not individually tallied in log)
+
+Aggregate parsed assertions: 285 passed, 0 failed (h1–orders-authz checkmarks/summaries). smoke: suite PASS (6 asserts in source, not tallied in log).
+
+## Playwright / e2e
+- frontend/playwright.config.ts: PRESENT
+- package.json test:e2e: PRESENT (build + build:frontend + playwright install chromium + playwright test)
+- Full e2e: NOT RUN (not quick)
+
+## Log files
+- docs/qa/evidence/authz-phase3.log
+- docs/qa/evidence/build.log
+- docs/qa/evidence/environment.log
+- docs/qa/evidence/h1.log
+- docs/qa/evidence/h2.log
+- docs/qa/evidence/h3.log
+- docs/qa/evidence/lint-backend.log
+- docs/qa/evidence/orders-authz.log
+- docs/qa/evidence/r1.log
+- docs/qa/evidence/r15.log
+- docs/qa/evidence/smoke.log
+- docs/qa/evidence/staff-authz.log

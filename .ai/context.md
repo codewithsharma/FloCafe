@@ -45,6 +45,8 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 **Code evidence:** `docs/00-product/feature-list.md`.
 **Active development vertical:** Restaurant only (Retail deferred).
 
+**Exhaustive QA audit (2026-08-15):** Pack at `docs/qa/` (inventory, RBAC, API, GUI, bugs, complete report). Targeted suites H1–H4 + R1–R15 + authz + Playwright **PASS** after correcting stale tip=83 asserts → **86**. Verdict: **QA INCOMPLETE** (manual GUI/button matrix/full role GUI/offline manual/full `npm test` not done). Engineering **GO WITH CONDITIONS**; live **NO-GO** (R16/OPS-02).
+
 ## Stage
 
 Advanced single-location café POS. Executive scores (audit 2026-08-12): Product 68 · Eng 78 · Arch 70 · Sec 66 · Rel 74 · Test 84 · Prod 62 · **Overall 64/100**. CEO: GO WITH CHANGES. CTO: ARCHITECTURE READY WITH CHANGES.

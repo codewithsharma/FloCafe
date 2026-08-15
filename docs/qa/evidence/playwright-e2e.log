@@ -1,0 +1,15 @@
+
+Running 4 tests using 3 workers
+
+(node:38500) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38498) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38499) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 [chromium] › e2e/kds-login.spec.ts:3:5 › KDS standalone logs in and restores its session (1.6s)
+  ✓  3 [chromium] › e2e/layout-integrity.spec.ts:3:5 › POS product grid has no horizontal clipping and touchable product cards (1.9s)
+  ✓  1 [chromium] › e2e/prepaid-payment-reconciliation.spec.ts:3:5 › prepaid checkout uses the authoritative decimal bill total and settles in full (3.0s)
+  ✓  4 [chromium] › e2e/prepaid-payment-reconciliation.spec.ts:48:5 › prepaid checkout never reports success when the payment response is partial (1.7s)
+
+  4 passed (7.7s)

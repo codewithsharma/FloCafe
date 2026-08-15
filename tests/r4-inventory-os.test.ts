@@ -73,13 +73,13 @@ function stockHeaders(authHeader: Record<string, string>, key: string) {
 
 async function main() {
   console.log('\nR4 — Inventory OS deepen\n' + '='.repeat(60));
-  assertEqual(getSupportedSchemaVersion(), 83, 'schema version is 83');
+  assertEqual(getSupportedSchemaVersion(), 86, 'schema version is 86');
 
   const db = initTestDb();
   assertEqual(
     Number(db.pragma('user_version', { simple: true })),
-    83,
-    'fresh DB at user_version 83',
+    86,
+    'fresh DB at user_version 86',
   );
 
   const cols = db.prepare('PRAGMA table_info(products)').all() as { name: string }[];

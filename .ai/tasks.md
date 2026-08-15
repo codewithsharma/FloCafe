@@ -46,6 +46,7 @@ Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `
 - [x] **R15 Simulation S1 foundation GREEN (2026-08-15):** test/fixture/docs only; `npm run test:r15` 27/27; open shift → order → pay → close → day-close/Z → local backup; fixtures `tests/fixtures/restaurant-sim/`; banner simulation ≠ OPS-02. Doc: `r15-simulation-s1.md`. KDS/receipt/S2–S10 later.
 - [x] **R15 Simulation S1 GREEN (2026-08-15):** sim pack order→pay→Z→backup; `npm run test:r15`. Doc: `r15-simulation-s1.md`. Sim ≠ OPS-02.
 - [ ] **R16 Production Release** — **HUMAN BLOCKED** (signed RC + OPS-02 + escrow + exec sign-off). Gate checklist: `r16-release-gate-checklist.md`. Live **NO-GO**. Orchestrator prepared drill/escrow/signoff templates; do not invent PASS.
+- [x] **Exhaustive QA audit pack (2026-08-15):** docs under `docs/qa/` + evidence; H1–H4/R1–R15/authz/Playwright executed; schema-tip test locks → v86; **QA INCOMPLETE** (manual GUI/role walkthrough/full npm test/offline manual remaining). Live still **NO-GO**.
 - [ ] **Next program:** residual Hardening / OPS-02 signed RC when credentials available.
 - [ ] **Hardening (prefer next, authorized slice only):** REAL money cutover (drop REAL); residual Zod; durable KDS ticket outbox (still deferred) — or next authorized R-wave. R0–R12 + R14 thin + R15 S1 closed.
 - [ ] **Planned (not started):** see matrix — expediter, promotions, gift cards, Advanced BI warehouse, etc. Reuse shipped slices; do not rebuild.

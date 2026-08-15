@@ -1,0 +1,5 @@
+
+> flo-desktop@3.0.5 build
+> tsc && node scripts/copy-runtime-assets.cjs
+
+EXIT=0 DURATION_SEC=21

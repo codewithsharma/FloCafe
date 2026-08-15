@@ -1,0 +1,1043 @@
+
+> flo-desktop@3.0.5 lint:backend
+> eslint main/
+
+
+/Users/devrajsharma/Projects/FloCafe/main/database/migrations.ts
+    12:10  warning  'parsePhoneE164' is defined but never used          @typescript-eslint/no-unused-vars
+    46:43  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+    84:10  warning  'loadInstallDefaults' is defined but never used     @typescript-eslint/no-unused-vars
+    90:10  warning  'initializeJWTSecret' is defined but never used     @typescript-eslint/no-unused-vars
+    93:10  warning  'migrateLegacyJWTSecret' is defined but never used  @typescript-eslint/no-unused-vars
+   418:19  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   427:19  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   458:19  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   469:27  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   494:46  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   497:41  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   537:19  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   546:19  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   604:21  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   710:21  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  1807:21  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  1810:23  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/database/order-row.ts
+  35:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  36:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  95:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  95:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  97:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/db.ts
+     9:10  warning  'BUNDLED_COUNTRY_PACKS' is defined but never used  @typescript-eslint/no-unused-vars
+     9:33  warning  'bundledPackVersionId' is defined but never used   @typescript-eslint/no-unused-vars
+    12:3   warning  'insertOrderItemAddons' is defined but never used  @typescript-eslint/no-unused-vars
+    13:3   warning  'parseItemJson' is defined but never used          @typescript-eslint/no-unused-vars
+    14:3   warning  'attachEffectiveAddons' is defined but never used  @typescript-eslint/no-unused-vars
+    15:3   warning  'parseRowJson' is defined but never used           @typescript-eslint/no-unused-vars
+   463:14  warning  'error' is defined but never used                  @typescript-eslint/no-unused-vars
+   770:12  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   772:10  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   780:22  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   818:74  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   869:27  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   890:27  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   916:17  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   926:19  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  1258:31  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  2388:31  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  2493:47  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  2686:27  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  2695:31  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  2739:31  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  3931:27  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  4001:40  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  4001:67  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  4026:38  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  4026:65  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  4053:48  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  4066:12  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  4069:4   warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/index.ts
+  19:23  warning  'printReceipt' is defined but never used  @typescript-eslint/no-unused-vars
+  19:37  warning  'printKOT' is defined but never used      @typescript-eslint/no-unused-vars
+
+/Users/devrajsharma/Projects/FloCafe/main/ipc.ts
+  180:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  220:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/kds-server.ts
+  136:62  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  142:35  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  157:17  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  167:16  warning  'error' is defined but never used                 @typescript-eslint/no-unused-vars
+  208:23  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  227:26  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  265:23  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  289:36  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  293:38  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  298:16  warning  'error' is defined but never used                 @typescript-eslint/no-unused-vars
+  298:23  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  310:33  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  384:24  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  393:33  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  412:86  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  416:43  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  418:38  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  426:27  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  433:23  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  460:33  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  467:15  warning  'categoryIds' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  523:38  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  591:27  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  608:23  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  622:33  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+  666:23  warning  Unexpected any. Specify a different type          @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/middleware/security.ts
+   66:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  278:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  399:14  warning  'err' is defined but never used           @typescript-eslint/no-unused-vars
+
+/Users/devrajsharma/Projects/FloCafe/main/preload.ts
+  20:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/printers/profiles.ts
+  93:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/printers/thermal.ts
+     5:20  warning  'exec' is defined but never used                                                       @typescript-eslint/no-unused-vars
+   294:42  warning  'info' is defined but never used. Allowed unused args must match /^_/u                 @typescript-eslint/no-unused-vars
+   590:88  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+   596:12  warning  'error' is defined but never used                                                      @typescript-eslint/no-unused-vars
+   602:10  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+   603:9   warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+   604:14  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+   643:19  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+   740:19  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+   773:19  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+   904:19  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+   925:13  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+   939:19  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+   946:10  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+   947:10  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+   950:19  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+   972:71  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+   991:19  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1134:40  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1159:39  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1183:30  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1189:10  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1190:9   warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1191:14  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1196:12  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1222:10  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1223:9   warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1224:14  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1297:10  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1298:9   warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1299:8   warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1418:19  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1440:10  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1441:9   warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1442:8   warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1575:19  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1616:10  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1617:9   warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1618:8   warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1737:19  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1772:9   warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1787:10  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1804:30  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1804:36  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1875:10  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1876:10  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  1882:15  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  2004:3   warning  'useUnicode' is assigned a value but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  2226:17  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  2485:17  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  2502:68  warning  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/addon-groups.ts
+   11:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   21:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   70:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  108:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  137:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  170:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  171:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  212:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/auth.ts
+   452:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   538:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   545:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   566:12  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+   601:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   608:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   650:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   657:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   689:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   692:88  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   795:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   798:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1321:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/bills.ts
+   22:40  warning  'billTotalCents' is defined but never used  @typescript-eslint/no-unused-vars
+   62:4   warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  122:19  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  175:50  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  175:81  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  176:31  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  177:73  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  203:52  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  203:83  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  204:33  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  205:75  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  430:91  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  432:93  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  466:45  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  476:47  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  503:65  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  505:42  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  725:42  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  777:42  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  809:89  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  817:91  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  908:29  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  936:88  warning  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/categories.ts
+   16:19   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   34:57   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   40:19   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   58:19   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   83:19   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   99:111  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  113:19   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:21   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  161:19   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/customers.ts
+   25:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   25:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  169:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  491:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  601:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/database-tools.ts
+  15:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  25:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  36:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  49:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  74:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  92:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/database.ts
+   78:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   92:87  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  134:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  164:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  370:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  379:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  408:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  415:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  425:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  428:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  464:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  498:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/held-orders.ts
+   27:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   40:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   68:9   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  227:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  260:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/index.ts
+   61:42  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   65:42  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   69:43  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  179:21  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  194:21  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  204:21  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  232:55  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  240:23  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  250:22  warning  'country_code' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  270:21  warning  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/inventory.ts
+  152:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  205:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/kds-info.ts
+  78:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/kds.ts
+   45:26  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+   53:26  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+   62:18  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+   66:26  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  172:19  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  195:43  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  199:33  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  200:40  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  214:30  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  221:40  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  245:40  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  301:19  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  349:13  warning  'result' is assigned a value but never used                     @typescript-eslint/no-unused-vars
+  406:38  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  410:14  warning  'e' is defined but never used                                   @typescript-eslint/no-unused-vars
+  452:19  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  469:86  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  472:42  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  474:32  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  478:34  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  479:57  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  480:32  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  481:27  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  481:62  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  482:26  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  483:34  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  484:33  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  485:32  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  542:13  warning  'stationRoutingCategoryIds' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  554:24  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  561:32  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  586:34  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  642:32  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  709:35  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+  720:44  warning  Unexpected any. Specify a different type                        @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/kitchen-stations.ts
+   13:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   33:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   34:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   37:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   75:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  126:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  178:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  199:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/kitchen.ts
+   27:28   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   44:42   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   63:60   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   79:28   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   82:40   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   88:37   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   91:115  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  128:36   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  134:19   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/menu-csv.ts
+  129:17   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  153:17   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  181:17   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  186:23   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  254:17   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  396:104  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  415:40   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/more-apps.ts
+  66:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  77:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/order-items.ts
+   43:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   70:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  114:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  203:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  214:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  241:85  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  263:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/orders-shared.ts
+  148:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:76  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  148:86  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  164:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  186:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  229:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  264:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  284:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  322:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  329:60  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  331:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  342:66  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  343:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  350:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  353:93  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  356:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  360:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  362:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  363:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  366:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/orders-validation.ts
+  14:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  28:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/orders/cancel.ts
+   1:10  warning  'createHash' is defined but never used                        @typescript-eslint/no-unused-vars
+   2:18  warning  'Request' is defined but never used                           @typescript-eslint/no-unused-vars
+   2:27  warning  'Response' is defined but never used                          @typescript-eslint/no-unused-vars
+   5:3   warning  'generateOrderNumber' is defined but never used               @typescript-eslint/no-unused-vars
+   8:3   warning  'parseRowJson' is defined but never used                      @typescript-eslint/no-unused-vars
+  12:3   warning  'insertOrderItemAddons' is defined but never used             @typescript-eslint/no-unused-vars
+  14:3   warning  'utcDayBounds' is defined but never used                      @typescript-eslint/no-unused-vars
+  15:3   warning  'utcTodayDate' is defined but never used                      @typescript-eslint/no-unused-vars
+  20:3   warning  'calculateItemTax' is defined but never used                  @typescript-eslint/no-unused-vars
+  23:3   warning  'getConfiguredChargeTaxCategories' is defined but never used  @typescript-eslint/no-unused-vars
+  29:3   warning  'assertStockAvailable' is defined but never used              @typescript-eslint/no-unused-vars
+  30:3   warning  'decrementTrackedStock' is defined but never used             @typescript-eslint/no-unused-vars
+  35:3   warning  'consumeRecipeForOrderItem' is defined but never used         @typescript-eslint/no-unused-vars
+  39:27  warning  'notifyOrderUpdated' is defined but never used                @typescript-eslint/no-unused-vars
+  44:10  warning  'validateOrderNotes' is defined but never used                @typescript-eslint/no-unused-vars
+  44:30  warning  'validateItemNotes' is defined but never used                 @typescript-eslint/no-unused-vars
+  46:10  warning  'validateBody' is defined but never used                      @typescript-eslint/no-unused-vars
+  48:3   warning  'assertTableCanOpen' is defined but never used                @typescript-eslint/no-unused-vars
+  50:3   warning  'markTableOccupiedCas' is defined but never used              @typescript-eslint/no-unused-vars
+  51:3   warning  'TableServiceError' is defined but never used                 @typescript-eslint/no-unused-vars
+  55:3   warning  'addOrderItemsBodySchema' is defined but never used           @typescript-eslint/no-unused-vars
+  56:3   warning  'createOrderBodySchema' is defined but never used             @typescript-eslint/no-unused-vars
+  57:3   warning  'orderDiscountBodySchema' is defined but never used           @typescript-eslint/no-unused-vars
+  58:3   warning  'orderStatusBodySchema' is defined but never used             @typescript-eslint/no-unused-vars
+  60:10  warning  'readTerminalIdHeaderFromRequest' is defined but never used   @typescript-eslint/no-unused-vars
+  60:43  warning  'resolveActiveShiftForOrder' is defined but never used        @typescript-eslint/no-unused-vars
+  68:3   warning  'orderIdempotencyKey' is defined but never used               @typescript-eslint/no-unused-vars
+  70:3   warning  'syncCustomerTagCounts' is defined but never used             @typescript-eslint/no-unused-vars
+  71:3   warning  'validateItemAddonGroupLimits' is defined but never used      @typescript-eslint/no-unused-vars
+  72:3   warning  'lookupOrderIdempotencyReplay' is defined but never used      @typescript-eslint/no-unused-vars
+  73:3   warning  'storeOrderIdempotency' is defined but never used             @typescript-eslint/no-unused-vars
+  74:3   warning  'batchHydrateOrders' is defined but never used                @typescript-eslint/no-unused-vars
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/orders/create.ts
+   10:3   warning  'verifyPin' is defined but never used                             @typescript-eslint/no-unused-vars
+   11:3   warning  'getSettingValue' is defined but never used                       @typescript-eslint/no-unused-vars
+   14:3   warning  'utcDayBounds' is defined but never used                          @typescript-eslint/no-unused-vars
+   15:3   warning  'utcTodayDate' is defined but never used                          @typescript-eslint/no-unused-vars
+   18:3   warning  'applyPayableRounding' is defined but never used                  @typescript-eslint/no-unused-vars
+   22:3   warning  'getActiveCountryPack' is defined but never used                  @typescript-eslint/no-unused-vars
+   24:3   warning  'invertTaxBreakdown' is defined but never used                    @typescript-eslint/no-unused-vars
+   25:3   warning  'invertTaxSnapshot' is defined but never used                     @typescript-eslint/no-unused-vars
+   26:3   warning  'scaleItemTaxAfterOrderDiscount' is defined but never used        @typescript-eslint/no-unused-vars
+   31:3   warning  'restoreTrackedStock' is defined but never used                   @typescript-eslint/no-unused-vars
+   36:3   warning  'reverseRecipeConsumptionForOrder' is defined but never used      @typescript-eslint/no-unused-vars
+   37:3   warning  'reverseRecipeConsumptionForOrderItem' is defined but never used  @typescript-eslint/no-unused-vars
+   39:27  warning  'notifyOrderUpdated' is defined but never used                    @typescript-eslint/no-unused-vars
+   49:3   warning  'freeTableIfModule' is defined but never used                     @typescript-eslint/no-unused-vars
+   55:3   warning  'addOrderItemsBodySchema' is defined but never used               @typescript-eslint/no-unused-vars
+   57:3   warning  'orderDiscountBodySchema' is defined but never used               @typescript-eslint/no-unused-vars
+   58:3   warning  'orderStatusBodySchema' is defined but never used                 @typescript-eslint/no-unused-vars
+   61:10  warning  'orderHasSuccessfulTender' is defined but never used              @typescript-eslint/no-unused-vars
+   69:3   warning  'checkPinRateLimit' is defined but never used                     @typescript-eslint/no-unused-vars
+   74:3   warning  'batchHydrateOrders' is defined but never used                    @typescript-eslint/no-unused-vars
+  167:30  warning  Unexpected any. Specify a different type                          @typescript-eslint/no-explicit-any
+  414:18  warning  Unexpected any. Specify a different type                          @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/orders/discount.ts
+    5:3   warning  'generateOrderNumber' is defined but never used                   @typescript-eslint/no-unused-vars
+    7:3   warning  'parseItemJson' is defined but never used                         @typescript-eslint/no-unused-vars
+    8:3   warning  'parseRowJson' is defined but never used                          @typescript-eslint/no-unused-vars
+   12:3   warning  'insertOrderItemAddons' is defined but never used                 @typescript-eslint/no-unused-vars
+   13:3   warning  'attachEffectiveAddons' is defined but never used                 @typescript-eslint/no-unused-vars
+   14:3   warning  'utcDayBounds' is defined but never used                          @typescript-eslint/no-unused-vars
+   15:3   warning  'utcTodayDate' is defined but never used                          @typescript-eslint/no-unused-vars
+   23:3   warning  'getConfiguredChargeTaxCategories' is defined but never used      @typescript-eslint/no-unused-vars
+   24:3   warning  'invertTaxBreakdown' is defined but never used                    @typescript-eslint/no-unused-vars
+   25:3   warning  'invertTaxSnapshot' is defined but never used                     @typescript-eslint/no-unused-vars
+   29:3   warning  'assertStockAvailable' is defined but never used                  @typescript-eslint/no-unused-vars
+   30:3   warning  'decrementTrackedStock' is defined but never used                 @typescript-eslint/no-unused-vars
+   31:3   warning  'restoreTrackedStock' is defined but never used                   @typescript-eslint/no-unused-vars
+   34:3   warning  'consumeRecipeForOrderItem' is defined but never used             @typescript-eslint/no-unused-vars
+   35:3   warning  'reverseRecipeConsumptionForOrder' is defined but never used      @typescript-eslint/no-unused-vars
+   36:3   warning  'reverseRecipeConsumptionForOrderItem' is defined but never used  @typescript-eslint/no-unused-vars
+   38:10  warning  'notifyKdsUpdate' is defined but never used                       @typescript-eslint/no-unused-vars
+   39:10  warning  'isModuleEnabled' is defined but never used                       @typescript-eslint/no-unused-vars
+   40:10  warning  'cloudSync' is defined but never used                             @typescript-eslint/no-unused-vars
+   43:10  warning  'validateOrderNotes' is defined but never used                    @typescript-eslint/no-unused-vars
+   43:30  warning  'validateItemNotes' is defined but never used                     @typescript-eslint/no-unused-vars
+   47:3   warning  'assertTableCanOpen' is defined but never used                    @typescript-eslint/no-unused-vars
+   48:3   warning  'freeTableIfModule' is defined but never used                     @typescript-eslint/no-unused-vars
+   49:3   warning  'markTableOccupiedCas' is defined but never used                  @typescript-eslint/no-unused-vars
+   50:3   warning  'TableServiceError' is defined but never used                     @typescript-eslint/no-unused-vars
+   52:10  warning  'DOMAIN_SPAN' is defined but never used                           @typescript-eslint/no-unused-vars
+   52:23  warning  'withSpan' is defined but never used                              @typescript-eslint/no-unused-vars
+   54:3   warning  'addOrderItemsBodySchema' is defined but never used               @typescript-eslint/no-unused-vars
+   55:3   warning  'createOrderBodySchema' is defined but never used                 @typescript-eslint/no-unused-vars
+   57:3   warning  'orderStatusBodySchema' is defined but never used                 @typescript-eslint/no-unused-vars
+   59:10  warning  'readTerminalIdHeaderFromRequest' is defined but never used       @typescript-eslint/no-unused-vars
+   59:43  warning  'resolveActiveShiftForOrder' is defined but never used            @typescript-eslint/no-unused-vars
+   69:3   warning  'syncCustomerTagCounts' is defined but never used                 @typescript-eslint/no-unused-vars
+   70:3   warning  'validateItemAddonGroupLimits' is defined but never used          @typescript-eslint/no-unused-vars
+   73:3   warning  'batchHydrateOrders' is defined but never used                    @typescript-eslint/no-unused-vars
+  213:25  warning  Unexpected any. Specify a different type                          @typescript-eslint/no-explicit-any
+  509:23  warning  Unexpected any. Specify a different type                          @typescript-eslint/no-explicit-any
+  574:65  warning  Unexpected any. Specify a different type                          @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/orders/items.ts
+    5:3   warning  'generateOrderNumber' is defined but never used                   @typescript-eslint/no-unused-vars
+   10:3   warning  'verifyPin' is defined but never used                             @typescript-eslint/no-unused-vars
+   11:3   warning  'getSettingValue' is defined but never used                       @typescript-eslint/no-unused-vars
+   14:3   warning  'utcDayBounds' is defined but never used                          @typescript-eslint/no-unused-vars
+   15:3   warning  'utcTodayDate' is defined but never used                          @typescript-eslint/no-unused-vars
+   23:3   warning  'getConfiguredChargeTaxCategories' is defined but never used      @typescript-eslint/no-unused-vars
+   24:3   warning  'invertTaxBreakdown' is defined but never used                    @typescript-eslint/no-unused-vars
+   25:3   warning  'invertTaxSnapshot' is defined but never used                     @typescript-eslint/no-unused-vars
+   31:3   warning  'restoreTrackedStock' is defined but never used                   @typescript-eslint/no-unused-vars
+   36:3   warning  'reverseRecipeConsumptionForOrder' is defined but never used      @typescript-eslint/no-unused-vars
+   37:3   warning  'reverseRecipeConsumptionForOrderItem' is defined but never used  @typescript-eslint/no-unused-vars
+   39:27  warning  'notifyOrderUpdated' is defined but never used                    @typescript-eslint/no-unused-vars
+   42:10  warning  'logAuditEvent' is defined but never used                         @typescript-eslint/no-unused-vars
+   43:10  warning  'correlationId' is defined but never used                         @typescript-eslint/no-unused-vars
+   48:3   warning  'assertTableCanOpen' is defined but never used                    @typescript-eslint/no-unused-vars
+   49:3   warning  'freeTableIfModule' is defined but never used                     @typescript-eslint/no-unused-vars
+   50:3   warning  'markTableOccupiedCas' is defined but never used                  @typescript-eslint/no-unused-vars
+   51:3   warning  'TableServiceError' is defined but never used                     @typescript-eslint/no-unused-vars
+   53:10  warning  'DOMAIN_SPAN' is defined but never used                           @typescript-eslint/no-unused-vars
+   53:23  warning  'withSpan' is defined but never used                              @typescript-eslint/no-unused-vars
+   56:3   warning  'createOrderBodySchema' is defined but never used                 @typescript-eslint/no-unused-vars
+   57:3   warning  'orderDiscountBodySchema' is defined but never used               @typescript-eslint/no-unused-vars
+   58:3   warning  'orderStatusBodySchema' is defined but never used                 @typescript-eslint/no-unused-vars
+   60:10  warning  'readTerminalIdHeaderFromRequest' is defined but never used       @typescript-eslint/no-unused-vars
+   60:43  warning  'resolveActiveShiftForOrder' is defined but never used            @typescript-eslint/no-unused-vars
+   61:10  warning  'orderHasSuccessfulTender' is defined but never used              @typescript-eslint/no-unused-vars
+   69:3   warning  'checkPinRateLimit' is defined but never used                     @typescript-eslint/no-unused-vars
+   70:3   warning  'syncCustomerTagCounts' is defined but never used                 @typescript-eslint/no-unused-vars
+   72:3   warning  'lookupOrderIdempotencyReplay' is defined but never used          @typescript-eslint/no-unused-vars
+   73:3   warning  'storeOrderIdempotency' is defined but never used                 @typescript-eslint/no-unused-vars
+   74:3   warning  'batchHydrateOrders' is defined but never used                    @typescript-eslint/no-unused-vars
+  143:26  warning  Unexpected any. Specify a different type                          @typescript-eslint/no-explicit-any
+  494:16  warning  Unexpected any. Specify a different type                          @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/orders/list.ts
+   1:10  warning  'createHash' is defined but never used                            @typescript-eslint/no-unused-vars
+   5:3   warning  'generateOrderNumber' is defined but never used                   @typescript-eslint/no-unused-vars
+   6:3   warning  'now' is defined but never used                                   @typescript-eslint/no-unused-vars
+   7:3   warning  'parseItemJson' is defined but never used                         @typescript-eslint/no-unused-vars
+   9:3   warning  'withTxn' is defined but never used                               @typescript-eslint/no-unused-vars
+  10:3   warning  'verifyPin' is defined but never used                             @typescript-eslint/no-unused-vars
+  11:3   warning  'getSettingValue' is defined but never used                       @typescript-eslint/no-unused-vars
+  12:3   warning  'insertOrderItemAddons' is defined but never used                 @typescript-eslint/no-unused-vars
+  13:3   warning  'attachEffectiveAddons' is defined but never used                 @typescript-eslint/no-unused-vars
+  18:3   warning  'applyPayableRounding' is defined but never used                  @typescript-eslint/no-unused-vars
+  19:3   warning  'calculateConfiguredChargeTaxes' is defined but never used        @typescript-eslint/no-unused-vars
+  20:3   warning  'calculateItemTax' is defined but never used                      @typescript-eslint/no-unused-vars
+  21:3   warning  'combineItemAndChargeTaxes' is defined but never used             @typescript-eslint/no-unused-vars
+  22:3   warning  'getActiveCountryPack' is defined but never used                  @typescript-eslint/no-unused-vars
+  23:3   warning  'getConfiguredChargeTaxCategories' is defined but never used      @typescript-eslint/no-unused-vars
+  24:3   warning  'invertTaxBreakdown' is defined but never used                    @typescript-eslint/no-unused-vars
+  25:3   warning  'invertTaxSnapshot' is defined but never used                     @typescript-eslint/no-unused-vars
+  26:3   warning  'scaleItemTaxAfterOrderDiscount' is defined but never used        @typescript-eslint/no-unused-vars
+  29:3   warning  'assertStockAvailable' is defined but never used                  @typescript-eslint/no-unused-vars
+  30:3   warning  'decrementTrackedStock' is defined but never used                 @typescript-eslint/no-unused-vars
+  31:3   warning  'restoreTrackedStock' is defined but never used                   @typescript-eslint/no-unused-vars
+  34:3   warning  'consumeRecipeForOrderItem' is defined but never used             @typescript-eslint/no-unused-vars
+  35:3   warning  'reverseRecipeConsumptionForOrder' is defined but never used      @typescript-eslint/no-unused-vars
+  36:3   warning  'reverseRecipeConsumptionForOrderItem' is defined but never used  @typescript-eslint/no-unused-vars
+  38:10  warning  'notifyKdsUpdate' is defined but never used                       @typescript-eslint/no-unused-vars
+  38:27  warning  'notifyOrderUpdated' is defined but never used                    @typescript-eslint/no-unused-vars
+  39:10  warning  'isModuleEnabled' is defined but never used                       @typescript-eslint/no-unused-vars
+  40:10  warning  'cloudSync' is defined but never used                             @typescript-eslint/no-unused-vars
+  41:10  warning  'logAuditEvent' is defined but never used                         @typescript-eslint/no-unused-vars
+  42:10  warning  'correlationId' is defined but never used                         @typescript-eslint/no-unused-vars
+  43:10  warning  'validateOrderNotes' is defined but never used                    @typescript-eslint/no-unused-vars
+  43:30  warning  'validateItemNotes' is defined but never used                     @typescript-eslint/no-unused-vars
+  45:10  warning  'validateBody' is defined but never used                          @typescript-eslint/no-unused-vars
+  47:3   warning  'assertTableCanOpen' is defined but never used                    @typescript-eslint/no-unused-vars
+  48:3   warning  'freeTableIfModule' is defined but never used                     @typescript-eslint/no-unused-vars
+  49:3   warning  'markTableOccupiedCas' is defined but never used                  @typescript-eslint/no-unused-vars
+  50:3   warning  'TableServiceError' is defined but never used                     @typescript-eslint/no-unused-vars
+  52:10  warning  'DOMAIN_SPAN' is defined but never used                           @typescript-eslint/no-unused-vars
+  52:23  warning  'withSpan' is defined but never used                              @typescript-eslint/no-unused-vars
+  54:3   warning  'addOrderItemsBodySchema' is defined but never used               @typescript-eslint/no-unused-vars
+  55:3   warning  'createOrderBodySchema' is defined but never used                 @typescript-eslint/no-unused-vars
+  56:3   warning  'orderDiscountBodySchema' is defined but never used               @typescript-eslint/no-unused-vars
+  57:3   warning  'orderStatusBodySchema' is defined but never used                 @typescript-eslint/no-unused-vars
+  59:10  warning  'readTerminalIdHeaderFromRequest' is defined but never used       @typescript-eslint/no-unused-vars
+  59:43  warning  'resolveActiveShiftForOrder' is defined but never used            @typescript-eslint/no-unused-vars
+  60:10  warning  'orderHasSuccessfulTender' is defined but never used              @typescript-eslint/no-unused-vars
+  66:3   warning  'orderIdempotencyKey' is defined but never used                   @typescript-eslint/no-unused-vars
+  67:3   warning  'checkPinRateLimit' is defined but never used                     @typescript-eslint/no-unused-vars
+  68:3   warning  'syncCustomerTagCounts' is defined but never used                 @typescript-eslint/no-unused-vars
+  69:3   warning  'validateItemAddonGroupLimits' is defined but never used          @typescript-eslint/no-unused-vars
+  70:3   warning  'lookupOrderIdempotencyReplay' is defined but never used          @typescript-eslint/no-unused-vars
+  71:3   warning  'storeOrderIdempotency' is defined but never used                 @typescript-eslint/no-unused-vars
+  74:3   warning  'errorMessage' is defined but never used                          @typescript-eslint/no-unused-vars
+  75:3   warning  'errorStatus' is defined but never used                           @typescript-eslint/no-unused-vars
+  76:8   warning  'OrderRow' is defined but never used                              @typescript-eslint/no-unused-vars
+  93:23  warning  Unexpected any. Specify a different type                          @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/orders/mutate.ts
+    1:10  warning  'createHash' is defined but never used                            @typescript-eslint/no-unused-vars
+    5:3   warning  'generateOrderNumber' is defined but never used                   @typescript-eslint/no-unused-vars
+   10:3   warning  'verifyPin' is defined but never used                             @typescript-eslint/no-unused-vars
+   11:3   warning  'getSettingValue' is defined but never used                       @typescript-eslint/no-unused-vars
+   12:3   warning  'insertOrderItemAddons' is defined but never used                 @typescript-eslint/no-unused-vars
+   14:3   warning  'utcDayBounds' is defined but never used                          @typescript-eslint/no-unused-vars
+   15:3   warning  'utcTodayDate' is defined but never used                          @typescript-eslint/no-unused-vars
+   18:3   warning  'applyPayableRounding' is defined but never used                  @typescript-eslint/no-unused-vars
+   19:3   warning  'calculateConfiguredChargeTaxes' is defined but never used        @typescript-eslint/no-unused-vars
+   20:3   warning  'calculateItemTax' is defined but never used                      @typescript-eslint/no-unused-vars
+   21:3   warning  'combineItemAndChargeTaxes' is defined but never used             @typescript-eslint/no-unused-vars
+   22:3   warning  'getActiveCountryPack' is defined but never used                  @typescript-eslint/no-unused-vars
+   23:3   warning  'getConfiguredChargeTaxCategories' is defined but never used      @typescript-eslint/no-unused-vars
+   24:3   warning  'invertTaxBreakdown' is defined but never used                    @typescript-eslint/no-unused-vars
+   25:3   warning  'invertTaxSnapshot' is defined but never used                     @typescript-eslint/no-unused-vars
+   26:3   warning  'scaleItemTaxAfterOrderDiscount' is defined but never used        @typescript-eslint/no-unused-vars
+   29:3   warning  'assertStockAvailable' is defined but never used                  @typescript-eslint/no-unused-vars
+   30:3   warning  'decrementTrackedStock' is defined but never used                 @typescript-eslint/no-unused-vars
+   31:3   warning  'restoreTrackedStock' is defined but never used                   @typescript-eslint/no-unused-vars
+   34:3   warning  'consumeRecipeForOrderItem' is defined but never used             @typescript-eslint/no-unused-vars
+   35:3   warning  'reverseRecipeConsumptionForOrder' is defined but never used      @typescript-eslint/no-unused-vars
+   36:3   warning  'reverseRecipeConsumptionForOrderItem' is defined but never used  @typescript-eslint/no-unused-vars
+   41:10  warning  'logAuditEvent' is defined but never used                         @typescript-eslint/no-unused-vars
+   42:10  warning  'correlationId' is defined but never used                         @typescript-eslint/no-unused-vars
+   43:10  warning  'validateOrderNotes' is defined but never used                    @typescript-eslint/no-unused-vars
+   43:30  warning  'validateItemNotes' is defined but never used                     @typescript-eslint/no-unused-vars
+   45:10  warning  'validateBody' is defined but never used                          @typescript-eslint/no-unused-vars
+   47:3   warning  'assertTableCanOpen' is defined but never used                    @typescript-eslint/no-unused-vars
+   49:3   warning  'markTableOccupiedCas' is defined but never used                  @typescript-eslint/no-unused-vars
+   50:3   warning  'TableServiceError' is defined but never used                     @typescript-eslint/no-unused-vars
+   52:10  warning  'DOMAIN_SPAN' is defined but never used                           @typescript-eslint/no-unused-vars
+   52:23  warning  'withSpan' is defined but never used                              @typescript-eslint/no-unused-vars
+   54:3   warning  'addOrderItemsBodySchema' is defined but never used               @typescript-eslint/no-unused-vars
+   55:3   warning  'createOrderBodySchema' is defined but never used                 @typescript-eslint/no-unused-vars
+   56:3   warning  'orderDiscountBodySchema' is defined but never used               @typescript-eslint/no-unused-vars
+   57:3   warning  'orderStatusBodySchema' is defined but never used                 @typescript-eslint/no-unused-vars
+   59:10  warning  'readTerminalIdHeaderFromRequest' is defined but never used       @typescript-eslint/no-unused-vars
+   59:43  warning  'resolveActiveShiftForOrder' is defined but never used            @typescript-eslint/no-unused-vars
+   60:10  warning  'orderHasSuccessfulTender' is defined but never used              @typescript-eslint/no-unused-vars
+   66:3   warning  'orderIdempotencyKey' is defined but never used                   @typescript-eslint/no-unused-vars
+   67:3   warning  'checkPinRateLimit' is defined but never used                     @typescript-eslint/no-unused-vars
+   68:3   warning  'syncCustomerTagCounts' is defined but never used                 @typescript-eslint/no-unused-vars
+   69:3   warning  'validateItemAddonGroupLimits' is defined but never used          @typescript-eslint/no-unused-vars
+   70:3   warning  'lookupOrderIdempotencyReplay' is defined but never used          @typescript-eslint/no-unused-vars
+   71:3   warning  'storeOrderIdempotency' is defined but never used                 @typescript-eslint/no-unused-vars
+   72:3   warning  'batchHydrateOrders' is defined but never used                    @typescript-eslint/no-unused-vars
+   73:3   warning  'getAuthUser' is defined but never used                           @typescript-eslint/no-unused-vars
+  118:14  warning  Unexpected any. Specify a different type                          @typescript-eslint/no-explicit-any
+  186:14  warning  Unexpected any. Specify a different type                          @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/orders/status.ts
+    5:3   warning  'generateOrderNumber' is defined but never used               @typescript-eslint/no-unused-vars
+   11:3   warning  'getSettingValue' is defined but never used                   @typescript-eslint/no-unused-vars
+   12:3   warning  'insertOrderItemAddons' is defined but never used             @typescript-eslint/no-unused-vars
+   14:3   warning  'utcDayBounds' is defined but never used                      @typescript-eslint/no-unused-vars
+   15:3   warning  'utcTodayDate' is defined but never used                      @typescript-eslint/no-unused-vars
+   18:3   warning  'applyPayableRounding' is defined but never used              @typescript-eslint/no-unused-vars
+   19:3   warning  'calculateConfiguredChargeTaxes' is defined but never used    @typescript-eslint/no-unused-vars
+   20:3   warning  'calculateItemTax' is defined but never used                  @typescript-eslint/no-unused-vars
+   21:3   warning  'combineItemAndChargeTaxes' is defined but never used         @typescript-eslint/no-unused-vars
+   22:3   warning  'getActiveCountryPack' is defined but never used              @typescript-eslint/no-unused-vars
+   23:3   warning  'getConfiguredChargeTaxCategories' is defined but never used  @typescript-eslint/no-unused-vars
+   24:3   warning  'invertTaxBreakdown' is defined but never used                @typescript-eslint/no-unused-vars
+   25:3   warning  'invertTaxSnapshot' is defined but never used                 @typescript-eslint/no-unused-vars
+   26:3   warning  'scaleItemTaxAfterOrderDiscount' is defined but never used    @typescript-eslint/no-unused-vars
+   29:3   warning  'assertStockAvailable' is defined but never used              @typescript-eslint/no-unused-vars
+   30:3   warning  'decrementTrackedStock' is defined but never used             @typescript-eslint/no-unused-vars
+   35:3   warning  'consumeRecipeForOrderItem' is defined but never used         @typescript-eslint/no-unused-vars
+   39:27  warning  'notifyOrderUpdated' is defined but never used                @typescript-eslint/no-unused-vars
+   44:10  warning  'validateOrderNotes' is defined but never used                @typescript-eslint/no-unused-vars
+   44:30  warning  'validateItemNotes' is defined but never used                 @typescript-eslint/no-unused-vars
+   48:3   warning  'assertTableCanOpen' is defined but never used                @typescript-eslint/no-unused-vars
+   50:3   warning  'markTableOccupiedCas' is defined but never used              @typescript-eslint/no-unused-vars
+   51:3   warning  'TableServiceError' is defined but never used                 @typescript-eslint/no-unused-vars
+   53:10  warning  'DOMAIN_SPAN' is defined but never used                       @typescript-eslint/no-unused-vars
+   53:23  warning  'withSpan' is defined but never used                          @typescript-eslint/no-unused-vars
+   55:3   warning  'addOrderItemsBodySchema' is defined but never used           @typescript-eslint/no-unused-vars
+   56:3   warning  'createOrderBodySchema' is defined but never used             @typescript-eslint/no-unused-vars
+   57:3   warning  'orderDiscountBodySchema' is defined but never used           @typescript-eslint/no-unused-vars
+   60:10  warning  'readTerminalIdHeaderFromRequest' is defined but never used   @typescript-eslint/no-unused-vars
+   60:43  warning  'resolveActiveShiftForOrder' is defined but never used        @typescript-eslint/no-unused-vars
+   69:3   warning  'syncCustomerTagCounts' is defined but never used             @typescript-eslint/no-unused-vars
+   70:3   warning  'validateItemAddonGroupLimits' is defined but never used      @typescript-eslint/no-unused-vars
+   73:3   warning  'batchHydrateOrders' is defined but never used                @typescript-eslint/no-unused-vars
+  207:23  warning  Unexpected any. Specify a different type                      @typescript-eslint/no-explicit-any
+  317:16  warning  Unexpected any. Specify a different type                      @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/payment-methods.ts
+   38:152  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   47:106  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   60:19   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   70:89   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   80:19   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  106:96   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:127  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  110:115  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  114:21   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  140:19   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/printers.ts
+    21:3   warning  'formatRefundReceipt' is defined but never used  @typescript-eslint/no-unused-vars
+    48:38  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+    48:54  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+    77:35  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+    82:17  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+    91:32  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   112:44  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   112:67  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   115:81  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   130:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   142:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   158:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   170:42  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   180:21  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   194:93  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   197:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   232:94  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   257:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   267:94  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   302:34  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   317:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   328:93  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   332:84  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   342:21  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   351:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   374:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   384:93  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   418:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   454:17  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   466:20  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   473:18  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   476:26  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   499:22  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   515:21  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   626:44  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   647:21  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   744:21  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   789:21  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   864:21  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   880:7   warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   881:15  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   882:36  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   882:48  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   887:15  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   906:66  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   906:78  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   907:19  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   910:20  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   960:20  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   966:25  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   970:22  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  1015:21  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/products.ts
+   185:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   212:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   212:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   215:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   216:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   219:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   224:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   236:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   247:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   248:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   253:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   260:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   265:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   274:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   274:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   343:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   371:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   400:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   402:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   402:69  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   426:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   492:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   493:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   497:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   498:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   567:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1025:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1057:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/public-qr.ts
+  150:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/purchasing.ts
+  39:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/recipes.ts
+  31:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  31:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/reports.ts
+  748:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  771:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  772:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  780:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  786:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/server-app-info.ts
+  64:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/settings.ts
+  28:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  28:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:85  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/tables.ts
+   20:3   warning  'tableAssignWaiterBodySchema' is defined but never used  @typescript-eslint/no-unused-vars
+   23:3   warning  'tableMergeBodySchema' is defined but never used         @typescript-eslint/no-unused-vars
+   24:3   warning  'tableMoveOrderBodySchema' is defined but never used     @typescript-eslint/no-unused-vars
+   25:3   warning  'tableSplitBodySchema' is defined but never used         @typescript-eslint/no-unused-vars
+   34:18  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   37:47  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   63:19  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+   92:33  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  109:43  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  131:96  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  171:57  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  241:38  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  253:89  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  279:45  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  289:89  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  310:45  warning  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/tax-packs.ts
+    81:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+    81:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   209:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   907:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1054:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1065:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1091:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1549:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1632:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1785:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1794:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  1817:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/tax.ts
+  56:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/routes/whatsapp.ts
+   60:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  100:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  106:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  163:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  191:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/server-app.ts
+   86:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   92:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  100:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  136:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  195:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  221:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  228:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  231:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/server.ts
+  139:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  161:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/services/audit-log.ts
+  99:9  warning  'metadataJson' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/devrajsharma/Projects/FloCafe/main/services/bills-csv-export.ts
+  144:23  warning  'windowEnd' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/devrajsharma/Projects/FloCafe/main/services/cloud-sync.ts
+   487:13   warning  'message' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  1327:16   warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1475:28   warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1535:23   warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1549:37   warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1565:61   warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1578:37   warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1604:50   warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1626:83   warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1631:32   warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1631:53   warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1633:157  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1634:110  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1635:101  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1717:49   warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  1720:36   warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/services/inventory-count.ts
+  33:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/services/inventory.ts
+   97:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  131:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  143:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  194:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  231:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  268:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  301:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  330:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  361:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  532:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/services/kds.ts
+  108:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  300:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  331:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  346:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  350:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  419:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  470:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  529:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  556:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  636:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  636:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  637:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  648:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  655:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  656:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  658:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  665:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  667:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  670:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  677:91  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  678:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  681:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  686:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  701:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  706:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  708:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  714:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  731:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/services/payment-tender.ts
+  261:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  266:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  704:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/services/print-queue.ts
+   76:4   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   79:81  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   85:84  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   86:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   89:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  111:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  125:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  284:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  289:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/services/qr-ordering.ts
+  164:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  201:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  385:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/services/recipe-consumption.ts
+   60:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   75:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  176:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  228:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  249:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  258:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/services/recipe.ts
+   95:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  132:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  143:62  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  239:7   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  268:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/services/schema-health.ts
+  108:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  117:81  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:83  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  134:71  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  425:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/services/tables.ts
+   35:4   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   47:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   55:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   55:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   70:81  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:81  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  202:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  203:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  204:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  230:75  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  286:72  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  289:97  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  290:97  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  313:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  315:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  316:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  333:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  334:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  407:81  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  414:82  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  418:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  434:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  435:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  436:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  437:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  463:67  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  488:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  568:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  571:74  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  582:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  586:79  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  597:5   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  605:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  635:90  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  644:5   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  704:90  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/services/tax.ts
+  381:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  540:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  636:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  643:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  662:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  673:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  676:4   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  681:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  691:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  748:16  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  749:11  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  810:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  823:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  848:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  848:58  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  871:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  900:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/devrajsharma/Projects/FloCafe/main/services/whatsapp.ts
+  116:33  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  375:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  416:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  446:52  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  459:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  466:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  506:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  515:68  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  528:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  684:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  781:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  807:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  848:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  854:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  909:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 903 problems (0 errors, 903 warnings)
+
+EXIT=0 DURATION_SEC=6

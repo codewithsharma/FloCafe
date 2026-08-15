@@ -1,0 +1,24 @@
+Playwright e2e summary
+Date: 2026-08-15
+Command: cd frontend && npx playwright test
+Chromium: already available (no install needed)
+
+Results
+- Total: 4
+- Passed: 4
+- Failed: 0
+- Skipped: 0
+- Duration: 7.7s
+- Workers: 3
+- Exit: success
+
+Tests
+1. [chromium] e2e/kds-login.spec.ts › KDS standalone logs in and restores its session (1.6s) — PASS
+2. [chromium] e2e/layout-integrity.spec.ts › POS product grid has no horizontal clipping and touchable product cards (1.9s) — PASS
+3. [chromium] e2e/prepaid-payment-reconciliation.spec.ts › prepaid checkout uses the authoritative decimal bill total and settles in full (3.0s) — PASS
+4. [chromium] e2e/prepaid-payment-reconciliation.spec.ts › prepaid checkout never reports success when the payment response is partial (1.7s) — PASS
+
+Artifacts
+- Full log: docs/qa/evidence/playwright-e2e.log
+- frontend/test-results/: only .last-run.json (no failure screenshots/traces)
+- frontend/playwright-report/: not produced (HTML report not generated on this run)

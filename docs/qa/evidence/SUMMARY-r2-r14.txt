@@ -1,0 +1,27 @@
+=== Test run 2026-08-15T08:06:23Z ===
+
+SUITE        RESULT ASSERTIONS
+------------ ------ ---------------------------
+h4           PASS   20/20 passed, 0 failed
+r2           FAIL   R2 results: 61 passed, 1 failed
+r3           FAIL   68/70 passed, 2 failed
+r4           FAIL   R4 Inventory OS: 51 passed, 2 failed
+r5           FAIL   55 passed, 2 failed
+r6           FAIL   70 passed, 3 failed
+r7           FAIL   45/46 passed, 1 failed
+r8           FAIL   56/57 passed, 1 failed
+r9           FAIL   35/38 passed, 3 failed
+r9.2         FAIL   50/53 passed, 3 failed
+r9.3         FAIL   35/38 passed, 3 failed
+r9.4         FAIL   31/34 passed, 3 failed
+r9.5         FAIL   19/21 passed, 2 failed
+r9.6         PASS   14/14 passed, 0 failed
+r10          PASS   33/33 passed, 0 failed
+r11          PASS   R11 results: 53/53 passed, 0 failed
+r12          PASS   45/45 passed, 0 failed
+r13          PASS   R13 results: 51 passed, 0 failed
+r14          PASS   6 passed, 0 failed (ALL PASSED)
+
+Completed at 2026-08-15T08:07:40Z
+Logs: docs/qa/evidence/<suite>.log
+RESULT = npm script exit code. ASSERTIONS from suite summary line when present, else ✓/✗ counts.
