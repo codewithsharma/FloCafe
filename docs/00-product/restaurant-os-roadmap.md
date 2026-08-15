@@ -182,6 +182,8 @@ Print queue/retry, multi-printer routing depth, cash drawer depth. Payment termi
 
 Corrupt-openable DB policy, DR product depth, Drive PIN (DRV-01), observability. Parallel with R1+.
 
+**Thin deepen (2026-08-15):** Corrupt-but-openable live DB fail-closed — `checkSqliteIntegrity` + install-state `corrupt_database` latch; money APIs / `/api/health` 503. Doc: [`docs/05-production/r14-corrupt-db-fail-closed.md`](../05-production/r14-corrupt-db-fail-closed.md). Suite `npm run test:r14`. Does **not** close full R14 (DR product / DRV-01 / live drill remain open). No schema bump.
+
 ---
 
 ## R15 — Restaurant Simulation Environment

@@ -385,7 +385,7 @@ R8 (2026-08-15) deepened Existing staff management (search/filter, detail, shift
 | Backup                 | 🟢 Existing  |
 | Restore                | 🟡 Hardening |
 | Disaster recovery      | 🔵 Planned   |
-| Data integrity checks  | 🔵 Planned   |
+| Data integrity checks  | 🟡 Hardening |
 | Recovery procedures    | 🟢 Existing  |
 
 ## Integrations
@@ -543,7 +543,9 @@ Remaining after H3 (not falsely marked Existing): Sensitive-action controls (Pla
 | App restart recovery | 🟡 Hardening | Restore audit + create-time backup integrity; interrupted swap recovery preserved |
 | Restore              | 🟡 Hardening | Backup integrity before success; `backup.created` / `restore.completed            | failed` audits |
 
-Remaining after H4 (not falsely marked Existing): order-status CAS, stock adjust idempotency, Drive backup-now PIN, corrupt-openable live DB fail-closed, durable KDS outbox, disaster recovery (Planned).
+Remaining after H4 (not falsely marked Existing): order-status CAS, stock adjust idempotency, Drive backup-now PIN, durable KDS outbox, disaster recovery (Planned).
+
+**R14 thin deepen (2026-08-15):** Corrupt-openable live DB fail-closed latched via install-state `corrupt_database` + schema-health integrity — see [`docs/05-production/r14-corrupt-db-fail-closed.md`](../05-production/r14-corrupt-db-fail-closed.md). Data integrity checks → 🟡 Hardening. Does not promote Disaster recovery → Existing.
 
 ### OPS-01 operations closure (2026-08-15)
 

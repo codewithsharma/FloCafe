@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — R14 Corrupt-DB fail-closed (COMPLETE thin deepen)
+
+Authorized Reliability thin deepen. No schema bump. Startup `PRAGMA integrity_check` via `checkSqliteIntegrity` (schema-health); on failure latch install-state `setRecoveryRequired('corrupt_database')` and refuse dirty service (existing recovery middleware + `/api/health` 503). Do not clear latch solely because `users>0`. Good `restoreBackup` still clears latch (H4/REC-01 path). Suite `npm run test:r14`. Doc: `docs/05-production/r14-corrupt-db-fail-closed.md`. **Live DR drill NOT CLAIMED. Unopenable DB (P1-06) and full DR product remain open.**
+
 ## 2026-08-15 — R12 Void / Cancel Report (Implemented)
 
 Authorized thin Reporting/BI deepen. No schema bump. Reads `audit_logs` actions `order.cancelled` / `order.item_cancelled` / `order.item_voided`. JSON `GET /api/reports/voids` + CSV `export/voids.csv` + `report.voids_exported`. Owner/Manager only. Suite `npm run test:r12`. Doc: `docs/05-production/r12-void-cancel-report.md`. **Do not rebuild food-cost (R9.6) or invent Advanced BI warehouse. Do not touch coupons/migrations (R11).**
