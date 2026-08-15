@@ -1,4 +1,4 @@
-<!-- Last updated: 2026-08-15, schema v75 -->
+<!-- Last updated: 2026-08-15, schema v79 -->
 
 # OPS-01 — Pilot release & operations closure
 
@@ -6,7 +6,7 @@
 **Branch:** `restaurant-vertical`  
 **Engineering baseline:** `24966ba7272aa4e0e6650796ec469a3cd60ed423`  
 **Author of baseline:** Dev Raj Sharma \<sharmadevraj2204@gmail.com\>  
-**App version:** 3.0.5 · **Schema:** v75  
+**App version:** 3.0.5 · **Schema:** v79  
 **Prior audit:** Post-H4 **PILOT READY WITH CONDITIONS**  
 **Canonical plan:** [`../00-product/capability-matrix.md`](../00-product/capability-matrix.md) — H1–H4 remain **🟡 Hardening** depth (not Existing)
 

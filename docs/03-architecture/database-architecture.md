@@ -9,7 +9,7 @@
 | File | `{userData}/flo.db` |
 | Journal | WAL |
 | FK enforcement | ON (after migrations) |
-| Schema version | 66 (`PRAGMA user_version`) |
+| Schema version | 79 (`PRAGMA user_version`) |
 | Tables | 40 live |
 
 ### Migration strategy

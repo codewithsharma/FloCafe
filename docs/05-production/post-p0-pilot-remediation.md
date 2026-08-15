@@ -3,14 +3,14 @@
 **Date:** 2026-08-14  
 **Branch:** `modular-verticles`  
 **HEAD at start:** `edc44d8` (`fix: close retail vertical isolation blockers`)  
-**Schema:** v75 (unchanged)  
+**Schema:** v79 (unchanged)  
 **Money path:** unchanged (payments, refunds, FIN-01, tax, day-close, shifts)  
 **Phase 4.16:** not created  
 **ADR-014:** still Proposed; not wired
 
 ### Human policy implementation (2026-08-14)
 
-Authorized and implemented on this tree (schema v75, money writes unchanged):
+Authorized and implemented on this tree (schema v79, money writes unchanged):
 
 | Gate        | Decision               | Result                                                                                                                                                                                                         |
 | ----------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -152,7 +152,7 @@ Missing/empty DB → recovery UI; money APIs 503. `new Database()` throw / corru
 | FIN-02 collectible-complete `partial` in Gross/Net (H2) | `main/routes/reports.ts`         | `tests/financial-reporting-semantics.test.ts`                                                           |
 | Chef cancel requires manager PIN (H3)                   | `main/routes/orders.ts`          | `tests/orders-authz.test.ts`                                                                            |
 
-**Not changed:** payment/refund writes, FIN-01, tax, day-close, shifts, schema v75, ADR-014. Chef remains on KDS.
+**Not changed:** payment/refund writes, FIN-01, tax, day-close, shifts, schema v79, ADR-014. Chef remains on KDS.
 
 ---
 

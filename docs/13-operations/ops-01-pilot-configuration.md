@@ -1,9 +1,9 @@
-<!-- Last updated: 2026-08-15, schema v75 -->
+<!-- Last updated: 2026-08-15, schema v79 -->
 
 # OPS-01 — Pilot configuration (Restaurant)
 
 **Audience:** Owner / installer / pilot engineer.  
-**Baseline:** commit `24966ba7272aa4e0e6650796ec469a3cd60ed423` · app **3.0.5** · schema **v75**.  
+**Baseline:** commit `24966ba7272aa4e0e6650796ec469a3cd60ed423` · app **3.0.5** · schema **v79**.  
 **Canonical product plan:** [`../00-product/capability-matrix.md`](../00-product/capability-matrix.md).
 
 This document lists **operator settings** for a controlled single-café pilot. Defaults in a fresh install are **not** the pilot-required profile. Do not silently flip production values in code; change them in Settings on the café machine (or spare) with owner/manager authority.

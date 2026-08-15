@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — R4.1 Foundation Stabilization (Implemented)
+
+Authorized correctness slice (not product features). Drive `backup-now` requires Master PIN. Zod on bill generate/discount + order status/discount. Extracted `main/routes/orders-shared.ts` and `main/database/{time,order-row}.ts`. P1.3 scenarios in `test:r4.1`. Full REAL→integer-cents persistence **STOPPED** — dual-write plan required (P0.3). Schema v79 unchanged. No R5 expansion / no R6. Doc: `docs/05-production/r4-1-foundation-stabilization.md`.
+
 ## 2026-08-15 — R5 BOM / Recipes / Food Cost (Implemented)
 
 Authorized R5 deepen (not purchasing). Schema **v79**: `recipes`, `recipe_ingredients`, `recipe_consumptions`, `recipe_consumption_lines`. **Ingredients = existing `products` SKUs** (no separate catalog). Consumption at order create/add-items via Inventory `applyRecipeStockDelta`; ledger `adjustment` + reason `recipe_consumption`; **BLOCK** on insufficient stock; cancel reverses; refund restaurant restock remains a gap; **no addon BOM**. Food cost = integer cents theoretical. Suite `npm run test:r5`. Doc: `docs/05-production/r5-bom-recipes-food-cost.md`. **Do not start R6.**

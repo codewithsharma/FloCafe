@@ -25,7 +25,7 @@ From `AGENTS.md` and CI:
 
 ### Migration (CURRENT)
 
-- [ ] Fresh install reaches schema v75
+- [ ] Fresh install reaches schema v79
 - [ ] v1.5.0 fixture upgrades without data loss
 - [ ] Pre-migration backup created
 

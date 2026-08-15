@@ -68,7 +68,7 @@ This `docs/` tree is the **Operavia documentation system**. It supplements (does
 
 ## Current project state (Operavia Restaurant / Phase 1)
 
-**VERIFIED:** Electron 43 desktop POS with three LAN servers (ports 3001/3002/3003), SQLite WAL database, Next.js 16 static frontend, Express 5 API, WebSocket KDS, JWT auth with five roles, schema **v75**, extensive test suite.
+**VERIFIED:** Electron 43 desktop POS with three LAN servers (ports 3001/3002/3003), SQLite WAL database, Next.js 16 static frontend, Express 5 API, WebSocket KDS, JWT auth with five roles, schema **v79**, extensive test suite.
 
 **Strengths:** Offline-first, payment/tax/KDS coverage, cross-platform packaging, tax pack system, backup/restore, shifts/refunds/day-close.
 
@@ -138,7 +138,7 @@ Every document distinguishes:
 package.json              Version, productName (Operavia), build config
 STRATEGY.md               Canonical strategy
 main/index.ts             Electron entry, startup sequence
-main/db.ts                Schema, migrations (v75), DB utilities
+main/db.ts                Schema, migrations (v79), DB utilities
 main/routes/index.ts      API route registry
 main/server.ts            Main API server (:3001)
 frontend/package.json     Frontend dependencies

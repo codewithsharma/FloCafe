@@ -1,6 +1,6 @@
 # Database Schema
 
-Schema version **71**. Authoritative sources: `main/db.ts` (`createSchema()`, `MIGRATIONS[]`, helper schema functions).
+Schema version **79**. Authoritative sources: `main/db.ts` (`createSchema()`, `MIGRATIONS[]`, helper schema functions).
 
 ## Table count: 43 live tables
 

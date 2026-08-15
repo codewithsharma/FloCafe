@@ -1,5 +1,6 @@
 # Patterns
 
+- **R4.1 stabilization:** Drive backup-now uses `requireMasterPin` (parity with `/api/db/backup`). Order helpers live in `orders-shared.ts`. Pure DB time/order-row helpers live under `main/database/`. Do not grow `db.ts` / `orders.ts` / Settings without extracting first. REAL money persistence cutover remains dual-write + human gate (not a drive-by migration).
 - Feature modules: `main/services/<name>.ts` + `main/routes/<name>.ts` + `requireRole()`.
 - **Prompt pipeline (`prompts/`):** one ACTIVE phase (`ACTIVE.md` + `STATE.md`). Complete only after tests/lint/builds/isolation/docs/commit. `ADR_REQUIRED` / `BLOCKED` / `DEFERRED` stop auto-advance. Do not commit unrelated dirty tree listed in `STATE.md`.
 - **Boundary validation:** Zod schemas in `main/validation/` + `validateBody` middleware for untrusted HTTP input (auth, order create/add-items, payment single/batch, refund body, stock adjust). Domain rules stay in services.

@@ -29,7 +29,7 @@ import {
 import { sendEvent } from '../services/telemetry';
 import { readTerminalIdHeaderFromRequest } from '../services/shift';
 import { applyPaymentBatch } from '../services/payment-tender';
-import { batchPaymentBodySchema, singlePaymentBodySchema } from '../validation/payments';
+import { batchPaymentBodySchema, billDiscountBodySchema, billGenerateBodySchema, singlePaymentBodySchema } from '../validation/payments';
 
 const router = Router();
 
@@ -194,13 +194,10 @@ router.get(
 router.post(
   '/generate',
   requireRole('owner', 'manager', 'cashier'),
+  validateBody(billGenerateBodySchema),
   (req: Request, res: Response) => {
     try {
       const { order_id } = req.body;
-
-      if (!order_id) {
-        return res.status(400).json({ error: 'Order ID is required' });
-      }
 
       const db = getDatabase();
       const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(order_id) as any;
@@ -690,24 +687,10 @@ router.post(
 router.post(
   '/:id/applyDiscount',
   requireRole('owner', 'manager'),
+  validateBody(billDiscountBodySchema),
   (req: Request, res: Response) => {
     try {
       const { type, value, reason } = req.body;
-
-      if (!type || !['percentage', 'amount'].includes(type)) {
-        return res
-          .status(400)
-          .json({ error: 'Valid discount type is required (percentage, amount)' });
-      }
-
-      if (
-        value === undefined ||
-        typeof value !== 'number' ||
-        !Number.isFinite(value) ||
-        value < 0
-      ) {
-        return res.status(400).json({ error: 'Valid discount value is required' });
-      }
 
       const db = getDatabase();
       const bill = db.prepare('SELECT * FROM bills WHERE id = ?').get(req.params.id) as any;

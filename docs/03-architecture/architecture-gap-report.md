@@ -7,7 +7,7 @@
 
 This report does **not** rewrite historical audits in `docs/15-project-management/`.
 
-> **Phase 2 status:** COMPLETE ([phase-2-final-exit-gate.md](phase-2-final-exit-gate.md) — PASS WITH DOCUMENTED DEFERMENTS). Schema **v75**. Registry exists. Order/Payment/POS seams + synthetic retail-test. Soft composition; fail-closed / packages / production Retail remain **Phase 3**.
+> **Phase 2 status:** COMPLETE ([phase-2-final-exit-gate.md](phase-2-final-exit-gate.md) — PASS WITH DOCUMENTED DEFERMENTS). Schema **v79**. Registry exists. Order/Payment/POS seams + synthetic retail-test. Soft composition; fail-closed / packages / production Retail remain **Phase 3**.
 
 ---
 
@@ -16,7 +16,7 @@ This report does **not** rewrite historical audits in `docs/15-project-managemen
 | Aspect          | Reality                                                                                                                                                                                                    |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Runtime         | Electron + Express + SQLite monolith                                                                                                                                                                       |
-| Schema          | `PRAGMA user_version` → **v75** (`inventory_movements` from Phase 2.8)                                                                                                                                     |
+| Schema          | `PRAGMA user_version` → **v79** (`inventory_movements` from Phase 2.8)                                                                                                                                     |
 | Routing         | Static `registerRoutes` (modules do not dynamically mount/unmount)                                                                                                                                         |
 | Features        | Settings feature flags + `isModuleEnabled` / `isFeatureAvailable`                                                                                                                                          |
 | Business type   | Locked to **restaurant**; `retail-test` synthetic only                                                                                                                                                     |

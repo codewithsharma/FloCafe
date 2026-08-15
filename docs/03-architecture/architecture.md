@@ -8,7 +8,7 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Electron Main Process                         │
 │  main/index.ts                                                   │
-│  ├── initDatabase()          → flo.db (WAL, schema v75)         │
+│  ├── initDatabase()          → flo.db (WAL, schema v79)         │
 │  ├── startServer()           → :3001  API + static frontend     │
 │  ├── startKdsServer()        → :3002  KDS standalone            │
 │  ├── startServerApp()        → :3003  Waiter app                │
@@ -39,7 +39,7 @@
 
 - **SQLite** via `better-sqlite3` (sync API)
 - **Location:** OS userData dir when packaged; repo-adjacent in dev
-- **Migrations:** inline in `main/db.ts`, `PRAGMA user_version` 1→75
+- **Migrations:** inline in `main/db.ts`, `PRAGMA user_version` 1→79
 - **Maintenance lock:** 503 during backup/restore/initialize
 
 ### Communication patterns

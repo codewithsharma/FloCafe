@@ -3,7 +3,7 @@
 **Date:** 2026-08-14  
 **Branch:** `modular-verticles`  
 **HEAD at audit start:** `5fee6df` (`feat: add inventory wastage stock action`)  
-**Schema:** v75  
+**Schema:** v79  
 **Product:** Operavia (repo: FloCafe / `flo-desktop` 3.0.5)  
 **Scope:** Phases 3.x and 4.1–4.15 are complete. This is an **audit**, not a feature phase. **Phase 4.16 was not created.**  
 **Working tree before audit:** clean. Production code was **not** modified.

@@ -1,4 +1,4 @@
-<!-- Last updated: 2026-08-15, schema v75 -->
+<!-- Last updated: 2026-08-15, schema v79 -->
 
 # OPS-02 — Live Pilot RC / Site Readiness & Go-Live Audit
 
@@ -6,7 +6,7 @@
 **Branch:** `restaurant-vertical`  
 **Docs HEAD:** `d3322a4041ba0114b3fe821bdbf46fae79e8e47e` (OPS-01)  
 **Engineering tree (H1–H4):** `24966ba7272aa4e0e6650796ec469a3cd60ed423`  
-**App version:** 3.0.5 · **Schema:** v75  
+**App version:** 3.0.5 · **Schema:** v79  
 **Prior:** OPS-01 closed → 🟡 PILOT READY WITH CONDITIONS (engineering + ops docs)  
 **Canonical plan:** [`../00-product/capability-matrix.md`](../00-product/capability-matrix.md)
 

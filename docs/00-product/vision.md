@@ -15,7 +15,7 @@ See [opervia-platform.md](opervia-platform.md) · [verticals.md](verticals.md) �
 
 ## CURRENT PRODUCT — Operavia Restaurant (Phase 1)
 
-A **mature local-first café POS with KDS and operational management capabilities** — Electron desktop, SQLite, offline billing. Evidence: `package.json` (`productName: Operavia`), `main/index.ts`, schema **v75**, `STRATEGY.md`.
+A **mature local-first café POS with KDS and operational management capabilities** — Electron desktop, SQLite, offline billing. Evidence: `package.json` (`productName: Operavia`), `main/index.ts`, schema **v79**, `STRATEGY.md`.
 
 **Honest description (use this):** local-first, offline-capable restaurant and café POS (Operavia Restaurant vertical) designed to keep businesses operating when the internet is unavailable.
 
@@ -68,5 +68,5 @@ Restaurant depth vs freeze is in [`capability-matrix.md`](capability-matrix.md):
 - Product plan: `docs/00-product/capability-matrix.md`
 - Platform docs: `docs/00-product/opervia-platform.md`, gap report `docs/03-architecture/architecture-gap-report.md`
 - Execution backlog: `.ai/tasks.md`
-- Version: `package.json` `"version": "3.0.5"` · schema **v75** in `main/db.ts`
+- Version: `package.json` `"version": "3.0.5"` · schema **v79** in `main/db.ts`
 - Fork: `origin` → `codewithsharma/FloCafe`, `upstream` → `FreeOpenSourcePOS/FloCafe`

@@ -12,6 +12,7 @@
 import { getDatabase, now, parseRowJson, verifyPin, withTxn } from '../db';
 import { logAuditEvent, type AuditContext } from './audit-log';
 import { parseStoredPaymentAmountCents } from './payment-cash';
+import type { BillSettlementRow } from './bill-settlement-types';
 import {
   assertOpenShiftForCashPayment,
   getActiveShift,
@@ -264,7 +265,7 @@ function loadIdempotentReplay(
   idempotencyKey: string,
   billId: number | string,
   requestHash: string,
-): { refund: RefundRecord; bill: any } | null {
+): { refund: RefundRecord; bill: BillSettlementRow } | null {
   const prior = db
     .prepare(
       `
@@ -296,7 +297,7 @@ function loadIdempotentReplay(
  */
 export function createBillRefund(input: CreateBillRefundInput): {
   refund: RefundRecord;
-  bill: any;
+  bill: BillSettlementRow;
 } {
   if (!REFUND_ROLES.has(String(input.actorRole))) {
     throw new RefundServiceError(403, 'Insufficient permissions', 'REFUND_FORBIDDEN');
@@ -340,7 +341,9 @@ export function createBillRefund(input: CreateBillRefundInput): {
       );
       if (nestedReplay) return nestedReplay;
 
-      const bill = db.prepare('SELECT * FROM bills WHERE id = ?').get(input.billId) as any;
+      const bill = db.prepare('SELECT * FROM bills WHERE id = ?').get(input.billId) as
+        | BillSettlementRow
+        | undefined;
       if (!bill) {
         throw new RefundServiceError(404, 'Bill not found', 'REFUND_BILL_NOT_FOUND');
       }

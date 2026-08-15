@@ -1,11 +1,11 @@
-<!-- Last updated: 2026-08-15, schema v75 -->
+<!-- Last updated: 2026-08-15, schema v79 -->
 
 # OPS-01 — Pilot release checklist
 
 **Product:** Operavia Restaurant  
 **Use for:** Controlled single-café pilot after H1–H4.  
 **Engineering baseline:** `24966ba7272aa4e0e6650796ec469a3cd60ed423`  
-**App version:** 3.0.5 · **Schema:** v75  
+**App version:** 3.0.5 · **Schema:** v79  
 **Do not retag** historical `3.0.5` artifacts built from older commits.
 
 Related: [`../05-production/ops-01-pilot-release-operations-closure.md`](../05-production/ops-01-pilot-release-operations-closure.md) · [`../13-operations/pilot-runbook.md`](../13-operations/pilot-runbook.md) · [`../13-operations/pilot-signoff.md`](../13-operations/pilot-signoff.md) · [`../13-operations/ops-01-pilot-configuration.md`](../13-operations/ops-01-pilot-configuration.md)

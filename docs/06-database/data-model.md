@@ -1,10 +1,10 @@
 # Data Model — Current State
 
-Schema version **66**. Authoritative source: `main/db.ts`.
+Schema version **79**. Authoritative source: `main/db.ts`.
 
 ## Schema initialization
 
-**VERIFIED:** Fresh installs run migration v1, which calls `createSchema()` then `seedInstallDefaults()`. Subsequent migrations (v2–v66) append tables, columns, and indexes.
+**VERIFIED:** Fresh installs run migration v1, which calls `createSchema()` then `seedInstallDefaults()`. Subsequent migrations (v2–v79) append tables, columns, and indexes.
 
 | Layer | Table count | Origin |
 |-------|-------------|--------|

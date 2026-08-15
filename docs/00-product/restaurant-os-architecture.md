@@ -1,4 +1,4 @@
-<!-- Last updated: 2026-08-15, schema v75 -->
+<!-- Last updated: 2026-08-15, schema v79 -->
 
 # Operavia Restaurant OS — Architecture (domains & dependencies)
 

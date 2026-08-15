@@ -20,6 +20,9 @@ import { isQualifyingCashPaymentLineCents } from './payment-cash';
 import { assertOpenShiftForCashPayment, resolveActiveShiftForTerminal } from './shift';
 import { DOMAIN_SPAN, withSpanSync } from '../lib/tracing';
 import { freeTableIfModule } from './tables';
+import type { BillSettlementRow, StoredPaymentLine } from './bill-settlement-types';
+
+export type { BillSettlementRow, StoredPaymentLine } from './bill-settlement-types';
 
 /** Concerns Payment tender is responsible for coordinating / persisting. */
 export const PAYMENT_OWNED_CONCERNS: readonly string[] = [
@@ -90,8 +93,12 @@ export function paymentDetailsGrossCents(details: unknown): number {
   } else if (details && typeof details === 'object') {
     lines = [details];
   }
-  return lines.reduce((sum: number, line: any) => {
-    const amount = Number(line?.amount);
+  return lines.reduce((sum: number, line: unknown) => {
+    const amount = Number(
+      line && typeof line === 'object' && 'amount' in line
+        ? (line as StoredPaymentLine).amount
+        : undefined,
+    );
     if (!Number.isFinite(amount)) return sum;
     return sum + Math.round(amount * 100);
   }, 0);
@@ -182,7 +189,10 @@ function paymentTransactionKey(payment: unknown): string | null {
     : null;
 }
 
-function transactionPaymentMatches(existing: any, candidate: PaymentInput): boolean {
+function transactionPaymentMatches(
+  existing: StoredPaymentLine | null | undefined,
+  candidate: PaymentInput,
+): boolean {
   if (!existing) return false;
   if (existing.method !== candidate.method || existing.transaction_id !== candidate.transaction_id)
     return false;
@@ -212,13 +222,15 @@ export function preparePaymentBatch(
   bodyCustomerId?: string | number,
   allowOmittedAmount = false,
 ): {
-  bill: any;
+  bill: BillSettlementRow;
   prepared: PreparedPayment[];
-  existingPayments: any[];
+  existingPayments: StoredPaymentLine[];
   effectiveCustomerId: string | null;
   idempotentReplay?: boolean;
 } {
-  const bill = db.prepare('SELECT * FROM bills WHERE id = ?').get(billId) as any;
+  const bill = db.prepare('SELECT * FROM bills WHERE id = ?').get(billId) as
+    | BillSettlementRow
+    | undefined;
   if (!bill) throw Object.assign(new Error('Bill not found'), { statusCode: 404 });
   if (!Array.isArray(payments) || payments.length === 0)
     throw Object.assign(new Error('payments must be a non-empty array'), { statusCode: 400 });
@@ -226,7 +238,7 @@ export function preparePaymentBatch(
     throw Object.assign(new Error(`A maximum of ${MAX_PAYMENT_LINES} payment lines is allowed`), {
       statusCode: 400,
     });
-  let existingPayments: any[] = [];
+  let existingPayments: StoredPaymentLine[] = [];
   if (bill.payment_details) {
     try {
       const parsed = JSON.parse(bill.payment_details);
@@ -291,7 +303,7 @@ export function preparePaymentBatch(
   const existingTransactionKeys = new Set(
     existingPayments.map(paymentTransactionKey).filter(Boolean),
   );
-  const existingTransactionPayments = new Map<string, any>();
+  const existingTransactionPayments = new Map<string, StoredPaymentLine>();
   for (const existing of existingPayments) {
     const transactionKey = paymentTransactionKey(existing);
     if (transactionKey) existingTransactionPayments.set(transactionKey, existing);
@@ -478,21 +490,26 @@ export function preparePaymentBatch(
 
 function calculateCashback(
   db: ReturnType<typeof getDatabase>,
-  bill: any,
+  bill: BillSettlementRow,
   customerId: string | null,
 ): number {
   if (!customerId) return 0;
   const enabled = (
-    db.prepare(`SELECT value FROM settings WHERE key = 'loyalty_enabled'`).get() as any
+    db.prepare(`SELECT value FROM settings WHERE key = 'loyalty_enabled'`).get() as
+      | { value?: string }
+      | undefined
   )?.value;
   if (enabled !== 'true' && enabled !== '1') return 0;
   const globalRate = parseFloat(
-    (db.prepare(`SELECT value FROM settings WHERE key = 'global_cashback_percent'`).get() as any)
-      ?.value || '0',
+    (
+      db.prepare(`SELECT value FROM settings WHERE key = 'global_cashback_percent'`).get() as
+        | { value?: string }
+        | undefined
+    )?.value || '0',
   );
   const order = db
     .prepare('SELECT subtotal, discount_amount FROM orders WHERE id = ?')
-    .get(bill.order_id) as any;
+    .get(bill.order_id) as { subtotal?: number; discount_amount?: number } | undefined;
   const items = db
     .prepare(
       `SELECT oi.subtotal, p.cb_percent FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = ? AND oi.status != 'cancelled'`,
@@ -529,7 +546,7 @@ export function applyPaymentBatch(
   requestHash?: string,
   idempotencyUserId?: string,
   terminalIdHeader?: string,
-): { bill: any; walletDebited: boolean; loyaltyPointsEarned: number } {
+): { bill: BillSettlementRow; walletDebited: boolean; loyaltyPointsEarned: number } {
   return withSpanSync(
     'payment',
     DOMAIN_SPAN.payment.applyBatch,
@@ -701,7 +718,7 @@ export function applyPaymentBatch(
           ).run(changedAt, changedAt, bill.order_id);
           const order = db
             .prepare('SELECT table_id FROM orders WHERE id = ?')
-            .get(bill.order_id) as any;
+            .get(bill.order_id) as { table_id?: string | number | null } | undefined;
           // Soft-gate: Restaurant enables tables → identical to pre-2.15.
           // retail-test composition excludes tables → skip free-table side effect.
           if (isModuleEnabled('tables') && order?.table_id) {
@@ -714,8 +731,12 @@ export function applyPaymentBatch(
           .get(bill.id);
         if (cashback > 0 && !alreadyCredited) {
           const walletCents = allPayments
-            .filter((p: any) => p.method === 'wallet')
-            .reduce((sum: number, p: any) => sum + Math.round(Number(p.amount || 0) * 100), 0);
+            .filter((p: StoredPaymentLine) => p.method === 'wallet')
+            .reduce(
+              (sum: number, p: StoredPaymentLine) =>
+                sum + Math.round(Number(p.amount || 0) * 100),
+              0,
+            );
           const finalCashback = Math.floor(
             cashback * (1 - Math.min(1, walletCents / Math.max(1, totalCents))),
           );

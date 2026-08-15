@@ -96,7 +96,9 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 **R4 (2026-08-15): CLOSED.** Inventory OS — `docs/05-production/r4-inventory-os.md`. Schema **v78**. Idempotent adjust, units, counts, ledger reconstruct, wastage reasons, counts UI. Suite `npm run test:r4` 53/53.
 
-**R5 (2026-08-15): CLOSED.** BOM / Recipes / Food Cost — `docs/05-production/r5-bom-recipes-food-cost.md`. Schema **v79**. Ingredients = product SKUs; consume at order create/add-items; theoretical cost cents; BLOCK insufficient; cancel reverse. Suite `npm run test:r5`. **Do not start R6.**
+**R5 (2026-08-15): CLOSED.** BOM / Recipes / Food Cost — `docs/05-production/r5-bom-recipes-food-cost.md`. Schema **v79**. Suite `npm run test:r5`.
+
+**R4.1 (2026-08-15): CLOSED.** Foundation stabilization — `docs/05-production/r4-1-foundation-stabilization.md`. Drive backup-now Master PIN; Zod money bodies; orders-shared + database/time|order-row extraction; P1.3 matrix tests; REAL→cents **STOP** (plan only). Suite `npm run test:r4.1`. Do not expand R5 further without authorization. Do not start R6.
 
 Do not invent 4.16. Do not push.
 

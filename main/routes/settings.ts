@@ -837,6 +837,7 @@ router.post(
 router.post(
   '/google-drive/backup-now',
   requireRole('owner'),
+  requireMasterPin,
   async (_req: Request, res: Response) => {
     try {
       const status = await googleDrive.backupNow();

@@ -1,4 +1,4 @@
-<!-- Last verified against codebase: 2026-08-14, schema v75 -->
+<!-- Last verified against codebase: 2026-08-14, schema v79 -->
 
 # Local Setup
 
@@ -25,7 +25,7 @@ The GitHub repository name remains **FloCafe** for continuity. The product brand
 | React          | 19.2.8    | `frontend/package.json`                                     |
 | Express        | ^5.2.1    | `package.json`                                              |
 | better-sqlite3 | ^13.0.3   | `package.json`                                              |
-| Schema version | **75**    | `main/db.ts` MIGRATIONS (`p2_8_inventory_movements_ledger`) |
+| Schema version | **79**    | `main/db.ts` MIGRATIONS (`v79 recipes/BOM (R5); prior ledger v75`) |
 | App version    | 3.0.5     | `package.json`                                              |
 | Product name   | Operavia  | `package.json` `build.productName`                          |
 

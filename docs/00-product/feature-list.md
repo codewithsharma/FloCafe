@@ -1,4 +1,4 @@
-<!-- Last verified against codebase: 2026-08-14, schema v75 -->
+<!-- Last verified against codebase: 2026-08-14, schema v79 -->
 
 # Feature Inventory
 
@@ -6,7 +6,7 @@ This file is **code evidence** (what exists in the tree). The canonical **produc
 
 Status legend: **[BUILT]** usable · **[PARTIAL]** incomplete · **[STUB]** surface only · **[EXPERIMENTAL]** unstable · **[NOT BUILT]** absent · **[FROZEN]** deferred per `STRATEGY.md`
 
-Evidence paths reference the Operavia codebase (repo: FloCafe) as of schema **v75** (`main/db.ts` migration `p2_8_inventory_movements_ledger`). Default vertical: **restaurant**.
+Evidence paths reference the Operavia codebase (repo: FloCafe) as of schema **v79** (`main/db.ts` migration `p2_8_inventory_movements_ledger`). Default vertical: **restaurant**.
 
 ## POS & Orders
 

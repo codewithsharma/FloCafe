@@ -20,7 +20,8 @@ Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `
 - [x] **R3 Kitchen OS GREEN (2026-08-15):** `kitchen-status` CAS + timestamps + audit + priority; schema v77; companion wired; UI aging/rush/station/bump/addons; `npm run test:r3` 70/70. Doc: `docs/05-production/r3-kitchen-os.md`. Do not start BOM.
 - [x] **R4 Inventory OS GREEN (2026-08-15):** schema v78; units; idempotent stock adjust; stock counts; ledger reconstruct; wastage reasons; counts UI. `npm run test:r4` 53/53. Doc: `docs/05-production/r4-inventory-os.md`.
 - [x] **R5 BOM / Recipes / Food Cost GREEN (2026-08-15):** schema v79; recipes + ingredients (product SKUs); deduction at order create/add-items; theoretical food cost cents + basic %; BLOCK insufficient; cancel reverse. `npm run test:r5`. Doc: `docs/05-production/r5-bom-recipes-food-cost.md`. Do not start R6.
-- [ ] **Hardening (prefer next, authorized slice only):** durable KDS outbox residual; audit trail depth — or next authorized R-wave. R0–R5 closed.
+- [x] **R4.1 Foundation Stabilization GREEN (2026-08-15):** backup-now Master PIN; Zod money bodies; orders-shared + database/time|order-row extraction; P1.3 matrix; REAL→cents STOP (plan). `npm run test:r4.1`. Doc: `r4-1-foundation-stabilization.md`.
+- [ ] **Hardening (prefer next, authorized slice only):** complete db.ts/orders.ts package split; REAL→cents dual-write when approved; durable KDS outbox residual — or next authorized R-wave. R0–R5 + R4.1 closed.
 - [ ] **R6 Purchasing (planned, not started):** PO, goods receiving, supplier management — only if authorized.
 - [ ] **Planned (not started):** see matrix — expediter, QR, consumption/food-cost full BI, auto-86, expiry, stock transfer, etc. Reuse shipped slices; do not rebuild.
 - [ ] **Frozen / later / out of scope:** terminals, gateways, online payment, multi-location, payroll, aggregators, AI — do not start.

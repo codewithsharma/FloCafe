@@ -69,3 +69,36 @@ export const addOrderItemsBodySchema = z
   .passthrough();
 
 export type AddOrderItemsBody = z.infer<typeof addOrderItemsBodySchema>;
+
+export const orderDiscountBodySchema = z
+  .object({
+    discount_type: z.enum(['percentage', 'amount']).optional().nullable(),
+    discount_value: z.number().finite().min(0).optional().nullable(),
+    discount_reason: z.string().max(500).optional().nullable(),
+    override_pin: z.string().optional().nullable(),
+  })
+  .passthrough();
+
+export type OrderDiscountBody = z.infer<typeof orderDiscountBodySchema>;
+
+export const orderStatusBodySchema = z
+  .object({
+    status: z.enum(['preparing', 'ready', 'served', 'completed', 'cancelled'], {
+      message: 'Invalid status. Use: preparing, ready, served, completed, cancelled',
+    }),
+    reason: z.string().max(500).optional().nullable(),
+    override_pin: z.string().optional().nullable(),
+    free_table: z.boolean().optional().nullable(),
+  })
+  .passthrough();
+
+export type OrderStatusBody = z.infer<typeof orderStatusBodySchema>;
+
+export const orderItemCancelBodySchema = z
+  .object({
+    reason: z.string().max(500).optional().nullable(),
+    override_pin: z.string().optional().nullable(),
+  })
+  .passthrough();
+
+export type OrderItemCancelBody = z.infer<typeof orderItemCancelBodySchema>;

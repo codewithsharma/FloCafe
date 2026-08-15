@@ -11,7 +11,7 @@
 
 ## CURRENT STATE — Limitations operators still face
 
-**VERIFIED** from codebase analysis (2026-08-14, schema v75):
+**VERIFIED** from codebase analysis (2026-08-14, schema v79):
 
 | Limitation                                 | Evidence                                                                                     |
 | ------------------------------------------ | -------------------------------------------------------------------------------------------- |

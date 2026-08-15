@@ -44,6 +44,8 @@ Canonical Restaurant capability matrix: `docs/00-product/capability-matrix.md` (
 
 Inspect the existing implementation before changing it. Reuse established patterns and keep the diff focused. Use `fix/`, `feat/`, `docs/`, `test/`, `refactor/`, or `chore/` branch prefixes when creating a branch. Do not commit, tag, release, or push unless asked.
 
+**Architecture governance (R4.1):** No new feature may materially increase the responsibility of `main/db.ts`, `main/routes/orders.ts`, or the Settings page without extracting the corresponding domain boundary first.
+
 For database, import/export, authentication, printing, or release changes, identify the affected tests before implementation. Do not bypass platform security checks to make a local development binary run.
 
 ## Verification

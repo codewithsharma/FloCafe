@@ -219,7 +219,8 @@
     "test:r2": "node tests/run-electron-node-test.cjs tests/r2-floor-operations.test.ts",
     "test:r3": "node tests/run-electron-node-test.cjs tests/r3-kitchen-os.test.ts",
     "test:r4": "node tests/run-electron-node-test.cjs tests/r4-inventory-os.test.ts",
-    "test:r5": "node tests/run-electron-node-test.cjs tests/r5-bom-recipes-food-cost.test.ts"
+    "test:r5": "node tests/run-electron-node-test.cjs tests/r5-bom-recipes-food-cost.test.ts",
+    "test:r4.1": "node tests/run-electron-node-test.cjs tests/r4-1-foundation-stabilization.test.ts"
   },
   "author": {
     "name": "OPERAVIA",
