@@ -112,11 +112,12 @@ function syncCustomerTagCounts(
 
 function validateItemAddonGroupLimits(
   db: ReturnType<typeof getDatabase>,
+  productId: string,
   addons: any[] | null | undefined,
 ): void {
-  if (!addons || !Array.isArray(addons) || addons.length === 0) return;
+  const addonList = Array.isArray(addons) ? addons : [];
 
-  for (const addon of addons) {
+  for (const addon of addonList) {
     if (!addon) continue;
     if (addon.quantity !== undefined) {
       if (
@@ -133,7 +134,7 @@ function validateItemAddonGroupLimits(
 
   const groupSelections = new Map<string, { totalQty: number; hasMultiQty: boolean }>();
 
-  for (const addon of addons) {
+  for (const addon of addonList) {
     if (!addon) continue;
     let groupId: string | null = addon.addon_group_id || null;
     if (!groupId && addon.id) {
@@ -178,6 +179,74 @@ function validateItemAddonGroupLimits(
       );
     }
   }
+
+  const requiredGroups = db
+    .prepare(
+      `
+      SELECT ag.*
+      FROM addon_groups ag
+      INNER JOIN addon_group_product agp ON agp.addon_group_id = ag.id
+      WHERE agp.product_id = ?
+        AND ag.is_active = 1
+        AND (ag.is_required = 1 OR COALESCE(ag.min_selection, 0) > 0)
+    `,
+    )
+    .all(productId) as any[];
+
+  for (const group of requiredGroups) {
+    const totalQty = groupSelections.get(group.id)?.totalQty || 0;
+    const minRequired = Math.max(group.is_required ? 1 : 0, Number(group.min_selection) || 0);
+    if (totalQty < minRequired) {
+      throw new Error(
+        group.is_required
+          ? `Add-on group "${group.name}" is required`
+          : `Selection for group "${group.name}" requires at least ${minRequired} item(s)`,
+      );
+    }
+  }
+}
+
+function lookupOrderIdempotencyReplay(
+  db: ReturnType<typeof getDatabase>,
+  userId: string,
+  idempotencyKey: string,
+  requestHash: string,
+): { replay: true; response: any } | { replay: false } {
+  const prior = db
+    .prepare(
+      `
+      SELECT request_hash, response_json
+      FROM order_idempotency
+      WHERE (user_id = ? OR user_id = 'legacy') AND idempotency_key = ?
+      ORDER BY CASE WHEN user_id = ? THEN 0 ELSE 1 END
+      LIMIT 1
+    `,
+    )
+    .get(userId, idempotencyKey, userId) as
+    { request_hash: string; response_json: string } | undefined;
+  if (!prior) return { replay: false };
+  if (prior.request_hash !== requestHash) {
+    throw Object.assign(new Error('Idempotency-Key was already used for a different request'), {
+      statusCode: 409,
+    });
+  }
+  try {
+    return { replay: true, response: JSON.parse(prior.response_json) };
+  } catch {
+    throw Object.assign(new Error('Stored order response is invalid'), { statusCode: 500 });
+  }
+}
+
+function storeOrderIdempotency(
+  db: ReturnType<typeof getDatabase>,
+  userId: string,
+  idempotencyKey: string,
+  requestHash: string,
+  response: unknown,
+): void {
+  db.prepare(
+    'INSERT INTO order_idempotency (user_id, idempotency_key, request_hash, response_json, created_at) VALUES (?, ?, ?, ?, ?)',
+  ).run(userId, idempotencyKey, requestHash, JSON.stringify(response), now());
 }
 
 router.get(
@@ -446,46 +515,27 @@ router.post(
           validateOrderNotes(db, special_instructions);
           for (const item of items) {
             validateItemNotes(db, item.special_instructions);
-            validateItemAddonGroupLimits(db, item.addons);
+            validateItemAddonGroupLimits(db, item.product_id, item.addons);
           }
         } catch (err: any) {
           return res.status(400).json({ error: err.message });
         }
         const result = withTxn(() => {
-          if (idempotencyKey) {
+          if (idempotencyKey && requestHash) {
             // Preserve exact replay for pre-user-scoped records whose creator is
             // unavailable. New records never use the `legacy` compatibility owner.
-            const prior = db
-              .prepare(
-                `
-          SELECT request_hash, response_json
-          FROM order_idempotency
-          WHERE (user_id = ? OR user_id = 'legacy') AND idempotency_key = ?
-          ORDER BY CASE WHEN user_id = ? THEN 0 ELSE 1 END
-          LIMIT 1
-        `,
-              )
-              .get(idempotencyUserId, idempotencyKey, idempotencyUserId) as
-              { request_hash: string; response_json: string } | undefined;
-            if (prior) {
-              if (prior.request_hash !== requestHash) {
-                throw Object.assign(
-                  new Error('Idempotency-Key was already used for a different order request'),
-                  { statusCode: 409 },
-                );
-              }
-              try {
-                const response = JSON.parse(prior.response_json);
-                return {
-                  order: response.order,
-                  orderItems: response.order?.items || [],
-                  idempotentReplay: true,
-                };
-              } catch {
-                throw Object.assign(new Error('Stored order response is invalid'), {
-                  statusCode: 500,
-                });
-              }
+            const prior = lookupOrderIdempotencyReplay(
+              db,
+              idempotencyUserId,
+              idempotencyKey,
+              requestHash,
+            );
+            if (prior.replay) {
+              return {
+                order: prior.response.order,
+                orderItems: prior.response.order?.items || [],
+                idempotentReplay: true,
+              };
             }
           }
 
@@ -710,9 +760,7 @@ router.post(
           );
           const response = { order: Object.assign({}, order, { items: orderItems }) };
           if (idempotencyKey && requestHash) {
-            db.prepare(
-              'INSERT INTO order_idempotency (user_id, idempotency_key, request_hash, response_json, created_at) VALUES (?, ?, ?, ?, ?)',
-            ).run(idempotencyUserId, idempotencyKey, requestHash, JSON.stringify(response), now());
+            storeOrderIdempotency(db, idempotencyUserId, idempotencyKey, requestHash, response);
           }
           return { order, orderItems, idempotentReplay: false };
         });
@@ -720,6 +768,22 @@ router.post(
         if (!result.idempotentReplay) {
           if (isModuleEnabled('kds')) notifyKdsUpdate();
           cloudSync.recordOrderChanged(result.order.id, 'order.created');
+
+          logAuditEvent({
+            actorUserId: authenticatedUserId ?? null,
+            action: 'order.created',
+            entityType: 'order',
+            entityId: String(result.order.id),
+            result: 'success',
+            metadata: {
+              type: result.order.type,
+              item_count: Array.isArray(items) ? items.length : result.orderItems.length,
+            },
+            context: {
+              requestId: correlationId(),
+              clientIp: req.ip || req.socket.remoteAddress || null,
+            },
+          });
 
           if (customer_id) {
             try {
@@ -784,7 +848,7 @@ router.post(
       try {
         for (const item of items) {
           validateItemNotes(db, item.special_instructions);
-          validateItemAddonGroupLimits(db, item.addons);
+          validateItemAddonGroupLimits(db, item.product_id, item.addons);
         }
         if (special_instructions !== undefined) {
           validateOrderNotes(db, special_instructions);
@@ -1143,6 +1207,54 @@ router.patch(
         return res.status(403).json({ error: 'Waiters can only modify their own orders' });
       }
 
+      const currentStatus = (order as any).status as string;
+      if (currentStatus !== status) {
+        if (currentStatus === 'cancelled' || currentStatus === 'completed') {
+          return res.status(409).json({
+            error: `Illegal status transition from ${currentStatus} to ${status}`,
+            code: 'ILLEGAL_STATUS_TRANSITION',
+          });
+        }
+      }
+
+      let cancelIdempotencyKey: string | null = null;
+      let cancelRequestHash: string | null = null;
+      let cancelIdempotencyUserId: string | null = null;
+      if (status === 'cancelled') {
+        try {
+          cancelIdempotencyKey = orderIdempotencyKey(req);
+        } catch (err: any) {
+          return res.status(err.statusCode || 400).json({ error: err.message });
+        }
+        if (cancelIdempotencyKey) {
+          cancelIdempotencyUserId = String(authUser.userId);
+          cancelRequestHash = createHash('sha256')
+            .update(
+              JSON.stringify({
+                op: 'cancel',
+                orderId: req.params.id,
+                body: req.body,
+              }),
+            )
+            .digest('hex');
+          try {
+            const prior = lookupOrderIdempotencyReplay(
+              db,
+              cancelIdempotencyUserId,
+              cancelIdempotencyKey,
+              cancelRequestHash,
+            );
+            if (prior.replay) {
+              return res.status(200).json({ ...prior.response, idempotent_replay: true });
+            }
+          } catch (err: any) {
+            return res
+              .status(err.statusCode || 500)
+              .json({ error: err.statusCode ? err.message : 'Internal server error' });
+          }
+        }
+      }
+
       if (
         status === 'cancelled' &&
         (order as any).status !== 'cancelled' &&
@@ -1310,7 +1422,24 @@ router.patch(
       cloudSync.recordOrderChanged(req.params.id as string, `order.${status}`);
       if (isModuleEnabled('kds')) notifyKdsUpdate();
 
-      res.json({ order: Object.assign({}, updatedOrder, { items: orderItems, table }) });
+      const response = {
+        order: Object.assign({}, updatedOrder, { items: orderItems, table }),
+      };
+      if (
+        status === 'cancelled' &&
+        cancelIdempotencyKey &&
+        cancelRequestHash &&
+        cancelIdempotencyUserId
+      ) {
+        storeOrderIdempotency(
+          db,
+          cancelIdempotencyUserId,
+          cancelIdempotencyKey,
+          cancelRequestHash,
+          response,
+        );
+      }
+      res.json(response);
     } catch (error: any) {
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -1447,6 +1576,43 @@ router.patch('/:id/discount', requireRole('owner', 'manager'), (req: Request, re
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
+
+    let discountIdempotencyKey: string | null = null;
+    let discountRequestHash: string | null = null;
+    let discountIdempotencyUserId: string | null = null;
+    try {
+      discountIdempotencyKey = orderIdempotencyKey(req);
+    } catch (err: any) {
+      return res.status(err.statusCode || 400).json({ error: err.message });
+    }
+    if (discountIdempotencyKey) {
+      discountIdempotencyUserId = String((req as any).user.userId);
+      discountRequestHash = createHash('sha256')
+        .update(
+          JSON.stringify({
+            op: 'discount',
+            orderId: req.params.id,
+            body: req.body,
+          }),
+        )
+        .digest('hex');
+      try {
+        const prior = lookupOrderIdempotencyReplay(
+          db,
+          discountIdempotencyUserId,
+          discountIdempotencyKey,
+          discountRequestHash,
+        );
+        if (prior.replay) {
+          return res.status(200).json({ ...prior.response, idempotent_replay: true });
+        }
+      } catch (err: any) {
+        return res
+          .status(err.statusCode || 500)
+          .json({ error: err.statusCode ? err.message : 'Internal server error' });
+      }
+    }
+
     if (
       db
         .prepare('SELECT 1 FROM bills WHERE order_id = ? AND split_group_id IS NOT NULL LIMIT 1')
@@ -1725,7 +1891,17 @@ router.patch('/:id/discount', requireRole('owner', 'manager'), (req: Request, re
     });
 
     notifyOrderUpdated();
-    res.json({ order: result });
+    const response = { order: result };
+    if (discountIdempotencyKey && discountRequestHash && discountIdempotencyUserId) {
+      storeOrderIdempotency(
+        db,
+        discountIdempotencyUserId,
+        discountIdempotencyKey,
+        discountRequestHash,
+        response,
+      );
+    }
+    res.json(response);
   } catch (error: any) {
     console.error('[API] Internal error:', error);
     res
@@ -2027,6 +2203,24 @@ router.patch(
         }
 
         return db.prepare('SELECT * FROM order_items WHERE id = ?').get(req.params.itemId) as any;
+      });
+
+      logAuditEvent({
+        actorUserId: (req as any).user?.userId ?? null,
+        action: 'order.item_discount_applied',
+        entityType: 'order',
+        entityId: String(req.params.id),
+        result: 'success',
+        metadata: {
+          item_id: updatedItem.id ?? req.params.itemId,
+          discount_type,
+          discount_value,
+          discount_amount: updatedItem.discount_amount ?? discountAmount,
+        },
+        context: {
+          requestId: correlationId(),
+          clientIp: req.ip || req.socket.remoteAddress || null,
+        },
       });
 
       res.json({ item: updatedItem });

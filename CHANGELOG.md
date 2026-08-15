@@ -18,6 +18,7 @@ All notable changes to Opervia (repo/package legacy: Flo Cafe / flo-desktop) are
 - OPS-01 pilot release/ops closure: baseline `24966ba`, configuration, runbook/checklist/gates, drill evidence (`docs/05-production/ops-01-pilot-release-operations-closure.md`).
 - OPS-02 live RC / site readiness audit: signed artifact missing; café gates PENDING; live verdict NO-GO (`docs/05-production/ops-02-live-pilot-rc-site-readiness.md`).
 - R0 Restaurant OS product blueprint: complete OS map, R0–R16 roadmap, architecture/offline/financial contracts, simulation design (`docs/00-product/restaurant-os-blueprint.md`).
+- R1 POS core completion: illegal transitions, cancel/discount Idempotency-Key, required addons, reprint coerce, preview foundation, create/item-discount audits, WebUSB print log (`docs/05-production/r1-pos-core-completion.md`).
 
 ### Changed
 

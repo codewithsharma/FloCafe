@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — R1 POS Core Completion (Implemented)
+
+Authorized Restaurant POS core completion. Illegal terminal status transitions; cancel/discount Idempotency-Key; required addon group enforcement; print-bill reprint coerce + preview `bill_id`; `order.created` + item discount audits; WebUSB/local print log parity; frontend discount keys. Schema v75 unchanged. FIN-01/H1–H4 preserved. No service charge (ADR-014). No R2. Tests: `npm run test:r1`. Doc: `docs/05-production/r1-pos-core-completion.md`. STOP after R1.
+
 ## 2026-08-15 — R0 Operavia Restaurant OS Product Blueprint (Docs)
 
 Authorized complete-product blueprint for Operavia Restaurant OS. Delivered: capability hierarchy A–N, dependency graph, domain boundaries, offline + financial contracts, role model, R0–R16 roadmap, simulation environment design, competitive/differentiator/risk notes. Capability matrix remains canonical for status marks — no Hardening→Existing promotions in R0. Retail/other verticals deferred. No production code, schema, APIs, UI. Do not invent Phase 4.16; use R-waves. Do not auto-start R1. Docs: `restaurant-os-blueprint.md` and companions under `docs/00-product/`. STOP after R0.

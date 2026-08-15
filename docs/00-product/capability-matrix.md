@@ -62,7 +62,7 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | Delivery orders            | 🟢 Existing  |
 | Order source tracking      | 🔵 Planned   |
 | Receipt generation         | 🟡 Hardening |
-| Receipt reprint            | 🔵 Planned   |
+| Receipt reprint            | 🟢 Existing  |
 | Digital receipt            | 🔵 Planned   |
 
 ## Menu
@@ -540,6 +540,20 @@ Go-live audit: source RC = `24966ba`; installable signed/notarized artifact **mi
 ### R0 Restaurant OS blueprint (2026-08-15)
 
 Complete-product blueprint (docs only): [`restaurant-os-blueprint.md`](restaurant-os-blueprint.md), [`restaurant-os-roadmap.md`](restaurant-os-roadmap.md) (R0–R16), architecture / offline / financial contracts, [`restaurant-simulation.md`](restaurant-simulation.md). Does **not** promote Hardening→Existing. Does **not** authorize R1. Retail/other verticals deferred for development. No Phase 4.16.
+
+### R1 POS Core Completion (2026-08-15)
+
+| Row                | Still        | R1 closed                                                                 |
+| ------------------ | ------------ | ------------------------------------------------------------------------- |
+| Void order         | 🟡 Hardening | Cancel Idempotency-Key replay (no double audit); terminal transition lock |
+| Discounts          | 🟡 Hardening | Discount Idempotency-Key + UI keys; item discount audit                   |
+| Receipt generation | 🟡 Hardening | WebUSB/local/browser best-effort print log parity                         |
+| Receipt reprint    | 🟢 Existing  | Server coerces second print-bill to `reprint`                             |
+| Order lifecycle    | 🟢 Existing  | Illegal leave from cancelled/completed → 409                              |
+| Modifier groups    | 🔵 Planned   | Required/min groups enforced on empty addons (deepen, not Existing)       |
+| Digital receipt    | 🔵 Planned   | Preview foundation (`bill_id`, text, escpos_base64) — no delivery         |
+
+Remaining after R1: mandatory cancel/discount keys; item-discount UI; `order.updated` audit depth; full status CAS; digital delivery; ADR-014 service charge; coupons/reopen/courses. Doc: `docs/05-production/r1-pos-core-completion.md`. **Do not start R2 automatically.**
 
 ### Frozen (do not start)
 

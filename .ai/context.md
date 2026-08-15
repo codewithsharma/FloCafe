@@ -51,9 +51,9 @@ Phase 2 delivered: registry → … → 2.14 Order → 2.15 Payment → 2.16 POS
 
 **Frozen until pilots prove reliability:** AI, aggregators (Swiggy/Zomato/ONDC), multi-tenant SaaS, multi-location implementation, payment terminals / gateways / online payment, Bluetooth print, microservices. **ERP inventory (recipes/BOM/PO)** is 🔵 Planned in `capability-matrix.md` but still needs an authorized slice — do not start from this sentence.
 
-## Already shipped (do not rebuild)
+**Already shipped (do not rebuild)**
 
-M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close · **M6 refunds API** · Flo UI redesign Phases 1–12 · KDS · printing · tax · payments · loyalty · WhatsApp · Drive · FloAdmin outbound bridge · **Phase 2 modular foundation (2.1–2.18) CLOSED** · Phase 2 hardening (Zod/OTel/i18n) · **Phase 3.1–3.3 COMPLETE** (fail-closed remount; deploy/start vertical; production Retail).
+M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close · **M6 refunds API** · Flo UI redesign Phases 1–12 · KDS · printing · tax · payments · loyalty · WhatsApp · Drive · FloAdmin outbound bridge · **Phase 2 modular foundation (2.1–2.18) CLOSED** · Phase 2 hardening (Zod/OTel/i18n) · **Phase 3.1–3.3 COMPLETE** (fail-closed remount; deploy/start vertical; production Retail) · **R1 POS Core Completion GREEN** (illegal transitions, cancel/discount idempotency, required addons, reprint coerce, create/item-discount audits).
 
 ## Architecture anchors
 
@@ -86,11 +86,13 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 **OPS-02 (2026-08-15): CLOSED.** Live go-live **NO-GO** until signed RC + site checklist.
 
-**R0 (2026-08-15): CLOSED.** Complete Restaurant OS blueprint + R0–R16 roadmap + contracts + simulation. **Do not start R1** without authorization.
+**R0 (2026-08-15): CLOSED.** Complete Restaurant OS blueprint + R0–R16 roadmap + contracts + simulation.
 
-Do not invent 4.16. Do not push. Do not start H5/R1 unless authorized.
+**R1 (2026-08-15): CLOSED.** POS Core Completion — `docs/05-production/r1-pos-core-completion.md`. Suite `npm run test:r1` 34/34. **Do not start R2** without authorization.
+
+Do not invent 4.16. Do not push. Do not start H5/R2 unless authorized.
 
 - **Human/RELEASE + OPS:** signed RC + `ops-02-site-readiness-checklist.md` + `pilot-signoff.md`.
-- **Next software (if authorized):** **R1 POS Core Completion** (`restaurant-os-roadmap.md`) or remaining Hardening audit-trail depth.
-- ADR-014 Proposed. Schema v75. Engineering baseline `24966ba`. R0 closed.
+- **Next software (if authorized):** **R2 Tables / Floor** or remaining Hardening (audit trail depth).
+- ADR-014 Proposed. Schema v75. Engineering baseline includes R1 on `restaurant-vertical`.
 - Test debt: `security-hardening.test.ts` isolation only (not live blocker).

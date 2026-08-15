@@ -107,7 +107,9 @@ export async function placePrepaidOrder(
   }
 
   if (params.discountBody) {
-    await api.patch(`/orders/${order!.id}/discount`, params.discountBody);
+    await api.patch(`/orders/${order!.id}/discount`, params.discountBody, {
+      headers: { 'Idempotency-Key': crypto.randomUUID() },
+    });
   }
 
   let bill = params.existingBill;

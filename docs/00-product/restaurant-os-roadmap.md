@@ -46,18 +46,16 @@ Delivered: blueprint, architecture, offline/financial contracts, simulation desi
 
 ## R1 — POS Core Completion
 
+**Status:** COMPLETE (2026-08-15) — depth closed per `docs/05-production/r1-pos-core-completion.md`.  
 **Goal:** Make daily POS the most trustworthy surface before floor/kitchen/ERP depth.
 
-**Include (authorized slice may subset):**
+**Delivered:** illegal terminal transitions; cancel/discount Idempotency-Key; required addon groups; reprint coerce; digital preview foundation; create/item-discount audits; WebUSB print-log parity.
 
-- Remaining Hardening: void order, discounts, receipt generation depth
-- Deepen shipped Planned: 86/availability, modifier groups, item notes if in slice
-- Idempotency gaps called out in H1 remaining depth (cancel/discount keys) only if authorized
-- Preserve FIN-01, H1 tender guards, H3 discount RBAC
+**Remaining (not R2):** see R1 doc remaining gaps. Void/Discounts/Receipt generation stay Hardening.
 
-**Exclude:** BOM, PO, QR, aggregators, REAL→cents without approval, Phase 4.16.
+**Exclude:** BOM, PO, QR, aggregators, REAL→cents without approval, Phase 4.16, R2 floor.
 
-**Exit criteria:** Matrix Hardening POS rows either Existing or explicitly remaining; feature-list updated; financial + authz + offline acceptance pass.
+**Exit criteria:** `npm run test:r1` PASS; H1–H4 green; matrix R1 depth table updated.
 
 ---
 

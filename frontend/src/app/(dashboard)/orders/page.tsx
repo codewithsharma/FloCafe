@@ -884,12 +884,17 @@ export default function OrdersPage() {
     }
 
     try {
-      await api.patch(`/orders/${discountModal.order.id}/discount`, {
-        discount_type: discountModal.type,
-        discount_value: discountModal.value,
-        discount_reason: discountModal.reason || undefined,
-        override_pin: discountRequiresApproval && discountModal.value > 0 ? discountPin : undefined,
-      });
+      await api.patch(
+        `/orders/${discountModal.order.id}/discount`,
+        {
+          discount_type: discountModal.type,
+          discount_value: discountModal.value,
+          discount_reason: discountModal.reason || undefined,
+          override_pin:
+            discountRequiresApproval && discountModal.value > 0 ? discountPin : undefined,
+        },
+        { headers: { 'Idempotency-Key': crypto.randomUUID() } },
+      );
       toast.success(t('orders.discountApplied'));
       fetchOrders();
     } catch (err: unknown) {

@@ -175,7 +175,18 @@ export const usePrinterStore = create<PrinterState>()(
               isReprint,
               trimDecimals: printerTrimDecimals,
             });
-            return [];
+            const browserWarnings = [] as PrintWarning[] & { printLogged?: boolean };
+            try {
+              const printType =
+                isReprint || (bill as Bill & { printed_at?: string | null }).printed_at
+                  ? 'reprint'
+                  : 'receipt';
+              await api.post(`/bills/${bill.id}/print`, { print_type: printType });
+              browserWarnings.printLogged = true;
+            } catch {
+              // best-effort print log
+            }
+            return browserWarnings;
           }
 
           // ESC/POS thermal path
@@ -210,7 +221,18 @@ export const usePrinterStore = create<PrinterState>()(
 
           set({ lastPrintedBytes: bytes });
           await printerService.print(bytes);
-          return warnings;
+          const resultWarnings = warnings as PrintWarning[] & { printLogged?: boolean };
+          try {
+            const printType =
+              isReprint || (bill as Bill & { printed_at?: string | null }).printed_at
+                ? 'reprint'
+                : 'receipt';
+            await api.post(`/bills/${bill.id}/print`, { print_type: printType });
+            resultWarnings.printLogged = true;
+          } catch {
+            // best-effort print log
+          }
+          return resultWarnings;
         } catch (err) {
           set({ lastError: (err as Error).message });
           throw err;

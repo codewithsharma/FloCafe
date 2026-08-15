@@ -550,6 +550,7 @@ router.post(
         return res.json({
           success: true,
           preview: true,
+          bill_id: Number(bill.id),
           columns: prepared.columns,
           printer: { id: prepared.printer.id, name: prepared.printer.name },
           text: escPosToText(prepared.data),
@@ -557,6 +558,14 @@ router.post(
           warnings: prepared.warnings,
         });
       }
+
+      const priorPrint = db
+        .prepare(
+          `SELECT 1 FROM print_logs WHERE bill_id = ? AND print_type IN ('receipt', 'reprint') LIMIT 1`,
+        )
+        .get(bill.id);
+      const forceReprint = !!bill.printed_at || !!priorPrint;
+      const effectiveIsReprint = Boolean(isReprint) || forceReprint;
 
       // Use existing printReceipt function with template support
       console.log('[Print Bill] Calling printReceipt...');
@@ -566,13 +575,13 @@ router.post(
         business,
         billTemplate || 'classic',
         useUnicode,
-        isReprint,
+        effectiveIsReprint,
       );
       console.log('[Print Bill] Print completed', result);
 
       if (result.ok) {
         const actorUserId = String((req as any).user?.userId || '');
-        const printType = isReprint ? 'reprint' : 'receipt';
+        const printType = effectiveIsReprint ? 'reprint' : 'receipt';
         await logSaleReceiptPrint(Number(bill.id), actorUserId, printType);
         res.json({ success: true, print_logged: true, warnings: result.warnings || [] });
       } else {

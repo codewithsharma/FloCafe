@@ -211,12 +211,16 @@ export default function PaymentModal({ bill, currency, onClose, onPaid, onBillUp
     }
     setApplyingDiscount(true);
     try {
-      await api.patch(`/orders/${bill.order_id}/discount`, {
-        discount_type: discountType,
-        discount_value: val,
-        discount_reason: val > 0 ? discountReason || undefined : undefined,
-        override_pin: discountRequiresApproval && val > 0 ? discountPin : undefined,
-      });
+      await api.patch(
+        `/orders/${bill.order_id}/discount`,
+        {
+          discount_type: discountType,
+          discount_value: val,
+          discount_reason: val > 0 ? discountReason || undefined : undefined,
+          override_pin: discountRequiresApproval && val > 0 ? discountPin : undefined,
+        },
+        { headers: { 'Idempotency-Key': crypto.randomUUID() } },
+      );
       toast.success(val === 0 ? t('pos.discountRemoved') : t('pos.discountUpdated'));
       setDiscountPin('');
       if (val === 0) {
