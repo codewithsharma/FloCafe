@@ -85,6 +85,7 @@
     "test:flo-refund-ui": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-refund-ui.test.ts",
     "test:flo-products": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-products.test.ts",
     "test:stock-adjust-ui": "ts-node --transpile-only -P tests/tsconfig.json tests/stock-adjust-ui.test.ts",
+    "test:inventory-counts-ui": "ts-node --transpile-only -P tests/tsconfig.json tests/inventory-counts-ui.test.ts",
     "test:flo-customers": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-customers.test.ts",
     "test:flo-staff": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-staff.test.ts",
     "test:flo-reports": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-reports.test.ts",
@@ -216,7 +217,8 @@
     "test:h4": "node tests/run-electron-node-test.cjs tests/h4-restore-conflict-hardening.test.ts",
     "test:r1": "node tests/run-electron-node-test.cjs tests/r1-pos-core-completion.test.ts",
     "test:r2": "node tests/run-electron-node-test.cjs tests/r2-floor-operations.test.ts",
-    "test:r3": "node tests/run-electron-node-test.cjs tests/r3-kitchen-os.test.ts"
+    "test:r3": "node tests/run-electron-node-test.cjs tests/r3-kitchen-os.test.ts",
+    "test:r4": "node tests/run-electron-node-test.cjs tests/r4-inventory-os.test.ts"
   },
   "author": {
     "name": "OPERAVIA",

@@ -57,7 +57,8 @@ async function main() {
 
   const zod = fs.readFileSync(path.join(ROOT, 'main/validation/inventory.ts'), 'utf8');
   assert(zod.includes("'wastage'"), 'Zod allows wastage action');
-  assert(!zod.includes('reason'), 'no free-text reason on HTTP body');
+  assert(zod.includes('wastage_reason'), 'optional wastage_reason enum');
+  assert(!/^\s*reason:\s*z\.string/m.test(zod), 'no free-text reason on HTTP body');
   console.log('   ✓ Zod');
 
   const service = fs.readFileSync(path.join(ROOT, 'main/services/inventory.ts'), 'utf8');
@@ -93,7 +94,7 @@ async function main() {
     const waste = await api(baseUrl, '/api/products/p415-milk/stock', {
       method: 'POST',
       body: { action: 'wastage', quantity: 3 },
-      headers: authHeader,
+      headers: { ...authHeader, 'Idempotency-Key': 'p415-waste-1' },
     });
     assertEqual(waste.status, 200, 'wastage 200');
     assertEqual(waste.data.product.stock_quantity, 7, 'stock 10-3=7');
@@ -121,7 +122,7 @@ async function main() {
     const over = await api(baseUrl, '/api/products/p415-milk/stock', {
       method: 'POST',
       body: { action: 'wastage', quantity: 999 },
-      headers: authHeader,
+      headers: { ...authHeader, 'Idempotency-Key': 'p415-waste-over' },
     });
     assertEqual(over.status, 400, 'oversized wastage 400');
     assertEqual(over.data.error, 'Insufficient stock', 'Insufficient stock message');
@@ -136,7 +137,7 @@ async function main() {
     const dec = await api(baseUrl, '/api/products/p415-milk/stock', {
       method: 'POST',
       body: { action: 'decrease', quantity: 1 },
-      headers: authHeader,
+      headers: { ...authHeader, 'Idempotency-Key': 'p415-dec-1' },
     });
     assertEqual(dec.status, 200, 'decrease still works');
     assertEqual(dec.data.product.stock_quantity, 6, 'decrease 7-1=6');

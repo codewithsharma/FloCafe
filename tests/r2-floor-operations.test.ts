@@ -126,7 +126,7 @@ function auditCount(db: any, action: string, entityId?: string): number {
 
 async function main() {
   console.log('\nR2 — Restaurant Floor Operations\n' + '='.repeat(60));
-  assertEqual(getSupportedSchemaVersion(), 77, 'schema version is 77 (kitchen timestamps + priority)');
+  assertEqual(getSupportedSchemaVersion(), 78, 'schema version is 78 (kitchen timestamps + R4 inventory)');
 
   const db = initTestDb();
   const owner = seedOwnerUser(db);

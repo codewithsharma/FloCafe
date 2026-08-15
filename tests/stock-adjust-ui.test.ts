@@ -26,7 +26,8 @@ function main(): void {
   );
   assert.ok(helper.includes('action: body.action'), 'payload includes action');
   assert.ok(helper.includes('quantity: body.quantity'), 'payload includes quantity');
-  assert.ok(!/reason:\s*body/.test(helper), 'client must not invent reason field');
+  assert.ok(helper.includes('Idempotency-Key'), 'client sends Idempotency-Key');
+  assert.ok(!/reason:\s*body\.reason/.test(helper), 'client must not invent free-text reason field');
   assert.ok(
     helper.includes("'set'") &&
       helper.includes("'increase'") &&
@@ -67,6 +68,19 @@ function main(): void {
     'shows current stock',
   );
   assert.ok(
+    dialog.includes('wastageReason') || dialog.includes('wastage_reason'),
+    'wastage reason select when wastage',
+  );
+  assert.ok(
+    dialog.includes('SPOILAGE') &&
+      dialog.includes('DAMAGED') &&
+      dialog.includes('EXPIRED') &&
+      dialog.includes('SPILLAGE') &&
+      dialog.includes('OTHER'),
+    'wastage reason enum options',
+  );
+  assert.ok(dialog.includes('inventory_unit'), 'shows inventory_unit when present');
+  assert.ok(
     !/name=["']reason["']|id=["']stockReason["']/.test(dialog),
     'no free-text reason inventing API field',
   );
@@ -90,20 +104,23 @@ function main(): void {
     page.includes('postProductStockAdjust') || page.includes('/stock'),
     'page calls stock endpoint',
   );
+  assert.ok(page.includes('wastage_reason'), 'page passes wastage_reason on wastage');
   assert.ok(page.includes('isOwnerOrManager'), 'role gate preserved');
   console.log('   ✓ products page orchestration');
 
   const en = fs.readFileSync(path.join(FRONTEND, 'lib/i18n/en.json'), 'utf8');
   assert.ok(en.includes('stockAdjust.'), 'en stockAdjust i18n keys');
+  assert.ok(en.includes('stockAdjust.wastageReason'), 'en wastage reason i18n');
   console.log('   ✓ i18n keys');
 
   const validation = fs.readFileSync(path.join(ROOT, 'main/validation/inventory.ts'), 'utf8');
   assert.ok(
-    validation.includes("z.enum(['set', 'increase', 'decrease', 'wastage']"),
+    validation.includes("'wastage'"),
     'backend schema includes wastage',
   );
-  assert.ok(!validation.includes('reason'), 'backend still has no reason field');
-  console.log('   ✓ backend contract unchanged');
+  assert.ok(validation.includes('wastage_reason'), 'optional wastage_reason enum');
+  assert.ok(!/^\s*reason:\s*z\.string/m.test(validation), 'no free-text reason field');
+  console.log('   ✓ backend contract');
 
   console.log('='.repeat(60));
   console.log('✅ Phase 3.6C stock adjust UI contracts passed');

@@ -123,20 +123,20 @@ async function main() {
     const setRes = await api(baseUrl, '/api/products/prod-tracked/stock', {
       method: 'POST',
       body: { action: 'set', quantity: 20 },
-      headers: authHeader,
+      headers: { ...authHeader, 'Idempotency-Key': 'inv-bound-set' },
     });
     assertEqual(setRes.status, 200, 'stock set');
     assertEqual(setRes.data.product.stock_quantity, 20, 'set → 20');
     const inc = await api(baseUrl, '/api/products/prod-tracked/stock', {
       method: 'POST',
       body: { action: 'increase', quantity: 5 },
-      headers: authHeader,
+      headers: { ...authHeader, 'Idempotency-Key': 'inv-bound-inc' },
     });
     assertEqual(inc.data.product.stock_quantity, 25, 'increase → 25');
     const dec = await api(baseUrl, '/api/products/prod-tracked/stock', {
       method: 'POST',
       body: { action: 'decrease', quantity: 4 },
-      headers: authHeader,
+      headers: { ...authHeader, 'Idempotency-Key': 'inv-bound-dec' },
     });
     assertEqual(dec.data.product.stock_quantity, 21, 'decrease → 21');
 
@@ -145,7 +145,7 @@ async function main() {
     const over = await api(baseUrl, '/api/products/prod-tracked/stock', {
       method: 'POST',
       body: { action: 'decrease', quantity: 999 },
-      headers: authHeader,
+      headers: { ...authHeader, 'Idempotency-Key': 'inv-bound-over' },
     });
     assertEqual(over.status, 400, 'decrease overflow 400');
     assertEqual(over.data.error, 'Insufficient stock', 'Insufficient stock message');

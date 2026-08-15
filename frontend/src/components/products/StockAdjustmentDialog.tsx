@@ -9,8 +9,20 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useI18n } from '@/hooks/useI18n';
-import { canSubmitStockAdjust, type StockAdjustAction } from '@/lib/stock-adjust';
+import {
+  canSubmitStockAdjust,
+  type StockAdjustAction,
+  type WastageReason,
+} from '@/lib/stock-adjust';
 import type { Product } from '@/lib/types';
+
+const WASTAGE_REASON_OPTIONS: WastageReason[] = [
+  'SPOILAGE',
+  'DAMAGED',
+  'EXPIRED',
+  'SPILLAGE',
+  'OTHER',
+];
 
 export interface StockAdjustmentDialogProps {
   open: boolean;
@@ -20,6 +32,8 @@ export interface StockAdjustmentDialogProps {
   onActionChange: (action: StockAdjustAction) => void;
   quantity: string;
   onQuantityChange: (quantity: string) => void;
+  wastageReason: WastageReason;
+  onWastageReasonChange: (reason: WastageReason) => void;
   onConfirm: () => void;
   submitting: boolean;
 }
@@ -32,6 +46,8 @@ export function StockAdjustmentDialog({
   onActionChange,
   quantity,
   onQuantityChange,
+  wastageReason,
+  onWastageReasonChange,
   onConfirm,
   submitting,
 }: StockAdjustmentDialogProps) {
@@ -41,6 +57,10 @@ export function StockAdjustmentDialog({
 
   const currentStock = Number(product.stock_quantity ?? 0);
   const canConfirm = canSubmitStockAdjust(action, quantity) && !submitting;
+  const unitLabel =
+    typeof product.inventory_unit === 'string' && product.inventory_unit.trim()
+      ? product.inventory_unit.trim()
+      : null;
 
   const inputClass =
     'w-full px-3 py-2 min-h-11 border border-flo-border rounded-flo-md outline-none focus:ring-2 focus:ring-flo-brand-500 text-flo-text bg-flo-surface';
@@ -58,6 +78,11 @@ export function StockAdjustmentDialog({
             <p className="text-caption text-flo-text-muted mt-1">
               {t('stockAdjust.currentStock')}:{' '}
               <span className="text-numeric text-flo-text font-medium">{currentStock}</span>
+              {unitLabel ? (
+                <span className="ml-2 text-flo-text-secondary">
+                  ({t('stockAdjust.inventoryUnit')}: {unitLabel})
+                </span>
+              ) : null}
             </p>
           </div>
 
@@ -81,6 +106,30 @@ export function StockAdjustmentDialog({
               <option value="set">{t('stockAdjust.actionSet')}</option>
             </select>
           </div>
+
+          {action === 'wastage' ? (
+            <div>
+              <label
+                htmlFor="stockAdjustWastageReason"
+                className="block text-small font-medium text-flo-text mb-1"
+              >
+                {t('stockAdjust.wastageReason')}
+              </label>
+              <select
+                id="stockAdjustWastageReason"
+                value={wastageReason}
+                onChange={(e) => onWastageReasonChange(e.target.value as WastageReason)}
+                disabled={submitting}
+                className={inputClass}
+              >
+                {WASTAGE_REASON_OPTIONS.map((reason) => (
+                  <option key={reason} value={reason}>
+                    {t(`stockAdjust.wastageReason.${reason}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
 
           <div>
             <label

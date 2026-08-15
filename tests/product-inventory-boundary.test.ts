@@ -138,7 +138,7 @@ async function main() {
     const adj = await api(baseUrl, `/api/products/${prodId}/stock`, {
       method: 'POST',
       body: { action: 'increase', quantity: 3 },
-      headers: authHeader,
+      headers: { ...authHeader, 'Idempotency-Key': 'prod-inv-bound-inc' },
     });
     assertEqual(adj.status, 200, 'stock endpoint 200');
     assertEqual(adj.data.product.stock_quantity, 40, 'stock=40 after increase');

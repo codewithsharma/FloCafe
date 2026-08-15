@@ -4909,6 +4909,54 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       }
     },
   },
+  {
+    version: 78,
+    name: 'r4_inventory_os_units_idempotency_counts',
+    up: () => {
+      // R4 Inventory OS deepen: product unit, stock-adjust idempotency, stock counts.
+      // Do NOT change inventory_movements CHECK types. Fresh installs may already
+      // have inventory_unit from createSchema — skip ALTER.
+      const productColumns = getColumns(db, 'products');
+      if (!productColumns.includes('inventory_unit')) {
+        db.exec(`ALTER TABLE products ADD COLUMN inventory_unit TEXT DEFAULT 'pcs'`);
+      }
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS stock_adjust_idempotency (
+          user_id TEXT NOT NULL,
+          idempotency_key TEXT NOT NULL,
+          product_id TEXT NOT NULL,
+          request_hash TEXT NOT NULL,
+          response_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          PRIMARY KEY (user_id, idempotency_key)
+        );
+        CREATE TABLE IF NOT EXISTS inventory_counts (
+          id TEXT PRIMARY KEY,
+          status TEXT NOT NULL DEFAULT 'draft',
+          notes TEXT,
+          created_by TEXT,
+          created_at TEXT,
+          updated_at TEXT,
+          applied_at TEXT
+        );
+        CREATE TABLE IF NOT EXISTS inventory_count_lines (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          count_id TEXT NOT NULL,
+          product_id TEXT NOT NULL,
+          system_qty REAL NOT NULL,
+          counted_qty REAL NOT NULL,
+          variance REAL NOT NULL,
+          applied_movement_id INTEGER,
+          UNIQUE(count_id, product_id),
+          FOREIGN KEY (count_id) REFERENCES inventory_counts(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_inventory_count_lines_count
+          ON inventory_count_lines(count_id);
+        CREATE INDEX IF NOT EXISTS idx_stock_adjust_idempotency_product
+          ON stock_adjust_idempotency(product_id);
+      `);
+    },
+  },
 ];
 
 function syncBackupBeforeMigration(fromVersion: number, toVersion: number): void {
@@ -5088,6 +5136,7 @@ function createSchema(): void {
       sort_order INTEGER DEFAULT 0,
       track_inventory INTEGER DEFAULT 0,
       stock_quantity REAL DEFAULT 0,
+      inventory_unit TEXT DEFAULT 'pcs',
       low_stock_threshold REAL DEFAULT 5,
       tax_type TEXT DEFAULT 'none',
       tax_rate REAL DEFAULT 0,
@@ -5443,6 +5492,41 @@ function createSchema(): void {
     CREATE INDEX IF NOT EXISTS idx_tax_categories_pack_version ON tax_categories(pack_version_id);
     CREATE INDEX IF NOT EXISTS idx_tax_rules_pack_version ON tax_rules(pack_version_id);
     CREATE INDEX IF NOT EXISTS idx_tax_overrides_pack_version ON tax_overrides(pack_version_id);
+
+    -- R4 Inventory OS (migration v78 also creates these for upgrades)
+    CREATE TABLE IF NOT EXISTS stock_adjust_idempotency (
+      user_id TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL,
+      product_id TEXT NOT NULL,
+      request_hash TEXT NOT NULL,
+      response_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY (user_id, idempotency_key)
+    );
+    CREATE TABLE IF NOT EXISTS inventory_counts (
+      id TEXT PRIMARY KEY,
+      status TEXT NOT NULL DEFAULT 'draft',
+      notes TEXT,
+      created_by TEXT,
+      created_at TEXT,
+      updated_at TEXT,
+      applied_at TEXT
+    );
+    CREATE TABLE IF NOT EXISTS inventory_count_lines (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      count_id TEXT NOT NULL,
+      product_id TEXT NOT NULL,
+      system_qty REAL NOT NULL,
+      counted_qty REAL NOT NULL,
+      variance REAL NOT NULL,
+      applied_movement_id INTEGER,
+      UNIQUE(count_id, product_id),
+      FOREIGN KEY (count_id) REFERENCES inventory_counts(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_inventory_count_lines_count
+      ON inventory_count_lines(count_id);
+    CREATE INDEX IF NOT EXISTS idx_stock_adjust_idempotency_product
+      ON stock_adjust_idempotency(product_id);
   `);
 }
 

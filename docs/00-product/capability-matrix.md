@@ -195,10 +195,10 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | Supplier management      | 🔵 Planned  |
 | Supplier pricing         | 🔵 Planned  |
 | Stock transfer           | 🔵 Planned  |
-| Waste management         | 🔵 Planned  |
+| Waste management         | 🟢 Existing |
 | Expiry tracking          | 🔵 Planned  |
-| Inventory count          | 🔵 Planned  |
-| Inventory reconciliation | 🔵 Planned  |
+| Inventory count          | 🟢 Existing |
+| Inventory reconciliation | 🟢 Existing |
 | Consumption reports      | 🔵 Planned  |
 | Food-cost percentage     | 🔵 Planned  |
 | Auto-86 from stock       | 🔵 Planned  |
@@ -306,7 +306,7 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | Staff report         | 🔵 Planned  |
 | Shift report         | 🟢 Existing |
 | Cash reconciliation  | 🟢 Existing |
-| Inventory report     | 🔵 Planned  |
+| Inventory report     | 🟢 Existing |
 | Food-cost report     | 🔵 Planned  |
 | Profitability        | 🔵 Planned  |
 | KDS performance      | 🔵 Planned  |
@@ -436,7 +436,7 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | Printing tests              | 🔵 Planned  |
 | Offline/reconnect tests     | 🔵 Planned  |
 | Recovery tests              | 🔵 Planned  |
-| Inventory integrity tests   | 🔵 Planned  |
+| Inventory integrity tests   | 🟢 Existing |
 | End-to-end restaurant tests | 🔵 Planned  |
 | Pilot acceptance tests      | 🔵 Planned  |
 
@@ -579,8 +579,10 @@ Some 🔵 Planned rows already have a **shipped slice**. Treat Planned as remain
 | Priority queue / ticket timers / prep-time | R3: `orders.kitchen_priority` + item timestamps + aging UI; expediter/analytics/sound still Planned                                                |
 | Multiple printer routing                   | `kitchen_stations.printer_id`                                                                                                                      |
 | Cash drawer                                | Phase 3.6F `POST /api/printers/kick-drawer`                                                                                                        |
-| Waste management                           | Phase 4.15 SKU `action=wastage` (not ingredient waste)                                                                                             |
+| Waste management                           | R4 SKU wastage + reasons (not ingredient waste); Phase 4.15 base                                                                                   |
+| Inventory count / reconciliation           | R4 `inventory_counts` draft→apply via ledger `count_variance`; UI `/products/counts`                                                               |
 | Inventory report                           | Phase 4.11 on-hand valuation (not food-cost %)                                                                                                     |
+| Stock adjustment                           | R4 mandatory Idempotency-Key + audits; units convert on adjust                                                                                     |
 | Service charge                             | ADR-014 **Proposed** — no wiring until human Accept                                                                                                |
 | Merge tables                               | R2 unpaid-only merge (`POST /api/tables/:id/merge`); billed merge still **ADR_REQUIRED** (4.13)                                                    |
 | Sections                                   | R2 free-text `section` on CRUD + list filter + create UI; no first-class section entity / floor designer                                           |

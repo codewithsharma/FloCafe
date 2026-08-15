@@ -64,6 +64,8 @@ export interface Product {
   tax_behavior?: 'country_default' | 'inclusive' | 'exclusive' | 'exempt';
   track_inventory: boolean;
   stock_quantity: number;
+  /** Catalog unit for on-hand qty (pcs, kg, …). Optional on older payloads. */
+  inventory_unit?: string | null;
   low_stock_threshold: number | null;
   is_active: boolean;
   available_online: boolean;

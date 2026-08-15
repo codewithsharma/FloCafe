@@ -7,7 +7,14 @@ import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
-import { Plus, FileSpreadsheet, History, AlertTriangle, CircleDollarSign } from 'lucide-react';
+import {
+  Plus,
+  FileSpreadsheet,
+  History,
+  AlertTriangle,
+  CircleDollarSign,
+  ClipboardList,
+} from 'lucide-react';
 import type { Product, Category, AddonGroup } from '@/lib/types';
 import {
   ProductsTabBar,
@@ -37,6 +44,7 @@ import {
   parseStockAdjustQuantity,
   postProductStockAdjust,
   type StockAdjustAction,
+  type WastageReason,
 } from '@/lib/stock-adjust';
 
 export default function ProductsPage() {
@@ -61,6 +69,8 @@ export default function ProductsPage() {
   const [stockAdjustProduct, setStockAdjustProduct] = useState<Product | null>(null);
   const [stockAdjustAction, setStockAdjustAction] = useState<StockAdjustAction>('increase');
   const [stockAdjustQuantity, setStockAdjustQuantity] = useState('');
+  const [stockAdjustWastageReason, setStockAdjustWastageReason] =
+    useState<WastageReason>('OTHER');
   const [stockAdjusting, setStockAdjusting] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const { confirm, ConfirmDialog } = useConfirm();
@@ -349,6 +359,7 @@ export default function ProductsPage() {
     setStockAdjustProduct(product);
     setStockAdjustAction('increase');
     setStockAdjustQuantity('');
+    setStockAdjustWastageReason('OTHER');
   };
 
   const handleStockAdjust = async () => {
@@ -364,10 +375,14 @@ export default function ProductsPage() {
       await postProductStockAdjust(stockAdjustProduct.id, {
         action: stockAdjustAction,
         quantity,
+        ...(stockAdjustAction === 'wastage'
+          ? { wastage_reason: stockAdjustWastageReason }
+          : {}),
       });
       toast.success(t('stockAdjust.success'));
       setStockAdjustProduct(null);
       setStockAdjustQuantity('');
+      setStockAdjustWastageReason('OTHER');
       await fetchData();
     } catch (err: unknown) {
       const message =
@@ -660,6 +675,11 @@ export default function ProductsPage() {
                   </Link>
                 </Button>
                 <Button variant="outline" asChild>
+                  <Link href="/products/counts">
+                    <ClipboardList size={16} className="mr-1" /> {t('inventoryCounts.title')}
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
                   <Link href="/products/valuation">
                     <CircleDollarSign size={16} className="mr-1" /> {t('inventoryValuation.title')}
                   </Link>
@@ -711,6 +731,7 @@ export default function ProductsPage() {
               if (!open && !stockAdjusting) {
                 setStockAdjustProduct(null);
                 setStockAdjustQuantity('');
+                setStockAdjustWastageReason('OTHER');
               }
             }}
             product={stockAdjustProduct}
@@ -718,6 +739,8 @@ export default function ProductsPage() {
             onActionChange={setStockAdjustAction}
             quantity={stockAdjustQuantity}
             onQuantityChange={setStockAdjustQuantity}
+            wastageReason={stockAdjustWastageReason}
+            onWastageReasonChange={setStockAdjustWastageReason}
             onConfirm={() => void handleStockAdjust()}
             submitting={stockAdjusting}
           />

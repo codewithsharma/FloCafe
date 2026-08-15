@@ -15,6 +15,7 @@ import {
   parseStockAdjustQuantity,
   postProductStockAdjust,
   type StockAdjustAction,
+  type WastageReason,
 } from '@/lib/stock-adjust';
 import { PageHeader, Panel, LoadingState, EmptyState } from '@/components/flo';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,8 @@ export default function LowStockPage() {
   const [stockAdjustProduct, setStockAdjustProduct] = useState<Product | null>(null);
   const [stockAdjustAction, setStockAdjustAction] = useState<StockAdjustAction>('increase');
   const [stockAdjustQuantity, setStockAdjustQuantity] = useState('');
+  const [stockAdjustWastageReason, setStockAdjustWastageReason] =
+    useState<WastageReason>('OTHER');
   const [stockAdjusting, setStockAdjusting] = useState(false);
 
   useEffect(() => {
@@ -69,6 +72,7 @@ export default function LowStockPage() {
     setStockAdjustProduct(product);
     setStockAdjustAction('increase');
     setStockAdjustQuantity('');
+    setStockAdjustWastageReason('OTHER');
   };
 
   const handleStockAdjust = async () => {
@@ -80,10 +84,14 @@ export default function LowStockPage() {
       const updated = await postProductStockAdjust(stockAdjustProduct.id, {
         action: stockAdjustAction,
         quantity,
+        ...(stockAdjustAction === 'wastage'
+          ? { wastage_reason: stockAdjustWastageReason }
+          : {}),
       });
       toast.success(t('stockAdjust.success'));
       setStockAdjustProduct(null);
       setStockAdjustQuantity('');
+      setStockAdjustWastageReason('OTHER');
       const threshold = Number(
         updated.low_stock_threshold ?? stockAdjustProduct.low_stock_threshold ?? 0,
       );
@@ -168,6 +176,7 @@ export default function LowStockPage() {
           if (!open) {
             setStockAdjustProduct(null);
             setStockAdjustQuantity('');
+            setStockAdjustWastageReason('OTHER');
           }
         }}
         product={stockAdjustProduct}
@@ -175,6 +184,8 @@ export default function LowStockPage() {
         onActionChange={setStockAdjustAction}
         quantity={stockAdjustQuantity}
         onQuantityChange={setStockAdjustQuantity}
+        wastageReason={stockAdjustWastageReason}
+        onWastageReasonChange={setStockAdjustWastageReason}
         onConfirm={handleStockAdjust}
         submitting={stockAdjusting}
       />

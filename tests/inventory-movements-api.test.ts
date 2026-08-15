@@ -249,7 +249,7 @@ async function main() {
     const stock = await api(baseUrl, `/api/products/${productId}/stock`, {
       method: 'POST',
       body: { action: 'set', quantity: 20 },
-      headers: ownerAuth,
+      headers: { ...ownerAuth, 'Idempotency-Key': 'inv-mov-api-stock-1' },
     });
     assertEqual(stock.status, 200, 'stock POST still works');
 

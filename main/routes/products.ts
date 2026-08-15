@@ -19,15 +19,67 @@ import {
   InventoryServiceError,
   LOW_STOCK_SQL_FRAGMENT,
 } from '../services/inventory';
+import { convertQuantity, isAllowedInventoryUnit } from '../services/inventory-units';
 import { stockAdjustBodySchema } from '../validation/inventory';
 import { productAvailabilityBodySchema } from '../validation/products';
 import { logAuditEvent } from '../services/audit-log';
+import { createHash } from 'crypto';
 import * as crypto from 'crypto';
 import * as dns from 'dns';
 import * as https from 'https';
 import * as net from 'net';
 
 const MAX_FETCH_BYTES = 10 * 1024 * 1024;
+const MAX_IDEMPOTENCY_KEY_LENGTH = 128;
+
+function canonicalizeStockAdjustRequest(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalizeStockAdjustRequest).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value as Record<string, unknown>)
+      .sort()
+      .map(
+        (key) =>
+          `${JSON.stringify(key)}:${canonicalizeStockAdjustRequest((value as Record<string, unknown>)[key])}`,
+      )
+      .join(',')}}`;
+  }
+  if (value === undefined) return 'undefined';
+  return JSON.stringify(value);
+}
+
+function stockAdjustRequestHash(productId: string, body: unknown): string {
+  return createHash('sha256')
+    .update(canonicalizeStockAdjustRequest({ productId, body }))
+    .digest('hex');
+}
+
+function requireStockAdjustIdempotencyKey(req: Request): string {
+  const supplied = req.get('Idempotency-Key')?.trim();
+  if (!supplied) {
+    throw Object.assign(new Error('Idempotency-Key is required'), {
+      statusCode: 400,
+      code: 'STOCK_ADJUST_IDEMPOTENCY_REQUIRED',
+    });
+  }
+  if (supplied.length > MAX_IDEMPOTENCY_KEY_LENGTH || !/^[\x21-\x7e]+$/.test(supplied)) {
+    throw Object.assign(new Error('Idempotency-Key is invalid or too long'), {
+      statusCode: 400,
+      code: 'STOCK_ADJUST_IDEMPOTENCY_INVALID',
+    });
+  }
+  return supplied;
+}
+
+function resolveInventoryUnit(raw: unknown): string | null {
+  if (raw === undefined || raw === null || raw === '') return null;
+  if (typeof raw !== 'string' || !isAllowedInventoryUnit(raw)) {
+    throw new InventoryServiceError(
+      400,
+      'inventory_unit must be one of: pcs, box, pack, kg, g, L, ml',
+    );
+  }
+  return raw;
+}
 
 /**
  * Resolves a hostname and rejects it if any resolved address is a
@@ -592,6 +644,7 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
       tax_behavior,
       track_inventory,
       stock_quantity,
+      inventory_unit,
       low_stock_threshold,
       is_active,
       image_url,
@@ -606,6 +659,17 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
     }
     const numericError = validateProductNumericFields(req.body, true);
     if (numericError) return res.status(400).json({ error: numericError });
+
+    let resolvedUnit = 'pcs';
+    try {
+      const unit = resolveInventoryUnit(inventory_unit);
+      if (unit) resolvedUnit = unit;
+    } catch (error: any) {
+      if (error instanceof InventoryServiceError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      throw error;
+    }
 
     if (cb_percent !== undefined && cb_percent !== null) {
       if (
@@ -662,9 +726,9 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
         db.prepare(
           `
           INSERT INTO products (id, category_id, name, sku, barcode, description, price, cost,
-            tax_type, tax_rate, tax_category_id, tax_behavior, track_inventory, stock_quantity, low_stock_threshold,
+            tax_type, tax_rate, tax_category_id, tax_behavior, track_inventory, stock_quantity, inventory_unit, low_stock_threshold,
             is_active, image_url, sort_order, cb_percent, tags, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         ).run(
           id,
@@ -681,6 +745,7 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
           tax_behavior || 'country_default',
           track_inventory ? 1 : 0,
           0,
+          resolvedUnit,
           low_stock_threshold || 0,
           is_active !== false ? 1 : 0,
           image_url || null,
@@ -743,6 +808,7 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
       tax_behavior,
       track_inventory,
       stock_quantity,
+      inventory_unit,
       low_stock_threshold,
       is_active,
       image_url,
@@ -754,6 +820,21 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
 
     const numericError = validateProductNumericFields(req.body, false);
     if (numericError) return res.status(400).json({ error: numericError });
+
+    let resolvedPutUnit: string | null = null;
+    if ('inventory_unit' in req.body) {
+      try {
+        resolvedPutUnit = resolveInventoryUnit(inventory_unit);
+        if (!resolvedPutUnit) {
+          return res.status(400).json({ error: 'inventory_unit is required when provided' });
+        }
+      } catch (error: any) {
+        if (error instanceof InventoryServiceError) {
+          return res.status(error.statusCode).json({ error: error.message });
+        }
+        throw error;
+      }
+    }
 
     if (
       tax_behavior !== undefined &&
@@ -826,6 +907,7 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
             tax_category_id = CASE WHEN @has_tax_category_id = 1 THEN @tax_category_id ELSE tax_category_id END,
             tax_behavior = COALESCE(@tax_behavior, tax_behavior),
             track_inventory = COALESCE(@track_inventory, track_inventory),
+            inventory_unit = COALESCE(@inventory_unit, inventory_unit),
             low_stock_threshold = COALESCE(@low_stock_threshold, low_stock_threshold),
             is_active = COALESCE(@is_active, is_active),
             image_url = CASE WHEN @has_image_url = 1 THEN @image_url ELSE image_url END,
@@ -847,6 +929,7 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
           tax_behavior,
           has_tax_category_id: hasTaxCategoryId ? 1 : 0,
           track_inventory: track_inventory ? 1 : track_inventory === 0 ? 0 : null,
+          inventory_unit: resolvedPutUnit,
           low_stock_threshold,
           is_active: is_active !== undefined ? (is_active ? 1 : 0) : null,
           has_image_url: hasImageUrl ? 1 : 0,
@@ -958,13 +1041,96 @@ router.post(
   validateBody(stockAdjustBodySchema),
   (req: Request, res: Response) => {
     try {
-      const { action, quantity } = req.body;
+      const { action, quantity, wastage_reason, inventory_unit } = req.body as {
+        action: string;
+        quantity: number;
+        wastage_reason?: string;
+        inventory_unit?: string;
+      };
       const productId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const updated = adjustProductStock(productId, action, quantity);
-      res.json({ product: updated });
+      const idempotencyKey = requireStockAdjustIdempotencyKey(req);
+      const userId = String((req as any).user.userId);
+      const requestHash = stockAdjustRequestHash(productId, req.body);
+
+      const result = withTxn(() => {
+        const db = getDatabase();
+        const existing = db
+          .prepare(
+            `
+          SELECT request_hash, response_json FROM stock_adjust_idempotency
+          WHERE user_id = ? AND idempotency_key = ?
+        `,
+          )
+          .get(userId, idempotencyKey) as
+          | { request_hash: string; response_json: string }
+          | undefined;
+
+        if (existing) {
+          if (existing.request_hash !== requestHash) {
+            throw Object.assign(
+              new Error('Idempotency-Key was already used for a different stock adjust request'),
+              { statusCode: 409, code: 'STOCK_ADJUST_IDEMPOTENCY_CONFLICT' },
+            );
+          }
+          return JSON.parse(existing.response_json) as { product: Record<string, unknown> };
+        }
+
+        let qty = quantity;
+        if (inventory_unit) {
+          const product = db
+            .prepare(
+              'SELECT inventory_unit FROM products WHERE id = ? AND deleted_at IS NULL',
+            )
+            .get(productId) as { inventory_unit?: string } | undefined;
+          if (!product) {
+            throw new InventoryServiceError(404, 'Product not found');
+          }
+          const productUnit = product.inventory_unit || 'pcs';
+          if (inventory_unit !== productUnit) {
+            qty = convertQuantity(quantity, inventory_unit, productUnit);
+          }
+        }
+
+        const updated = adjustProductStock(productId, action, qty, {
+          wastageReason: wastage_reason,
+        });
+        const response = { product: updated };
+
+        db.prepare(
+          `
+          INSERT INTO stock_adjust_idempotency
+            (user_id, idempotency_key, product_id, request_hash, response_json, created_at)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `,
+        ).run(userId, idempotencyKey, productId, requestHash, JSON.stringify(response), now());
+
+        logAuditEvent({
+          actorUserId: userId,
+          action: action === 'wastage' ? 'inventory.wastage' : 'inventory.stock_adjusted',
+          entityType: 'product',
+          entityId: productId,
+          result: 'success',
+          metadata: {
+            product_id: productId,
+            action,
+            quantity: qty,
+            ...(wastage_reason ? { wastage_reason } : {}),
+            ...(inventory_unit ? { inventory_unit } : {}),
+          },
+        });
+
+        return response;
+      });
+
+      res.json(result);
     } catch (error: any) {
       if (error instanceof InventoryServiceError) {
         return res.status(error.statusCode).json({ error: error.message });
+      }
+      if (error?.statusCode) {
+        const payload: { error: string; code?: string } = { error: error.message };
+        if (error.code) payload.code = error.code;
+        return res.status(error.statusCode).json(payload);
       }
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });

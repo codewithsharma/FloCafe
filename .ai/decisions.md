@@ -1,5 +1,17 @@
 # Decisions
 
+## 2026-08-15 — R4 Inventory UI minimal deepen (Implemented)
+
+Authorized UI deepen only (no purchasing/BOM). `StockAdjustmentDialog` optional wastage_reason (SPOILAGE|DAMAGED|EXPIRED|SPILLAGE|OTHER, default OTHER) + read-only `inventory_unit`; wired through products + low-stock hubs via `postProductStockAdjust`. New `/products/counts` owner/manager page (fail-closed when inventory module off) + `frontend/src/lib/inventory-counts.ts`. Products hub link; `getRouteTitleKey` for counts. No nav children invented (navigation has none). Suites: `test:stock-adjust-ui`, `test:inventory-counts-ui`.
+
+## 2026-08-15 — R4 Inventory OS backend deepen (Implemented)
+
+Authorized Inventory OS deepen (not rebuild). Schema v78: `products.inventory_unit`, `stock_adjust_idempotency`, `inventory_counts` / `inventory_count_lines`. Units service (pcs/box/pack/kg/g/L/ml; mass/volume milli-units). Stock adjust requires Idempotency-Key; wastage reasons; ledger `reconstructQuantityFromLedger`; stock count draft→submit→apply via `adjustProductStock` set + `count_variance`. No BOM/recipes/auto-depletion/purchasing. `inventory_movements` CHECK unchanged. Suite `npm run test:r4`.
+
+## 2026-08-15 — R4 Inventory OS (Implemented)
+
+Authorized Inventory OS deepen (not BOM/purchasing). Schema v78: `inventory_unit`, `stock_adjust_idempotency`, `inventory_counts`/`inventory_count_lines`. Units convert (kg↔g, L↔ml). Mandatory stock-adjust Idempotency-Key + audits. Stock count draft→apply via ledger. `reconstructQuantityFromLedger` + ledger-check API. UI: wastage reasons, `/products/counts`. POS sale SKU decrement unchanged; no BOM auto-depletion. Suite `npm run test:r4` 53/53. Doc: `docs/05-production/r4-inventory-os.md`. Do not start R5.
+
 ## 2026-08-15 — R3 Kitchen OS (Implemented)
 
 Authorized Kitchen OS deepen (not rebuild). Schema v77 item kitchen timestamps + `orders.kitchen_priority`. Service `kitchen-status.ts` CAS + audit; wired into order-items, kds REST/WS, and companion `kds-server`. Priority PATCH owner/manager; list sorts rush first. UI: aging bands, station_name, bump labels, kanban addon names, RUSH badge. H2 advertise/stale/CAS preserved. Durable outbox documented as gap. Suite `npm run test:r3` 70/70. Doc: `docs/05-production/r3-kitchen-os.md`. Do not start R4.

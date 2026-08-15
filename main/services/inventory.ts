@@ -293,6 +293,23 @@ export function sumRefundRestockedQtyForOrderItem(db: any, orderItemId: string |
   return Number(row?.total ?? 0);
 }
 
+export const ALLOWED_WASTAGE_REASONS = [
+  'SPOILAGE',
+  'DAMAGED',
+  'EXPIRED',
+  'SPILLAGE',
+  'OTHER',
+] as const;
+
+export interface AdjustProductStockOptions {
+  /** For action=wastage: SPOILAGE|DAMAGED|EXPIRED|SPILLAGE|OTHER → reason wastage:CODE */
+  wastageReason?: string;
+  /** Override ledger reason (e.g. count_variance). Defaults to action / wastage form. */
+  reason?: string;
+  referenceType?: string | null;
+  referenceId?: string | number | null;
+}
+
 /**
  * Manual stock adjust — POST /api/products/:id/stock behavior.
  * Decrease uses stock_quantity >= ? floor (unlike sale decrement).
@@ -302,6 +319,7 @@ export function adjustProductStock(
   productId: string,
   action: StockAdjustAction | string,
   quantity: unknown,
+  options?: AdjustProductStockOptions,
 ): Record<string, unknown> {
   return withSpanSync(
     'inventory',
@@ -318,6 +336,26 @@ export function adjustProductStock(
       }
       if (typeof quantity !== 'number' || !Number.isFinite(quantity) || quantity < 0) {
         throw new InventoryServiceError(400, 'quantity must be a non-negative number');
+      }
+
+      let movementReason: string;
+      if (options?.reason != null && options.reason !== '') {
+        movementReason = options.reason;
+      } else if (action === 'wastage') {
+        const code = options?.wastageReason?.trim();
+        if (code) {
+          if (!(ALLOWED_WASTAGE_REASONS as readonly string[]).includes(code)) {
+            throw new InventoryServiceError(
+              400,
+              `Invalid wastage_reason. Use: ${ALLOWED_WASTAGE_REASONS.join(', ')}`,
+            );
+          }
+          movementReason = `wastage:${code}`;
+        } else {
+          movementReason = 'wastage';
+        }
+      } else {
+        movementReason = action;
       }
 
       return withTxn(() => {
@@ -380,9 +418,9 @@ export function adjustProductStock(
           quantityDelta: delta,
           movementType: 'adjustment',
           stockAfter,
-          referenceType: 'manual',
-          referenceId: null,
-          reason: action,
+          referenceType: options?.referenceType !== undefined ? options.referenceType : 'manual',
+          referenceId: options?.referenceId !== undefined ? options.referenceId : null,
+          reason: movementReason,
           createdAt: updatedAt,
         });
 
@@ -394,6 +432,70 @@ export function adjustProductStock(
     },
     { 'product.id': String(productId), action: String(action) },
   );
+}
+
+export interface LedgerReconstruction {
+  opening: number;
+  sumDeltas: number;
+  reconstructed: number;
+  current: number;
+  valid: boolean;
+}
+
+/**
+ * Reconstruct quantity from the movement ledger.
+ * No movements: opening = current, sum = 0, reconstructed = current.
+ * With movements: opening from chronological first row (stock_after - delta).
+ */
+export function reconstructQuantityFromLedger(
+  db: any,
+  productId: string | number,
+): LedgerReconstruction {
+  const id = String(productId);
+  const product = db
+    .prepare('SELECT stock_quantity FROM products WHERE id = ? AND deleted_at IS NULL')
+    .get(id) as { stock_quantity: number } | undefined;
+  if (!product) {
+    throw new InventoryServiceError(404, 'Product not found');
+  }
+  const current = Number(product.stock_quantity ?? 0);
+
+  const first = db
+    .prepare(
+      `
+    SELECT quantity_delta, stock_after FROM inventory_movements
+    WHERE product_id = ?
+    ORDER BY id ASC
+    LIMIT 1
+  `,
+    )
+    .get(id) as { quantity_delta: number; stock_after: number } | undefined;
+
+  if (!first) {
+    return {
+      opening: current,
+      sumDeltas: 0,
+      reconstructed: current,
+      current,
+      valid: true,
+    };
+  }
+
+  const opening = Number(first.stock_after) - Number(first.quantity_delta);
+  const sumRow = db
+    .prepare(
+      `
+    SELECT COALESCE(SUM(quantity_delta), 0) AS total
+    FROM inventory_movements
+    WHERE product_id = ?
+  `,
+    )
+    .get(id) as { total: number };
+  const sumDeltas = Number(sumRow.total ?? 0);
+  const reconstructed = opening + sumDeltas;
+  const valid = reconstructed.toFixed(6) === current.toFixed(6);
+
+  return { opening, sumDeltas, reconstructed, current, valid };
 }
 
 export function getCurrentStock(productId: string | number): number {
