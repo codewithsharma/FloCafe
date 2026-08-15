@@ -26,7 +26,7 @@ North-star KPI unchanged: **3 cafés × 30 days × zero critical failures** ([`S
 | **R8**  | Staff / Shift / Attendance        | **COMPLETE** (2026-08-15)                                   | R1 RBAC                      |
 | **R9**  | Finance / Compliance              | Hardening audit + Planned expenses/tax depth                | R1 finance                   |
 | **R10** | Online / QR Ordering              | **COMPLETE** (2026-08-15); online pay Frozen                | R1–R3; no gateway            |
-| **R11** | Marketing                         | Planned/Later                                               | R7                           |
+| **R11** | Marketing                         | **COMPLETE** thin slice (2026-08-15); campaigns Later       | R7                           |
 | **R12** | Reporting / BI                    | Planned deepen (void report thin slice COMPLETE 2026-08-15) | R1–R9 data                   |
 | **R13** | Integrations / Hardware           | Planned print queue; Frozen terminals                       | R1–R3                        |
 | **R14** | Reliability / Backup / DR         | Hardening + Planned DR                                      | Continuous; parallel         |
@@ -158,7 +158,9 @@ QR menu, acceptance, kitchen flow via existing dine_in path, guest status poll. 
 
 ## R11 — Marketing
 
-Campaigns, offers, coupons, WhatsApp marketing (vs transactional), analytics. Depends on R7.
+**Status:** COMPLETE thin slice (2026-08-15) — [`r11-coupons.md`](../05-production/r11-coupons.md). Schema **v85**. Suite `npm run test:r11`.
+
+Coupon codes via existing order discount path. Owner/Manager CRUD; apply by owner/manager/cashier. **No** WhatsApp marketing campaigns / blasts (Later).
 
 ---
 

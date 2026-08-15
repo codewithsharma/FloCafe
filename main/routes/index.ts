@@ -30,6 +30,7 @@ import { inventoryRoutes } from './inventory';
 import { recipeRoutes } from './recipes';
 import { purchasingRoutes } from './purchasing';
 import { expenseRoutes } from './expenses';
+import { couponRoutes } from './coupons';
 import { publicQrRoutes, tableQrStaffRoutes } from './public-qr';
 import { heldOrderRoutes } from './held-orders';
 import { whatsappRoutes } from './whatsapp';
@@ -122,6 +123,7 @@ export function registerRoutes(app: Express, options: RegisterRoutesOptions = {}
   mount('/api/users', staffRoutes, 'staff');
   mount('/api/reports', reportRoutes, 'reporting');
   mount('/api/expenses', expenseRoutes, 'reporting');
+  mount('/api/coupons', couponRoutes, 'order');
   mount('/api/pos-info', posInfoRoutes, 'pos');
   mount('/api/printers', printerRoutes, 'printing');
   mount('/api/db', databaseRoutes, 'backup');

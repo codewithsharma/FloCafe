@@ -2656,4 +2656,40 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       }
     },
   },
+  {
+    version: 85,
+    name: 'r11_coupons',
+    up: () => {
+      // R11 — marketing coupon codes (percent XOR fixed cents; apply via order discount path).
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS coupons (
+          id TEXT PRIMARY KEY,
+          code TEXT NOT NULL,
+          percent_off INTEGER,
+          amount_cents INTEGER,
+          active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
+          max_uses INTEGER,
+          uses_count INTEGER NOT NULL DEFAULT 0 CHECK (uses_count >= 0),
+          created_at TEXT NOT NULL,
+          CHECK (
+            (
+              percent_off IS NOT NULL
+              AND amount_cents IS NULL
+              AND percent_off BETWEEN 1 AND 100
+            )
+            OR
+            (
+              amount_cents IS NOT NULL
+              AND percent_off IS NULL
+              AND amount_cents > 0
+            )
+          ),
+          CHECK (max_uses IS NULL OR max_uses > 0)
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_coupons_code_nocase
+          ON coupons(code COLLATE NOCASE);
+        CREATE INDEX IF NOT EXISTS idx_coupons_active ON coupons(active);
+      `);
+    },
+  },
 ];
