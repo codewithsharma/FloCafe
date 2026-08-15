@@ -2259,5 +2259,17 @@
   "reports.expensesExportCsv": "Export expenses CSV",
   "reports.expensesExporting": "Exporting expenses…",
   "reports.expensesExportSuccess": "Expenses CSV downloaded",
-  "reports.expensesExportFailed": "Could not export expenses"
+  "reports.expensesExportFailed": "Could not export expenses",
+  "reports.foodCostTitle": "Food cost (theoretical)",
+  "reports.foodCostEmpty": "Could not load food-cost report.",
+  "reports.foodCostClarity": "Theoretical COGS from recipe consumption snapshots — not actual vs theoretical BI.",
+  "reports.foodCostNetSales": "Net sales",
+  "reports.foodCostCogs": "Theoretical COGS",
+  "reports.foodCostPercent": "Food-cost %",
+  "reports.foodCostConsumptions": "Consumptions",
+  "reports.foodCostInsufficient": "{count} ingredient lines missing cost snapshots",
+  "reports.foodCostColRecipe": "Recipe",
+  "reports.foodCostColCount": "Count",
+  "reports.foodCostColCogs": "COGS",
+  "reports.foodCostNoRows": "No recipe consumptions in this date range."
 }

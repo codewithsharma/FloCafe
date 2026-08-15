@@ -1,5 +1,13 @@
 # Decisions
 
+## 2026-08-15 — R9 Restaurant Production / Finance Depth (COMPLETE)
+
+R9 Slices 1–6 COMPLETE under R9 program governance. Schema tip **v83**. Suites `test:r9` … `test:r9.6`. Doc: `docs/05-production/r9-completion.md`. Live go-live remains **NO-GO**. **Do not auto-start R10** — planning only at `prompts/r10/R10-workforce-os-planning.md`.
+
+## 2026-08-15 — R9 Slice 6 Food-cost Report v1 (Implemented)
+
+Authorized under R9. Theoretical COGS from `recipe_consumption_lines` + Net Sales via `queryDaySalesSemantics`; insufficient-cost honesty; Reports UI; `npm run test:r9.6`. Schema tip **v83**. No actual-vs-theoretical BI (R12). Doc: `docs/05-production/r9-food-cost-report-slice-6.md`.
+
 ## 2026-08-15 — R9 Slice 5 Operations Finance Reports v1 (Implemented)
 
 Authorized under R9 program. Composed Gross/Refunds/Net via shared `queryDaySalesSemantics` + posted expenses by category; `GET /ops-finance`; expenses CSV + `expense.exported`; Reports UI. Schema tip **v83**. Suite `npm run test:r9.5`. Doc: `docs/05-production/r9-ops-finance-reports-slice-5.md`. **Do not pull R12 BI.** Next: Slice 6 food-cost report (theoretical only).

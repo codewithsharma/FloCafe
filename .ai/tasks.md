@@ -36,7 +36,9 @@ Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `
 - [x] **R9 Slice 3 Tax Export GREEN (2026-08-15):** schema tip **v83** unchanged; tax-components CSV + Reports UI; `tax.exported`; `npm run test:r9.3`. Remaining R9 (Z polish / ops reports / food-cost) not started. Live **NO-GO**.
 - [x] **R9 Slice 4 Day-close/Z Polish GREEN (2026-08-15):** schema tip **v83**; confirm + clarity + historical date + Z txt export audits; `npm run test:r9.4`. Remaining R9 (ops reports / food-cost) not started. Live **NO-GO**.
 - [x] **R9 Slice 5 Ops Finance Reports GREEN (2026-08-15):** schema tip **v83**; ops-finance + expenses CSV; `npm run test:r9.5`. Remaining R9: food-cost report. Live **NO-GO**.
-- [ ] **Authorized next:** R9 Slice 6 food-cost report — R9 program governance; theoretical COGS only (no R12 actual-vs-theoretical BI). Or OPS-02 signed RC when credentials available.
+- [x] **R9 Slice 6 Food-cost Report GREEN (2026-08-15):** schema tip **v83**; theoretical COGS + Reports UI; `npm run test:r9.6`. Live **NO-GO**.
+- [x] **R9 COMPLETE (2026-08-15):** S1–S6 green; completion doc `r9-completion.md`. Do not auto-start R10.
+- [ ] **Next program:** R10 Workforce OS — planning prompt only (`prompts/r10/R10-workforce-os-planning.md`); requires new program authorization. Or OPS-02 signed RC when credentials available.
 - [ ] **Hardening (prefer next, authorized slice only):** REAL money cutover (drop REAL); residual Zod; durable KDS ticket outbox (still deferred) — or next authorized R-wave. R0–R8 closed.
 - [ ] **Planned (not started):** see matrix — expediter, QR, marketing (R11), full BI (R12), gift cards, etc. Reuse shipped slices; do not rebuild.
 - [ ] **Frozen / later / out of scope:** terminals, gateways, online payment, multi-location, payroll, aggregators, AI — do not start.

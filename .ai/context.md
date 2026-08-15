@@ -15,7 +15,9 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 **R9 Slice 2 Financial Audit-Trail Hardening (2026-08-15):** COMPLETE — `/audit` UI + CSV export + `until` + `audit.exported`; schema tip remains **v83**; `npm run test:r9.2`.
 **R9 Slice 3 Tax Reporting Depth + Accountant Export (2026-08-15):** COMPLETE — Reports tax UI + `export/tax-components.csv` + `tax.exported`; schema tip remains **v83**; `npm run test:r9.3`.
 **R9 Slice 4 Day-close / Z Polish (2026-08-15):** COMPLETE — confirm + cash clarity + historical date + float/shifts display + Z txt export/`day_close.z_*` audits; schema tip remains **v83**; `npm run test:r9.4`.
-**R9 Slice 5 Operations Finance Reports v1 (2026-08-15):** COMPLETE — ops-finance compose + expenses CSV; schema tip remains **v83**; `npm run test:r9.5`. Remaining R9: food-cost report. Live Go-Live **NO-GO**. Doc: `docs/05-production/r9-ops-finance-reports-slice-5.md`.
+**R9 Slice 5 Operations Finance Reports v1 (2026-08-15):** COMPLETE — ops-finance compose + expenses CSV; schema tip remains **v83**; `npm run test:r9.5`.
+**R9 Slice 6 Food-cost Report v1 (2026-08-15):** COMPLETE — theoretical COGS report; schema tip remains **v83**; `npm run test:r9.6`.
+**R9 COMPLETE (2026-08-15).** Doc: `docs/05-production/r9-completion.md`. Live Go-Live **NO-GO**. Next program: R10 planning only (`prompts/r10/R10-workforce-os-planning.md`) — not authorized for implementation.
 
 **Foundation Phase 2 (2026-08-15):** COMPLETE — prefer-cents readers + dual-write writers; process-kill harness; Zod expansion; `any` main&lt;600 / orders&lt;50. Doc: `docs/05-production/foundation-priority-deepen-phase2.md`.
 

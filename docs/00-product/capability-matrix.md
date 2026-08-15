@@ -18,7 +18,9 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 **R9 Slice 2 note (2026-08-15):** Financial Audit-Trail Hardening **COMPLETE** — schema tip remains **v83**.
 **R9 Slice 3 note (2026-08-15):** Tax Reporting Depth + Accountant Export **COMPLETE** — schema tip remains **v83**.
 **R9 Slice 4 note (2026-08-15):** Day-close / Z Polish **COMPLETE** — schema tip remains **v83**.
-**R9 Slice 5 note (2026-08-15):** Operations Finance Reports v1 **COMPLETE** — schema tip remains **v83**. Remaining R9: food-cost report. Live go-live still **NO-GO** (OPS-02). ADR-014 service charge remains out.
+**R9 Slice 5 note (2026-08-15):** Operations Finance Reports v1 **COMPLETE** — schema tip remains **v83**.
+**R9 Slice 6 note (2026-08-15):** Food-cost Report v1 **COMPLETE** — schema tip remains **v83**.
+**R9 COMPLETE (2026-08-15).** Live go-live still **NO-GO** (OPS-02). ADR-014 service charge remains out. R10 not auto-started.
 ---
 
 ## Legend

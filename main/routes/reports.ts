@@ -13,6 +13,7 @@ import {
   listPostedExpensesForCsv,
   queryOpsFinanceReport,
 } from '../services/ops-finance-report';
+import { queryFoodCostReport } from '../services/food-cost-report';
 import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
 import { toCsvRow } from '../lib/csv';
@@ -548,6 +549,23 @@ router.get(
     }
   },
 );
+
+router.get('/food-cost', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const today = utcTodayDate();
+    const startDate = reportDate(req.query.start_date, today);
+    const endDate = reportDate(req.query.end_date, today);
+    if (startDate > endDate) {
+      return res.status(400).json({ error: 'start_date must be on or before end_date' });
+    }
+    const report = queryFoodCostReport(db, startDate, endDate);
+    res.json({ foodCost: report });
+  } catch (error: unknown) {
+    console.error('[API] Food-cost report failed:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 router.get('/sales', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {

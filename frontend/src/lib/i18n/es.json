@@ -2087,5 +2087,17 @@
   "reports.expensesExportCsv": "Exportar gastos CSV",
   "reports.expensesExporting": "Exportando gastos…",
   "reports.expensesExportSuccess": "CSV de gastos descargado",
-  "reports.expensesExportFailed": "No se pudieron exportar los gastos"
+  "reports.expensesExportFailed": "No se pudieron exportar los gastos",
+  "reports.foodCostTitle": "Costo de comida (teórico)",
+  "reports.foodCostEmpty": "No se pudo cargar el reporte de costo.",
+  "reports.foodCostClarity": "COGS teórico desde consumos de receta — no es BI real vs teórico.",
+  "reports.foodCostNetSales": "Ventas netas",
+  "reports.foodCostCogs": "COGS teórico",
+  "reports.foodCostPercent": "% costo comida",
+  "reports.foodCostConsumptions": "Consumos",
+  "reports.foodCostInsufficient": "{count} líneas sin costo capturado",
+  "reports.foodCostColRecipe": "Receta",
+  "reports.foodCostColCount": "Cantidad",
+  "reports.foodCostColCogs": "COGS",
+  "reports.foodCostNoRows": "No hay consumos de receta en este rango."
 }

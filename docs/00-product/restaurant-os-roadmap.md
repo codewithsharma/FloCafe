@@ -136,11 +136,11 @@ Fine-grained permissions product, attendance clocks, scheduling, leave remain La
 
 ## R9 — Finance / Compliance
 
-**Status:** IN PROGRESS — Slice 1–5 COMPLETE (2026-08-15). Schema **v83**. Suites `test:r9` … `test:r9.5`.
+**Status:** COMPLETE — Slices 1–6 (2026-08-15). Schema **v83**. Suites `test:r9` … `test:r9.6`. Completion: [`r9-completion.md`](../05-production/r9-completion.md).
 
-**Slice 5 delivered:** Ops finance compose (Gross/Refunds/Net + posted expenses) + expenses CSV; Reports UI; schema tip remains v83.
+**Slice 6 delivered:** Theoretical food-cost report from R5 consumption snapshots + Net Sales; Reports UI; schema tip remains v83.
 
-**Remaining R9 (not started):** food-cost report v1.
+**Remaining R9:** none — phase complete. R10 requires new program authorization.
 
 **Out:** Service charge (ADR-014 Proposed); tips; QR; gift cards; REAL→cents cutover; Frozen rows.
 

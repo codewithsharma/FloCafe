@@ -50,6 +50,7 @@ import {
   fetchOpsFinance,
   type OpsFinancePayload,
 } from '@/lib/ops-finance-report';
+import { fetchFoodCostReport, type FoodCostPayload } from '@/lib/food-cost-report';
 
 interface PaymentMethodBreakdown {
   method: string | null;
@@ -192,6 +193,7 @@ export default function ReportsPage() {
   const [insights, setInsights] = useState<Insights | null>(null);
   const [taxComponents, setTaxComponents] = useState<TaxComponentsPayload | null>(null);
   const [opsFinance, setOpsFinance] = useState<OpsFinancePayload | null>(null);
+  const [foodCost, setFoodCost] = useState<FoodCostPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [exportingCsv, setExportingCsv] = useState(false);
   const [exportingTaxCsv, setExportingTaxCsv] = useState(false);
@@ -243,8 +245,9 @@ export default function ReportsPage() {
       api.get('/reports/insights', { params: { days: 30 }, signal: controller.signal }),
       fetchTaxComponents(selectedDate, endDate),
       fetchOpsFinance(selectedDate, endDate),
+      fetchFoodCostReport(selectedDate, endDate),
     ])
-      .then(([statsRes, topRes, recentRes, insightsRes, taxRes, opsRes]) => {
+      .then(([statsRes, topRes, recentRes, insightsRes, taxRes, opsRes, foodRes]) => {
         setStats(isToday ? statsRes.data : null);
         setDaySummary(isToday ? null : statsRes.data.summary);
         setTopProducts(topRes.data.topProducts || []);
@@ -252,6 +255,7 @@ export default function ReportsPage() {
         setInsights(insightsRes.data);
         setTaxComponents(taxRes);
         setOpsFinance(opsRes);
+        setFoodCost(foodRes);
       })
       .catch((err: unknown) => {
         if (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))
@@ -565,6 +569,83 @@ export default function ReportsPage() {
                   ) : (
                     <p className="text-body text-flo-text-secondary">
                       {t('reports.opsFinanceNoExpenses')}
+                    </p>
+                  )}
+                </div>
+              )}
+            </Panel>
+          </section>
+
+          <section className="mb-6" aria-label={t('reports.foodCostTitle')}>
+            <Panel title={t('reports.foodCostTitle')}>
+              {!foodCost ? (
+                <EmptyState title={t('reports.foodCostEmpty')} className="min-h-[120px] py-6" />
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-caption text-flo-text-muted">{t('reports.foodCostClarity')}</p>
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div>
+                      <p className="text-caption text-flo-text-muted mb-1">
+                        {t('reports.foodCostNetSales')}
+                      </p>
+                      <p className="text-numeric-lg">{fmt(foodCost.net_sales)}</p>
+                    </div>
+                    <div>
+                      <p className="text-caption text-flo-text-muted mb-1">
+                        {t('reports.foodCostCogs')}
+                      </p>
+                      <p className="text-numeric-lg">
+                        {fmt(foodCost.theoretical_cogs_cents / 100)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-caption text-flo-text-muted mb-1">
+                        {t('reports.foodCostPercent')}
+                      </p>
+                      <p className="text-numeric-lg">
+                        {foodCost.food_cost_percent === null
+                          ? '—'
+                          : `${foodCost.food_cost_percent}%`}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-caption text-flo-text-muted mb-1">
+                        {t('reports.foodCostConsumptions')}
+                      </p>
+                      <p className="text-numeric-lg">{foodCost.consumption_count}</p>
+                    </div>
+                  </div>
+                  {foodCost.insufficient_line_count > 0 ? (
+                    <p className="text-caption text-flo-warning">
+                      {t('reports.foodCostInsufficient', {
+                        count: String(foodCost.insufficient_line_count),
+                      })}
+                    </p>
+                  ) : null}
+                  {foodCost.by_recipe.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead>
+                          <tr className="border-b text-muted-foreground">
+                            <th className="py-2 pr-3">{t('reports.foodCostColRecipe')}</th>
+                            <th className="py-2 pr-3">{t('reports.foodCostColCount')}</th>
+                            <th className="py-2">{t('reports.foodCostColCogs')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {foodCost.by_recipe.map((row) => (
+                            <tr key={row.recipe_id} className="border-b border-border/60">
+                              <td className="py-2 pr-3">{row.recipe_name}</td>
+                              <td className="py-2 pr-3">{row.consumption_count}</td>
+                              <td className="py-2">{fmt(row.theoretical_cogs_cents / 100)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-body text-flo-text-secondary">
+                      {t('reports.foodCostNoRows')}
                     </p>
                   )}
                 </div>
