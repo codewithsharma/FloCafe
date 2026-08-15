@@ -30,6 +30,7 @@ import {
   mdnsPrimaryPort,
   shouldAdvertiseMdns,
 } from './services/network-mode';
+import { mdnsTxtKdsFields, shouldPublishMdns } from './services/kds-recovery';
 import { initializeJWTSecret, JwtSecretError } from './services/jwt-secret';
 import {
   isRecoveryRequired,
@@ -462,8 +463,14 @@ function createTray(): void {
 function startMdns(): void {
   try {
     const mode = getNetworkMode();
-    if (!shouldAdvertiseMdns(mode)) {
-      console.log(`[mDNS] Skipped (network_mode=${mode}; LAN advertising disabled)`);
+    const kdsRunning = isKdsServerRunning();
+    if (
+      !shouldAdvertiseMdns(mode) ||
+      !shouldPublishMdns({ networkMode: mode, kdsCompanionRunning: kdsRunning })
+    ) {
+      console.log(
+        `[mDNS] Skipped (network_mode=${mode}; kds_running=${kdsRunning}; LAN advertising disabled or KDS companion down)`,
+      );
       return;
     }
 
@@ -472,6 +479,8 @@ function startMdns(): void {
       kds: getKdsPort(),
       serverApp: getServerAppPort(),
     });
+
+    const kdsTxt = mdnsTxtKdsFields({ kdsCompanionRunning: kdsRunning, kdsPort: getKdsPort() });
 
     bonjour = new Bonjour();
     bonjour.publish({
@@ -482,8 +491,7 @@ function startMdns(): void {
       txt: {
         version: app.getVersion(),
         network_mode: mode,
-        kds: `/kds`,
-        kds_port: String(getKdsPort()),
+        ...(kdsTxt || {}),
         ...(isLanPosEnabled(mode) ? { pos_port: String(getServerPort()) } : {}),
         ...(isLanServerAppEnabled(mode)
           ? { server_app: '/server-standalone', server_app_port: String(getServerAppPort()) }
@@ -494,7 +502,7 @@ function startMdns(): void {
     console.log(
       `[mDNS] Advertising flo.local:${primaryPort} (mode=${mode}, IP fallback: http://${ip}:${primaryPort})`,
     );
-    if (isLanKdsEnabled(mode)) {
+    if (kdsTxt && isLanKdsEnabled(mode)) {
       console.log(
         `[mDNS] KDS available at http://flo.local:${getKdsPort()}  (IP fallback: http://${ip}:${getKdsPort()})`,
       );

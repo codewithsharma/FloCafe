@@ -3,7 +3,7 @@
 ## Document status
 
 - **Operavia CURRENT STATE:** v3.0.5 (verified `package.json`); schema **v75**
-- **TARGET STATE:** Modular platform depth after pilots — see `vision.md`, `roadmap.md`, `STRATEGY.md`
+- **TARGET STATE:** Modular platform depth after pilots — see `vision.md`, `capability-matrix.md`, `roadmap.md`, `STRATEGY.md`
 
 ## Executive summary
 
@@ -35,4 +35,4 @@ Microservices, mandatory cloud, AI-dependent core flows, payment terminals, aggr
 
 ## Traceability
 
-Requirements → `01-requirements/` · Architecture → `03-architecture/` · Feature truth → `feature-list.md` · Strategy → `STRATEGY.md`
+Requirements → `01-requirements/` · Architecture → `03-architecture/` · Product plan → `capability-matrix.md` · Feature truth → `feature-list.md` · Strategy → `STRATEGY.md`

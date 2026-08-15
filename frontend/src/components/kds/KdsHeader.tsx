@@ -9,6 +9,7 @@ export interface KdsHeaderProps {
   userName: string;
   userRole: string;
   connected: boolean;
+  dataStale?: boolean;
   connectionMode: ConnectionMode;
   viewMode: KdsViewMode;
   onChangeView: (mode: KdsViewMode) => void;
@@ -19,6 +20,7 @@ export function KdsHeader({
   userName,
   userRole,
   connected,
+  dataStale = false,
   connectionMode,
   viewMode,
   onChangeView,
@@ -54,7 +56,9 @@ export function KdsHeader({
               ? connectionMode === 'websocket'
                 ? t('kds.connectionLive')
                 : t('kds.connectionPolling')
-              : t('kds.connectionConnecting')}
+              : dataStale
+                ? t('kds.connectionStale')
+                : t('kds.connectionConnecting')}
           </span>
 
           <div className="ml-2 flex items-center rounded-flo-md bg-flo-bg p-0.5" role="tablist">

@@ -25,6 +25,11 @@ COMPLETE. Do not invent 4.16.
 - Table merge implementation (discovery only; billed merge still ADR_REQUIRED)
 - Variants matrix (ADR-013 forbids until a new authorized slice)
 
+## Product plan (not this pipeline)
+
+Canonical: `docs/00-product/capability-matrix.md` (adopted 2026-08-14).
+Prefer 🟡 Hardening before 🔵 Planned. Do not auto-start from the matrix.
+
 ## Auto-advance rule
 
 Pipeline mode: COMPLETE

@@ -28,10 +28,11 @@
 
 - **Pilot-readiness classification:** INTENTIONAL GAP vs ACCIDENTAL GAP vs PRODUCTION DEFECT. Frozen STRATEGY items are never P0. Unsigned artifacts and OPS-01 are human **conditions**, not product P0s. A vertical with a product P0 is **NOT PILOT READY**. Companion processes (`startKdsServer` / `startServerApp`) must be gated the same way HTTP remount is. Renderer `isModuleEnabled(id)` without composition `verticalId` is restaurant-fail-open.
 
-- **Paid-order cancel (H1):** if any bill has GROSS `payment_details` > 0, `PATCH` cancel returns 409 `ORDER_HAS_SUCCESSFUL_TENDER` before `withTxn`. Do not restock. Do not reverse money. Refund workflow owns money.
+- **Paid-order cancel (H1 policy):** if any bill has GROSS `payment_details` > 0, `PATCH` cancel returns 409 `ORDER_HAS_SUCCESSFUL_TENDER` before `withTxn`. Do not restock. Do not reverse money. Refund workflow owns money. **H1 integrity:** same tender guard on item cancel and order/item discount; full-order cancel audits `order.cancelled`; discount audits `order.discount_applied`; successful `/printers/print-bill` logs via `main/services/receipt.ts` (`print_logged`).
 - **FIN-02 Gross/Net:** include `partial` only when FIN-01 collectible is 0. Do not rewrite `payment_status`.
 - **Chef cancel (H3):** chef requires manager PIN for cancel; other roles keep in-progress-only PIN. Do not drop chef from KDS bump.
 - **Companion bind degrade:** after 10 `EADDRINUSE` retries, `startKdsServer` / `startServerApp` must `close()`, null the handle, and **`resolve()`** — never `reject()` into Electron `initialize()` / `app.quit()`. Billing continues without the companion.
+- **KDS offline advertise (H2):** never publish LAN KDS QR/mDNS pointing at a dead companion. Gate `GET /api/kds-info` and mDNS txt with `isKdsServerRunning()` via `main/services/kds-recovery.ts`. KDS UI: `dataStale` when disconnected with last-known orders; one silent status PATCH retry after reconnect (`pendingRetryRef`). Do not add a second ticket SoR or outbox in this slice.
 - **Cancel restock idempotency:** if `orders.status === 'cancelled'`, a repeat status PATCH must not call `restoreTrackedStock`. Paid-cancel policy is a separate HUMAN gate.
 - **Last-item catch-up:** remaining-to-serve excludes `cancelled` / `voided` / `void_adjustment`. Do not reuse `activeItems` (tax/totals still include voided + void_adjustment net).
 - **Companion process gating:** HTTP remount 404 is not enough. `startKdsServer` / `startServerApp` must no-op (`Promise.resolve`) when the owning module is off for the committed vertical. Do not gate start on settings flags (`kds_enabled` / `server_app_enabled`).
@@ -44,4 +45,4 @@
 - Refunds: `RefundServiceError` + `{ error, code }`; idempotency mirrors payments; PIN always via `verifyPin` + rate limit; cash gate via `assertOpenShiftForCashPayment`. Refund receipt print is best-effort outside the refund txn (`/printers/print-refund` + audit `print_type: refund`); print failure must not reverse money.
 - **Complete ≠ Pilot validated:** Implemented → Functional → Tested → Production ready → Pilot validated — do not interchange.
 - **Refactor-on-touch:** when changing billing/payments for refunds, improve that slice’s boundaries/validation; do not rewrite the monolith.
-- **Status vocabulary in docs:** COMPLETE / PARTIAL / PLACEHOLDER / PLANNED / NOT FOUND — code is source of truth.
+- **Status vocabulary in docs:** COMPLETE / PARTIAL / PLACEHOLDER / PLANNED / NOT FOUND — code is source of truth (`feature-list.md`). **Product-plan vocabulary:** 🟢 Existing / 🟡 Hardening / 🔵 Planned / ⚪ Later / 🔴 Frozen (`capability-matrix.md`). Do not treat Planned as shipped; do not rebuild Existing.

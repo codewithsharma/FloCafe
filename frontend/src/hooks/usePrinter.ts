@@ -3,7 +3,12 @@
 import { useEffect } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { printerService, type PrinterStatus, type PrinterInfo, type PrintMode } from '@/lib/printer/PrinterService';
+import {
+  printerService,
+  type PrinterStatus,
+  type PrinterInfo,
+  type PrintMode,
+} from '@/lib/printer/PrinterService';
 import {
   buildClassicReceiptBytes,
   buildCompactReceiptBytes,
@@ -44,8 +49,16 @@ interface PrinterState {
 
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
-  printBill: (bill: Bill, tenant: Pick<Tenant, 'business_name' | 'currency' | 'country'>, opts?: ReceiptOptions) => Promise<PrintWarning[]>;
-  printTaxBill: (bill: Bill, tenant: Pick<Tenant, 'business_name' | 'currency' | 'country'>, opts?: TaxBillOptions) => Promise<PrintWarning[]>;
+  printBill: (
+    bill: Bill,
+    tenant: Pick<Tenant, 'business_name' | 'currency' | 'country'>,
+    opts?: ReceiptOptions,
+  ) => Promise<PrintWarning[] & { printLogged?: boolean }>;
+  printTaxBill: (
+    bill: Bill,
+    tenant: Pick<Tenant, 'business_name' | 'currency' | 'country'>,
+    opts?: TaxBillOptions,
+  ) => Promise<PrintWarning[]>;
   printKot: (order: Order, opts?: KotOptions) => Promise<PrintWarning[]>;
   setPrintMode: (mode: PrintModeType) => void;
   setPaperWidth: (width: PaperWidth) => void;
@@ -72,7 +85,8 @@ export const usePrinterStore = create<PrinterState>()(
         try {
           const res = await api.get('/printers');
           const list: HardwarePrinter[] = res.data.printers || [];
-          const defaultPrinter = list.find((p) => p.is_default === 1 && p.connection_type !== 'webusb') || null;
+          const defaultPrinter =
+            list.find((p) => p.is_default === 1 && p.connection_type !== 'webusb') || null;
           set({ hardwarePrinter: defaultPrinter });
         } catch {
           set({ hardwarePrinter: null });
@@ -97,9 +111,18 @@ export const usePrinterStore = create<PrinterState>()(
         try {
           const {
             billTemplate,
-            billTaxRegistrationNumber, billAddress, billPhone, billFooterMessage,
-            billShowName, billShowAddress, billShowPhone, billShowTaxId,
-            billShowTaxBreakdown, billShowCustomerName, billShowCustomerPhone, billShowTableNumber,
+            billTaxRegistrationNumber,
+            billAddress,
+            billPhone,
+            billFooterMessage,
+            billShowName,
+            billShowAddress,
+            billShowPhone,
+            billShowTaxId,
+            billShowTaxBreakdown,
+            billShowCustomerName,
+            billShowCustomerPhone,
+            billShowTableNumber,
             printerPaperSize,
             printerUseUnicode,
             printerTrimDecimals,
@@ -110,8 +133,21 @@ export const usePrinterStore = create<PrinterState>()(
           const hw = get().hardwarePrinter;
           if (hw && get().printMethod === 'escpos') {
             try {
-              const response = await api.post<{ warnings?: PrintWarning[] }>('/printers/print-bill', { billId: bill.id, useUnicode: printerUseUnicode, isReprint });
-              return response.data.warnings || [];
+              const response = await api.post<{
+                warnings?: PrintWarning[];
+                print_logged?: boolean;
+              }>('/printers/print-bill', {
+                billId: bill.id,
+                useUnicode: printerUseUnicode,
+                isReprint,
+              });
+              const warnings = (response.data.warnings || []) as PrintWarning[] & {
+                printLogged?: boolean;
+              };
+              if (response.data.print_logged) {
+                warnings.printLogged = true;
+              }
+              return warnings;
             } catch (err: unknown) {
               const e = err as { response?: { data?: { error?: string } }; message?: string };
               throw new Error(e.response?.data?.error || e.message || 'Print failed');
@@ -124,7 +160,8 @@ export const usePrinterStore = create<PrinterState>()(
             printWebBill(bill, tenant, {
               paperSize: printerPaperSize,
               includeTaxId: billShowTaxId,
-              taxRegistrationNumber: billShowTaxId && billTaxRegistrationNumber ? billTaxRegistrationNumber : undefined,
+              taxRegistrationNumber:
+                billShowTaxId && billTaxRegistrationNumber ? billTaxRegistrationNumber : undefined,
               address: billShowAddress && billAddress ? billAddress : undefined,
               phone: billShowPhone && billPhone ? billPhone : undefined,
               footerNote: billFooterMessage || undefined,
@@ -146,7 +183,8 @@ export const usePrinterStore = create<PrinterState>()(
           const builderOpts: ReceiptOptions = {
             ...opts,
             paperWidth: opts?.paperWidth ?? configuredPaperWidth,
-            taxRegistrationNumber: billShowTaxId && billTaxRegistrationNumber ? billTaxRegistrationNumber : undefined,
+            taxRegistrationNumber:
+              billShowTaxId && billTaxRegistrationNumber ? billTaxRegistrationNumber : undefined,
             address: billShowAddress && billAddress ? billAddress : undefined,
             phone: billShowPhone && billPhone ? billPhone : undefined,
             footerNote: billFooterMessage || undefined,
@@ -183,29 +221,44 @@ export const usePrinterStore = create<PrinterState>()(
         set({ lastError: null });
         try {
           const {
-            printerUseUnicode, printerTrimDecimals, printerPaperSize,
-            billTaxRegistrationNumber, billAddress, billPhone,
-            billShowName, billShowAddress, billShowPhone, billShowTaxId,
-            billShowTaxBreakdown, billShowCustomerName, billShowCustomerPhone, billShowTableNumber,
+            printerUseUnicode,
+            printerTrimDecimals,
+            printerPaperSize,
+            billTaxRegistrationNumber,
+            billAddress,
+            billPhone,
+            billShowName,
+            billShowAddress,
+            billShowPhone,
+            billShowTaxId,
+            billShowTaxBreakdown,
+            billShowCustomerName,
+            billShowCustomerPhone,
+            billShowTableNumber,
           } = usePosSettingsStore.getState();
           const configuredPaperWidth: PaperWidth = printerPaperSize === 'thermal80' ? 80 : 58;
           const warnings: PrintWarning[] = [];
-          const bytes = buildTaxBillBytes(bill, tenant, {
-            ...opts,
-            paperWidth: opts?.paperWidth ?? configuredPaperWidth,
-            taxRegistrationNumber: billShowTaxId
-              ? (opts?.taxRegistrationNumber || billTaxRegistrationNumber || undefined)
-              : undefined,
-            address: billShowAddress ? (opts?.address || billAddress || undefined) : undefined,
-            phone: billShowPhone ? (opts?.phone || billPhone || undefined) : undefined,
-            showBusinessName: billShowName,
-            showTaxBreakdown: billShowTaxBreakdown,
-            showCustomerName: billShowCustomerName,
-            showCustomerPhone: billShowCustomerPhone,
-            showTableNumber: billShowTableNumber,
-            useUnicode: printerUseUnicode,
-            trimDecimals: printerTrimDecimals,
-          }, warnings);
+          const bytes = buildTaxBillBytes(
+            bill,
+            tenant,
+            {
+              ...opts,
+              paperWidth: opts?.paperWidth ?? configuredPaperWidth,
+              taxRegistrationNumber: billShowTaxId
+                ? opts?.taxRegistrationNumber || billTaxRegistrationNumber || undefined
+                : undefined,
+              address: billShowAddress ? opts?.address || billAddress || undefined : undefined,
+              phone: billShowPhone ? opts?.phone || billPhone || undefined : undefined,
+              showBusinessName: billShowName,
+              showTaxBreakdown: billShowTaxBreakdown,
+              showCustomerName: billShowCustomerName,
+              showCustomerPhone: billShowCustomerPhone,
+              showTableNumber: billShowTableNumber,
+              useUnicode: printerUseUnicode,
+              trimDecimals: printerTrimDecimals,
+            },
+            warnings,
+          );
           set({ lastPrintedBytes: bytes });
 
           if (get().printMethod === 'escpos') {
@@ -238,7 +291,10 @@ export const usePrinterStore = create<PrinterState>()(
           const hw = get().hardwarePrinter;
           if (hw && get().printMethod === 'escpos') {
             try {
-              const response = await api.post<{ warnings?: PrintWarning[] }>('/printers/print-kot', { orderId: order.id, useUnicode: printerUseUnicode });
+              const response = await api.post<{ warnings?: PrintWarning[] }>(
+                '/printers/print-kot',
+                { orderId: order.id, useUnicode: printerUseUnicode },
+              );
               return response.data.warnings || [];
             } catch (err: unknown) {
               const e = err as { response?: { data?: { error?: string } }; message?: string };
@@ -297,7 +353,11 @@ export const usePrinterStore = create<PrinterState>()(
     }),
     {
       name: 'flo-printer-settings',
-      partialize: (state) => ({ printMode: state.printMode, paperWidth: state.paperWidth, printMethod: state.printMethod }),
+      partialize: (state) => ({
+        printMode: state.printMode,
+        paperWidth: state.paperWidth,
+        printMethod: state.printMethod,
+      }),
       // v1: the 'gst' print-mode value was renamed to 'tax'. Carry existing
       // browsers' saved selection forward instead of silently resetting it.
       version: 1,
@@ -308,8 +368,8 @@ export const usePrinterStore = create<PrinterState>()(
         }
         return state as unknown as PrinterState;
       },
-    }
-  )
+    },
+  ),
 );
 
 export function usePrinterStatusSync(): void {
@@ -331,6 +391,6 @@ export function usePrinterStatusSync(): void {
     });
 
     return unsub;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }

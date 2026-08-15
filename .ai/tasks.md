@@ -3,6 +3,16 @@
 ## Mandate
 
 Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical failures**.
+Product plan: `docs/00-product/capability-matrix.md`. Do not auto-implement Planned rows. Do not invent 4.16.
+
+## Restaurant capability plan (2026-08-14)
+
+- [x] Adopt capability matrix as canonical product plan (docs + `.ai` + `prompts/` pointers). No production code.
+- [x] **H1 POS Transaction Integrity (2026-08-15):** void order audit; item cancel + discount post-tender 409; discount audit; print-bill `print_logs`. `npm run test:h1`.
+- [x] **H2 KDS Offline / Recovery (2026-08-15):** live-companion advertise; stale-board UX; one silent status retry on reconnect. `npm run test:h2`. Doc: `docs/05-production/h2-kds-offline-recovery.md`.
+- [ ] **Hardening (prefer next, authorized slice only):** permissions/RBAC/audit; offline conflict + app restart recovery; reliability error handling + restore; data integrity + audit logging. POS H1 + KDS H2 closed (depth remains Hardening where noted).
+- [ ] **Planned (not started):** see matrix — 86 depth, notes, combos, courses, QR ordering, recipes/BOM, PO/suppliers, floor plan/merge/seats, KDS routing/timers, print queue/retry, reports, workflow tests. Reuse shipped slices; do not rebuild.
+- [ ] **Frozen / later / out of scope:** terminals, gateways, online payment, multi-location, payroll, aggregators, AI — do not start.
 
 ## Completed (M4–M5 + UI)
 
@@ -41,7 +51,7 @@ Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical 
 - [x] P0.7a Operavia platform architecture docs — ADR-010 + product/architecture/modules docs (2026-08-13)
 - [x] P0.7b Operavia branding consolidation — STRATEGY, vision, docs/README, package `productName`, UI i18n/manifest, user-facing main strings (2026-08-13); historical audits preserved; `appId`/linux `executableName` unchanged for upgrade continuity
 - [x] P2.1 Lightweight module registry + Operavia Restaurant vertical (`main/modules/`; `tests/module-registry.test.ts`) — **IMPLEMENTED** (metadata seam; no package extraction)
-- [ ] P0.7 Documentation truth — roadmap/feature-list/production-readiness match code; CURRENT Operavia Restaurant vs TARGET modular platform
+- [ ] P0.7 Documentation truth — roadmap/feature-list/production-readiness match code; CURRENT Operavia Restaurant vs TARGET modular platform; **capability matrix adopted 2026-08-14** (`docs/00-product/capability-matrix.md`)
 - [x] P2.2 Broaden module consumers (nav/UI) + soft dep diagnostics — **IMPLEMENTED**
 - [x] P2.3 Read-only composition snapshot — **IMPLEMENTED** (`phase-2.3-composition-snapshot.md`; in-process only; still no package extraction)
 - [x] P2.4 Composition read API + settings module gates — **IMPLEMENTED** (`phase-2.4-platform-composition-api.md`; GET `/api/platform/composition`; tax/shifts/kds/loyalty settings gates)

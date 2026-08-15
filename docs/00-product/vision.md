@@ -1,6 +1,7 @@
 # Operavia Product Vision
 
-> **Canonical strategy:** [`STRATEGY.md`](../../STRATEGY.md) (updated 2026-08-13).
+> **Canonical strategy:** [`STRATEGY.md`](../../STRATEGY.md) (updated 2026-08-14).
+> **Canonical product plan:** [`capability-matrix.md`](capability-matrix.md).
 > **Platform brand:** **Operavia**. **Operavia POS** is retired as an active product name.
 > **Do not blur:** Operavia Restaurant (CURRENT Phase 1) ≠ multi-vertical Operavia platform (TARGET).
 
@@ -37,7 +38,7 @@ MIT / free core; no tiered feature gating in code. Packaging/UI brand consolidat
 
 After pilot KPI (**3 cafés × 30 days × zero critical failures**), deepen modular verticals beyond Restaurant. **Operavia Retail** already exists as a deploy/start composition (`ACTIVE_VERTICAL_ID=retail`) with shared commerce modules — retail-native UX depth is still incomplete. Additional verticals (Grocery, Salon, Health & Beauty, Pharmacy, Hospitality, Custom) remain PLANNED.
 
-Planned Restaurant/platform depth (not fully built): recipes/BOM, procurement, multi-location (ADR-006 first), cloud ops, accounting, payment terminals, aggregators, advanced analytics, optional AI. (Append-only `inventory_movements` ledger + read API + owner/manager ledger UI at `/products/movements` exist at schema v75.)
+Restaurant depth vs freeze is in [`capability-matrix.md`](capability-matrix.md): 🟡 Hardening first; 🔵 Planned includes 86 depth, recipes/BOM, procurement, QR ordering; 🔴 Frozen remains terminals, gateways, multi-location; ⚪ Later remains aggregators, AI, reservations. Ledger UI at `/products/movements` is already 🟢 Existing.
 
 ### Guiding principles
 
@@ -64,6 +65,7 @@ Planned Restaurant/platform depth (not fully built): recipes/BOM, procurement, m
 ## Evidence
 
 - Strategy: `STRATEGY.md`
+- Product plan: `docs/00-product/capability-matrix.md`
 - Platform docs: `docs/00-product/opervia-platform.md`, gap report `docs/03-architecture/architecture-gap-report.md`
 - Execution backlog: `.ai/tasks.md`
 - Version: `package.json` `"version": "3.0.5"` · schema **v75** in `main/db.ts`

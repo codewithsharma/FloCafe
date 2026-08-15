@@ -479,7 +479,7 @@ export default function OrdersPage() {
         try {
           const { data } = await api.get(`/bills/${bill.id}`);
           const latestBill = data.bill as Bill;
-          await printBill(
+          const printWarnings = await printBill(
             { ...latestBill, order },
             {
               business_name: currentTenant?.business_name || t('common.businessNameFallback'),
@@ -488,7 +488,9 @@ export default function OrdersPage() {
             },
             { isReprint: false },
           );
-          await api.post(`/bills/${bill.id}/print`, { print_type: 'receipt' });
+          if (!(printWarnings as { printLogged?: boolean }).printLogged) {
+            await api.post(`/bills/${bill.id}/print`, { print_type: 'receipt' });
+          }
         } catch {
           toast.error(t('orders.receiptPrintFailedHint'));
         }
@@ -516,7 +518,9 @@ export default function OrdersPage() {
         },
         { isReprint },
       );
-      await api.post(`/bills/${billId}/print`, { print_type: isReprint ? 'reprint' : 'receipt' });
+      if (!(printWarnings as { printLogged?: boolean }).printLogged) {
+        await api.post(`/bills/${billId}/print`, { print_type: isReprint ? 'reprint' : 'receipt' });
+      }
       toast.success(isReprint ? t('orders.printReceiptReprint') : t('orders.printReceipt'));
       showPrintWarningsToast(printWarnings);
       fetchPrintHistory(billId);

@@ -6,17 +6,18 @@ Evidence-based documentation for **Operavia** — a modular business platform. P
 
 ## Start here (platform)
 
-| Doc                                                                                      | Purpose                          |
-| ---------------------------------------------------------------------------------------- | -------------------------------- |
-| [`STRATEGY.md`](../STRATEGY.md)                                                          | CEO/CTO north star + pilot KPI   |
-| [00-product/opervia-platform.md](00-product/opervia-platform.md)                         | Platform vision + 3-layer model  |
-| [00-product/verticals.md](00-product/verticals.md)                                       | Vertical compositions            |
-| [00-product/principles.md](00-product/principles.md)                                     | Architecture principles 1–10     |
-| [00-product/vision.md](00-product/vision.md)                                             | CURRENT vs TARGET product vision |
-| [03-architecture/modular-architecture.md](03-architecture/modular-architecture.md)       | Lego / modular model             |
-| [03-architecture/architecture-gap-report.md](03-architecture/architecture-gap-report.md) | Phase 1 → Operavia gap (A–H)     |
-| [14-decisions/ADR-010-opervia-platform.md](14-decisions/ADR-010-opervia-platform.md)     | Brand + modular vision ADR       |
-| [modules/README.md](modules/README.md)                                                   | Module index                     |
+| Doc                                                                                      | Purpose                                                        |
+| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| [`STRATEGY.md`](../STRATEGY.md)                                                          | CEO/CTO north star + pilot KPI                                 |
+| [00-product/opervia-platform.md](00-product/opervia-platform.md)                         | Platform vision + 3-layer model                                |
+| [00-product/verticals.md](00-product/verticals.md)                                       | Vertical compositions                                          |
+| [00-product/principles.md](00-product/principles.md)                                     | Architecture principles 1–10                                   |
+| [00-product/vision.md](00-product/vision.md)                                             | CURRENT vs TARGET product vision                               |
+| [00-product/capability-matrix.md](00-product/capability-matrix.md)                       | Product plan (Existing / Hardening / Planned / Later / Frozen) |
+| [03-architecture/modular-architecture.md](03-architecture/modular-architecture.md)       | Lego / modular model                                           |
+| [03-architecture/architecture-gap-report.md](03-architecture/architecture-gap-report.md) | Phase 1 → Operavia gap (A–H)                                   |
+| [14-decisions/ADR-010-opervia-platform.md](14-decisions/ADR-010-opervia-platform.md)     | Brand + modular vision ADR                                     |
+| [modules/README.md](modules/README.md)                                                   | Module index                                                   |
 
 ## Repository state
 
@@ -25,7 +26,7 @@ Evidence-based documentation for **Operavia** — a modular business platform. P
 | Product brand    | Operavia (`package.json` `productName`) |
 | Phase 1 vertical | Operavia Restaurant                     |
 | Version          | 3.0.5 (`package.json`)                  |
-| Schema version   | 74 (`main/db.ts`)                       |
+| Schema version   | 75 (`main/db.ts`)                       |
 | Origin           | `codewithsharma/FloCafe`                |
 | Upstream         | `FreeOpenSourcePOS/FloCafe`             |
 
@@ -84,16 +85,17 @@ Modular business platform evolving incrementally from Phase 1:
 - Keep AI optional and non-blocking
 - Do **not** build Operavia Custom until composition model is real
 
-See [vision.md](00-product/vision.md), [opervia-platform.md](00-product/opervia-platform.md), and [roadmap.md](00-product/roadmap.md).
+See [vision.md](00-product/vision.md), [capability-matrix.md](00-product/capability-matrix.md), [opervia-platform.md](00-product/opervia-platform.md), and [roadmap.md](00-product/roadmap.md).
 
 ## How to use these docs
 
 ### For product managers
 
 1. [opervia-platform.md](00-product/opervia-platform.md) — platform vision
-2. [feature-list.md](00-product/feature-list.md) — what exists vs planned
-3. [roadmap.md](00-product/roadmap.md) — priorities
-4. [master-implementation-plan.md](15-project-management/master-implementation-plan.md) — execution plan
+2. [capability-matrix.md](00-product/capability-matrix.md) — product plan (Existing / Hardening / Planned / Later / Frozen)
+3. [feature-list.md](00-product/feature-list.md) — code evidence
+4. [roadmap.md](00-product/roadmap.md) — priorities
+5. [master-implementation-plan.md](15-project-management/master-implementation-plan.md) — execution plan
 
 ### For engineers
 
@@ -152,7 +154,7 @@ AGENTS.md                 Agent/developer conventions
 Update docs when:
 
 - Schema version increments (update `06-database/`)
-- New routes or features ship (update `00-product/feature-list.md`, `05-api/`)
+- New routes or features ship (update `00-product/feature-list.md`, `00-product/capability-matrix.md` if posture changes, `05-api/`)
 - Architecture changes (new ADR in `14-decisions/`)
 - Security findings change (`07-security/`)
 - Brand/platform decisions change (`00-product/`, `STRATEGY.md`, ADR)

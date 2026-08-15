@@ -75,6 +75,7 @@ docs/README.md + architecture.md + vision.md + architecture-gap-report.md + acce
 
 1. Add `<!-- Last verified: YYYY-MM-DD, schema vXX -->` to the top of every product/feature doc
 2. Add a `docs:verify` script to `package.json` that greps for known stale patterns (version numbers, “planned” statuses on built features)
-3. Update `feature-list.md` and `verticals.md` at the start of every Phase gate closeout
-4. Update `local-setup.md` whenever a migration bumps `user_version`
-5. Treat `docs/15-project-management/` historical audits as immutable; put CURRENT truth in `00-product/` + `.ai/context.md`
+3. Update `feature-list.md` (code evidence) and `capability-matrix.md` (product plan) at every posture or ship change
+4. Update `verticals.md` at the start of every Phase gate closeout
+5. Update `local-setup.md` whenever a migration bumps `user_version`
+6. Treat `docs/15-project-management/` historical audits as immutable; put CURRENT truth in `00-product/` + `.ai/context.md`

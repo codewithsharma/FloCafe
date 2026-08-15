@@ -30,6 +30,7 @@ Module._load = function (request: string, parent: unknown, isMain: boolean) {
 };
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-issue-133';
+process.env.KDS_PORT = process.env.KDS_PORT || '19151';
 
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -44,6 +45,7 @@ const { kitchenRoutes } = require('../main/routes/kitchen');
 const { kdsInfoRoutes } = require('../main/routes/kds-info');
 const { printerRoutes } = require('../main/routes/printers');
 const { getJWTSecret } = require('../main/routes/auth');
+const { startKdsServer, stopKdsServer } = require('../main/kds-server');
 
 function seedUser(db: any, id: string, role: string, email: string) {
   db.prepare(`
@@ -138,6 +140,8 @@ async function main() {
     // LAN KDS pairing QR requires network_mode=kds_lan|lan (P0.1)
     const enableLanKds = await request(app).put('/api/settings/network_mode').set(ownerAuth).send({ value: 'kds_lan' });
     assertEqual(enableLanKds.status, 200, 'PUT /api/settings/network_mode kds_lan succeeds');
+    // H2: /api/kds-info only returns 200 when the companion process is live.
+    await startKdsServer();
     assertEqual((await request(app).get('/api/kds/orders').set(chefAuth)).status, 200, 'GET /api/kds/orders 200 when enabled');
     assertEqual((await request(app).get('/api/kds/display?station_id=none').set(chefAuth)).status, 404, 'GET /api/kds/display 404 for unknown station (not gated — reaches the handler)');
     assertEqual((await request(app).get('/api/kitchen/orders').set(chefAuth)).status, 200, 'GET /api/kitchen/orders 200 when enabled');
@@ -221,6 +225,7 @@ async function main() {
     console.error(error.stack);
     process.exit(1);
   } finally {
+    stopKdsServer();
     closeDatabase();
   }
 }

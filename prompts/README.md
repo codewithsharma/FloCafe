@@ -32,7 +32,7 @@ Before proposing or reordering a phase, inspect:
 1. Repository implementation (`main/`, `frontend/`, `tests/`)
 2. Architecture docs (`docs/03-architecture/`)
 3. ADRs (`docs/14-decisions/`)
-4. `docs/00-product/feature-list.md`
+4. `docs/00-product/capability-matrix.md` (product plan) and `docs/00-product/feature-list.md` (code evidence)
 5. `.ai/context.md`, `.ai/tasks.md`, `.ai/decisions.md`, `.ai/patterns.md`, `.ai/risks.md`
 6. Recent git history
 7. Latest phase docs (`docs/04-product/phase-4.*`)

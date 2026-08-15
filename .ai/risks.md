@@ -46,4 +46,4 @@
 
 ## Explicitly out of scope (temptation risks)
 
-- Building AI, aggregators, or multi-location **before** pilot KPI — dilutes reliability focus (see `STRATEGY.md` Not working on).
+- ⚠️ RISK: **Capability matrix vs code** (2026-08-14) — some 🔵 Planned rows already have shipped slices (86, cash drawer kick, SKU wastage, valuation, addon groups, stations). Rebuilding them is waste. Recipe/BOM + PO listed Planned while STRATEGY still says ERP freeze until ledger foundation — require an authorized slice, not silent implementation.

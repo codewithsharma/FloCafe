@@ -1266,6 +1266,22 @@ router.patch(
                 (order as any).table_id,
               );
             }
+            logAuditEvent({
+              actorUserId: authUser?.userId ?? null,
+              action: 'order.cancelled',
+              entityType: 'order',
+              entityId: String(req.params.id),
+              result: 'success',
+              reason: reason || null,
+              metadata: {
+                previous_status: (order as any).status,
+                reason: reason || null,
+              },
+              context: {
+                requestId: correlationId(),
+                clientIp: req.ip || req.socket.remoteAddress || null,
+              },
+            });
             break;
           }
         }
@@ -1435,6 +1451,13 @@ router.patch('/:id/discount', requireRole('owner', 'manager'), (req: Request, re
       return res
         .status(409)
         .json({ error: 'Discounts cannot be changed after a check has been split' });
+    }
+
+    if (orderHasSuccessfulTender(db, req.params.id as string)) {
+      return res.status(409).json({
+        error: 'Cannot change discount after successful tender; refund the bill instead',
+        code: 'ORDER_HAS_SUCCESSFUL_TENDER',
+      });
     }
 
     // Cannot apply discount to completed or cancelled orders
@@ -1674,6 +1697,26 @@ router.patch('/:id/discount', requireRole('owner', 'manager'), (req: Request, re
       const updatedOrder = parseRowJson(
         db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id),
       ) as any;
+
+      logAuditEvent({
+        actorUserId: (req as any).user?.userId ?? null,
+        action: 'order.discount_applied',
+        entityType: 'order',
+        entityId: String(req.params.id),
+        result: 'success',
+        reason: discount_value > 0 ? discount_reason || null : null,
+        metadata: {
+          discount_type: discount_value > 0 ? discount_type : null,
+          discount_value: discount_value > 0 ? discount_value : 0,
+          discount_amount: updatedOrder.discount_amount || 0,
+          cleared: !(discount_value > 0),
+        },
+        context: {
+          requestId: correlationId(),
+          clientIp: req.ip || req.socket.remoteAddress || null,
+        },
+      });
+
       return updatedOrder;
     });
 
@@ -1705,6 +1748,13 @@ router.patch(
         return res
           .status(409)
           .json({ error: 'Discounts cannot be changed after a check has been split' });
+      }
+
+      if (orderHasSuccessfulTender(db, req.params.id as string)) {
+        return res.status(409).json({
+          error: 'Cannot change discount after successful tender; refund the bill instead',
+          code: 'ORDER_HAS_SUCCESSFUL_TENDER',
+        });
       }
 
       // Cannot apply discount to completed or cancelled orders
@@ -2004,6 +2054,14 @@ router.patch('/:orderId/items/:itemId/cancel', async (req, res) => {
       }
       if (userRole === 'waiter' && String(order.user_id) !== String((req as any).user.userId)) {
         return res.status(403).json({ error: 'Waiters can only modify their own orders' });
+      }
+
+      if (orderHasSuccessfulTender(db, orderId as string)) {
+        return res.status(409).json({
+          error:
+            'Cannot cancel an item on an order with successful tender; refund the bill instead',
+          code: 'ORDER_HAS_SUCCESSFUL_TENDER',
+        });
       }
 
       const item = db

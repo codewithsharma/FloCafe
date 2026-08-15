@@ -15,7 +15,7 @@
 
 - Preserve data safety across all schema changes
 - Maintain backward compatibility with existing Operavia/FloCafe databases
-- Keep product docs truthful (`feature-list.md`, `verticals.md`)
+- Keep product docs truthful (`capability-matrix.md` plan, `feature-list.md` code, `verticals.md`)
 
 ### P1 — Critical (pilot)
 
@@ -25,7 +25,8 @@
 
 ### P2 — Important
 
-- Inventory ledger UI; recipes/BOM; suppliers/PO
+- 🟡 Hardening first (void/discounts/receipts, KDS offline, permissions, restore) per `capability-matrix.md`
+- 🔵 Planned depth (86, recipes/BOM, PO/receiving, QR ordering) only as authorized slices
 - Multi-location schema design (ADR-006 first)
 - Retail-native UX depth beyond composition switch
 

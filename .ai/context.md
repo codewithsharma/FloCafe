@@ -11,6 +11,8 @@
 
 Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v75**) + statically exported Next.js (`frontend/`).
 
+**Canonical product plan:** `docs/00-product/capability-matrix.md` (Existing / Hardening / Planned / Later / Frozen, 2026-08-14). Code evidence: `docs/00-product/feature-list.md`.
+
 ## Stage
 
 Advanced single-location café POS. Executive scores (audit 2026-08-12): Product 68 · Eng 78 · Arch 70 · Sec 66 · Rel 74 · Test 84 · Prod 62 · **Overall 64/100**. CEO: GO WITH CHANGES. CTO: ARCHITECTURE READY WITH CHANGES.
@@ -44,7 +46,7 @@ Phase 2 delivered: registry → … → 2.14 Order → 2.15 Payment → 2.16 POS
 6. Electron sandbox / process security — **Phase A/B1/B2 GREEN WITH HARDENING**; **Final P0.6 audit: GO WITH CONDITIONS** (`p0.6-final-production-security-audit.md`, score **78/100** after FIN-01). Phase C deferred.
 7. **FIN-01** — prevent over-collection after partial pay + refund — **CLOSED** (gross-tender outstanding)
 
-**Frozen until pilots prove reliability:** AI, aggregators (Swiggy/Zomato/ONDC), multi-tenant SaaS, multi-location implementation, ERP inventory, payment terminals, Bluetooth print, microservices.
+**Frozen until pilots prove reliability:** AI, aggregators (Swiggy/Zomato/ONDC), multi-tenant SaaS, multi-location implementation, payment terminals / gateways / online payment, Bluetooth print, microservices. **ERP inventory (recipes/BOM/PO)** is 🔵 Planned in `capability-matrix.md` but still needs an authorized slice — do not start from this sentence.
 
 ## Already shipped (do not rebuild)
 
@@ -75,10 +77,13 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 ## Next step
 
+**Product plan (2026-08-14):** Canonical matrix `docs/00-product/capability-matrix.md`. Prefer 🟡 Hardening over 🔵 Planned. Do not invent 4.16. Do not auto-start.
+
 **First café dry run (2026-08-14): NO-GO.** Signing unavailable (0 identities; CSC_*/APPLE_* UNSET). No café access. Sheet: `docs/05-production/first-cafe-dry-run-result.md`.
 
 Do not invent 4.16. Do not auto-start features. Do not push. Do not fake signing.
 
 - **Human/RELEASE:** isolate RC (branding dirty-tree decision), bump past 3.0.5, sign+notarize.
 - **Human/OPS on site:** Phases 2–10 on the dry-run result sheet.
+- **If software slice authorized next:** Prefer remaining Hardening (permissions/RBAC/audit; restore/conflict/restart). **H1 POS void/discount/receipt integrity CLOSED** (`docs/05-production/h1-pos-transaction-integrity.md`). **H2 KDS offline/recovery CLOSED** (`docs/05-production/h2-kds-offline-recovery.md`). Do not auto-start H3.
 - ADR-014 remains **Proposed**. Schema v75. Baseline `0200cae`.

@@ -26,6 +26,7 @@ import {
 import { getSupportedPrinterProfiles, resolvePrinterProfile } from '../printers/profiles';
 import { requireRole } from '../middleware/security';
 import { getDayClose } from '../services/day-close';
+import { printReceipt as logSaleReceiptPrint } from '../services/receipt';
 
 const router = Router();
 
@@ -570,7 +571,10 @@ router.post(
       console.log('[Print Bill] Print completed', result);
 
       if (result.ok) {
-        res.json({ success: true, warnings: result.warnings || [] });
+        const actorUserId = String((req as any).user?.userId || '');
+        const printType = isReprint ? 'reprint' : 'receipt';
+        await logSaleReceiptPrint(Number(bill.id), actorUserId, printType);
+        res.json({ success: true, print_logged: true, warnings: result.warnings || [] });
       } else {
         res.status(502).json({
           error: 'Print failed. Check printer connection and settings.',

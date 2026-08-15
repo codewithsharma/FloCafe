@@ -1,5 +1,7 @@
 # Operavia — next 10 phases (4.6–4.15)
 
+**This 10 is COMPLETE.** Further product work is **not** Phase 4.16. Canonical backlog: [`docs/00-product/capability-matrix.md`](../docs/00-product/capability-matrix.md).
+
 **Baseline:** Phase 4.5 complete — Retail exchange (`a42493a`) · schema **v75** · ADR-011 / ADR-012 accepted.
 
 **Principle:** one shared commerce platform + vertical composition. Not restaurant-backend + retail-backend.

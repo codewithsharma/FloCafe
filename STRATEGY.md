@@ -1,6 +1,6 @@
 ---
 name: Operavia
-last_updated: 2026-08-13
+last_updated: 2026-08-14
 ---
 
 # Operavia Strategy
@@ -17,6 +17,7 @@ last_updated: 2026-08-13
 
 **Future verticals (PLANNED):** Grocery, Salon, Health & Beauty, Pharmacy, Hospitality, Custom. **Retail** is a production-selectable composition (`ACTIVE_VERTICAL_ID=retail`) with partial UX — see [`docs/00-product/verticals.md`](docs/00-product/verticals.md).
 
+**Restaurant capability plan:** [`docs/00-product/capability-matrix.md`](docs/00-product/capability-matrix.md) (Existing / Hardening / Planned / Later / Frozen). Does not authorize implementation.
 **Architecture vision:** [`docs/00-product/opervia-platform.md`](docs/00-product/opervia-platform.md) · ADR-010 · gap report in `docs/03-architecture/architecture-gap-report.md`.
 **Do not** rewrite Phase 1 into packages/microservices before pilot reliability is proven.
 
@@ -77,7 +78,7 @@ _Why it serves the approach:_ Avoids building impressive surfaces on untrusted m
 - AI / LLM features until core POS reliability is proven
 - Swiggy / Zomato / ONDC / aggregator ingest
 - Multi-tenant SaaS or premature multi-location implementation (ADR-006 first)
-- ERP inventory / full procurement before ledger foundation
+- ERP inventory / full procurement until an authorized `capability-matrix.md` slice (recipes/BOM/PO are Planned there, not auto-started)
 - Bluetooth printing, payment terminals, microservices, Kubernetes, architecture rewrites
 - Building Operavia Custom or additional verticals before Restaurant pilot success
 - Describing Phase 1 as a finished multi-vertical platform or as “RestaurantOS” product you install today

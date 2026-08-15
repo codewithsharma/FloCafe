@@ -1257,6 +1257,7 @@
   "kds.connectionConnecting": "Connecting...",
   "kds.connectionLive": "Live",
   "kds.connectionPolling": "Polling 5s",
+  "kds.connectionStale": "Reconnecting — showing last known orders",
   "kds.deliveredDone": "✓ Delivered — no further actions",
   "kds.emptyAll": "No active orders 🎉",
   "kds.emptyHint": "Items will appear here when their status changes",

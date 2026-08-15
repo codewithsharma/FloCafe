@@ -2,6 +2,8 @@
 
 # Feature Inventory
 
+This file is **code evidence** (what exists in the tree). The canonical **product plan** (Existing / Hardening / Planned / Later / Frozen) is [`capability-matrix.md`](capability-matrix.md).
+
 Status legend: **[BUILT]** usable · **[PARTIAL]** incomplete · **[STUB]** surface only · **[EXPERIMENTAL]** unstable · **[NOT BUILT]** absent · **[FROZEN]** deferred per `STRATEGY.md`
 
 Evidence paths reference the Operavia codebase (repo: FloCafe) as of schema **v75** (`main/db.ts` migration `p2_8_inventory_movements_ledger`). Default vertical: **restaurant**.
@@ -17,8 +19,8 @@ Evidence paths reference the Operavia codebase (repo: FloCafe) as of schema **v7
 | Order notes validation                    | [BUILT] | `tests/order-notes-validation.test.ts`                                                            | High                               |
 | Barcode product lookup                    | [BUILT] | Wedge + POS name/SKU/barcode search (Phase 4.1); `?barcode=` exact; `?search=` name\|sku\|barcode | High                               |
 | Retail floor usability (chrome + search)  | [BUILT] | Phase 4.1: tables settings gated; `/tables` fail-closed; POS SKU/barcode search + scan toasts     | High                               |
-| Cancel order (manager PIN)                | [BUILT] | `tests/cancel-override.test.ts`                                                                   | High                               |
-| Void/cancel line items                    | [BUILT] | `main/routes/index.ts` PATCH cancel/restore                                                       | High                               |
+| Cancel order (manager PIN)                | [BUILT] | `tests/cancel-override.test.ts`; H1 audit `order.cancelled` on status cancel                      | High                               |
+| Void/cancel line items                    | [BUILT] | Item cancel/restore; H1 blocks after successful tender (`ORDER_HAS_SUCCESSFUL_TENDER`)            | High                               |
 | Split checks                              | [BUILT] | `main/routes/bills.ts`, `bill_items`, v59 migration                                               | High — payment tests               |
 | Prepaid checkout                          | [BUILT] | `frontend/src/components/pos/PrepaidCheckoutModal.tsx`, E2E spec                                  | High                               |
 
@@ -98,7 +100,7 @@ Restaurant vertical only (`ACTIVE_VERTICAL_ID=restaurant` or unset). Not mounted
 | Payment idempotency                   | [BUILT]     | `payment_idempotency`, v49+ migrations                                                                                                  | High                 |
 | Transaction reference tracking        | [BUILT]     | `payment_transaction_refs`                                                                                                              | High                 |
 | Payment reconciliation (shift-level)  | [BUILT]     | `main/services/shift.ts` close/recon + day-close cash − cash refunds                                                                    | High                 |
-| Discounts (order & item level)        | [BUILT]     | discount integration tests                                                                                                              | High                 |
+| Discounts (order & item level)        | [BUILT]     | discount integration tests; H1 `order.discount_applied` audit + post-tender 409                                                         | High                 |
 | Comps (complimentary)                 | [PARTIAL]   | Discounts with reason; void/cancel paths — no dedicated comp type                                                                       | Medium               |
 | Taxes (pack-based engine)             | [BUILT]     | `main/services/tax-engine.ts`                                                                                                           | High                 |
 | Packaging & delivery charges          | [BUILT]     | `orders.packaging_charge`, `delivery_charge`                                                                                            | High                 |
@@ -112,16 +114,16 @@ Restaurant vertical only (`ACTIVE_VERTICAL_ID=restaurant` or unset). Not mounted
 
 ## Printing
 
-| Feature                    | Status      | Evidence                                                          | Production readiness |
-| -------------------------- | ----------- | ----------------------------------------------------------------- | -------------------- |
-| ESC/POS thermal — network  | [BUILT]     | `main/printers/thermal.ts` TCP 9100                               | High                 |
-| ESC/POS thermal — USB      | [BUILT]     | `main/printers/thermal.ts`                                        | High                 |
-| WebUSB printing (renderer) | [BUILT]     | `PrinterService.ts`; bills + refund parity (Phase 3.6G)           | Medium               |
-| Browser print fallback     | [BUILT]     | `frontend/src/lib/printer/web-print.ts`                           | Medium               |
-| Bluetooth printing         | [NOT BUILT] | UI type stub only; DB CHECK excludes bluetooth; no print path     | —                    |
-| Printer profiles (58/80mm) | [BUILT]     | `main/printers/profiles.ts`                                       | High                 |
-| Print audit log            | [BUILT]     | `print_logs` table                                                | High                 |
-| Cash drawer kick           | [BUILT]     | `POST /api/printers/kick-drawer` + POS PrinterStatus (Phase 3.6F) | High                 |
+| Feature                    | Status      | Evidence                                                                   | Production readiness |
+| -------------------------- | ----------- | -------------------------------------------------------------------------- | -------------------- |
+| ESC/POS thermal — network  | [BUILT]     | `main/printers/thermal.ts` TCP 9100                                        | High                 |
+| ESC/POS thermal — USB      | [BUILT]     | `main/printers/thermal.ts`                                                 | High                 |
+| WebUSB printing (renderer) | [BUILT]     | `PrinterService.ts`; bills + refund parity (Phase 3.6G)                    | Medium               |
+| Browser print fallback     | [BUILT]     | `frontend/src/lib/printer/web-print.ts`                                    | Medium               |
+| Bluetooth printing         | [NOT BUILT] | UI type stub only; DB CHECK excludes bluetooth; no print path              | —                    |
+| Printer profiles (58/80mm) | [BUILT]     | `main/printers/profiles.ts`                                                | High                 |
+| Print audit log            | [BUILT]     | `print_logs` table; H1: successful `/printers/print-bill` logs server-side | High                 |
+| Cash drawer kick           | [BUILT]     | `POST /api/printers/kick-drawer` + POS PrinterStatus (Phase 3.6F)          | High                 |
 
 Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webusb`.
 

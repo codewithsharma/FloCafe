@@ -1,0 +1,17 @@
+---
+description: Canonical Operavia Restaurant capability plan (Existing / Hardening / Planned / Later / Frozen)
+alwaysApply: true
+---
+
+# Capability matrix
+
+Canonical product plan: [`docs/00-product/capability-matrix.md`](docs/00-product/capability-matrix.md) (adopted 2026-08-14).
+
+- **🟢 Existing** — shipped; do not rebuild.
+- **🟡 Hardening** — prefer this over new surfaces.
+- **🔵 Planned** — in initial scope; do not implement until an authorized slice.
+- **⚪ Later** / **🔴 Frozen / out of scope** — closed. Terminals, payment gateway, online payment, multi-location, payroll, aggregators, AI stay frozen.
+
+Do not invent Phase 4.16 from this matrix. Code evidence remains `docs/00-product/feature-list.md`. If a Planned row already has a shipped slice (86, cash drawer, SKU wastage, valuation, addon groups), deepen it — do not start over.
+
+Recipe/BOM and procurement are Planned in this matrix but still need an explicit phase + ADR for schema/money changes.

@@ -1256,6 +1256,7 @@
   "kds.connectionConnecting": "Conectando…",
   "kds.connectionLive": "En vivo",
   "kds.connectionPolling": "Sondeo 5s",
+  "kds.connectionStale": "Reconectando — mostrando últimos pedidos conocidos",
   "kds.deliveredDone": "✓ Entregado — sin más acciones",
   "kds.emptyAll": "No hay pedidos activos 🎉",
   "kds.emptyHint": "Aparecen acá cuando cambia el estado",

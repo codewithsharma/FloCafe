@@ -36,6 +36,10 @@ Customer data must survive upgrades. Add a new migration version for schema chan
 
 Do not add the private `specs` repository as a submodule, build dependency, CI dependency, or runtime dependency. Never commit credentials, API keys, internal URLs, customer data, backups, or `.env` files.
 
+## Product plan
+
+Canonical Restaurant capability matrix: `docs/00-product/capability-matrix.md` (Existing / Hardening / Planned / Later / Frozen). Code evidence: `docs/00-product/feature-list.md`. Do not auto-start Planned items or invent Phase 4.16. Prefer Hardening. Frozen (terminals, gateways, online payment, multi-location, payroll) stays frozen.
+
 ## Working conventions
 
 Inspect the existing implementation before changing it. Reuse established patterns and keep the diff focused. Use `fix/`, `feat/`, `docs/`, `test/`, `refactor/`, or `chore/` branch prefixes when creating a branch. Do not commit, tag, release, or push unless asked.

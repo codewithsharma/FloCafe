@@ -10,6 +10,9 @@ All notable changes to Opervia (repo/package legacy: Flo Cafe / flo-desktop) are
 - Production Opervia Retail vertical composition (shared commerce modules; no tables/kitchen/KDS/menu/addons).
 - Fail-closed module remount so disabled vertical modules do not mount HTTP routes.
 - Documentation truth pass: `.env.example` documents `ACTIVE_VERTICAL_ID`; feature-list and verticals aligned to schema v75.
+- Restaurant capability matrix (`docs/00-product/capability-matrix.md`): Existing / Hardening / Planned / Later / Frozen product plan (docs only; no Phase 4.16).
+- H1 POS transaction integrity: order cancel audit, post-tender void/discount guards, print-bill `print_logs` (`docs/05-production/h1-pos-transaction-integrity.md`).
+- H2 KDS offline/recovery: live-companion advertise (`kds-info` 503 + mDNS honesty), stale-board UX, one silent status retry on reconnect (`docs/05-production/h2-kds-offline-recovery.md`).
 
 ### Changed
 

@@ -1,5 +1,17 @@
 # Decisions
 
+## 2026-08-15 — H2 KDS Offline / Recovery Hardening (Implemented)
+
+Authorized slice: KDS offline → reconnect → recovery. Live-companion advertise only (`GET /api/kds-info` 503 `KDS_SERVER_NOT_RUNNING`; mDNS skip/omit when companion down). KDS UI `dataStale` + `kds.connectionStale`. One silent chef status PATCH retry via `pendingRetryRef` after WS/REST reconnect. Preserved: SQLite SoR, coalesced `notifyKdsUpdate`, cancelled exclusion, CAS 409, bind-degrade. Schema v75 unchanged. Tests: `npm run test:h2`. Doc: `docs/05-production/h2-kds-offline-recovery.md`. Matrix Offline KDS / KDS recovery remain Hardening with H2 depth. No Phase 4.16. No frozen features. STOP after H2 (do not auto-start H3 permissions/restore).
+
+## 2026-08-15 — H1 POS Transaction Integrity Hardening (Implemented)
+
+Authorized slice: void → discounts → receipts. Order cancel audit `order.cancelled`; item cancel + discount blocked after successful tender (`ORDER_HAS_SUCCESSFUL_TENDER`); order discount audit `order.discount_applied`; successful `print-bill` writes `print_logs`/`printed_at` with `print_logged`; Orders UI skips duplicate client log. Schema v75 unchanged. Tests: `npm run test:h1`. Doc: `docs/05-production/h1-pos-transaction-integrity.md`. Matrix rows remain Hardening/Planned with H1 depth notes. No Phase 4.16. No frozen features. STOP after H1.
+
+## 2026-08-14 — Restaurant capability matrix (Accepted — product plan)
+
+Canonical plan: `docs/00-product/capability-matrix.md`. Statuses: 🟢 Existing · 🟡 Hardening · 🔵 Planned · ⚪ Later · 🔴 Frozen / out of initial scope. Pointers in `docs/00-product/roadmap.md`, `feature-list.md`, `.ai/*`, `prompts/*`, `AGENTS.md`. **No production code. No Phase 4.16. No auto-start.** Prefer Hardening. Recipe/BOM and procurement are Planned in this matrix but still need an authorized slice + ADR for schema/money. Terminals, gateways, online payment, multi-location, payroll remain Frozen.
+
 ## 2026-08-14 — Pilot operations readiness (docs only)
 
 Closed software hardening verification at `0200cae`. Ops pack updated (runbook 1–16, staff training checklist, success criteria, readiness report). **No production code. No Phase 4.16. No push.** Live café remains blocked on human/physical gates (signed artifact, OPS-01, PIN escrow, backup policy, drills, sign-off). Verdict unchanged: Restaurant/Retail **PILOT READY WITH CONDITIONS**.
