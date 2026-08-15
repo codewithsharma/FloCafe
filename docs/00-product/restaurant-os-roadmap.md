@@ -25,7 +25,7 @@ North-star KPI unchanged: **3 cafés × 30 days × zero critical failures** ([`S
 | **R7**  | Customer / CRM / Loyalty          | **COMPLETE** (2026-08-15)                    | R1 payments                  |
 | **R8**  | Staff / Shift / Attendance        | **COMPLETE** (2026-08-15)                    | R1 RBAC                      |
 | **R9**  | Finance / Compliance              | Hardening audit + Planned expenses/tax depth | R1 finance                   |
-| **R10** | Online / QR Ordering              | Planned; online pay Frozen                   | R1–R3; no gateway            |
+| **R10** | Online / QR Ordering              | **COMPLETE** (2026-08-15); online pay Frozen | R1–R3; no gateway            |
 | **R11** | Marketing                         | Planned/Later                                | R7                           |
 | **R12** | Reporting / BI                    | Planned deepen                               | R1–R9 data                   |
 | **R13** | Integrations / Hardware           | Planned print queue; Frozen terminals        | R1–R3                        |
@@ -150,7 +150,9 @@ Tips = Later unless matrix updated.
 
 ## R10 — Online / QR Ordering
 
-QR menu, acceptance, kitchen flow, pickup/delivery status. **Online payment remains Frozen** — record-only or pay-at-counter until unfrozen.
+**Status:** COMPLETE (2026-08-15) — [`r10-online-qr-ordering.md`](../05-production/r10-online-qr-ordering.md). Schema **v84**. Suite `npm run test:r10`.
+
+QR menu, acceptance, kitchen flow via existing dine_in path, guest status poll. **Online payment remains Frozen** — pay-at-counter only.
 
 ---
 

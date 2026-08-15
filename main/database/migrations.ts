@@ -5,6 +5,7 @@
  */
 import type Database from 'better-sqlite3';
 import * as bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 import { BUNDLED_COUNTRY_PACKS, bundledPackVersionId } from '../tax-packs/bundled';
 import { now } from './time';
 import { insertOrderItemAddons } from './order-row';
@@ -2620,6 +2621,39 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
         CREATE INDEX IF NOT EXISTS idx_expenses_created_by
           ON expenses(created_by_user_id);
       `);
+    },
+  },
+  {
+    version: 84,
+    name: 'r10_table_qr_ordering',
+    up: () => {
+      // R10 — opaque per-table guest QR token + system attribution user (pay-at-counter).
+      const cols = getColumns(db, 'tables');
+      if (!cols.includes('qr_token')) {
+        db.exec(`ALTER TABLE tables ADD COLUMN qr_token TEXT`);
+      }
+      db.exec(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_tables_qr_token
+          ON tables(qr_token) WHERE qr_token IS NOT NULL
+      `);
+
+      const ts = now();
+      const password = bcrypt.hashSync(`qr-guest-disabled-${ts}`, 10);
+      db.prepare(
+        `INSERT OR IGNORE INTO users
+          (id, name, email, password, role, is_active, created_at, updated_at)
+         VALUES (?, 'QR Guest', 'qr-guest@system.local', ?, 'waiter', 0, ?, ?)`,
+      ).run('usr-system-qr-guest', password, ts, ts);
+
+      const tables = db
+        .prepare(`SELECT id FROM tables WHERE qr_token IS NULL OR qr_token = ''`)
+        .all() as {
+        id: string;
+      }[];
+      const update = db.prepare(`UPDATE tables SET qr_token = ?, updated_at = ? WHERE id = ?`);
+      for (const t of tables) {
+        update.run(randomBytes(24).toString('base64url'), ts, t.id);
+      }
     },
   },
 ];

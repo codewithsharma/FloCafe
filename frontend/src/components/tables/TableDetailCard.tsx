@@ -26,6 +26,7 @@ export interface TableDetailCardProps {
   onTransfer?: (table: Table) => void;
   onMerge?: (table: Table) => void;
   onAssignWaiter?: (table: Table) => void;
+  onShowQr?: (table: Table) => void;
 }
 
 export function TableDetailCard({
@@ -37,6 +38,7 @@ export function TableDetailCard({
   onTransfer,
   onMerge,
   onAssignWaiter,
+  onShowQr,
 }: TableDetailCardProps) {
   const { t } = useI18n();
   const hasOrders = orders.length > 0;
@@ -82,6 +84,15 @@ export function TableDetailCard({
       )}
 
       <div className="px-4 py-2 border-t border-flo-border flex justify-end gap-2 flex-wrap">
+        {onShowQr && table.is_active !== false && (
+          <button
+            type="button"
+            onClick={() => onShowQr(table)}
+            className="text-caption text-flo-brand-600 hover:text-flo-brand-700 font-medium min-h-11 px-2"
+          >
+            {t('tables.qr')}
+          </button>
+        )}
         {isOccupied && onTransfer && (
           <button
             type="button"

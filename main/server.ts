@@ -119,6 +119,11 @@ function requireAuth(req: Request, res: Response, next: NextFunction): void {
     next();
     return;
   }
+  // R10 — guest table QR public API (token-scoped; no staff JWT)
+  if (req.path.startsWith('/api/public/')) {
+    next();
+    return;
+  }
 
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {

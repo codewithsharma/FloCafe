@@ -3087,6 +3087,7 @@ function createSchema(): void {
       kitchen_station_id TEXT,
       assigned_waiter_id TEXT,
       is_active INTEGER DEFAULT 1,
+      qr_token TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );

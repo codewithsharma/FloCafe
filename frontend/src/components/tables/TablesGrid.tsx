@@ -14,6 +14,7 @@ export interface TablesGridProps {
   onTransfer?: (table: Table) => void;
   onMerge?: (table: Table) => void;
   onAssignWaiter?: (table: Table) => void;
+  onShowQr?: (table: Table) => void;
 }
 
 export function TablesGrid({
@@ -26,6 +27,7 @@ export function TablesGrid({
   onTransfer,
   onMerge,
   onAssignWaiter,
+  onShowQr,
 }: TablesGridProps) {
   if (showDetails) {
     return (
@@ -41,6 +43,7 @@ export function TablesGrid({
             onTransfer={onTransfer}
             onMerge={onMerge}
             onAssignWaiter={onAssignWaiter}
+            onShowQr={onShowQr}
           />
         ))}
       </div>

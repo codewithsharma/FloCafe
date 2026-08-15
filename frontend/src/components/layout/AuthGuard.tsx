@@ -18,6 +18,7 @@ const PUBLIC_PATHS = [
   '/auth/recover',
   '/setup',
   '/recovery',
+  '/qr',
 ];
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -28,7 +29,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
   const [recoveryRequired, setRecoveryRequired] = useState<boolean | null>(null);
 
-  const isPublicPath = PUBLIC_PATHS.some(p => pathname === p || pathname?.startsWith(p + '/'));
+  const isPublicPath = PUBLIC_PATHS.some((p) => pathname === p || pathname?.startsWith(p + '/'));
   const isSetupPath = pathname === '/setup' || pathname?.startsWith('/setup/');
   const isRecoveryPath = pathname === '/recovery' || pathname?.startsWith('/recovery/');
   const isKdsPath = pathname?.startsWith('/kds');
@@ -43,7 +44,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     if (!isKdsPath && (needsSetup === null || recoveryRequired === null)) {
       const controller = new AbortController();
       let active = true;
-      api.get('/auth/setup/status', { signal: controller.signal })
+      api
+        .get('/auth/setup/status', { signal: controller.signal })
         .then(({ data }) => {
           if (!active) return;
           const recovering = Boolean(data.recoveryRequired || data.recovery_required);
@@ -51,7 +53,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
           setNeedsSetup(recovering ? false : Boolean(data.needsSetup));
         })
         .catch((err) => {
-          if (!active || (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))) return;
+          if (
+            !active ||
+            (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))
+          )
+            return;
           console.error('[AuthGuard] Failed to check setup status:', err);
           // Fail closed toward recovery when unknown — never invent first-run.
           setRecoveryRequired(true);
@@ -85,13 +91,30 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     } else if (!currentTenant) {
       router.push('/auth/login?select_tenant=true');
     }
-  }, [loading, user, currentTenant, isPublicPath, isSetupPath, isRecoveryPath, isKdsPath, needsSetup, recoveryRequired, router]);
+  }, [
+    loading,
+    user,
+    currentTenant,
+    isPublicPath,
+    isSetupPath,
+    isRecoveryPath,
+    isKdsPath,
+    needsSetup,
+    recoveryRequired,
+    router,
+  ]);
 
   if (isKdsPath || isSetupPath || isRecoveryPath) {
     return <>{children}</>;
   }
 
-  if (loading || needsSetup === null || recoveryRequired === null || needsSetup === true || recoveryRequired === true) {
+  if (
+    loading ||
+    needsSetup === null ||
+    recoveryRequired === null ||
+    needsSetup === true ||
+    recoveryRequired === true
+  ) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-flo-bg">
         <div className="flex flex-col items-center gap-3">

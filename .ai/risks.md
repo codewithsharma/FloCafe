@@ -1,5 +1,10 @@
 # Risks
 
+## Active program notes (2026-08-15)
+
+- ⚠️ RISK: **R10 guest QR** expands unauthenticated LAN surface to `/api/public/qr/*` (token-scoped). Mitigations: opaque tokens, rotate, inactive system user, no cost exposure, pay-at-counter only. Keep guest Wi‑Fi unsupported; use staff LAN / kiosk.
+- ⚠️ RISK: **R16 live Go-Live** remains **NO-GO** until signed/notarized RC + OPS-02 human/site gates — engineering completion of R-waves ≠ production PASS.
+
 ## Production blockers (P0)
 
 - ⚠️ RISK: **Post-P0 + H1/H2/H3 + ops audit (2026-08-14)** — Restaurant **81/100** / Retail **74/100** **PILOT READY WITH CONDITIONS**. Software bar green at `0200cae`. Live service blocked on human gates (signed RC — version must bump past tagged 3.0.5; OPS-01; PIN escrow; backup policy; café printer/KDS/restore drills; training/sign-off). Residual software: P1-06 unopenable DB; P1-05; P1-12. Composition fail-open **P2**. ADR-014 Proposed.
@@ -26,7 +31,7 @@
 - ⚠️ RISK: Lost `terminal_id` (cleared localStorage) orphans an open shift; managers must force-close.
 - ⚠️ RISK: Doc drift — some older architecture pages / PM audit may lag shipped 3.5A–3.6G; Phase 2–4 truth is **closeout gate + `.ai/` + `docs/04-product/phase-4-product-completion-discovery.md`** (Phase 3.1–3.4 COMPLETE; 3.5A+3.6A–G COMPLETE; 3.5B DEFERRED; 3.5C NO SAFE EXTRACTION; Phase 4 discovery COMPLETE).
 - 🔴 DEBT: Legacy `products.tax_type` / `tax_rate` remain on schema (forced none/0; not authoritative). **Phase 3.5B DEFERRED** until pilot evidence; Mode B vs DROP not chosen. See `phase-3.5b-legacy-tax-cleanup-discovery.md`.
-- ⚠️ RISK: **R3 kitchen deepen** — companion `kds-server.ts` status PATCH still uses raw UPDATE (not yet routed through `kitchen-status.ts`); timestamps/audit may diverge on companion-only bumps until wired.
+- ⚠️ RISK: **R3 kitchen deepen** — companion `kds-server.ts` status PATCH uses `applyKitchenItemStatus` (CAS + timestamps + audit). Residual: client-side bump retry is in-memory (tab reload still drops intent); durable KDS outbox remains deferred.
 - ⚠️ RISK (ops): Café pilots must keep `ACTIVE_VERTICAL_ID` unset or `restaurant`. Accidental `=retail` selects production Retail (wrong for café); `=retail-test` selects synthetic composition.
 - ⚠️ RISK: Brand consolidation to **Operavia** (ADR-010) — living docs/STRATEGY/`productName`/UI i18n updated; historical `15-*` audits still say Operavia/FloCafe; `appId`/`executableName` remain flo\* for upgrade continuity; Drive folder is `Operavia Backups` (old `Operavia Backups` not auto-migrated).
 - ⚠️ RISK: Phase 2.6 capabilities are metadata only — any future consumer must not treat `CapabilityId` as authorization (roles/`requireRole` remain authoritative).

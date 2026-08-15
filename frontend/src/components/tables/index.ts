@@ -7,4 +7,5 @@ export { AddTableDialog } from './AddTableDialog';
 export { TransferTableDialog } from './TransferTableDialog';
 export { MergeTableDialog } from './MergeTableDialog';
 export { AssignWaiterDialog } from './AssignWaiterDialog';
+export { TableQrDialog } from './TableQrDialog';
 export type { AddTableFormState } from './AddTableDialog';

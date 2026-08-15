@@ -30,6 +30,7 @@ import { inventoryRoutes } from './inventory';
 import { recipeRoutes } from './recipes';
 import { purchasingRoutes } from './purchasing';
 import { expenseRoutes } from './expenses';
+import { publicQrRoutes, tableQrStaffRoutes } from './public-qr';
 import { heldOrderRoutes } from './held-orders';
 import { whatsappRoutes } from './whatsapp';
 import { supportTicketRoutes } from './support-ticket';
@@ -138,6 +139,8 @@ export function registerRoutes(app: Express, options: RegisterRoutesOptions = {}
   mount('/api/kitchen', kitchenRoutes, 'kitchen');
   mount('/api/kitchen-stations', kitchenStationRoutes, 'kitchen');
   mount('/api/tables', tableRoutes, 'tables');
+  mount('/api/tables', tableQrStaffRoutes(), 'tables');
+  mount('/api/public/qr', publicQrRoutes(), 'tables');
   mount('/api/kds', kdsRoutes, 'kds');
   mount('/api/kds-info', kdsInfoRoutes, 'kds');
   mount('/api/menu-csv', menuCsvRoutes, 'menu');

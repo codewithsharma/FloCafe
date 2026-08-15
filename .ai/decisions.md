@@ -1,8 +1,12 @@
 # Decisions
 
+## 2026-08-15 — R10 Online / QR Ordering (COMPLETE)
+
+Canonical roadmap R10 = Online / QR (not Workforce). Schema **v84**. Pay-at-counter only; online payment remains Frozen. Suite `npm run test:r10`. Doc: `docs/05-production/r10-online-qr-ordering.md`. Misnamed Workforce planning relocated to `prompts/later/workforce-os-planning.md`.
+
 ## 2026-08-15 — R9 Restaurant Production / Finance Depth (COMPLETE)
 
-R9 Slices 1–6 COMPLETE under R9 program governance. Schema tip **v83**. Suites `test:r9` … `test:r9.6`. Doc: `docs/05-production/r9-completion.md`. Live go-live remains **NO-GO**. **Do not auto-start R10** — planning only at `prompts/r10/R10-workforce-os-planning.md`.
+R9 Slices 1–6 COMPLETE under R9 program governance. Schema tip **v83**. Suites `test:r9` … `test:r9.6`. Doc: `docs/05-production/r9-completion.md`. Live go-live remains **NO-GO**.
 
 ## 2026-08-15 — R9 Slice 6 Food-cost Report v1 (Implemented)
 

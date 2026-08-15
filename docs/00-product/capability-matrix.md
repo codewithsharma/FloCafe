@@ -20,7 +20,7 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 **R9 Slice 4 note (2026-08-15):** Day-close / Z Polish **COMPLETE** — schema tip remains **v83**.
 **R9 Slice 5 note (2026-08-15):** Operations Finance Reports v1 **COMPLETE** — schema tip remains **v83**.
 **R9 Slice 6 note (2026-08-15):** Food-cost Report v1 **COMPLETE** — schema tip remains **v83**.
-**R9 COMPLETE (2026-08-15).** Live go-live still **NO-GO** (OPS-02). ADR-014 service charge remains out. R10 not auto-started.
+**R9 COMPLETE (2026-08-15).** Live go-live still **NO-GO** (OPS-02). ADR-014 service charge remains out. **R10 Online / QR COMPLETE (2026-08-15)** — schema v84; pay-at-counter only.
 ---
 
 ## Legend
@@ -274,9 +274,9 @@ R8 (2026-08-15) deepened Existing staff management (search/filter, detail, shift
 
 | Feature                 | Status              |
 | ----------------------- | ------------------- |
-| QR menu                 | 🔵 Planned          |
-| QR ordering             | 🔵 Planned          |
-| Table QR                | 🔵 Planned          |
+| QR menu                 | 🟢 Existing (R10)   |
+| QR ordering             | 🟢 Existing (R10)   |
+| Table QR                | 🟢 Existing (R10)   |
 | Self-ordering           | 🔵 Planned          |
 | Kiosk                   | ⚪ Later            |
 | Branded online ordering | ⚪ Later            |

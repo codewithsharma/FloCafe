@@ -16,6 +16,7 @@ import {
   TransferTableDialog,
   MergeTableDialog,
   AssignWaiterDialog,
+  TableQrDialog,
   type AddTableFormState,
 } from '@/components/tables';
 import { useAuthStore } from '@/store/auth';
@@ -73,6 +74,7 @@ export default function TablesPage() {
   const [transferTable, setTransferTable] = useState<Table | null>(null);
   const [mergeTable, setMergeTable] = useState<Table | null>(null);
   const [assignWaiterTable, setAssignWaiterTable] = useState<Table | null>(null);
+  const [qrTable, setQrTable] = useState<Table | null>(null);
   const [sectionFilter, setSectionFilter] = useState('');
   const [form, setForm] = useState<AddTableFormState>(DEFAULT_FORM);
   const [showDetails, setShowDetails] = useState(() => {
@@ -256,6 +258,7 @@ export default function TablesPage() {
           onTransfer={setTransferTable}
           onMerge={setMergeTable}
           onAssignWaiter={setAssignWaiterTable}
+          onShowQr={setQrTable}
         />
       )}
 
@@ -304,6 +307,8 @@ export default function TablesPage() {
         onFormChange={setForm}
         onSubmit={handleCreate}
       />
+
+      <TableQrDialog table={qrTable} onClose={() => setQrTable(null)} />
     </div>
   );
 }
