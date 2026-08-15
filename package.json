@@ -309,7 +309,7 @@
     "zod": "^4.4.3"
   },
   "build": {
-    "appId": "com.flo.desktop",
+    "appId": "com.operavia.desktop",
     "productName": "Operavia",
     "icon": "assets/icon-512.png",
     "afterPack": "scripts/afterPack.js",
@@ -450,8 +450,8 @@
       "artifactName": "flocafe-${version}-${arch}.${ext}",
       "extraFiles": [
         {
-          "from": "assets/com.flo.desktop.metainfo.xml",
-          "to": "usr/share/metainfo/com.flo.desktop.metainfo.xml"
+          "from": "assets/com.operavia.desktop.metainfo.xml",
+          "to": "usr/share/metainfo/com.operavia.desktop.metainfo.xml"
         },
         {
           "from": "assets/icons",

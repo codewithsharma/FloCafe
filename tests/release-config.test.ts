@@ -21,6 +21,12 @@ function run() {
   assert.equal(pkg.scripts?.['verify:electron'], 'node scripts/verify-electron-runtime.cjs', 'Electron runtime verification must be cross-platform');
   assert.ok(fs.existsSync(path.join(__dirname, '../scripts/verify-electron-runtime.cjs')), 'cross-platform Electron runtime verifier must exist');
 
+  assert.equal(
+    build?.appId,
+    'com.operavia.desktop',
+    'build.appId must be com.operavia.desktop (macOS CFBundleIdentifier)',
+  );
+
   // ── electron-builder config ──────────────────────────────────────────
   assert.ok(build?.publish?.provider === 'github', 'build.publish must target GitHub releases');
 
@@ -121,7 +127,7 @@ function run() {
   assert.ok(
     fs.existsSync(path.join(__dirname, '../scripts/update-metainfo.js')),
     'scripts/update-metainfo.js must exist — it is invoked by the release job to keep ' +
-    'assets/com.flo.desktop.metainfo.xml current.'
+    'assets/com.operavia.desktop.metainfo.xml current.'
   );
   const metainfoUpdater = fs.readFileSync(path.join(__dirname, '../scripts/update-metainfo.js'), 'utf8');
   assert.ok(

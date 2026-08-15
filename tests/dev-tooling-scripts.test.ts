@@ -19,6 +19,7 @@ function runTest() {
     'electron . --appName=flo-desktop',
     'node /path/to/FloCafe/dev-server.js',
     'node /path/to/FloCafe/dist/index.js',
+    'com.operavia.desktop.helper',
     'com.flo.desktop.helper',
     'flo-pos-service',
   ];

@@ -20,7 +20,8 @@
 set -euo pipefail
 
 APP_NAMES=("OPERAVIA" "Operavia" "Opervia" "Flo Cafe")
-BUNDLE_ID="com.flo.desktop"
+# Current appId + legacy Flo Cafe id (upgrade cleanup)
+BUNDLE_IDS=("com.operavia.desktop" "com.flo.desktop")
 PURGE_DATA=0
 DRY_RUN=0
 
@@ -108,13 +109,15 @@ done
 if [ "$FOUND_APP" -eq 0 ]; then log "no app bundle found in /Applications or ~/Applications"; fi
 
 step "Removing support files (preferences, caches, logs, auto-update state)…"
-remove_path "$HOME/Library/Preferences/$BUNDLE_ID.plist"
-remove_path "$HOME/Library/Caches/$BUNDLE_ID"
-remove_path "$HOME/Library/Caches/$BUNDLE_ID.ShipIt"
+for BUNDLE_ID in "${BUNDLE_IDS[@]}"; do
+  remove_path "$HOME/Library/Preferences/$BUNDLE_ID.plist"
+  remove_path "$HOME/Library/Caches/$BUNDLE_ID"
+  remove_path "$HOME/Library/Caches/$BUNDLE_ID.ShipIt"
+  remove_path "$HOME/Library/Saved Application State/$BUNDLE_ID.savedState"
+  remove_path "$HOME/Library/HTTPStorages/$BUNDLE_ID"
+  remove_path "$HOME/Library/WebKit/$BUNDLE_ID"
+done
 for APP_NAME in "${APP_NAMES[@]}"; do remove_path "$HOME/Library/Logs/$APP_NAME"; done
-remove_path "$HOME/Library/Saved Application State/$BUNDLE_ID.savedState"
-remove_path "$HOME/Library/HTTPStorages/$BUNDLE_ID"
-remove_path "$HOME/Library/WebKit/$BUNDLE_ID"
 
 # Electron's default userData dir comes from package.json's top-level "name"
 # ("flo-desktop"), not the electron-builder "productName" ("Flo Cafe") used

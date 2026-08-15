@@ -17,21 +17,21 @@ The GitHub repository name remains **FloCafe** for continuity. The product brand
 
 ## Verified stack
 
-| Component      | Version   | Source                                                      |
-| -------------- | --------- | ----------------------------------------------------------- |
-| Node.js        | ≥ 22.12.0 | `package.json` engines                                      |
-| Electron       | ^43.3.0   | `package.json`                                              |
-| Next.js        | 16.2.12   | `frontend/package.json`                                     |
-| React          | 19.2.8    | `frontend/package.json`                                     |
-| Express        | ^5.2.1    | `package.json`                                              |
-| better-sqlite3 | ^13.0.3   | `package.json`                                              |
+| Component      | Version   | Source                                                             |
+| -------------- | --------- | ------------------------------------------------------------------ |
+| Node.js        | ≥ 22.12.0 | `package.json` engines                                             |
+| Electron       | ^43.3.0   | `package.json`                                                     |
+| Next.js        | 16.2.12   | `frontend/package.json`                                            |
+| React          | 19.2.8    | `frontend/package.json`                                            |
+| Express        | ^5.2.1    | `package.json`                                                     |
+| better-sqlite3 | ^13.0.3   | `package.json`                                                     |
 | Schema version | **79**    | `main/db.ts` MIGRATIONS (`v79 recipes/BOM (R5); prior ledger v75`) |
-| App version    | 3.0.5     | `package.json`                                              |
-| Product name   | Operavia  | `package.json` `build.productName`                          |
+| App version    | 3.0.5     | `package.json`                                                     |
+| Product name   | Operavia  | `package.json` `build.productName`                                 |
 
 SQLite version is bundled with `better-sqlite3` (not separately pinned).
 
-Internal package identifiers (do not rename): npm `flo-desktop`, Linux `executableName` `flocafe`, `appId` `com.flo.desktop`.
+Internal package identifiers: npm `flo-desktop`, Linux `executableName` `flocafe`. macOS / electron-builder `appId` is **`com.operavia.desktop`** (legacy `com.flo.desktop` retained only for upgrade cleanup matchers).
 
 ## Database location
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.flo.desktop</id>
+  <id>com.operavia.desktop</id>
   <name>OPERAVIA</name>
   <summary>Free, open-source POS for cafes and restaurants</summary>
   <developer id="com.flo">

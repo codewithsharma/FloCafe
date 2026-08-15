@@ -35,6 +35,7 @@ const FLO_PATTERNS = [
   /(?:^|[\s\\/])Opervia\.app(?:[\\/]Contents[\\/]MacOS[\\/]Opervia)?(?:$|\s)/i,
   /(?:^|[\s\\/])Operavia\.app(?:[\\/]Contents[\\/]MacOS[\\/]Operavia)?(?:$|\s)/i,
   /(?:^|[\s\\/])OPERAVIA\.app(?:[\\/]Contents[\\/]MacOS[\\/]OPERAVIA)?(?:$|\s)/i,
+  /(?:^|\s)com\.operavia\.desktop(?:\.\S*)?(?:$|\s)/i,
   /(?:^|\s)com\.flo\.desktop(?:\.\S*)?(?:$|\s)/i,
   /(?:^|\s)flo[_\-]?pos(?:-service)?(?:\.exe)?(?:$|\s)/i,
   /(?:^|\s)electron(?:\s+\S+)*\s+--appName=flo[_\-]?desktop(?:$|\s)/i,

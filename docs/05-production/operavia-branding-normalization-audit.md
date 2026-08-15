@@ -24,7 +24,7 @@ Human policy for this pass:
 - **User-visible brand:** `OPERAVIA` (all caps) / `Operavia` (title case). Spelling is **Operavia**, not Opervia.
 - **Electron `productName`:** `Operavia`. Uninstallers/`kill-ports` still match legacy `Opervia` installs.
 - **Drive folder:** `Operavia Backups` (also finds legacy `Opervia Backups`).
-- **Frozen forever (or migration plan required):** `appId` `com.flo.desktop`, npm `name` `flo-desktop`, Linux `executableName` `flocafe`, `flo.db`, `flo-backup-*` (+ restore regex), `jwt-secret.enc`, `master-pin.enc`, `X-Flo-Terminal-Id` / `flo_terminal_id`, localStorage `flocafe:*`, mDNS host `flo` / `flo.local`, FloAdmin, RevFlo, FloCafe-Plugins URLs, `flopos.com` infrastructure URLs, telemetry `app: 'flocafe'`, vertical IDs, CSS `--flo-*` tokens, `tests/flo-*.test.ts` filenames
+- **Frozen forever (or migration plan required):** npm `name` `flo-desktop`, Linux `executableName` `flocafe`, `flo.db`, `flo-backup-*` (+ restore regex), `jwt-secret.enc`, `master-pin.enc`, `X-Flo-Terminal-Id` / `flo_terminal_id`, localStorage `flocafe:*`, mDNS host `flo` / `flo.local`, FloAdmin, RevFlo, FloCafe-Plugins URLs, `flopos.com` infrastructure URLs, telemetry `app: 'flocafe'`, vertical IDs, CSS `--flo-*` tokens, `tests/flo-*.test.ts` filenames. **Exception (2026-08-15):** macOS/electron-builder `appId` moved `com.flo.desktop` → **`com.operavia.desktop`** before first signed RC (legacy id kept in uninstall/kill-ports cleanup).
 
 ---
 
@@ -45,29 +45,29 @@ Human policy for this pass:
 
 ## 3. Intentionally unchanged legacy references
 
-| Reference                                         | Allowed?       | Reason                                        |
-| ------------------------------------------------- | -------------- | --------------------------------------------- |
-| `appId` `com.flo.desktop`                         | Yes            | Upgrade / updater / MAS identity              |
-| `name` `flo-desktop`                              | Yes            | userData / WM_CLASS                           |
-| `executableName` `flocafe`                        | Yes            | Linux binary / Snap / shortcuts               |
-| `flo.db` / `flo-backup-*.db`                      | Yes            | Live DB + managed restore regex               |
-| `jwt-secret.enc` / `master-pin.enc`               | Yes            | Secret filenames                              |
-| `X-Flo-Terminal-Id` / `flo_terminal_id`           | Yes            | API + localStorage contract                   |
-| `flocafe:*` localStorage                          | Yes            | Session keys                                  |
-| mDNS `flo.local`                                  | Yes            | LAN bookmarks                                 |
-| FloAdmin / RevFlo                                 | Yes            | Separate products                             |
-| GitHub `…/FloCafe` / FloCafe-Plugins              | Yes            | Live repo / plugin feed                       |
-| `flopos.com` / `blue.flopos.com` / telemetry host | Yes            | Live infrastructure                           |
-| telemetry `app: 'flocafe'`                        | Yes            | Analytics contract (human decision to change) |
-| `docs/15-project-management/*` historical audits  | Yes            | Evidence freeze                               |
-| CHANGELOG historical bullets                      | Yes            | History                                       |
-| ADR-010 decision text                             | Yes            | Brand decision record (append-only)           |
-| CSS `flo-*` / `components/flo/`                   | Yes            | Design-system identifiers                     |
-| `tests/flo-*.test.ts` filenames                   | Yes            | Wired to `package.json` scripts               |
-| AppX `applicationId` / `identityName` FloCafe     | Yes            | Store identity                                |
-| publish.repo `FloCafe`                            | Yes            | electron-updater feed                         |
-| Nexora.app mentions in dry-run evidence           | Yes            | Historical TRAINING artifact observation      |
-| `productName: Operavia`                           | Yes (deferred) | Path continuity; display chrome uses OPERAVIA |
+| Reference                                                  | Allowed?                            | Reason                                                  |
+| ---------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------- |
+| `appId` **`com.operavia.desktop`** (was `com.flo.desktop`) | Changed 2026-08-15 before signed RC | macOS `CFBundleIdentifier` / updater / MAS group suffix |
+| `name` `flo-desktop`                                       | Yes                                 | userData / WM_CLASS                                     |
+| `executableName` `flocafe`                                 | Yes                                 | Linux binary / Snap / shortcuts                         |
+| `flo.db` / `flo-backup-*.db`                               | Yes                                 | Live DB + managed restore regex                         |
+| `jwt-secret.enc` / `master-pin.enc`                        | Yes                                 | Secret filenames                                        |
+| `X-Flo-Terminal-Id` / `flo_terminal_id`                    | Yes                                 | API + localStorage contract                             |
+| `flocafe:*` localStorage                                   | Yes                                 | Session keys                                            |
+| mDNS `flo.local`                                           | Yes                                 | LAN bookmarks                                           |
+| FloAdmin / RevFlo                                          | Yes                                 | Separate products                                       |
+| GitHub `…/FloCafe` / FloCafe-Plugins                       | Yes                                 | Live repo / plugin feed                                 |
+| `flopos.com` / `blue.flopos.com` / telemetry host          | Yes                                 | Live infrastructure                                     |
+| telemetry `app: 'flocafe'`                                 | Yes                                 | Analytics contract (human decision to change)           |
+| `docs/15-project-management/*` historical audits           | Yes                                 | Evidence freeze                                         |
+| CHANGELOG historical bullets                               | Yes                                 | History                                                 |
+| ADR-010 decision text                                      | Yes                                 | Brand decision record (append-only)                     |
+| CSS `flo-*` / `components/flo/`                            | Yes                                 | Design-system identifiers                               |
+| `tests/flo-*.test.ts` filenames                            | Yes                                 | Wired to `package.json` scripts                         |
+| AppX `applicationId` / `identityName` FloCafe              | Yes                                 | Store identity                                          |
+| publish.repo `FloCafe`                                     | Yes                                 | electron-updater feed                                   |
+| Nexora.app mentions in dry-run evidence                    | Yes                                 | Historical TRAINING artifact observation                |
+| `productName: Operavia`                                    | Yes (deferred)                      | Path continuity; display chrome uses OPERAVIA           |
 
 ---
 

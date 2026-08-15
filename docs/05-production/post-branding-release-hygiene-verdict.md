@@ -25,7 +25,7 @@ Automated green does **not** equal café GO. Physical gates remain human-owned.
 
 ## Frozen compatibility (do not rename)
 
-`com.flo.desktop` · `flo-desktop` · `flocafe` · `flo.db` · `flo-backup-*` · FloAdmin · RevFlo · FloCafe repo/AppX IDs · `flopos.com` · CSS `flo-*` · type `OperviaModule` / `OPERVIA_*` constants · legacy `Opervia` uninstall/kill-ports/Drive folder matchers.
+`com.operavia.desktop` (macOS appId; legacy `com.flo.desktop` cleanup only) · `flo-desktop` · `flocafe` · `flo.db` · `flo-backup-*` · FloAdmin · RevFlo · FloCafe repo/AppX IDs · `flopos.com` · CSS `flo-*` · type `OperviaModule` / `OPERVIA_*` constants · legacy `Opervia` uninstall/kill-ports/Drive folder matchers.
 
 ## User-visible brand
 
