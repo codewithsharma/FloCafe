@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — R7 Customer & CRM OS (Implemented)
+
+Authorized R7. Schema **v82**: `customer_notes` + `crm_segment_rules`. Customer 360 (`GET /customers/:id/crm`), deterministic segments, derived preferences, audited notes, CRM metrics, loyalty wallet integrated (not rebuilt). UI `/customers` + `/customers/detail/?id=`. Money via cents-preferred readers. Suite `npm run test:r7`. Doc: `docs/05-production/r7-customer-crm-os.md`. **Do not start R8 / marketing / BI.**
+
 ## 2026-08-15 — Foundation priority deepen Phase 2 (Implemented)
 
 Completed remaining foundation debt without R7. P0.3 **Phase 2**: prefer `*_cents` readers + dual-write writers on orders/bills/products (REAL retained; no cutover). Process-kill SIGKILL harness (`test:process-kill`). Zod expanded (staff/tables/shifts/KDS/settings/payment-methods) + `validateParams`/`validateQuery`. `any`: main ~577 / orders ~14. Doc: `docs/05-production/foundation-priority-deepen-phase2.md`. **Foundation ready for R7 authorization — do not start R7 in this change set.**

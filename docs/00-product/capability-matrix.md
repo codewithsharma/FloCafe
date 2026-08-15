@@ -218,10 +218,10 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | Customer history        | 🟢 Existing |
 | Customer lifecycle      | 🟢 Existing |
 | Purchase history        | 🟢 Existing |
-| Visit frequency         | 🔵 Planned  |
-| Customer segmentation   | 🔵 Planned  |
-| Customer preferences    | 🔵 Planned  |
-| Customer lifetime value | 🔵 Planned  |
+| Visit frequency         | 🟢 Existing |
+| Customer segmentation   | 🟢 Existing |
+| Customer preferences    | 🟢 Existing |
+| Customer lifetime value | 🟢 Existing |
 | Birthday / anniversary  | ⚪ Later    |
 | Customer feedback       | ⚪ Later    |
 

@@ -1,5 +1,6 @@
 # Patterns
 
+- **R7 CRM:** Customer 360 from orders SoR + cents spend; segments only via `customer-segments.ts` / `crm_segment_rules`; audited notes in `customer_notes` (soft delete); do not rebuild loyalty_ledger earn/redeem.
 - **Foundation Phase 2 money:** Writers dual-write REAL + `*_cents` via `dualFromMajor` / tender cents paths. Readers use `preferCents` / `billTotalCents` / `productPriceCents` (integer cents win; REAL fallback with explicit `toCents`). Do not drop REAL. Process-kill evidence: `npm run test:process-kill`.
 - **Boundary validation:** Zod schemas in `main/validation/` + `validateBody` / `validateParams` / `validateQuery` (`defineProperty` for query/params — Express getter-only). Domain rules stay in services.
 - **R4.1 stabilization:** Drive backup-now uses `requireMasterPin` (parity with `/api/db/backup`). Order helpers live in `orders-shared.ts`. Pure DB time/order-row helpers live under `main/database/`. Do not grow `db.ts` / `orders.ts` / Settings without extracting first. REAL money persistence cutover remains dual-write + human gate (not a drive-by migration).

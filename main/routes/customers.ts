@@ -1,8 +1,26 @@
 import { Router, Request, Response } from 'express';
 import { randomUUID } from 'crypto';
-import { getDatabase, now, getSettingValue } from '../db';
+import { getDatabase, now, getSettingValue, withTxn } from '../db';
 import { requireRole } from '../middleware/security';
 import { parsePhoneE164, stripPhoneDigits } from '../lib/phone';
+import { validateBody, validateParams, validateQuery } from '../middleware/validate';
+import { logAuditEvent } from '../services/audit-log';
+import { correlationId } from '../errors';
+import {
+  buildCustomer360,
+  customerMatchesSegment,
+  CustomerCrmError,
+  getCrmMetrics,
+  listCustomerNotes,
+} from '../services/customer-crm';
+import {
+  customerCreateBodySchema,
+  customerIdParamsSchema,
+  customerListQuerySchema,
+  customerNoteBodySchema,
+  customerNoteIdParamsSchema,
+  customerUpdateBodySchema,
+} from '../validation/customers';
 
 export function parseCustomer(c: any): any {
   if (!c) return c;
@@ -17,6 +35,17 @@ export function parseCustomer(c: any): any {
           }
         })()
       : null,
+  };
+}
+
+function actorUserId(req: Request): string | null {
+  return (req as Request & { user?: { userId?: string } }).user?.userId ?? null;
+}
+
+function auditCtx(req: Request) {
+  return {
+    requestId: correlationId(),
+    clientIp: req.ip || req.socket.remoteAddress || null,
   };
 }
 
@@ -87,6 +116,7 @@ router.get(
 router.get(
   '/',
   requireRole('owner', 'manager', 'cashier', 'waiter'),
+  validateQuery(customerListQuerySchema),
   (req: Request, res: Response) => {
     try {
       const db = getDatabase();
@@ -99,10 +129,11 @@ router.get(
       WITH order_stats AS (
         SELECT customer_id,
           COUNT(*) AS visits_count,
-          COALESCE(SUM(total), 0) AS total_spent,
+          COALESCE(SUM(COALESCE(total_cents, CAST(ROUND(COALESCE(total, 0) * 100) AS INTEGER))), 0) AS total_spent_cents,
+          COALESCE(SUM(COALESCE(total_cents, CAST(ROUND(COALESCE(total, 0) * 100) AS INTEGER))), 0) / 100.0 AS total_spent,
           MAX(created_at) AS last_visit_at
         FROM orders
-        WHERE customer_id IS NOT NULL
+        WHERE customer_id IS NOT NULL AND status != 'cancelled'
         GROUP BY customer_id
       ),
       ledger_credits AS (
@@ -120,6 +151,7 @@ router.get(
       SELECT c.*,
         COALESCE(os.visits_count, 0) as visits_count,
         COALESCE(os.total_spent, 0) as total_spent,
+        COALESCE(os.total_spent_cents, 0) as total_spent_cents,
         MAX(0, COALESCE(lc.credits, 0) - COALESCE(ld.debits, 0)) as wallet_balance,
         os.last_visit_at
       FROM customers c
@@ -187,7 +219,11 @@ router.get(
         query += ` LIMIT 200`;
       }
 
-      const customers = db.prepare(query).all(...params);
+      let customers = db.prepare(query).all(...params) as Array<{ id: string }>;
+      const segment = typeof req.query.segment === 'string' ? req.query.segment : '';
+      if (segment) {
+        customers = customers.filter((c) => customerMatchesSegment(String(c.id), segment));
+      }
       res.json({ data: customers });
     } catch (error: unknown) {
       console.error('[API] Internal error:', error);
@@ -196,9 +232,168 @@ router.get(
   },
 );
 
+router.get('/metrics', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+  try {
+    const metrics = getCrmMetrics();
+    res.json({ metrics });
+  } catch (error: unknown) {
+    console.error('[API] CRM metrics error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get(
+  '/:id/crm',
+  requireRole('owner', 'manager', 'cashier', 'waiter'),
+  validateParams(customerIdParamsSchema),
+  (req: Request, res: Response) => {
+    try {
+      const crm = buildCustomer360(String(req.params.id));
+      res.json({ crm });
+    } catch (error: unknown) {
+      if (error instanceof CustomerCrmError) {
+        return res.status(error.statusCode).json({ error: error.message, code: error.code });
+      }
+      console.error('[API] Customer 360 error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+router.get(
+  '/:id/notes',
+  requireRole('owner', 'manager', 'cashier', 'waiter'),
+  validateParams(customerIdParamsSchema),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const customer = db.prepare('SELECT id FROM customers WHERE id = ?').get(req.params.id);
+      if (!customer) return res.status(404).json({ error: 'Customer not found' });
+      res.json({ notes: listCustomerNotes(db, String(req.params.id)) });
+    } catch (error: unknown) {
+      console.error('[API] Customer notes list error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+router.post(
+  '/:id/notes',
+  requireRole('owner', 'manager', 'cashier'),
+  validateParams(customerIdParamsSchema),
+  validateBody(customerNoteBodySchema),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const customer = db.prepare('SELECT id FROM customers WHERE id = ?').get(req.params.id);
+      if (!customer) return res.status(404).json({ error: 'Customer not found' });
+      const noteId = `cnote-${randomUUID()}`;
+      const ts = now();
+      const actor = actorUserId(req);
+      withTxn(() => {
+        db.prepare(
+          `INSERT INTO customer_notes (id, customer_id, body, created_by_user_id, updated_by_user_id, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        ).run(noteId, req.params.id, String(req.body.body).trim(), actor, actor, ts, ts);
+        logAuditEvent({
+          actorUserId: actor,
+          action: 'customer.note_created',
+          entityType: 'customer_note',
+          entityId: noteId,
+          result: 'success',
+          metadata: { customer_id: req.params.id },
+          context: auditCtx(req),
+        });
+      });
+      const note = db.prepare('SELECT * FROM customer_notes WHERE id = ?').get(noteId);
+      res.status(201).json({ note });
+    } catch (error: unknown) {
+      console.error('[API] Customer note create error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+router.put(
+  '/:id/notes/:noteId',
+  requireRole('owner', 'manager'),
+  validateParams(customerNoteIdParamsSchema),
+  validateBody(customerNoteBodySchema),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const note = db
+        .prepare(
+          `SELECT * FROM customer_notes WHERE id = ? AND customer_id = ? AND deleted_at IS NULL`,
+        )
+        .get(req.params.noteId, req.params.id) as { id: string } | undefined;
+      if (!note) return res.status(404).json({ error: 'Note not found' });
+      const actor = actorUserId(req);
+      const ts = now();
+      withTxn(() => {
+        db.prepare(
+          `UPDATE customer_notes SET body = ?, updated_by_user_id = ?, updated_at = ? WHERE id = ?`,
+        ).run(String(req.body.body).trim(), actor, ts, note.id);
+        logAuditEvent({
+          actorUserId: actor,
+          action: 'customer.note_updated',
+          entityType: 'customer_note',
+          entityId: String(note.id),
+          result: 'success',
+          metadata: { customer_id: req.params.id },
+          context: auditCtx(req),
+        });
+      });
+      const updated = db.prepare('SELECT * FROM customer_notes WHERE id = ?').get(note.id);
+      res.json({ note: updated });
+    } catch (error: unknown) {
+      console.error('[API] Customer note update error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+router.delete(
+  '/:id/notes/:noteId',
+  requireRole('owner', 'manager'),
+  validateParams(customerNoteIdParamsSchema),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const note = db
+        .prepare(
+          `SELECT * FROM customer_notes WHERE id = ? AND customer_id = ? AND deleted_at IS NULL`,
+        )
+        .get(req.params.noteId, req.params.id) as { id: string } | undefined;
+      if (!note) return res.status(404).json({ error: 'Note not found' });
+      const actor = actorUserId(req);
+      const ts = now();
+      withTxn(() => {
+        db.prepare(
+          `UPDATE customer_notes SET deleted_at = ?, updated_by_user_id = ?, updated_at = ? WHERE id = ?`,
+        ).run(ts, actor, ts, note.id);
+        logAuditEvent({
+          actorUserId: actor,
+          action: 'customer.note_deleted',
+          entityType: 'customer_note',
+          entityId: String(note.id),
+          result: 'success',
+          metadata: { customer_id: req.params.id },
+          context: auditCtx(req),
+        });
+      });
+      res.json({ ok: true });
+    } catch (error: unknown) {
+      console.error('[API] Customer note delete error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
 router.get(
   '/:id',
   requireRole('owner', 'manager', 'cashier', 'waiter'),
+  validateParams(customerIdParamsSchema),
   (req: Request, res: Response) => {
     try {
       const db = getDatabase();
@@ -265,6 +460,7 @@ router.get(
 router.post(
   '/',
   requireRole('owner', 'manager', 'cashier', 'waiter'),
+  validateBody(customerCreateBodySchema),
   (req: Request, res: Response) => {
     try {
       const { phone, name, email, address, notes, country_code } = req.body;
@@ -317,6 +513,15 @@ router.post(
               existing.id,
             );
             const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(existing.id);
+            logAuditEvent({
+              actorUserId: actorUserId(req),
+              action: 'customer.updated',
+              entityType: 'customer',
+              entityId: String(existing.id),
+              result: 'success',
+              metadata: { soft_reactivate: true },
+              context: auditCtx(req),
+            });
             return res.status(201).json({ customer });
           } else {
             return res.status(409).json({ message: 'Customer with this phone already exists' });
@@ -344,6 +549,15 @@ router.post(
       );
 
       const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(id);
+      logAuditEvent({
+        actorUserId: actorUserId(req),
+        action: 'customer.created',
+        entityType: 'customer',
+        entityId: id,
+        result: 'success',
+        metadata: { phone: finalPhone },
+        context: auditCtx(req),
+      });
       res.status(201).json({ customer });
     } catch (error: unknown) {
       console.error('[Customer POST error]', error);
@@ -352,41 +566,46 @@ router.post(
   },
 );
 
-router.put('/:id', requireRole('owner', 'manager', 'cashier'), (req: Request, res: Response) => {
-  try {
-    const { phone, name, email, address, notes, country_code } = req.body;
-    const db = getDatabase();
+router.put(
+  '/:id',
+  requireRole('owner', 'manager', 'cashier'),
+  validateParams(customerIdParamsSchema),
+  validateBody(customerUpdateBodySchema),
+  (req: Request, res: Response) => {
+    try {
+      const { phone, name, email, address, notes, country_code } = req.body;
+      const db = getDatabase();
 
-    const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
-    if (!customer) {
-      return res.status(404).json({ error: 'Customer not found' });
-    }
-
-    let finalPhone = phone ? String(phone).trim() : null;
-    let finalCountryCode = country_code ? String(country_code).trim() : null;
-
-    if (finalPhone) {
-      const tenantCountry = getSettingValue('country') || 'IN';
-      const parsed = parsePhoneE164(finalPhone, tenantCountry);
-      if (!parsed) {
-        return res.status(400).json({
-          error: 'Phone number is not valid. Use international format (e.g. +919876543210).',
-        });
+      const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
+      if (!customer) {
+        return res.status(404).json({ error: 'Customer not found' });
       }
-      finalPhone = parsed.e164;
-      finalCountryCode = parsed.countryCode;
 
-      const phoneDigits = stripPhoneDigits(finalPhone);
-      const existing = db
-        .prepare('SELECT id FROM customers WHERE phone_digits = ? AND id != ?')
-        .get(phoneDigits, req.params.id) as any;
-      if (existing) {
-        return res.status(409).json({ error: 'Customer with this phone already exists' });
+      let finalPhone = phone ? String(phone).trim() : null;
+      let finalCountryCode = country_code ? String(country_code).trim() : null;
+
+      if (finalPhone) {
+        const tenantCountry = getSettingValue('country') || 'IN';
+        const parsed = parsePhoneE164(finalPhone, tenantCountry);
+        if (!parsed) {
+          return res.status(400).json({
+            error: 'Phone number is not valid. Use international format (e.g. +919876543210).',
+          });
+        }
+        finalPhone = parsed.e164;
+        finalCountryCode = parsed.countryCode;
+
+        const phoneDigits = stripPhoneDigits(finalPhone);
+        const existing = db
+          .prepare('SELECT id FROM customers WHERE phone_digits = ? AND id != ?')
+          .get(phoneDigits, req.params.id) as any;
+        if (existing) {
+          return res.status(409).json({ error: 'Customer with this phone already exists' });
+        }
       }
-    }
 
-    db.prepare(
-      `
+      db.prepare(
+        `
       UPDATE customers SET
         phone = COALESCE(NULLIF(?, ''), phone),
         name = COALESCE(NULLIF(?, ''), name),
@@ -397,15 +616,24 @@ router.put('/:id', requireRole('owner', 'manager', 'cashier'), (req: Request, re
         updated_at = ?
       WHERE id = ?
     `,
-    ).run(finalPhone, name, email, finalCountryCode, address, notes, now(), req.params.id);
+      ).run(finalPhone, name, email, finalCountryCode, address, notes, now(), req.params.id);
 
-    const updated = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
-    res.json({ customer: updated });
-  } catch (error: unknown) {
-    console.error('[API] Internal error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+      const updated = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
+      logAuditEvent({
+        actorUserId: actorUserId(req),
+        action: 'customer.updated',
+        entityType: 'customer',
+        entityId: String(req.params.id),
+        result: 'success',
+        context: auditCtx(req),
+      });
+      res.json({ customer: updated });
+    } catch (error: unknown) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 // Phase 3.6E: reactivate flips lifecycle flag only — no loyalty/wallet/order writes.
 // Auth matches POST / soft-reactivate-by-phone (no permission widening).
@@ -429,6 +657,15 @@ router.post(
         req.params.id,
       );
       const updated = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
+      logAuditEvent({
+        actorUserId: actorUserId(req),
+        action: 'customer.updated',
+        entityType: 'customer',
+        entityId: String(req.params.id),
+        result: 'success',
+        metadata: { reactivated: true },
+        context: auditCtx(req),
+      });
       res.json({ customer: parseCustomer(updated) });
     } catch (error: unknown) {
       console.error('[API] Internal error:', error);
@@ -454,6 +691,14 @@ router.post('/:id/deactivate', requireRole('owner', 'manager'), (req: Request, r
       req.params.id,
     );
     const updated = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
+    logAuditEvent({
+      actorUserId: actorUserId(req),
+      action: 'customer.archived',
+      entityType: 'customer',
+      entityId: String(req.params.id),
+      result: 'success',
+      context: auditCtx(req),
+    });
     res.json({ customer: parseCustomer(updated) });
   } catch (error: unknown) {
     console.error('[API] Internal error:', error);

@@ -232,8 +232,7 @@ export function preparePaymentBatch(
   idempotentReplay?: boolean;
 } {
   const bill = db.prepare('SELECT * FROM bills WHERE id = ?').get(billId) as
-    | BillSettlementRow
-    | undefined;
+    BillSettlementRow | undefined;
   if (!bill) throw Object.assign(new Error('Bill not found'), { statusCode: 404 });
   if (!Array.isArray(payments) || payments.length === 0)
     throw Object.assign(new Error('payments must be a non-empty array'), { statusCode: 400 });
@@ -499,15 +498,13 @@ function calculateCashback(
   if (!customerId) return 0;
   const enabled = (
     db.prepare(`SELECT value FROM settings WHERE key = 'loyalty_enabled'`).get() as
-      | { value?: string }
-      | undefined
+      { value?: string } | undefined
   )?.value;
   if (enabled !== 'true' && enabled !== '1') return 0;
   const globalRate = parseFloat(
     (
       db.prepare(`SELECT value FROM settings WHERE key = 'global_cashback_percent'`).get() as
-        | { value?: string }
-        | undefined
+        { value?: string } | undefined
     )?.value || '0',
   );
   const order = db
@@ -634,6 +631,20 @@ export function applyPaymentBatch(
           now(),
           now(),
         );
+        logAuditEvent({
+          actorUserId: idempotencyUserId || null,
+          action: 'customer.loyalty_changed',
+          entityType: 'customer',
+          entityId: String(effectiveCustomerId),
+          result: 'success',
+          metadata: {
+            bill_id: bill.id,
+            ledger_type: 'debit',
+            amount_cents: line.amountCents,
+            reason: 'wallet_payment',
+          },
+          context: { terminalId: terminalIdHeader || null },
+        });
         walletDebited = true;
       }
       const allPayments = existingPayments.concat(newPayments);
@@ -738,8 +749,7 @@ export function applyPaymentBatch(
           const walletCents = allPayments
             .filter((p: StoredPaymentLine) => p.method === 'wallet')
             .reduce(
-              (sum: number, p: StoredPaymentLine) =>
-                sum + Math.round(Number(p.amount || 0) * 100),
+              (sum: number, p: StoredPaymentLine) => sum + Math.round(Number(p.amount || 0) * 100),
               0,
             );
           const finalCashback = Math.floor(
@@ -756,6 +766,20 @@ export function applyPaymentBatch(
               changedAt,
               changedAt,
             );
+            logAuditEvent({
+              actorUserId: idempotencyUserId || null,
+              action: 'customer.loyalty_changed',
+              entityType: 'customer',
+              entityId: String(effectiveCustomerId),
+              result: 'success',
+              metadata: {
+                bill_id: bill.id,
+                ledger_type: 'credit',
+                amount_cents: finalCashback,
+                reason: 'cashback',
+              },
+              context: { terminalId: terminalIdHeader || null },
+            });
             loyaltyPointsEarned = finalCashback;
           }
         }

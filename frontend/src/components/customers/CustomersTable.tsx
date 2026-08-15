@@ -10,7 +10,9 @@ import {
   Wallet,
   RotateCcw,
   UserMinus,
+  UserRound,
 } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Panel, EmptyState, MoneyDisplay, StatusBadge } from '@/components/flo';
 import type { Customer } from '@/lib/types';
@@ -240,7 +242,11 @@ export function CustomersTable({
                         </td>
                         <td className="p-4 text-right">
                           <MoneyDisplay
-                            cents={Math.round(Number(c.total_spent || 0) * 100)}
+                            cents={
+                              c.total_spent_cents != null
+                                ? Number(c.total_spent_cents)
+                                : Math.round(Number(c.total_spent || 0) * 100)
+                            }
                             size="sm"
                           />
                         </td>
@@ -282,6 +288,15 @@ export function CustomersTable({
                                 <RotateCcw size={14} aria-hidden />
                               </Button>
                             ) : null}
+                            <Button variant="ghost" size="sm" className="min-h-11 min-w-11" asChild>
+                              <Link
+                                href={`/customers/detail/?id=${encodeURIComponent(String(c.id))}`}
+                                aria-label="Customer 360"
+                                title="Customer 360"
+                              >
+                                <UserRound size={14} aria-hidden />
+                              </Link>
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"

@@ -343,8 +343,7 @@ export function createBillRefund(input: CreateBillRefundInput): {
       if (nestedReplay) return nestedReplay;
 
       const bill = db.prepare('SELECT * FROM bills WHERE id = ?').get(input.billId) as
-        | BillSettlementRow
-        | undefined;
+        BillSettlementRow | undefined;
       if (!bill) {
         throw new RefundServiceError(404, 'Bill not found', 'REFUND_BILL_NOT_FOUND');
       }
@@ -515,6 +514,19 @@ export function createBillRefund(input: CreateBillRefundInput): {
           changedAt,
           changedAt,
         );
+        logAuditEvent({
+          actorUserId: input.actorUserId,
+          action: 'customer.loyalty_changed',
+          entityType: 'customer',
+          entityId: String(bill.customer_id),
+          result: 'success',
+          metadata: {
+            bill_id: bill.id,
+            ledger_type: 'credit',
+            amount_cents: amountCents,
+            reason: 'wallet_refund',
+          },
+        });
       }
 
       const refund = db.prepare('SELECT * FROM refunds WHERE id = ?').get(refundId) as RefundRecord;

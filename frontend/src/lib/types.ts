@@ -130,6 +130,7 @@ export interface Customer {
   is_active?: boolean | number;
   visits_count?: number;
   total_spent?: number;
+  total_spent_cents?: number;
   last_visit_at?: string | null;
   wallet_balance?: number;
   global_customer_id?: number | null;

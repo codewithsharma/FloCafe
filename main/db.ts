@@ -3105,6 +3105,22 @@ function createSchema(): void {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS customer_notes (
+      id TEXT PRIMARY KEY,
+      customer_id TEXT NOT NULL,
+      body TEXT NOT NULL,
+      created_by_user_id TEXT,
+      updated_by_user_id TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      deleted_at TEXT,
+      FOREIGN KEY (customer_id) REFERENCES customers(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_customer_notes_customer
+      ON customer_notes(customer_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_customer_notes_active
+      ON customer_notes(customer_id) WHERE deleted_at IS NULL;
+
     -- ── Users (authentication + roles) ──────────────────────────────────
     -- Roles: owner, manager, cashier, waiter, chef
     -- KDS is operated by the chef role.

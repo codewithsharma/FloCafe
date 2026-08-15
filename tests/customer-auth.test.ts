@@ -60,7 +60,21 @@ async function main() {
      VALUES (?, ?, ?, 1, ?, ?)`
   ).run(custId, 'Auth Test Customer', '5550000001', now(), now());
 
-  // Seed users for role checks
+  // Seed users for role checks (createApp auth uses DB role over JWT claim)
+  const hash = bcrypt.hashSync('password123', 4);
+  for (const u of [
+    ['owner-auth-001', 'owner', 'owner@auth.test'],
+    ['mgr-auth-001', 'manager', 'manager@auth.test'],
+    ['cashier-auth-001', 'cashier', 'cashier@auth.test'],
+    ['waiter-auth-001', 'waiter', 'waiter@auth.test'],
+    ['chef-auth-001', 'chef', 'chef@auth.test'],
+  ] as const) {
+    db.prepare(
+      `INSERT OR IGNORE INTO users (id, name, email, password, role, is_active, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, 1, ?, ?)`,
+    ).run(u[0], u[1], u[2], hash, u[1], now(), now());
+  }
+
   const ownerAuth   = makeToken('owner-auth-001',   'owner',   'owner@auth.test');
   const managerAuth = makeToken('mgr-auth-001',     'manager', 'manager@auth.test');
   const cashierAuth = makeToken('cashier-auth-001', 'cashier', 'cashier@auth.test');

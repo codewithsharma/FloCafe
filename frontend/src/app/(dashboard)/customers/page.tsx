@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Plus, AlertCircle, X } from 'lucide-react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import { fetchCrmMetrics } from '@/lib/crm';
 import { useAuthStore } from '@/store/auth';
 import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
@@ -11,7 +12,7 @@ import type { Customer } from '@/lib/types';
 import { countryName } from '@/lib/countries';
 import { dialCodeFor, parsePhone } from '@/lib/phone';
 import { useI18n } from '@/hooks/useI18n';
-import { PageHeader, LoadingState, StatusBadge } from '@/components/flo';
+import { PageHeader, LoadingState, StatusBadge, MoneyDisplay } from '@/components/flo';
 import {
   CustomersTable,
   CustomerFormDialog,
@@ -20,6 +21,16 @@ import {
   type LedgerData,
 } from '@/components/customers';
 
+type CrmMetrics = {
+  total_customers: number;
+  new_customers: number;
+  returning_customers: number;
+  active_customers: number;
+  inactive_customers: number;
+  customer_revenue_cents: number;
+  average_customer_spend_cents: number;
+  top_customers?: Array<{ id: string; name: string; spend_cents: number }>;
+};
 export default function CustomersPage() {
   const { currentTenant } = useAuthStore();
   const { t } = useI18n();
@@ -36,6 +47,7 @@ export default function CustomersPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [search, setSearch] = useState('');
   const [showInactive, setShowInactive] = useState(false);
+  const [segment, setSegment] = useState('');
   const [reactivatingId, setReactivatingId] = useState<string | number | null>(null);
   const [sortField, setSortField] = useState('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -51,6 +63,23 @@ export default function CustomersPage() {
   const [ledgerCustomer, setLedgerCustomer] = useState<Customer | null>(null);
   const [ledgerData, setLedgerData] = useState<LedgerData | null>(null);
   const [ledgerLoading, setLedgerLoading] = useState(false);
+  const [metrics, setMetrics] = useState<CrmMetrics | null>(null);
+  const canViewMetrics = role === 'owner' || role === 'manager';
+
+  useEffect(() => {
+    if (!canViewMetrics) return;
+    let cancelled = false;
+    fetchCrmMetrics()
+      .then((m) => {
+        if (!cancelled) setMetrics(m as CrmMetrics);
+      })
+      .catch(() => {
+        /* metrics are optional for list UX */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [canViewMetrics, refreshKey]);
 
   const openLedger = async (c: Customer) => {
     setLedgerCustomer(c);
@@ -75,6 +104,7 @@ export default function CustomersPage() {
       if (sortField) params.sort = sortField;
       if (sortOrder) params.order = sortOrder;
       if (canShowInactive && showInactive) params.include_inactive = 'true';
+      if (segment) params.segment = segment;
       api
         .get('/customers', { params, signal: controller.signal })
         .then(({ data }) => setCustomers(data.data || []))
@@ -95,7 +125,7 @@ export default function CustomersPage() {
       controller.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, filter, sortField, sortOrder, refreshKey, showInactive, canShowInactive]);
+  }, [search, filter, sortField, sortOrder, refreshKey, showInactive, canShowInactive, segment]);
 
   const openAdd = () => {
     setEditingCustomer(null);
@@ -215,27 +245,71 @@ export default function CustomersPage() {
         }
       />
 
+      {canViewMetrics && metrics ? (
+        <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {[
+            { label: 'Total', value: metrics.total_customers },
+            { label: 'New', value: metrics.new_customers },
+            { label: 'Returning', value: metrics.returning_customers },
+            { label: 'Active', value: metrics.active_customers },
+            { label: 'Inactive', value: metrics.inactive_customers },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-flo-md border border-flo-border bg-flo-surface px-3 py-2"
+            >
+              <div className="text-xs text-flo-text-secondary">{item.label}</div>
+              <div className="text-lg font-semibold text-flo-text">{item.value}</div>
+            </div>
+          ))}
+          <div className="rounded-flo-md border border-flo-border bg-flo-surface px-3 py-2">
+            <div className="text-xs text-flo-text-secondary">Avg spend</div>
+            <div className="text-lg font-semibold text-flo-text">
+              <MoneyDisplay cents={metrics.average_customer_spend_cents} />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {loading ? (
         <LoadingState />
       ) : (
-        <CustomersTable
-          customers={customers}
-          search={search}
-          onSearchChange={setSearch}
-          sortField={sortField}
-          sortOrder={sortOrder}
-          onSort={onSort}
-          onEdit={openEdit}
-          onOpenLedger={openLedger}
-          onAdd={openAdd}
-          canShowInactive={canShowInactive}
-          showInactive={showInactive}
-          onShowInactiveChange={setShowInactive}
-          onReactivate={handleReactivate}
-          reactivatingId={reactivatingId}
-          onDeactivate={canShowInactive ? handleDeactivate : undefined}
-          deactivatingId={reactivatingId}
-        />
+        <>
+          <div className="mb-3">
+            <label className="text-sm text-flo-text-secondary mr-2">Segment</label>
+            <select
+              className="min-h-11 rounded-flo-md border border-flo-border bg-flo-surface px-3 text-sm"
+              value={segment}
+              onChange={(e) => setSegment(e.target.value)}
+            >
+              <option value="">All</option>
+              <option value="new">New</option>
+              <option value="returning">Returning</option>
+              <option value="loyal">Loyal</option>
+              <option value="frequent">Frequent</option>
+              <option value="high_value">High value</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <CustomersTable
+            customers={customers}
+            search={search}
+            onSearchChange={setSearch}
+            sortField={sortField}
+            sortOrder={sortOrder}
+            onSort={onSort}
+            onEdit={openEdit}
+            onOpenLedger={openLedger}
+            onAdd={openAdd}
+            canShowInactive={canShowInactive}
+            showInactive={showInactive}
+            onShowInactiveChange={setShowInactive}
+            onReactivate={handleReactivate}
+            reactivatingId={reactivatingId}
+            onDeactivate={canShowInactive ? handleDeactivate : undefined}
+            deactivatingId={reactivatingId}
+          />
+        </>
       )}
 
       <CustomerLedgerDialog

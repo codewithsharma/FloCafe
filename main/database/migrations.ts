@@ -44,7 +44,9 @@ const db: Database.Database = new Proxy({} as Database.Database, {
   get(_target, prop, _receiver) {
     const real = requireHost().getDb() as any;
     const value = real[prop as keyof typeof real];
-    return typeof value === 'function' ? (value as Function).bind(real) : value;
+    return typeof value === 'function'
+      ? (value as (...args: unknown[]) => unknown).bind(real)
+      : value;
   },
 }) as Database.Database;
 
@@ -57,18 +59,39 @@ function insertSettingIfMissing(key: string, value: string): void {
 function getSettingValue(key: string): string | null {
   return requireHost().getSettingValue(key);
 }
-function createSchema(): void { requireHost().createSchema(); }
-function createCloudSyncSchema(): void { requireHost().createCloudSyncSchema(); }
-function createTaxPackSchema(): void { requireHost().createTaxPackSchema(); }
-function createWhatsAppSchema(): void { requireHost().createWhatsAppSchema(); }
-function seedInstallDefaults(): void { requireHost().seedInstallDefaults(); }
-function seedCloudSyncDefaults(): void { requireHost().seedCloudSyncDefaults(); }
-function seedWhatsAppDefaults(): void { requireHost().seedWhatsAppDefaults(); }
-function loadInstallDefaults(): void { requireHost().loadInstallDefaults(); }
-function sha256Hex(value: string): string { return requireHost().sha256Hex(value); }
-function initializeJWTSecret(): void { requireHost().initializeJWTSecret?.(); }
-function migrateLegacyJWTSecret(): void { requireHost().migrateLegacyJWTSecret?.(); }
-
+function createSchema(): void {
+  requireHost().createSchema();
+}
+function createCloudSyncSchema(): void {
+  requireHost().createCloudSyncSchema();
+}
+function createTaxPackSchema(): void {
+  requireHost().createTaxPackSchema();
+}
+function createWhatsAppSchema(): void {
+  requireHost().createWhatsAppSchema();
+}
+function seedInstallDefaults(): void {
+  requireHost().seedInstallDefaults();
+}
+function seedCloudSyncDefaults(): void {
+  requireHost().seedCloudSyncDefaults();
+}
+function seedWhatsAppDefaults(): void {
+  requireHost().seedWhatsAppDefaults();
+}
+function loadInstallDefaults(): void {
+  requireHost().loadInstallDefaults();
+}
+function sha256Hex(value: string): string {
+  return requireHost().sha256Hex(value);
+}
+function initializeJWTSecret(): void {
+  requireHost().initializeJWTSecret?.();
+}
+function migrateLegacyJWTSecret(): void {
+  requireHost().migrateLegacyJWTSecret?.();
+}
 
 // ─── Migration registry ───────────────────────────────────────────────────────
 // Each entry runs exactly once, in order, wrapped in a transaction.
@@ -2481,7 +2504,14 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       `);
 
       const billCols = getColumns(db, 'bills');
-      for (const col of ['subtotal_cents', 'tax_amount_cents', 'discount_amount_cents', 'total_cents', 'paid_amount_cents', 'balance_cents']) {
+      for (const col of [
+        'subtotal_cents',
+        'tax_amount_cents',
+        'discount_amount_cents',
+        'total_cents',
+        'paid_amount_cents',
+        'balance_cents',
+      ]) {
         if (!billCols.includes(col)) {
           db.exec(`ALTER TABLE bills ADD COLUMN ${col} INTEGER`);
         }
@@ -2498,7 +2528,13 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       `);
 
       const itemCols = getColumns(db, 'order_items');
-      for (const col of ['unit_price_cents', 'subtotal_cents', 'tax_amount_cents', 'discount_amount_cents', 'total_cents']) {
+      for (const col of [
+        'unit_price_cents',
+        'subtotal_cents',
+        'tax_amount_cents',
+        'discount_amount_cents',
+        'total_cents',
+      ]) {
         if (!itemCols.includes(col)) {
           db.exec(`ALTER TABLE order_items ADD COLUMN ${col} INTEGER`);
         }
@@ -2514,5 +2550,41 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       `);
     },
   },
-];
+  {
+    version: 82,
+    name: 'r7_customer_crm_notes_and_segment_defaults',
+    up: () => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS customer_notes (
+          id TEXT PRIMARY KEY,
+          customer_id TEXT NOT NULL,
+          body TEXT NOT NULL,
+          created_by_user_id TEXT,
+          updated_by_user_id TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          deleted_at TEXT,
+          FOREIGN KEY (customer_id) REFERENCES customers(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_customer_notes_customer
+          ON customer_notes(customer_id, created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_customer_notes_active
+          ON customer_notes(customer_id) WHERE deleted_at IS NULL;
+      `);
 
+      // Centralized CRM segment thresholds (JSON). Explainable defaults — not hard-coded in UI.
+      insertSettingIfMissing(
+        'crm_segment_rules',
+        JSON.stringify({
+          new_max_orders: 1,
+          returning_min_orders: 2,
+          loyal_min_orders: 5,
+          frequent_min_orders: 8,
+          frequent_window_days: 90,
+          high_value_min_spend_cents: 100000,
+          inactive_days: 60,
+        }),
+      );
+    },
+  },
+];

@@ -9,9 +9,11 @@
 **Canonical strategy:** `STRATEGY.md` (pilot KPI unchanged).
 **Branding audit:** `docs/05-production/operavia-branding-normalization-audit.md`.
 
-Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v81**) + statically exported Next.js (`frontend/`).
+Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v82**) + statically exported Next.js (`frontend/`).
 
-**Foundation Phase 2 (2026-08-15):** COMPLETE — prefer-cents readers + dual-write writers; process-kill harness; Zod expansion; `any` main&lt;600 / orders&lt;50. Doc: `docs/05-production/foundation-priority-deepen-phase2.md`. **Ready for R7 authorization; do not auto-start R7.**
+**Foundation Phase 2 (2026-08-15):** COMPLETE — prefer-cents readers + dual-write writers; process-kill harness; Zod expansion; `any` main&lt;600 / orders&lt;50. Doc: `docs/05-production/foundation-priority-deepen-phase2.md`.
+
+**R7 Customer & CRM OS (2026-08-15):** COMPLETE — schema **v82** `customer_notes` + segment rules; Customer 360; deterministic segments; derived preferences; audited notes; loyalty integrated; metrics. Suite `npm run test:r7`. Doc: `docs/05-production/r7-customer-crm-os.md`. **Do not start R8.**
 
 **Canonical product plan:** `docs/00-product/capability-matrix.md` (Existing / Hardening / Planned / Later / Frozen, 2026-08-14).  
 **Complete Restaurant OS (R0):** `docs/00-product/restaurant-os-blueprint.md` · `restaurant-os-roadmap.md` (R0–R16). Docs only until R1+ authorized.  
