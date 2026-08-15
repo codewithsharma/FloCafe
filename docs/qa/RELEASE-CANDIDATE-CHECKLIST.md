@@ -36,11 +36,12 @@
 
 - [x] Production build — **PASS**
 - [x] Electron package (`npm run pack` → `--dir`) — **PASS** (unsigned)
-- [ ] Signed build — **REQUIRES SIGNING CREDENTIALS**
-- [ ] Notarized build — **REQUIRES SIGNING CREDENTIALS**
+- [ ] Signed build — **REQUIRES SIGNING CREDENTIALS** (local keychain: 0 identities; `CSC_*` ABSENT — see `FINAL-SIGNED-RC-REPORT.md`)
+- [ ] Notarized build — **REQUIRES SIGNING CREDENTIALS** (`APPLE_API_*` ABSENT; not attempted)
 - [x] Version verification (Info.plist / asar / root package = 3.0.5) — **PASS**
 - [ ] Clean-machine installation — **NOT TESTED**
 - [ ] Note: `frontend/package.json` still **0.1.0** (metadata drift; not silently bumped)
+- [x] Signing environment inspected 2026-08-15 — **READY FOR SIGNING — CREDENTIALS NOT AVAILABLE**
 
 ### Operations
 
