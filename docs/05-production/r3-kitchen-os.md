@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-15  
 **Status:** COMPLETE  
-**Schema:** v77 (`order_items.preparing_started_at|ready_at|served_at`, `orders.kitchen_priority`)  
+**Schema:** v80 (`order_items.preparing_started_at|ready_at|served_at`, `orders.kitchen_priority`)  
 **Baseline:** R2 `c7137b9` on `restaurant-vertical`  
 **Suite:** `npm run test:r3` (S-KDS-01…10 + priority)
 

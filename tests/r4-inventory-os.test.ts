@@ -73,13 +73,13 @@ function stockHeaders(authHeader: Record<string, string>, key: string) {
 
 async function main() {
   console.log('\nR4 — Inventory OS deepen\n' + '='.repeat(60));
-  assertEqual(getSupportedSchemaVersion(), 80, 'schema version is 80');
+  assertEqual(getSupportedSchemaVersion(), 81, 'schema version is 81');
 
   const db = initTestDb();
   assertEqual(
     Number(db.pragma('user_version', { simple: true })),
-    80,
-    'fresh DB at user_version 80',
+    81,
+    'fresh DB at user_version 81',
   );
 
   const cols = db.prepare('PRAGMA table_info(products)').all() as { name: string }[];
@@ -301,10 +301,12 @@ async function main() {
     assertEqual(list.status, 200, 'list counts 200');
     assert(list.data.counts.length >= 2, 'list has counts');
 
-    // CHECK still unchanged
+    // CHECK still unchanged (registry lives in database/migrations + createSchema)
     const dbTs = fs.readFileSync(path.join(__dirname, '../main/db.ts'), 'utf8');
+    const migTs = fs.readFileSync(path.join(__dirname, '../main/database/migrations.ts'), 'utf8');
     assert(
-      dbTs.includes("CHECK (movement_type IN ('sale', 'cancel_restore', 'adjustment'))"),
+      dbTs.includes("CHECK (movement_type IN ('sale', 'cancel_restore', 'adjustment'))") ||
+        migTs.includes("CHECK (movement_type IN ('sale', 'cancel_restore', 'adjustment'))"),
       'movement_type CHECK unchanged',
     );
 

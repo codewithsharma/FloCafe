@@ -88,7 +88,12 @@ async function main() {
 
     // Soft-gate presence (companion to restaurant-isolation source contract).
     console.log('\n3. Soft-gate markers present in orders.ts');
-    const ordersSrc = fs.readFileSync(path.join(__dirname, '../main/routes/orders.ts'), 'utf8');
+    const ordersSrc = [
+    fs.readFileSync(path.join(__dirname, '../main/routes/orders.ts'), 'utf8'),
+    ...['create','items','status','cancel'].map((f) =>
+      fs.readFileSync(path.join(__dirname, '../main/routes/orders', f + '.ts'), 'utf8'),
+    ),
+  ].join('\n');
     assert(/isModuleEnabled\(\s*['"]tables['"]\s*\)/.test(ordersSrc), 'tables soft-gate present');
     assert(/isModuleEnabled\(\s*['"]kds['"]\s*\)/.test(ordersSrc), 'kds soft-gate present');
 

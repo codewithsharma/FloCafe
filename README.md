@@ -136,7 +136,7 @@ Operavia will remain local-first and free. Current work focuses on café pilot r
 
 The database and backups live in the operating system's user-data directory, separate from the installed application. Updating or reinstalling through the same distribution channel does not remove them.
 
-Before a pending migration runs, Operavia creates a timestamped local backup. Migrations are additive and tracked with SQLite's `user_version` pragma (current schema **v80**). Use Settings → Database Tools → Backup before moving to another computer or switching distribution channels.
+Before a pending migration runs, Operavia creates a timestamped local backup. Migrations are additive and tracked with SQLite's `user_version` pragma (current schema **v81**). Use Settings → Database Tools → Backup before moving to another computer or switching distribution channels.
 
 If the app cannot start, do not delete the database first. Restore the latest backup from Settings → Database Tools, then [open an issue](https://github.com/FreeOpenSourcePOS/FloCafe/issues) with the app version, operating system, and logs.
 

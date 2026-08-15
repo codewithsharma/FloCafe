@@ -21,6 +21,7 @@ import { assertOpenShiftForCashPayment, resolveActiveShiftForTerminal } from './
 import { DOMAIN_SPAN, withSpanSync } from '../lib/tracing';
 import { freeTableIfModule } from './tables';
 import type { BillSettlementRow, StoredPaymentLine } from './bill-settlement-types';
+import { toCents } from '../lib/money';
 
 export type { BillSettlementRow, StoredPaymentLine } from './bill-settlement-types';
 
@@ -94,13 +95,15 @@ export function paymentDetailsGrossCents(details: unknown): number {
     lines = [details];
   }
   return lines.reduce((sum: number, line: unknown) => {
-    const amount = Number(
+    const amount =
       line && typeof line === 'object' && 'amount' in line
         ? (line as StoredPaymentLine).amount
-        : undefined,
-    );
-    if (!Number.isFinite(amount)) return sum;
-    return sum + Math.round(amount * 100);
+        : undefined;
+    try {
+      return sum + toCents(amount ?? Number.NaN);
+    } catch {
+      return sum;
+    }
   }, 0);
 }
 
@@ -670,12 +673,14 @@ export function applyPaymentBatch(
       const previousPaymentStatus = String(bill.payment_status || 'unpaid');
       const previousPaidAmount = Number(bill.paid_amount || 0);
       db.prepare(
-        `UPDATE bills SET paid_amount = ?, balance = ?, payment_status = ?, payment_details = ?, paid_at = CASE WHEN ? = 'paid' THEN ? ELSE paid_at END, updated_at = ? WHERE id = ?`,
+        `UPDATE bills SET paid_amount = ?, balance = ?, payment_status = ?, payment_details = ?, paid_amount_cents = ?, balance_cents = ?, paid_at = CASE WHEN ? = 'paid' THEN ? ELSE paid_at END, updated_at = ? WHERE id = ?`,
       ).run(
         newPaidCents / 100,
         newBalanceCents / 100,
         paymentStatus,
         JSON.stringify(allPayments),
+        newPaidCents,
+        newBalanceCents,
         paymentStatus,
         paymentStatus === 'paid' ? changedAt : null,
         changedAt,

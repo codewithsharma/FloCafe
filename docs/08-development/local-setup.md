@@ -1,4 +1,4 @@
-<!-- Last verified against codebase: 2026-08-14, schema v79 -->
+<!-- Last verified against codebase: 2026-08-14, schema v80 -->
 
 # Local Setup
 

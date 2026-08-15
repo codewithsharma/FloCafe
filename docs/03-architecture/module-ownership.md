@@ -36,7 +36,7 @@ Practical ownership for future extraction. Implementations remain colocated in t
 - **Owns:** all application stock **writes** (sale, cancel restore, manual adjust, product create opening, product update stock), append-only `inventory_movements`, low-stock fragment, bounded history reads (`listInventoryMovements`, `GET /api/inventory/movements`).
 - **Does not own:** product metadata (name/price/category), sales/payments/orders, refund restock (intentionally none), Inventory UI (deferred).
 
-`products.stock_quantity` = current-state **read** cache; Inventory owns mutations. Ledger from schema v75 (no pre-migration backfill). Opening stock = `adjustment` + reason `opening` (no separate type).
+`products.stock_quantity` = current-state **read** cache; Inventory owns mutations. Ledger from schema v80 (no pre-migration backfill). Opening stock = `adjustment` + reason `opening` (no separate type).
 
 ## Product owns / does not own (tax — Phase 2.13)
 

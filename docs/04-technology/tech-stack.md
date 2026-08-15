@@ -59,7 +59,7 @@ All versions **VERIFIED** from `package.json` and `frontend/package.json` unless
 | Engine | SQLite 3 (via better-sqlite3) |
 | Mode | WAL (`journal_mode = WAL`) |
 | ORM | None — raw SQL |
-| Schema version | 79 |
+| Schema version | 80 |
 | Migration location | `main/db.ts` MIGRATIONS array |
 
 ## Build & packaging

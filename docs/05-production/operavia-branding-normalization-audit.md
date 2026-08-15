@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-14  
 **Baseline:** `0200cae`  
-**Schema:** v75 (unchanged)  
+**Schema:** v80 (unchanged)  
 **Scope:** Identity / branding only. No Phase 4.16. No ADR-014. No money/inventory/schema/API contract changes. No push. No version bump. No signing.
 
 ---

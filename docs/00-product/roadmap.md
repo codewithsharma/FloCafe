@@ -26,7 +26,7 @@ Priorities: **P0** production/pilot human gates · **P1** 🟡 Hardening · **P2
 
 Live café remains **NO-GO** until human gates: signed/notarized RC, OPS-01/OPS-02 site checklist, PIN escrow, backup policy, printer/KDS/restore drills, training/sign-off. OPS-02 audit: `docs/05-production/ops-02-live-pilot-rc-site-readiness.md`.
 
-Software bar: Restaurant **PILOT READY WITH CONDITIONS** (engineering). Schema **v79**. ADR-014 still **Proposed**. **R0 blueprint COMPLETE** — do not auto-start **R1**.
+Software bar: Restaurant **PILOT READY WITH CONDITIONS** (engineering). Schema **v80**. ADR-014 still **Proposed**. **R0 blueprint COMPLETE** — do not auto-start **R1**.
 
 Retail store pilot is **not** the current development target.
 ---

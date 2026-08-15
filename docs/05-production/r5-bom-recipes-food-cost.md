@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-15  
 **Status:** COMPLETE  
-**Schema:** v79 (`recipes`, `recipe_ingredients`, `recipe_consumptions`, `recipe_consumption_lines`)  
+**Schema:** v80 (`recipes`, `recipe_ingredients`, `recipe_consumptions`, `recipe_consumption_lines`)  
 **Baseline:** R4 `cbfb264` on `restaurant-vertical`  
 **Suite:** `npm run test:r5` (S-REC-01 … S-REC-12)
 

@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — Foundation priority deepen Phase 1 (Implemented)
+
+Closed audit-v3 open/partial foundation items without R7. Extracted `main/database/migrations.ts` (db.ts −~37%). Split orders into `main/routes/orders/*` concern modules. P0.3 **Phase 1** dual-write: schema **v81** additive `*_cents` on products/orders/order_items/bills + `main/lib/money.ts`; REAL retained. Categories Zod. P1.3 checklist closed via `test:r4.1`. Doc: `docs/05-production/foundation-priority-deepen.md`. **Do not start R7.**
+
 ## 2026-08-15 — R6 Purchasing & Supplier OS (Implemented)
 
 Authorized R6. Schema **v80**: suppliers, supplier_products, purchase_orders/lines, purchase_receipts/lines, purchase_receive_idempotency. Receiving uses Inventory `applyPurchaseReceiptStock` (`adjustment` + `purchase_receipt`). PO money = INTEGER cents; `products.cost` REAL updated on receive (P0.3 dependency). Over-receive 409; cancel never reverses stock; Idempotency-Key + CAS concurrency. RBAC owner/manager mutate, chef read. UI `/products/purchasing`. Suite `npm run test:r6`. Doc: `docs/05-production/r6-purchasing-supplier-os.md`. **Do not start R7.**

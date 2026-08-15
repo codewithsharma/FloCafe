@@ -46,9 +46,14 @@ async function main() {
 
   // ── 1. Source contract: orders.ts soft-gates tables + kds ─────────────
   console.log('\n1. Source contract: orders.ts uses isModuleEnabled for tables/kds');
-  const ordersSrc = fs.readFileSync(path.join(__dirname, '../main/routes/orders.ts'), 'utf8');
+  const ordersSrc = [
+    fs.readFileSync(path.join(__dirname, '../main/routes/orders.ts'), 'utf8'),
+    ...['create','items','status','cancel','discount','mutate','list'].map((f) =>
+      fs.readFileSync(path.join(__dirname, '../main/routes/orders', f + '.ts'), 'utf8'),
+    ),
+  ].join('\n');
   assert(
-    /import\s*\{[^}]*isModuleEnabled[^}]*\}\s*from\s*['"]\.\.\/modules['"]/.test(ordersSrc),
+    /import\s*\{[^}]*isModuleEnabled[^}]*\}\s*from\s*['"]\.\.\/(\.\.\/)?modules['"]/.test(ordersSrc),
     'orders.ts imports isModuleEnabled from modules',
   );
   assert(

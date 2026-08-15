@@ -7,7 +7,7 @@
 
 This report does **not** rewrite historical audits in `docs/15-project-management/`.
 
-> **Phase 2 status:** COMPLETE ([phase-2-final-exit-gate.md](phase-2-final-exit-gate.md) — PASS WITH DOCUMENTED DEFERMENTS). Schema **v79**. Registry exists. Order/Payment/POS seams + synthetic retail-test. Soft composition; fail-closed / packages / production Retail remain **Phase 3**.
+> **Phase 2 status:** COMPLETE ([phase-2-final-exit-gate.md](phase-2-final-exit-gate.md) — PASS WITH DOCUMENTED DEFERMENTS). Schema **v80**. Registry exists. Order/Payment/POS seams + synthetic retail-test. Soft composition; fail-closed / packages / production Retail remain **Phase 3**.
 
 ---
 

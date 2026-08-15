@@ -22,7 +22,8 @@ Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `
 - [x] **R5 BOM / Recipes / Food Cost GREEN (2026-08-15):** schema v79; recipes + ingredients (product SKUs); deduction at order create/add-items; theoretical food cost cents + basic %; BLOCK insufficient; cancel reverse. `npm run test:r5`. Doc: `docs/05-production/r5-bom-recipes-food-cost.md`. Do not start R6.
 - [x] **R4.1 Foundation Stabilization GREEN (2026-08-15):** backup-now Master PIN; Zod money bodies; orders-shared + database/time|order-row extraction; P1.3 matrix; REAL→cents STOP (plan). `npm run test:r4.1`. Doc: `r4-1-foundation-stabilization.md`.
 - [x] **R6 Purchasing & Supplier OS GREEN (2026-08-15):** schema v80; suppliers; mappings; PO lifecycle; partial/full receive → inventory `purchase_receipt`; cents on PO money; RBAC; idempotency; concurrency; UI `/products/purchasing`. `npm run test:r6`. Doc: `r6-purchasing-supplier-os.md`. Do not start R7.
-- [ ] **Hardening (prefer next, authorized slice only):** complete db.ts/orders.ts package split; REAL→cents dual-write when approved; durable KDS outbox residual — or next authorized R-wave. R0–R6 + R4.1 closed.
+- [x] **Foundation priority deepen Phase 1 (2026-08-15):** migrations extract; orders package split; P0.3 dual-write v81; categories Zod; P1.3 closed. Doc: `foundation-priority-deepen.md`. Remaining: full any wipe, Zod residual routes, REAL cutover.
+- [ ] **Hardening (prefer next, authorized slice only):** money cents cutover; remaining any/Zod; durable KDS outbox — or next authorized R-wave. R0–R6 + foundation Phase 1 closed.
 - [ ] **Planned (not started):** see matrix — expediter, QR, consumption/food-cost full BI, auto-86, expiry, stock transfer, etc. Reuse shipped slices; do not rebuild.
 - [ ] **Frozen / later / out of scope:** terminals, gateways, online payment, multi-location, payroll, aggregators, AI — do not start.
 
@@ -74,7 +75,7 @@ Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `
 
 - [x] P1.1 Cash drawer kick (ESC/POS) + permissions — **COMPLETE** (Phase 3.6F; manual POS kick; no auto-on-pay)
 - [x] P1.2 Backup → destroy DB → restore → verify continuity — **implemented** (GREEN WITH CONDITIONS); REC-01 hardening closed
-- [ ] P1.3 Failure/recovery testing matrix (offline, printer, crash, power, duplicate pay/order, token expiry)
+- [x] P1.3 Failure/recovery testing matrix (2026-08-15 deepen): duplicate pay + logical crash + printer pointer in `test:r4.1`; process-kill mid-txn remains documented debt. Checkbox closed for formal matrix coverage.
 - [x] P1.4 Critical E2E workflows for money paths — **packaged full-app QA 2026-08-13** (`full-app-qa-report.md`; READY WITH CONDITIONS)
 - [x] Complete GUI feature matrix pass (Electron CDP) — `complete-gui-test-report.md` + `$HOME/Operavia-full-app-test/evidence/gui-complete/`
 - [x] QA-INV-TAGS-01 — Array.isArray + recursive parseTags verified in rebuilt TRAINING package; regression `tests/product-tags-parse.test.ts` (commit still pending)

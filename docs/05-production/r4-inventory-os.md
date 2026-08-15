@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-15  
 **Status:** COMPLETE  
-**Schema:** v78 (`inventory_unit`, `stock_adjust_idempotency`, `inventory_counts` / `inventory_count_lines`)  
+**Schema:** v80 (`inventory_unit`, `stock_adjust_idempotency`, `inventory_counts` / `inventory_count_lines`)  
 **Baseline:** R3 `d62d21d` on `restaurant-vertical`  
 **Suite:** `npm run test:r4` (S-INV + units + reconstruct + counts)
 

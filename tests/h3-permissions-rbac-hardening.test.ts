@@ -98,7 +98,12 @@ async function main() {
 
   // ── Explicit requireRole wiring (source contracts) ────────────────────────
   console.log('\nH3-WIRE-01 explicit requireRole on sensitive mutations');
-  const ordersSrc = fs.readFileSync(path.join(ROOT, 'main/routes/orders.ts'), 'utf8');
+  const ordersSrc = [
+    fs.readFileSync(path.join(ROOT, 'main/routes/orders.ts'), 'utf8'),
+    ...['cancel','create','status','discount','items'].map((f) =>
+      fs.readFileSync(path.join(ROOT, 'main/routes/orders', f + '.ts'), 'utf8'),
+    ),
+  ].join('\n');
   const orderItemsSrc = fs.readFileSync(path.join(ROOT, 'main/routes/order-items.ts'), 'utf8');
   assert(
     /items\/:itemId\/cancel[\s\S]{0,120}requireRole\(/.test(ordersSrc) ||

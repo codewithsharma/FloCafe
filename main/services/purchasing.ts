@@ -680,8 +680,9 @@ export function receivePurchaseOrder(input: {
       // Catalog cost remains REAL until P0.3; store latest purchase as major units.
       const unitCostCents = Number(line.unit_cost_cents || 0);
       const catalogCost = unitCostCents / 100;
-      db.prepare(`UPDATE products SET cost = ?, updated_at = ? WHERE id = ?`).run(
+      db.prepare(`UPDATE products SET cost = ?, cost_cents = ?, updated_at = ? WHERE id = ?`).run(
         catalogCost,
+        unitCostCents,
         ts,
         product.id,
       );

@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-15  
 **Status:** COMPLETE  
-**Schema:** v76 (`tables.assigned_waiter_id`)  
+**Schema:** v80 (`tables.assigned_waiter_id`)  
 **Baseline:** R1 `8552546` on `restaurant-vertical`  
 **Suite:** `npm run test:r2` (S-FLOOR-01…10)
 

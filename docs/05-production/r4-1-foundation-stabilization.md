@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-15  
 **Status:** COMPLETE (with documented STOP on full REAL→cents persistence)  
-**Schema:** v79 (unchanged by this slice)  
+**Schema:** v80 (unchanged by this slice)  
 **Baseline HEAD before slice:** `a6ac124` (R5 already on branch)  
 **Suite:** `npm run test:r4.1`
 

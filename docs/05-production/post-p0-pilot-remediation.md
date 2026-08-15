@@ -3,7 +3,7 @@
 **Date:** 2026-08-14  
 **Branch:** `modular-verticles`  
 **HEAD at start:** `edc44d8` (`fix: close retail vertical isolation blockers`)  
-**Schema:** v79 (unchanged)  
+**Schema:** v80 (unchanged)  
 **Money path:** unchanged (payments, refunds, FIN-01, tax, day-close, shifts)  
 **Phase 4.16:** not created  
 **ADR-014:** still Proposed; not wired

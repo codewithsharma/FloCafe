@@ -1,4 +1,4 @@
-<!-- Last updated: 2026-08-15, schema v79 -->
+<!-- Last updated: 2026-08-15, schema v80 -->
 
 # OPS-02 — Site readiness checklist (live café)
 
@@ -16,7 +16,7 @@ Status: `PASS` · `FAIL` · `PENDING` · `N/A`
 - [ ] Signed/notarized PILOT/PRODUCTION artifact built from `24966ba` (or approved clean descendant)
 - [ ] Artifact path / URL recorded on [`pilot-signoff.md`](./pilot-signoff.md)
 - [ ] Codesign / notarization evidence attached (not adhoc)
-- [ ] App opens; schema **v79**; vertical Restaurant
+- [ ] App opens; schema **v80**; vertical Restaurant
 - [ ] **Not** using `npm run dev` or adhoc `Nexora.app` / TRAINING pack for live service
 
 ---

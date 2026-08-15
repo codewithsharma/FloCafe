@@ -1,6 +1,6 @@
 # Data Model — Current State
 
-Schema version **79**. Authoritative source: `main/db.ts`.
+Schema version **80**. Authoritative source: `main/db.ts`.
 
 ## Schema initialization
 

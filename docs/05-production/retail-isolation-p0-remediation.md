@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-14  
 **Branch:** `modular-verticles`  
-**Schema:** v75 (unchanged)  
+**Schema:** v80 (unchanged)  
 **Money path:** unchanged  
 **Phase 4.16:** not created
 

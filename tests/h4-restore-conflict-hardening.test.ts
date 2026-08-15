@@ -65,7 +65,12 @@ async function main() {
   // ── Source contracts ──────────────────────────────────────────────────────
   console.log('\nH4-WIRE-01 backup integrity + restore audit + cancel lock');
   const dbSrc = fs.readFileSync(path.join(ROOT, 'main/db.ts'), 'utf8');
-  const ordersSrc = fs.readFileSync(path.join(ROOT, 'main/routes/orders.ts'), 'utf8');
+  const ordersSrc = [
+    fs.readFileSync(path.join(ROOT, 'main/routes/orders.ts'), 'utf8'),
+    ...['cancel','status','create'].map((f) =>
+      fs.readFileSync(path.join(ROOT, 'main/routes/orders', f + '.ts'), 'utf8'),
+    ),
+  ].join('\n');
   const databaseRoute = fs.readFileSync(path.join(ROOT, 'main/routes/database.ts'), 'utf8');
   const ipcSrc = fs.readFileSync(path.join(ROOT, 'main/ipc.ts'), 'utf8');
   assert(dbSrc.includes("PRAGMA integrity_check") && dbSrc.includes('Backup integrity check failed'), 'createBackup verifies integrity');

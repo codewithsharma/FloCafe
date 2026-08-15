@@ -1,7 +1,7 @@
 # Operavia — Café Pilot Runbook
 
 **Audience:** Café owner / manager for a **controlled pilot**.  
-**Product:** Operavia Restaurant (café). Schema **v79**.  
+**Product:** Operavia Restaurant (café). Schema **v80**.  
 **Engineering baseline:** `24966ba7272aa4e0e6650796ec469a3cd60ed423` — matrix hardening **H1–H4** (void/discount/receipt · KDS offline · RBAC · restore/conflict). App **3.0.5**.  
 **OPS-01 package:** [`ops-01-pilot-configuration.md`](./ops-01-pilot-configuration.md) · [`../05-production/ops-01-pilot-release-operations-closure.md`](../05-production/ops-01-pilot-release-operations-closure.md) · [`../16-release/ops-01-pilot-release-checklist.md`](../16-release/ops-01-pilot-release-checklist.md).  
 **OPS-02 go-live:** [`ops-02-site-readiness-checklist.md`](./ops-02-site-readiness-checklist.md) · [`../05-production/ops-02-live-pilot-rc-site-readiness.md`](../05-production/ops-02-live-pilot-rc-site-readiness.md) — live service **NO-GO** until signed RC + site PASS.  

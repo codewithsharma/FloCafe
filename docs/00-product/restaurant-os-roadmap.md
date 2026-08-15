@@ -1,4 +1,4 @@
-<!-- Last updated: 2026-08-15, schema v79 -->
+<!-- Last updated: 2026-08-15, schema v80 -->
 
 # Operavia Restaurant OS — Roadmap (R0–R16)
 
@@ -84,7 +84,7 @@ Ingredient model (if not only SKU), unit conversion, stock count, spoilage, tran
 ## R4.1 — Foundation Stabilization
 
 **Status:** COMPLETE (2026-08-15) — [`docs/05-production/r4-1-foundation-stabilization.md`](../05-production/r4-1-foundation-stabilization.md).  
-**Suite:** `npm run test:r4.1`. Schema **v79** unchanged.
+**Suite:** `npm run test:r4.1`. Schema **v80** unchanged.
 
 Correctness/architecture/money-audit/validation/release-hygiene. Drive backup-now Master PIN; Zod money bodies; partial db/orders extraction; P1.3 matrix. Full REAL→cents **STOPPED** (dual-write plan required).
 
@@ -93,7 +93,7 @@ Correctness/architecture/money-audit/validation/release-hygiene. Drive backup-no
 ## R5 — Recipes / BOM / Food Cost
 
 **Status:** COMPLETE (2026-08-15) — depth closed per [`docs/05-production/r5-bom-recipes-food-cost.md`](../05-production/r5-bom-recipes-food-cost.md).  
-**Suite:** `npm run test:r5`. Schema **v79**.
+**Suite:** `npm run test:r5`. Schema **v80**.
 
 **Delivered:** recipes/BOM linked to menu products; ingredients = product SKUs; deduction at order create/add-items; theoretical food cost (integer cents) + basic food-cost %; cancel reverse; BLOCK on insufficient stock.
 

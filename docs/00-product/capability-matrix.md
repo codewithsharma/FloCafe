@@ -1,4 +1,4 @@
-<!-- Last updated: 2026-08-15, schema v79 -->
+<!-- Last updated: 2026-08-15, schema v80 -->
 
 # Operavia Restaurant — capability matrix
 
@@ -13,7 +13,7 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 
 **R0 note (2026-08-15):** Blueprint documents the complete Restaurant OS. **No row statuses were promoted** to Existing solely because of R0. H1–H4 remain Hardening depth where listed. Live pilot remains OPS-02 **NO-GO** until signed RC + site gates.
 
-**R5 note (2026-08-15):** BOM / Recipes / Food Cost shipped — schema **v79**. Suite `npm run test:r5`. Doc [`r5-bom-recipes-food-cost.md`](../05-production/r5-bom-recipes-food-cost.md). **R6 purchasing not started.**
+**R5 note (2026-08-15):** BOM / Recipes / Food Cost shipped — schema **v80**. Suite `npm run test:r5`. Doc [`r5-bom-recipes-food-cost.md`](../05-production/r5-bom-recipes-food-cost.md). **R6 purchasing not started.**
 ---
 
 ## Legend

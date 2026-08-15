@@ -3,7 +3,7 @@
 **Date:** 2026-08-14  
 **Branch:** `modular-verticles`  
 **HEAD:** `0200cae` — `fix: enforce H1 409, FIN-02 reporting, and chef cancel PIN`  
-**Schema:** v79  
+**Schema:** v80  
 **Scope:** Close/verify **pilot operations** gates only. No Phase 4.16. No feature development. ADR-014 remains Proposed.
 
 ---

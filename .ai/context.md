@@ -9,7 +9,7 @@
 **Canonical strategy:** `STRATEGY.md` (pilot KPI unchanged).
 **Branding audit:** `docs/05-production/operavia-branding-normalization-audit.md`.
 
-Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v80**) + statically exported Next.js (`frontend/`).
+Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v81**) + statically exported Next.js (`frontend/`).
 
 **Canonical product plan:** `docs/00-product/capability-matrix.md` (Existing / Hardening / Planned / Later / Frozen, 2026-08-14).  
 **Complete Restaurant OS (R0):** `docs/00-product/restaurant-os-blueprint.md` · `restaurant-os-roadmap.md` (R0–R16). Docs only until R1+ authorized.  
@@ -102,9 +102,11 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 **R6 (2026-08-15): CLOSED.** Purchasing & Supplier OS — `docs/05-production/r6-purchasing-supplier-os.md`. Schema **v80**. Suppliers, PO lifecycle, partial/full receive → inventory `purchase_receipt`, cents on PO money, UI `/products/purchasing`. Suite `npm run test:r6`. Do not start R7 without authorization.
 
+**Foundation deepen (2026-08-15): CLOSED Phase 1.** `docs/05-production/foundation-priority-deepen.md`. Migrations extracted; orders package split; P0.3 dual-write v81; categories Zod; P1.3 checkbox closed. Do not start R7 until remaining any/Zod debt accepted or further authorized.
+
 Do not invent 4.16. Do not push.
 
 - **Human/RELEASE + OPS:** signed RC + `ops-02-site-readiness-checklist.md` + `pilot-signoff.md`.
-- **Next software (if authorized):** **R7 CRM** or Hardening — only with explicit authorization. Do not start R7.
-- ADR-014 Proposed. Schema v80. Engineering baseline includes R1–R6 on `restaurant-vertical`.
+- **Next software (if authorized):** further money cutover / any reduction / Zod — or **R7 CRM** only with explicit authorization.
+- ADR-014 Proposed. Schema v81. Engineering baseline includes R1–R6 + foundation deepen on `restaurant-vertical`.
 - Test debt: `security-hardening.test.ts` isolation only (not live blocker).

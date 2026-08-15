@@ -2,7 +2,7 @@
 
 ## Document status
 
-- **Operavia CURRENT STATE:** v3.0.5 (verified `package.json`); schema **v79**
+- **Operavia CURRENT STATE:** v3.0.5 (verified `package.json`); schema **v80**
 - **TARGET STATE:** Modular platform depth after pilots — see `vision.md`, `capability-matrix.md`, `roadmap.md`, `STRATEGY.md`
 
 ## Executive summary

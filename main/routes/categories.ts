@@ -1,6 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { getDatabase, now, generateShortId } from '../db';
 import { requireRole } from '../middleware/security';
+import { validateBody } from '../middleware/validate';
+import {
+  categoryCreateBodySchema,
+  categoryUpdateBodySchema,
+} from '../validation/categories';
 
 const router = Router();
 
@@ -56,7 +61,7 @@ router.get('/:id', (req: Request, res: Response) => {
   }
 });
 
-router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+router.post('/', requireRole('owner', 'manager'), validateBody(categoryCreateBodySchema), (req: Request, res: Response) => {
   try {
     const { name, description, parent_id, sort_order, is_active, color, icon } = req.body;
 
@@ -81,7 +86,7 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
   }
 });
 
-router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+router.put('/:id', requireRole('owner', 'manager'), validateBody(categoryUpdateBodySchema), (req: Request, res: Response) => {
   try {
     const { name, description, parent_id, sort_order, is_active, color, icon } = req.body;
     const db = getDatabase();
