@@ -39,6 +39,7 @@ const {
   upsertSettings,
   businessDateInTimezone,
   localDayBoundsUtc,
+  getSupportedSchemaVersion,
 } = require('../main/db');
 const {
   DayCloseServiceError,
@@ -203,7 +204,8 @@ async function main(): Promise<void> {
   const db = getDatabase();
 
   // 1. Fresh install reaches latest schema with day_closes
-  assert.equal(db.pragma('user_version', { simple: true }), 83);
+  const tip = getSupportedSchemaVersion() as number;
+  assert.equal(db.pragma('user_version', { simple: true }), tip);
   assert.ok(
     db.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'day_closes'`).get(),
     'day_closes table exists',
@@ -212,7 +214,7 @@ async function main(): Promise<void> {
   for (const col of ['id', 'business_date', 'closed_by_user_id', 'summary_json', 'created_at']) {
     assert.ok(cols.includes(col), `day_closes.${col}`);
   }
-  console.log('   ✓ migration reaches tip schema; user_version 83');
+  console.log(`   ✓ migration reaches tip schema; user_version ${tip}`);
 
   // Timezone helpers
   {

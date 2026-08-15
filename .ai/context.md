@@ -45,7 +45,7 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 **Code evidence:** `docs/00-product/feature-list.md`.
 **Active development vertical:** Restaurant only (Retail deferred).
 
-**Exhaustive QA audit (2026-08-15):** Pack at `docs/qa/`. Live GUI: **PASS WITH CONDITIONS** — GUI-0001…0006 closed (`FINAL-FULL-COVERAGE.md`, `FINAL-RBAC-RETEST.md`). Residual: offline depth, Electron shell, printer HW, destructive restore/day-close. Live Go-Live **NO-GO** (R16/OPS-02).
+**Exhaustive QA audit (2026-08-15):** Pack at `docs/qa/`. Live GUI + RBAC + RC: PASS WITH CONDITIONS. Production readiness: **CONDITIONAL GO**. Final release hardening: **CONDITIONAL GO** (`docs/qa/FINAL-RELEASE-HARDENING-AUDIT.md`) — P1-06 unopenable DB fail-closed; OPS-02 drill checklist; RC checklist. Live café still blocked on signed/notarized RC + OPS-02 + Master-PIN DR + security residual acceptance + sign-off. Residual eng: JWT/CSP Phase C, REAL dual-write.
 
 ## Stage
 

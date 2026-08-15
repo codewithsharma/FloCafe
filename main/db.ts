@@ -28,17 +28,22 @@ export { MIGRATIONS };
 let db: Database.Database;
 let dbHealthError: string | null = null;
 
-/** Typed fail-closed condition when an existing install is missing its operational DB (REC-01). */
+/** Typed fail-closed condition when an existing install cannot use its operational DB (REC-01 / P1-06). */
 export class DatabaseRecoveryRequiredError extends Error {
   readonly code = 'DATABASE_RECOVERY_REQUIRED';
-  readonly reason: 'missing_database' | 'empty_database';
+  readonly reason: 'missing_database' | 'empty_database' | 'corrupt_database';
 
-  constructor(reason: 'missing_database' | 'empty_database', message?: string) {
+  constructor(
+    reason: 'missing_database' | 'empty_database' | 'corrupt_database',
+    message?: string,
+  ) {
     super(
       message ||
         (reason === 'missing_database'
           ? 'Operational database is missing — restore required'
-          : 'Operational database is empty for an initialized installation — restore required'),
+          : reason === 'empty_database'
+            ? 'Operational database is empty for an initialized installation — restore required'
+            : 'Operational database could not be opened — restore required'),
     );
     this.name = 'DatabaseRecoveryRequiredError';
     this.reason = reason;
@@ -621,7 +626,19 @@ export function initDatabase(
 
   console.log(`[DB] Opening database at: ${dbPath}`);
   dbHealthError = null;
-  db = new Database(dbPath);
+  // P1-06: hard-unopenable files never reach R14 integrity (which requires a successful open).
+  // Latch recovery instead of crashing the process with an uncaught better-sqlite3 error.
+  try {
+    db = new Database(dbPath);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error('[DB] P1-06: failed to open database:', detail);
+    setRecoveryRequired('corrupt_database');
+    throw new DatabaseRecoveryRequiredError(
+      'corrupt_database',
+      'Operational database could not be opened — restore required',
+    );
+  }
   db.pragma('journal_mode = WAL');
   db.pragma('synchronous = NORMAL');
   db.pragma('busy_timeout = 5000');
