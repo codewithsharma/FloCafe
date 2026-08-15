@@ -69,11 +69,11 @@ export function useTaxPreview(
     discountValue: discount?.value,
   });
   if (
-    items !== syncedRequest.items
-    || customerId !== syncedRequest.customerId
-    || packagingCharge !== syncedRequest.packagingCharge
-    || discount?.type !== syncedRequest.discountType
-    || discount?.value !== syncedRequest.discountValue
+    items !== syncedRequest.items ||
+    customerId !== syncedRequest.customerId ||
+    packagingCharge !== syncedRequest.packagingCharge ||
+    discount?.type !== syncedRequest.discountType ||
+    discount?.value !== syncedRequest.discountValue
   ) {
     setSyncedRequest({
       items,
@@ -112,7 +112,10 @@ export function useTaxPreview(
           items: items.map((item) => ({
             product_id: item.product.id,
             quantity: item.quantity,
-            addons: item.addons.map((a) => ({ price: Number(a.price), quantity: Number(a.quantity) || 1 })),
+            addons: item.addons.map((a) => ({
+              price: Number(a.price),
+              quantity: Number(a.quantity) || 1,
+            })),
             discount_amount: 0,
           })),
           customer_id: customerId || null,
@@ -127,7 +130,13 @@ export function useTaxPreview(
 
         setTax(data.summary);
       } catch (err: unknown) {
-        if (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError')) {
+        const maybeAxios = err as { code?: string; name?: string };
+        if (
+          maybeAxios?.code === 'ERR_CANCELED' ||
+          maybeAxios?.name === 'CanceledError' ||
+          maybeAxios?.name === 'AbortError' ||
+          (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))
+        ) {
           return; // Silently ignore aborted requests
         }
         console.error('[useTaxPreview] Error:', err);

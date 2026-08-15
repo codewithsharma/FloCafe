@@ -1,4 +1,5 @@
 'use client';
+import { getLandingPageForRole } from '@/lib/rbac';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -49,7 +50,7 @@ export default function StaffDetailPage() {
 
   useEffect(() => {
     if (role !== 'owner' && role !== 'manager') {
-      router.replace('/pos');
+      router.replace(getLandingPageForRole(currentTenant?.role));
       return;
     }
     if (!id) {

@@ -23,6 +23,7 @@ import { PAYMENT_METHODS, type CustomPaymentMethod } from '@/lib/payment-methods
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useAuthStore } from '@/store/auth';
 import { canApplyOrderDiscount } from '@/lib/rbac';
+import { canConfirmPrepaidPayment, prepaidConfirmLabelAmount } from '@/lib/prepaid-payable';
 
 interface LoyaltySettings {
   loyalty_enabled: boolean;
@@ -95,12 +96,11 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
           : Math.max(0, rawValue),
     };
   }, [discountType, discountValue]);
-  const { tax, loading: taxLoading } = useTaxPreview(
-    cart.items,
-    cart.customerId,
-    undefined,
-    previewDiscount,
-  );
+  const {
+    tax,
+    loading: taxLoading,
+    error: taxError,
+  } = useTaxPreview(cart.items, cart.customerId, undefined, previewDiscount);
 
   const [payments, setPayments] = useState<Payment[]>(
     PAYMENT_METHODS.map((method) => ({ method: method.key, amount: '' })),
@@ -181,17 +181,28 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
     };
   }, [tax]);
 
-  const remaining = preview?.total ?? 0;
+  const cartSubtotal = cart.subtotal();
+  const remaining = preview?.total ?? null;
+  const payableState = {
+    cartSubtotal,
+    previewTotal: remaining,
+    taxLoading,
+    taxError,
+  };
+  const confirmLabelAmount = prepaidConfirmLabelAmount(payableState);
+  const canConfirmPayable = canConfirmPrepaidPayment(payableState);
+  /** Numeric remaining for payment math — 0 only when confirm is blocked separately. */
+  const remainingAmount = remaining ?? 0;
 
   // Auto-fill payment splits to match the net payable amount, but only until the cashier
   // manually edits an amount — after that, discount/wallet edits must not silently rewrite
   // amounts they've already typed in. Read directly during render (same pattern as above)
   // so we only react when the net total itself changes, not on every render.
-  const [syncedRemaining, setSyncedRemaining] = useState(remaining);
-  if (preview && !paymentsTouched && remaining !== syncedRemaining) {
-    setSyncedRemaining(remaining);
+  const [syncedRemaining, setSyncedRemaining] = useState(remainingAmount);
+  if (preview && canConfirmPayable && !paymentsTouched && remainingAmount !== syncedRemaining) {
+    setSyncedRemaining(remainingAmount);
     const walletUsed = parseFloat(walletAmount) || 0;
-    const cashRemaining = Math.max(0, remaining - walletUsed);
+    const cashRemaining = Math.max(0, remainingAmount - walletUsed);
     const totalAllocated = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
     if (totalAllocated > 0) {
       setPayments(
@@ -218,7 +229,7 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
       (sum, payment, index) => (index === idx ? sum : sum + (parseFloat(payment.amount) || 0)),
       walletAmt,
     );
-    const due = Math.max(0, remaining - allocatedElsewhere);
+    const due = Math.max(0, remainingAmount - allocatedElsewhere);
     setPaymentsTouched(true);
     setPayments(
       payments.map((payment, index) =>
@@ -229,12 +240,15 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
 
   const hasCash = payments.some((p) => p.method === 'cash' && (parseFloat(p.amount) || 0) > 0);
   const change =
-    hasCash && totalPayment > remaining + 0.009
-      ? parseFloat((totalPayment - remaining).toFixed(2))
+    hasCash && totalPayment > remainingAmount + 0.009
+      ? parseFloat((totalPayment - remainingAmount).toFixed(2))
       : 0;
 
   const handleConfirm = () => {
-    if (!preview) return;
+    if (!canConfirmPayable || remaining === null || !preview) {
+      toast.error(taxError || t('pos.paymentFailed'));
+      return;
+    }
     const amountIsValid = (value: string) =>
       value.trim() === '' || /^\d+(?:\.\d{1,2})?$/.test(value.trim());
     if (
@@ -256,11 +270,11 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
       payments
         .filter((p) => p.method !== 'cash')
         .reduce((sum, p) => sum + (Number(p.amount) || 0), 0) + walletAmt;
-    if (nonCashTotal > remaining + 0.000001) {
+    if (nonCashTotal > remainingAmount + 0.000001) {
       toast.error(t('pos.paymentAboveBalance'));
       return;
     }
-    if (totalPayment < remaining - 0.01) {
+    if (totalPayment < remainingAmount - 0.01) {
       toast.error(t('pos.paymentBelowBalance'));
       return;
     }
@@ -328,10 +342,19 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
                 <p className="text-xs font-medium text-slate-400 uppercase tracking-widest">
                   {taxLoading ? t('pos.subtotal') : t('pos.totalDue')}
                 </p>
-                {taxLoading || !preview ? (
-                  <div className="h-10 w-32 bg-flo-surface/10 rounded animate-pulse mt-1" />
+                {taxLoading || confirmLabelAmount === null ? (
+                  <div className="mt-1">
+                    <div className="h-10 w-32 bg-flo-surface/10 rounded animate-pulse" />
+                    {!taxLoading && (taxError || cartSubtotal > 0) && (
+                      <p className="text-xs text-amber-300 mt-2">
+                        {taxError || t('pos.paymentFailed')}
+                      </p>
+                    )}
+                  </div>
                 ) : (
-                  <p className="text-4xl font-bold mt-1 tracking-tight">{currencyFmt(remaining)}</p>
+                  <p className="text-4xl font-bold mt-1 tracking-tight">
+                    {currencyFmt(confirmLabelAmount)}
+                  </p>
                 )}
                 <p className="text-xs text-slate-400 mt-1.5">
                   {t('pos.itemCount', { count: cart.itemCount() })}
@@ -585,7 +608,10 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
                       0,
                     );
                     const maxWallet = Math.floor(walletBalance / LOYALTY_REDEMPTION_RATE);
-                    const due = Math.min(maxWallet, Math.max(0, remaining - allocatedElsewhere));
+                    const due = Math.min(
+                      maxWallet,
+                      Math.max(0, remainingAmount - allocatedElsewhere),
+                    );
                     setWalletAmount(due > 0 ? due.toFixed(2) : '');
                   }}
                   className={`w-36 shrink-0 rounded-l-xl border px-3 flex items-center gap-2 text-sm font-semibold ${walletAmt > 0 ? 'bg-purple-600 text-white border-purple-600' : 'bg-purple-50 text-purple-800 border-purple-200 disabled:bg-flo-bg disabled:text-flo-text-muted disabled:border-flo-border'}`}
@@ -603,7 +629,7 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
                       const parsed = parseFloat(value);
                       const max = Math.min(
                         Math.floor(walletBalance / LOYALTY_REDEMPTION_RATE),
-                        remaining,
+                        remainingAmount,
                       );
                       setWalletAmount(
                         Number.isFinite(parsed) && parsed > max ? max.toFixed(2) : value,
@@ -614,7 +640,10 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
                     className="min-w-0 flex-1 px-2 py-2 text-right text-sm font-semibold outline-none rounded-r-xl disabled:bg-flo-bg"
                     step="0.01"
                     min="0"
-                    max={Math.min(Math.floor(walletBalance / LOYALTY_REDEMPTION_RATE), remaining)}
+                    max={Math.min(
+                      Math.floor(walletBalance / LOYALTY_REDEMPTION_RATE),
+                      remainingAmount,
+                    )}
                   />
                 </div>
               </div>
@@ -634,7 +663,7 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
         <div className="px-5 pb-6 pt-3 border-t border-flo-border">
           <Button
             onClick={handleConfirm}
-            disabled={processing || taxLoading || !preview || totalPayment < remaining - 0.01}
+            disabled={processing || !canConfirmPayable || totalPayment < remainingAmount - 0.01}
             className="w-full min-h-11 h-12 text-base font-semibold rounded-flo-lg bg-flo-brand-600 hover:bg-flo-brand-700"
             size="lg"
           >
@@ -642,7 +671,9 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
               ? t('pos.calculatingTax')
               : processing
                 ? t('pos.processingPayment')
-                : t('pos.confirmPaymentAmount', { amount: currencyFmt(remaining) })}
+                : confirmLabelAmount === null
+                  ? t('pos.paymentFailed')
+                  : t('pos.confirmPaymentAmount', { amount: currencyFmt(confirmLabelAmount) })}
           </Button>
         </div>
       </DialogContent>

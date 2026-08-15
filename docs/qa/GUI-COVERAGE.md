@@ -1,22 +1,23 @@
 # GUI Coverage Matrix — FloCafe / OPERAVIA
 
-**Session:** 2026-08-15 (frontend discovery inventory)  
+**Session:** 2026-08-15 (inventory + Playwright + live browse-MCP GUI)  
 **Scope:** `frontend/src/app` App Router screens, nav (`frontend/src/config/navigation.ts`), major interactive components, Playwright config.  
-**Method:** Static route/component inventory + later Playwright execution. **Exhaustive manual GUI walkthrough still NOT DONE.**
+**Method:** Static inventory + Playwright + **live Chromium GUI** (`docs/qa/evidence/gui/SESSION.md`). Button matrix / other roles still incomplete.
 
 ## Verdict (this session)
 
-| Metric                                          | Value                                  | Notes                                                                     |
-| ----------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------- |
-| App Router `page.tsx` routes inventoried        | **35 / 35 (100%)**                     | Full path list below                                                      |
-| Manual GUI exercised this session               | **0%**                                 | Button-by-button still `NOT TESTED`                                       |
-| Screens with flo-* component/static evidence    | **~20 / 35 (~57%)**                    | Source-file / token / structure asserts — **not** interactive browser GUI |
-| Playwright specs that exist                     | **3 files / 4 tests**                  | Under `frontend/e2e/`                                                     |
-| Playwright E2E executed this session            | **4 / 4 PASS (100% of written specs)** | Evidence: `docs/qa/evidence/playwright-e2e.log`                           |
-| True browser E2E coverage of screens (executed) | **~3 / 35 (~9%)**                      | KDS login, POS layout, prepaid checkout                                   |
-| Action-level live GUI verification (manual)     | **0%**                                 | Not completed                                                             |
+| Metric                                       | Value                                                     | Notes                                                     |
+| -------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------- |
+| App Router `page.tsx` routes inventoried     | **35 / 35 (100%)**                                        | Full path list below                                      |
+| Manual GUI (browse MCP, all 5 roles)         | **Owner deep + cashier/waiter/chef RBAC + prior manager** | `evidence/gui/full/SESSION-FULL.md`                       |
+| Screens with flo-* component/static evidence | **~20 / 35 (~57%)**                                       | Source asserts — not live GUI                             |
+| Playwright specs executed                    | **4 / 4 PASS**                                            | Prior run                                                 |
+| Live browser GUI critical path               | **PASS WITH CONDITIONS**                                  | KDS deeplink FAIL; checkout ฿0 FAIL; waiter/chef POS leak |
+| Role GUI coverage                            | **5 / 5 logged in**                                       | Full button matrix still incomplete                       |
+| Action-level exhaustive button matrix        | **Incomplete**                                            | Critical POS/KDS/RBAC only                                |
+| **Final GUI verdict**                        | **GUI QA COMPLETE — PASS WITH CONDITIONS**                | Conditions in SESSION-FULL.md                             |
 
-Honest read: Playwright proves a thin GUI slice. Do **not** treat flo-* static tests or inventory as full GUI verification.
+Honest read: Multi-role live GUI executed with screenshots. Exhaustive 217-button matrix, offline GUI, QR E2E, backup restore, and Electron native shell remain open conditions — do **not** claim unconditional PASS.
 
 ---
 

@@ -9,15 +9,15 @@
 
 ## Summary
 
-| Severity | Found                                   | Fixed this session      | Remaining |
-| -------- | --------------------------------------- | ----------------------- | --------- |
-| P0       | 0                                       | 0                       | 0         |
-| P1       | 1 (release gate / incomplete manual QA) | 0                       | 1         |
-| P2       | 2                                       | 2 (test infrastructure) | 0 product |
-| P3       | 2 (pre-existing residual risks)         | 0                       | 2         |
-| P4       | 0 new                                   | 0                       | 0         |
+| Severity | Found                                            | Fixed this session      | Remaining                |
+| -------- | ------------------------------------------------ | ----------------------- | ------------------------ |
+| P0       | 0                                                | 0                       | 0                        |
+| P1       | 3 (R16 gate + GUI checkout ฿0 + waiter/chef POS) | 0                       | 3                        |
+| P2       | 3 (2 test infra fixed + KDS deeplink)            | 2 (test infrastructure) | 1 product (KDS deeplink) |
+| P3       | 2 (pre-existing residual risks)                  | 0                       | 2                        |
+| P4       | 0 new                                            | 0                       | 0                        |
 
-No P0 product defects were reproduced in executed automated suites this session.
+No P0 product defects were reproduced in executed automated suites this session. Live GUI found **P1** money and RBAC defects (below).
 
 ---
 
@@ -52,6 +52,76 @@ No P0 product defects were reproduced in executed automated suites this session.
 | Root cause | Incorrect / brittle test string match (not product regression — `test:h2` already PASS)           |
 | Fix        | Assert `pendingRetriesRef` \|\| `flushPendingStatusRetry` \|\| `PendingStatusRetry`               |
 | Regression | `test:r3` 70/70 PASS; `test:h2` 34/34 PASS                                                        |
+
+---
+
+## Live GUI defects (2026-08-15 full GUI session)
+
+### GUI-0002 — Checkout Confirm Payment ฿0.00 (P1) — FIXED (2026-08-15 retest)
+
+| Field    | Value                                                                              |
+| -------- | ---------------------------------------------------------------------------------- |
+| Severity | P1                                                                                 |
+| Status   | **FIXED** — prepaid payable guards + tax preview fail-closed; GUI retest ฿64.20    |
+| Evidence | `docs/qa/evidence/gui/full/FINAL-RETEST.md`, `fix-retest-01-owner-checkout-64.png` |
+
+### GUI-0003 — Waiter/Chef can access POS UI (P1) — FIXED (2026-08-15 retest)
+
+| Field    | Value                                                                                    |
+| -------- | ---------------------------------------------------------------------------------------- |
+| Severity | P1                                                                                       |
+| Status   | **FIXED** — `canAccessPos` + AuthGuard/POS gate + role landing; chef order API still 403 |
+| Evidence | `fix-retest-03-waiter-pos-denied.png`, `fix-retest-04-chef-pos-denied.png`               |
+
+### QA-GUI-KDS-DEEPLINK-01 — Cannot GET /kds/ (P2) — FIXED (2026-08-15 retest)
+
+| Field    | Value                                              |
+| -------- | -------------------------------------------------- |
+| Severity | P2                                                 |
+| Status   | **FIXED** — SPA fallback no longer excludes `/kds` |
+| Evidence | `fix-retest-02-kds-deeplink-PASS.png`              |
+
+---
+
+## Live GUI defects (historical — superseded by FIXED entries above)
+
+### GUI-0002 — Checkout Confirm Payment ฿0.00 (P1) — OPEN
+
+| Field    | Value                                                        |
+| -------- | ------------------------------------------------------------ |
+| Severity | P1                                                           |
+| Module   | POS / payment                                                |
+| Role     | owner                                                        |
+| Steps    | Cart Items=1 Subtotal ฿60.00 → Place Order → Checkout dialog |
+| Expected | TOTAL DUE ฿64.20 (or clear error)                            |
+| Actual   | `Confirm Payment · ฿0.00` with blank TOTAL DUE               |
+| Evidence | `docs/qa/evidence/gui/full/11-owner-checkout-zero-FAIL.png`  |
+| Status   | OPEN — payment not confirmed                                 |
+
+### GUI-0003 — Waiter/Chef can access POS UI (P1) — OPEN
+
+| Field    | Value                                                                          |
+| -------- | ------------------------------------------------------------------------------ |
+| Severity | P1                                                                             |
+| Module   | AuthGuard / RBAC                                                               |
+| Role     | waiter, chef                                                                   |
+| Expected | POS hidden and unreachable (nav roles exclude POS)                             |
+| Actual   | Login lands on `/pos/` with full cart; unauthorized routes redirect to POS     |
+| Evidence | `docs/qa/evidence/gui/full/13-waiter-pos-access.png`, `14-chef-pos-access.png` |
+| Status   | OPEN                                                                           |
+
+### QA-GUI-KDS-DEEPLINK-01 — Cannot GET /kds/ (P2) — CONFIRMED OPEN
+
+| Field      | Value                                                               |
+| ---------- | ------------------------------------------------------------------- |
+| Severity   | P2                                                                  |
+| Module     | Express static / SPA (`main/server.ts`)                             |
+| Steps      | Hard navigate `GET /kds/`                                           |
+| Expected   | Kitchen Display SPA                                                 |
+| Actual     | `Cannot GET /kds/`                                                  |
+| Root cause | SPA fallback regex excludes `/kds` while static uses `index: false` |
+| Evidence   | `docs/qa/evidence/gui/full/06-owner-kds-deeplink-fail.png`          |
+| Status     | OPEN — sidebar client nav works                                     |
 
 ---
 
@@ -99,6 +169,22 @@ No P0 product defects were reproduced in executed automated suites this session.
 
 ---
 
-## Product defects from GUI/API exploratory
+## Product defects from GUI exploratory (browse MCP session 2026-08-15)
 
-**None newly confirmed** — manual button-by-button GUI for all roles was **NOT completed** this session. Do not infer absence of GUI defects.
+### QA-GUI-KDS-DEEPLINK-01 — Hard navigation to `/kds/` fails (P2) — OPEN
+
+| Field       | Value                                                                                           |
+| ----------- | ----------------------------------------------------------------------------------------------- |
+| Severity    | P2                                                                                              |
+| Module      | KDS / static route serving                                                                      |
+| Role        | manager (authenticated)                                                                         |
+| Environment | e2e-server on :3001, browse MCP Chromium                                                        |
+| Steps       | Login → sidebar Kitchen works → hard open/reload `http://localhost:3001/kds/`                   |
+| Expected    | Kitchen Display SPA                                                                             |
+| Actual      | `Cannot GET /kds/` (title Error)                                                                |
+| Evidence    | `docs/qa/evidence/gui/SESSION.md`; client-nav screenshot `06-kds.png`                           |
+| Root cause  | Suspected Express static SPA fallback gap for `/kds` ( `/orders/`, `/settings/` hard reload OK) |
+| Fix         | Not applied this session (needs product/serving fix + regression)                               |
+| Status      | OPEN                                                                                            |
+
+Manual button-by-button for **all** roles remains incomplete (manager only exercised).

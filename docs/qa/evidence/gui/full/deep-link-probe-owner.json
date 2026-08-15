@@ -1,0 +1,353 @@
+{
+  "kind": "deep-link-http-probe",
+  "disclaimer": "HTTP deep-link status only — NOT a GUI pass, NOT interaction coverage.",
+  "probedAt": "2026-08-15T08:41:52.435Z",
+  "role": "owner",
+  "email": "owner@flo.local",
+  "apiBase": "http://127.0.0.1:3001",
+  "appBase": "http://127.0.0.1:3001",
+  "kdsBase": "http://127.0.0.1:3002",
+  "login": {
+    "ok": true,
+    "status": 200,
+    "hasAccessToken": true,
+    "hasCookie": false,
+    "userRole": "owner"
+  },
+  "routeCount": 35,
+  "counts": {
+    "http2xx": 33,
+    "http3xx": 0,
+    "http4xx": 2,
+    "http5xx": 0,
+    "networkError": 0,
+    "containsCannotGet": 2,
+    "containsOperavia": 33
+  },
+  "routes": [
+    {
+      "url": "http://127.0.0.1:3001/",
+      "status": 200,
+      "redirect": null,
+      "ms": 3,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 14889
+    },
+    {
+      "url": "http://127.0.0.1:3001/dashboard/",
+      "status": 200,
+      "redirect": null,
+      "ms": 3,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 20499
+    },
+    {
+      "url": "http://127.0.0.1:3001/pos/",
+      "status": 200,
+      "redirect": null,
+      "ms": 3,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 21237
+    },
+    {
+      "url": "http://127.0.0.1:3001/tables/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 20772
+    },
+    {
+      "url": "http://127.0.0.1:3001/orders/",
+      "status": 200,
+      "redirect": null,
+      "ms": 3,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 21008
+    },
+    {
+      "url": "http://127.0.0.1:3001/kds/",
+      "status": 404,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": true,
+      "containsOperavia": false,
+      "bodyBytes": 143
+    },
+    {
+      "url": "http://127.0.0.1:3001/customers/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 20778
+    },
+    {
+      "url": "http://127.0.0.1:3001/customers/detail/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 21015
+    },
+    {
+      "url": "http://127.0.0.1:3001/products/",
+      "status": 200,
+      "redirect": null,
+      "ms": 3,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 20776
+    },
+    {
+      "url": "http://127.0.0.1:3001/addon-groups/",
+      "status": 200,
+      "redirect": null,
+      "ms": 3,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 20505
+    },
+    {
+      "url": "http://127.0.0.1:3001/products/low-stock/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 21019
+    },
+    {
+      "url": "http://127.0.0.1:3001/products/valuation/",
+      "status": 200,
+      "redirect": null,
+      "ms": 3,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 21019
+    },
+    {
+      "url": "http://127.0.0.1:3001/products/movements/",
+      "status": 200,
+      "redirect": null,
+      "ms": 3,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 21019
+    },
+    {
+      "url": "http://127.0.0.1:3001/products/counts/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 21013
+    },
+    {
+      "url": "http://127.0.0.1:3001/products/recipes/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 21015
+    },
+    {
+      "url": "http://127.0.0.1:3001/products/purchasing/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 21021
+    },
+    {
+      "url": "http://127.0.0.1:3001/reports/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 20495
+    },
+    {
+      "url": "http://127.0.0.1:3001/expenses/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 20497
+    },
+    {
+      "url": "http://127.0.0.1:3001/operations/",
+      "status": 200,
+      "redirect": null,
+      "ms": 1,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 20501
+    },
+    {
+      "url": "http://127.0.0.1:3001/audit/",
+      "status": 200,
+      "redirect": null,
+      "ms": 4,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 20491
+    },
+    {
+      "url": "http://127.0.0.1:3001/staff/",
+      "status": 200,
+      "redirect": null,
+      "ms": 3,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 20491
+    },
+    {
+      "url": "http://127.0.0.1:3001/staff/detail/",
+      "status": 200,
+      "redirect": null,
+      "ms": 1,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 21006
+    },
+    {
+      "url": "http://127.0.0.1:3001/settings/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 21248
+    },
+    {
+      "url": "http://127.0.0.1:3001/whatsapp/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 20776
+    },
+    {
+      "url": "http://127.0.0.1:3001/support/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 20495
+    },
+    {
+      "url": "http://127.0.0.1:3001/print-test/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 20780
+    },
+    {
+      "url": "http://127.0.0.1:3001/order-history-demo/",
+      "status": 200,
+      "redirect": null,
+      "ms": 3,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 20517
+    },
+    {
+      "url": "http://127.0.0.1:3001/auth/login/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 17730
+    },
+    {
+      "url": "http://127.0.0.1:3001/auth/register/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 17736
+    },
+    {
+      "url": "http://127.0.0.1:3001/auth/recover/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 17733
+    },
+    {
+      "url": "http://127.0.0.1:3001/setup/",
+      "status": 200,
+      "redirect": null,
+      "ms": 3,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 47011
+    },
+    {
+      "url": "http://127.0.0.1:3001/recovery/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 17493
+    },
+    {
+      "url": "http://127.0.0.1:3001/qr/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 16540
+    },
+    {
+      "url": "http://127.0.0.1:3001/kds-standalone/",
+      "status": 404,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": true,
+      "containsOperavia": false,
+      "bodyBytes": 154
+    },
+    {
+      "url": "http://127.0.0.1:3001/server-standalone/",
+      "status": 200,
+      "redirect": null,
+      "ms": 2,
+      "containsCannotGet": false,
+      "containsOperavia": true,
+      "bodyBytes": 17350
+    }
+  ],
+  "kdsStandaloneRoot": {
+    "url": "http://127.0.0.1:3002/",
+    "status": 302,
+    "redirect": "/kds-standalone",
+    "ms": 2,
+    "containsCannotGet": false,
+    "containsOperavia": false,
+    "bodyBytes": 44
+  }
+}

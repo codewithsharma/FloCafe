@@ -1,4 +1,5 @@
 'use client';
+import { getLandingPageForRole } from '@/lib/rbac';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -220,7 +221,7 @@ export default function ReportsPage() {
 
   useEffect(() => {
     if (currentTenant && !canView) {
-      router.replace('/pos');
+      router.replace(getLandingPageForRole(currentTenant?.role));
     }
   }, [currentTenant, canView, router]);
 

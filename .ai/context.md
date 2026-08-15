@@ -45,7 +45,7 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 **Code evidence:** `docs/00-product/feature-list.md`.
 **Active development vertical:** Restaurant only (Retail deferred).
 
-**Exhaustive QA audit (2026-08-15):** Pack at `docs/qa/` (inventory, RBAC, API, GUI, bugs, complete report). Targeted suites H1–H4 + R1–R15 + authz + Playwright **PASS** after correcting stale tip=83 asserts → **86**. Verdict: **QA INCOMPLETE** (manual GUI/button matrix/full role GUI/offline manual/full `npm test` not done). Engineering **GO WITH CONDITIONS**; live **NO-GO** (R16/OPS-02).
+**Exhaustive QA audit (2026-08-15):** Pack at `docs/qa/`. Live GUI: **PASS WITH CONDITIONS** — GUI-0001…0006 closed (`FINAL-FULL-COVERAGE.md`, `FINAL-RBAC-RETEST.md`). Residual: offline depth, Electron shell, printer HW, destructive restore/day-close. Live Go-Live **NO-GO** (R16/OPS-02).
 
 ## Stage
 

@@ -1,4 +1,5 @@
 'use client';
+import { getLandingPageForRole } from '@/lib/rbac';
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -35,13 +36,12 @@ export default function LowStockPage() {
   const [stockAdjustProduct, setStockAdjustProduct] = useState<Product | null>(null);
   const [stockAdjustAction, setStockAdjustAction] = useState<StockAdjustAction>('increase');
   const [stockAdjustQuantity, setStockAdjustQuantity] = useState('');
-  const [stockAdjustWastageReason, setStockAdjustWastageReason] =
-    useState<WastageReason>('OTHER');
+  const [stockAdjustWastageReason, setStockAdjustWastageReason] = useState<WastageReason>('OTHER');
   const [stockAdjusting, setStockAdjusting] = useState(false);
 
   useEffect(() => {
     if (!isOwnerOrManager) {
-      router.replace('/pos');
+      router.replace(getLandingPageForRole(currentTenant?.role));
     }
   }, [isOwnerOrManager, router]);
 
@@ -84,9 +84,7 @@ export default function LowStockPage() {
       const updated = await postProductStockAdjust(stockAdjustProduct.id, {
         action: stockAdjustAction,
         quantity,
-        ...(stockAdjustAction === 'wastage'
-          ? { wastage_reason: stockAdjustWastageReason }
-          : {}),
+        ...(stockAdjustAction === 'wastage' ? { wastage_reason: stockAdjustWastageReason } : {}),
       });
       toast.success(t('stockAdjust.success'));
       setStockAdjustProduct(null);

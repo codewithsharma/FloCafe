@@ -5,16 +5,20 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { MasterPinPrompt } from '@/components/settings/MasterPinPrompt';
 import { useI18n } from '@/hooks/useI18n';
+import { useAuthStore } from '@/store/auth';
+import { canAccessPos, getLandingPageForRole } from '@/lib/rbac';
 
 type PendingPinAction = 'backup' | 'restore' | null;
 
 export default function MenuActionHandler() {
   const { t } = useI18n();
   const router = useRouter();
+  const { currentTenant } = useAuthStore();
   const [pendingPinAction, setPendingPinAction] = useState<PendingPinAction>(null);
 
   async function runBackup(pin: string) {
-    if (!window.electronAPI?.backupDatabase) return { success: false, error: t('common.notAvailable') };
+    if (!window.electronAPI?.backupDatabase)
+      return { success: false, error: t('common.notAvailable') };
 
     toast.loading(t('backup.creating'), { id: 'backup' });
     try {
@@ -35,7 +39,8 @@ export default function MenuActionHandler() {
   }
 
   async function runRestore(pin: string) {
-    if (!window.electronAPI?.restoreBackup) return { success: false, error: t('common.notAvailable') };
+    if (!window.electronAPI?.restoreBackup)
+      return { success: false, error: t('common.notAvailable') };
 
     try {
       const result = await window.electronAPI.restoreBackup(pin);
@@ -81,7 +86,9 @@ export default function MenuActionHandler() {
       setPendingPinAction(action);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : t('common.notAvailable');
-      toast.error(t(action === 'backup' ? 'backup.failedWith' : 'restore.failedWith', { error: message }));
+      toast.error(
+        t(action === 'backup' ? 'backup.failedWith' : 'restore.failedWith', { error: message }),
+      );
     }
   }
 
@@ -93,10 +100,12 @@ export default function MenuActionHandler() {
 
       switch (action) {
         case 'new-order':
-          router.push('/pos');
-          break;
         case 'quick-search':
-          router.push('/pos');
+          if (canAccessPos(currentTenant?.role)) {
+            router.push('/pos');
+          } else {
+            router.push(getLandingPageForRole(currentTenant?.role));
+          }
           break;
         case 'view-orders':
           router.push('/orders');
@@ -133,15 +142,21 @@ export default function MenuActionHandler() {
       }
     });
 
-    return () => { unsubscribe?.(); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      unsubscribe?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   return (
     <MasterPinPrompt
       open={pendingPinAction !== null}
       mode="verify"
-      title={pendingPinAction === 'backup' ? t('settings.confirmBackupTitle') : t('settings.confirmRestoreTitle')}
+      title={
+        pendingPinAction === 'backup'
+          ? t('settings.confirmBackupTitle')
+          : t('settings.confirmRestoreTitle')
+      }
       description={t('settings.enterMasterPinPrompt')}
       onCancel={() => setPendingPinAction(null)}
       onSubmit={handlePinSubmit}

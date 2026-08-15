@@ -14,7 +14,7 @@
 
 ## 1. Executive Summary
 
-**QA status:** **QA INCOMPLETE — BLOCKED BY** incomplete manual GUI, full role GUI matrix, full offline manual drill, full `npm test` mega-suite, and signed RC / OPS-02.
+**QA status:** **QA INCOMPLETE — BLOCKED BY** exhaustive button matrix, offline GUI drill, full `npm test` mega-suite, and signed RC / OPS-02. **Live multi-role GUI** advanced 2026-08-15 → see `evidence/gui/full/SESSION-FULL.md` (**GUI QA COMPLETE — PASS WITH CONDITIONS**).
 
 **Overall result (split verdict):**
 
@@ -25,21 +25,21 @@
 
 **Why (one line):** Critical money / authz / offline-hardening / R-wave suites and thin Playwright GUI are green with evidence; exhaustive manual GUI, full role GUI deny paths, live offline drills, full default `npm test`, and Gate 1 (signed RC / OPS-02) are **not** done — therefore this is **not** COMPLETE QA and must not ship to a live café.
 
-| Metric                                              |                  Value |
-| --------------------------------------------------- | ---------------------: |
-| Features inventoried (Existing/Hardening)           |                    149 |
-| Feature coverage (automated critical-path estimate) |         ~62% (~93/149) |
-| Screens inventoried                                 |           35/35 (100%) |
-| Screens with live GUI executed                      |  ~9% (3/35 Playwright) |
-| Button/action live coverage                         |   ~0% — **NOT TESTED** |
-| Roles discovered                                    |             5/5 (100%) |
-| Role GUI walkthrough                                |    0% — **NOT TESTED** |
-| RBAC (API strong / GUI weak)                        |                   ~45% |
-| API critical-endpoint automated evidence            |                   ~55% |
-| P0 product bugs                                     |                      0 |
-| P1 remaining                                        | R16 / OPS-02 live gate |
-| Bugs fixed this session                             |         2 (test infra) |
-| Overall QA score                                    |           **62 / 100** |
+| Metric                                              |                                                                                               Value |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------: |
+| Features inventoried (Existing/Hardening)           |                                                                                                 149 |
+| Feature coverage (automated critical-path estimate) |                                                                                      ~62% (~93/149) |
+| Screens inventoried                                 |                                                                                        35/35 (100%) |
+| Screens with live GUI executed                      | Owner ~18 + prior manager ~12 + cashier/waiter/chef shells; see `evidence/gui/full/SESSION-FULL.md` |
+| Button/action live coverage                         |                       Critical POS/KDS/RBAC exercised — exhaustive 217-button matrix **NOT TESTED** |
+| Roles discovered                                    |                                                                                          5/5 (100%) |
+| Role GUI walkthrough                                |        **5/5 logged in via GUI**; owner deep + cashier/waiter/chef RBAC; manager prior + API verify |
+| RBAC (API strong / GUI weak)                        |                                                                                                ~45% |
+| API endpoint automated evidence                     |                                  **109/305 PASS (35.7%), 0 FAIL** after tip-fix (`API-COVERAGE.md`) |
+| P0 product bugs                                     |                                                                                                   0 |
+| P1 remaining                                        |                                                                              R16 / OPS-02 live gate |
+| Bugs fixed this session                             |                                                                                      2 (test infra) |
+| Overall QA score                                    |                                                                                        **62 / 100** |
 
 ---
 
@@ -73,22 +73,23 @@
 
 ## 4. Screen Coverage
 
-| Measure                              |                                    Value | Evidence                               |
-| ------------------------------------ | ---------------------------------------: | -------------------------------------- |
-| App Router `page.tsx` inventoried    |                       **35 / 35 (100%)** | [`GUI-COVERAGE.md`](./GUI-COVERAGE.md) |
-| Live GUI executed (Playwright)       |                        **~3 / 35 (~9%)** | KDS login, POS layout, prepaid (×2)    |
-| Exhaustive manual screen walkthrough |                      **0% — NOT TESTED** | —                                      |
-| flo-* static/component contracts     | ~20/35 (~57%) exist as **source** checks | **Not** interactive GUI                |
+| Measure                                          |                                    Value | Evidence                                                 |
+| ------------------------------------------------ | ---------------------------------------: | -------------------------------------------------------- |
+| App Router `page.tsx` inventoried                |                       **35 / 35 (100%)** | [`GUI-COVERAGE.md`](./GUI-COVERAGE.md)                   |
+| Live GUI executed (Playwright)                   |                        **~3 / 35 (~9%)** | KDS login, POS layout, prepaid (×2)                      |
+| Live GUI executed (browse MCP, manager)          |                      **~12 / 35 (~34%)** | POS→pay→Orders→KDS→…→Settings; `evidence/gui/SESSION.md` |
+| Exhaustive manual screen walkthrough (all roles) |                           **Incomplete** | Other roles / full button matrix remaining               |
+| flo-* static/component contracts                 | ~20/35 (~57%) exist as **source** checks | **Not** interactive GUI                                  |
 
 ---
 
 ## 5. Button/Action Coverage
 
-| Measure                                       |                                            Value |
-| --------------------------------------------- | -----------------------------------------------: |
-| Approximate interactive surface (static scan) | ~217 `<Button`, ~433 `onClick`, Settings 17 tabs |
-| Live button-by-button execution (all roles)   |                                          **~0%** |
-| Result                                        |                                   **NOT TESTED** |
+| Measure                                       |                                                                  Value |
+| --------------------------------------------- | ---------------------------------------------------------------------: |
+| Approximate interactive surface (static scan) |                       ~217 `<Button`, ~433 `onClick`, Settings 17 tabs |
+| Live button-by-button execution (all roles)   | **Partial** (POS cart/pay + KDS bump verified; exhaustive matrix open) |
+| Result                                        |                                          **Incomplete — NOT COMPLETE** |
 
 Rendering / static inventory is **not** action PASS. See [`GUI-COVERAGE.md`](./GUI-COVERAGE.md).
 
@@ -99,7 +100,7 @@ Rendering / static inventory is **not** action PASS. See [`GUI-COVERAGE.md`](./G
 | Role    | Discovered | API allow/deny exercised (automated) | GUI login + nav + deny walkthrough |
 | ------- | :--------: | :----------------------------------: | :--------------------------------: |
 | owner   |    Yes     |          Yes (authz suites)          |           **NOT TESTED**           |
-| manager |    Yes     |                 Yes                  |           **NOT TESTED**           |
+| manager |    Yes     |                 Yes                  |   **PASS** (browse MCP session)    |
 | cashier |    Yes     |                 Yes                  |           **NOT TESTED**           |
 | waiter  |    Yes     |                 Yes                  |           **NOT TESTED**           |
 | chef    |    Yes     |                 Yes                  |           **NOT TESTED**           |
@@ -108,7 +109,7 @@ Rendering / static inventory is **not** action PASS. See [`GUI-COVERAGE.md`](./G
 | ----------------- | -------------------------------------------------------------------------------------------------: |
 | Role discovery    |                                                                                   **5 / 5 (100%)** |
 | API role coverage | **100% of five roles** via `test:h3`, `test:authz-phase3`, `test:staff-authz`, `test:orders-authz` |
-| GUI role coverage |                                                                                             **0%** |
+| GUI role coverage |                                                                                    **1 / 5 (20%)** |
 
 Matrix: [`RBAC-MATRIX.md`](./RBAC-MATRIX.md).
 
@@ -291,13 +292,13 @@ Note: Early `API-COVERAGE.md` FAIL tallies for tables/inventory/CRM reflected **
 
 Summary from [`BUG-REPORT.md`](./BUG-REPORT.md):
 
-| Severity   | Found this session | Notes                                               |
-| ---------- | -----------------: | --------------------------------------------------- |
-| P0 product |              **0** | None reproduced in executed suites                  |
-| P1         |              **1** | R16 / OPS-02 live release gate                      |
-| P2         |              **2** | Test infra (schema tip; r3 symbol)                  |
-| P3         |     **2** residual | CSP/JWT residual; REAL→cents cutover (pre-existing) |
-| P4         |          **0** new | —                                                   |
+| Severity   | Found this session | Notes                                                    |
+| ---------- | -----------------: | -------------------------------------------------------- |
+| P0 product |              **0** | None reproduced in executed suites                       |
+| P1         |              **1** | R16 / OPS-02 live release gate                           |
+| P2         |              **3** | Tip/symbol infra (fixed) + QA-GUI-KDS-DEEPLINK-01 (open) |
+| P3         |     **2** residual | CSP/JWT residual; REAL→cents cutover (pre-existing)      |
+| P4         |          **0** new | —                                                        |
 
 Also noted (not bugs): backend lint warning debt (903); console noise during R2 isolation; full `npm test` not run.
 
@@ -316,11 +317,12 @@ Also noted (not bugs): backend lint warning debt (903); console noise during R2 
 
 ## 20. Remaining Bugs
 
-| ID                | Severity | Status                                                             |
-| ----------------- | -------- | ------------------------------------------------------------------ |
-| QA-REL-R16-01     | P1       | **OPEN** — signed RC / OPS-02 site drills pending → live **NO-GO** |
-| QA-SEC-CSP-JWT-01 | P3       | OPEN residual — fresh XSS PoC **NOT TESTED** this session          |
-| QA-MONEY-REAL-01  | P3       | OPEN — REAL→cents cutover **REQUIRES PRODUCT DECISION**            |
+| ID                     | Severity | Status                                                                       |
+| ---------------------- | -------- | ---------------------------------------------------------------------------- |
+| QA-REL-R16-01          | P1       | **OPEN** — signed RC / OPS-02 site drills pending → live **NO-GO**           |
+| QA-GUI-KDS-DEEPLINK-01 | P2       | **OPEN** — hard `GET /kds/` → `Cannot GET /kds/` (`evidence/gui/SESSION.md`) |
+| QA-SEC-CSP-JWT-01      | P3       | OPEN residual — fresh XSS PoC **NOT TESTED** this session                    |
+| QA-MONEY-REAL-01       | P3       | OPEN — REAL→cents cutover **REQUIRES PRODUCT DECISION**                      |
 
 No open automated-suite product failures after tip-fix regression.
 

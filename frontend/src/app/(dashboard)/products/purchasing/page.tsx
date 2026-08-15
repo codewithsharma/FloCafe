@@ -1,4 +1,5 @@
 'use client';
+import { getLandingPageForRole } from '@/lib/rbac';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -58,9 +59,7 @@ const inputClass =
   'w-full rounded-flo-md border border-flo-border bg-flo-surface px-3 py-2 text-flo-text text-sm';
 
 function apiError(err: unknown, fallback: string): string {
-  return (
-    (err as { response?: { data?: { error?: string } } })?.response?.data?.error || fallback
-  );
+  return (err as { response?: { data?: { error?: string } } })?.response?.data?.error || fallback;
 }
 
 export default function PurchasingPage() {
@@ -121,7 +120,7 @@ export default function PurchasingPage() {
 
   useEffect(() => {
     if (!isOwnerOrManager) {
-      router.replace('/pos');
+      router.replace(getLandingPageForRole(currentTenant?.role));
     }
   }, [isOwnerOrManager, router]);
 
@@ -141,10 +140,7 @@ export default function PurchasingPage() {
     [suppliers],
   );
 
-  const trackedProducts = useMemo(
-    () => products.filter((p) => p.track_inventory),
-    [products],
-  );
+  const trackedProducts = useMemo(() => products.filter((p) => p.track_inventory), [products]);
 
   const activeSuppliers = useMemo(
     () => suppliers.filter((s) => Number(s.is_active) === 1),
@@ -167,13 +163,10 @@ export default function PurchasingPage() {
     [poStatusFilter],
   );
 
-  const loadMappings = useCallback(
-    async (supplierId: string, signal?: AbortSignal) => {
-      const rows = await listSupplierProducts(supplierId, signal);
-      setMappings(rows);
-    },
-    [],
-  );
+  const loadMappings = useCallback(async (supplierId: string, signal?: AbortSignal) => {
+    const rows = await listSupplierProducts(supplierId, signal);
+    setMappings(rows);
+  }, []);
 
   const loadPoDetail = useCallback(
     async (poId: string, signal?: AbortSignal) => {
@@ -393,9 +386,7 @@ export default function PurchasingPage() {
     setBusy(true);
     try {
       await setPurchaseOrderStatus(selectedPoId, status);
-      toast.success(
-        status === 'ordered' ? t('purchasing.poOrdered') : t('purchasing.poCancelled'),
-      );
+      toast.success(status === 'ordered' ? t('purchasing.poOrdered') : t('purchasing.poCancelled'));
       await refreshOrders();
       await loadPoDetail(selectedPoId);
     } catch (err: unknown) {
@@ -428,11 +419,7 @@ export default function PurchasingPage() {
     }
     setBusy(true);
     try {
-      await receivePurchaseOrder(
-        selectedPoId,
-        { lines },
-        crypto.randomUUID(),
-      );
+      await receivePurchaseOrder(selectedPoId, { lines }, crypto.randomUUID());
       toast.success(t('purchasing.receiveSuccess'));
       setReceiveOpen(false);
       await refreshOrders();
@@ -477,8 +464,7 @@ export default function PurchasingPage() {
     return <LoadingState label={t('purchasing.title')} className="min-h-[16rem]" />;
   }
 
-  const canReceive =
-    poDetail?.status === 'ordered' || poDetail?.status === 'partially_received';
+  const canReceive = poDetail?.status === 'ordered' || poDetail?.status === 'partially_received';
   const canOrder = poDetail?.status === 'draft';
   const canCancel = poDetail?.status === 'draft' || poDetail?.status === 'ordered';
 
@@ -710,12 +696,9 @@ export default function PurchasingPage() {
                         }`}
                         onClick={() => setSelectedPoId(row.id)}
                       >
-                        <div className="font-medium">
-                          {row.po_number || row.id}
-                        </div>
+                        <div className="font-medium">{row.po_number || row.id}</div>
                         <div className="text-xs text-muted-foreground">
-                          {row.status} ·{' '}
-                          {row.supplier_name || supplierNameById(row.supplier_id)} ·{' '}
+                          {row.status} · {row.supplier_name || supplierNameById(row.supplier_id)} ·{' '}
                           {money(row.subtotal_cents)}
                         </div>
                       </button>
@@ -879,7 +862,8 @@ export default function PurchasingPage() {
                       {poLines.map((line) => (
                         <tr key={line.id} className="border-b border-flo-border/60">
                           <td className="p-2">
-                            {line.product_name || productName(line.product_id)} ({line.purchase_unit})
+                            {line.product_name || productName(line.product_id)} (
+                            {line.purchase_unit})
                           </td>
                           <td className="p-2 text-right">{line.ordered_qty}</td>
                           <td className="p-2 text-right">{line.received_qty}</td>

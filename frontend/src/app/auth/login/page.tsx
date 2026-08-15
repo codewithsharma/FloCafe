@@ -29,8 +29,8 @@ function LoginContent() {
 
   useEffect(() => {
     fetch('/api/auth/setup/status')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
         if (data?.recoveryRequired || data?.recovery_required) {
           router.replace('/recovery');
           return;
@@ -58,30 +58,39 @@ function LoginContent() {
     loadFromStorage();
   }, [loadFromStorage]);
 
-  const handleTenantSelect = useCallback(async (tenantId: number) => {
-    setLoading(true);
-    try {
-      await selectTenant(tenantId);
-    } catch {
-      toast.error(t('auth.selectBusinessFailed'));
-    } finally {
-      setLoading(false);
-    }
-  }, [selectTenant, t]);
+  const handleTenantSelect = useCallback(
+    async (tenantId: number) => {
+      setLoading(true);
+      try {
+        await selectTenant(tenantId);
+      } catch {
+        toast.error(t('auth.selectBusinessFailed'));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [selectTenant, t],
+  );
 
   const autoSelectAttempted = useRef(false);
 
   useEffect(() => {
     let active = true;
     if (user && currentTenant) {
-      router.push(getLandingPage());
+      router.push(getLandingPage(currentTenant.role));
     } else if (user && tenants.length === 1 && !autoSelectAttempted.current) {
       autoSelectAttempted.current = true;
       selectTenant(tenants[0].id)
-        .catch(() => { if (active) toast.error(t('auth.selectBusinessFailed')); })
-        .finally(() => { if (active) setLoading(false); });
+        .catch(() => {
+          if (active) toast.error(t('auth.selectBusinessFailed'));
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
     }
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [user, tenants, currentTenant, router, selectTenant, t]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -92,7 +101,12 @@ function LoginContent() {
       await login(email, password, rememberMe);
       toast.success(t('auth.signInSuccess'));
     } catch (err: unknown) {
-      const error = err as { response?: { status?: number; data?: { error?: string; attempts_remaining?: number; lockout_minutes?: number } } };
+      const error = err as {
+        response?: {
+          status?: number;
+          data?: { error?: string; attempts_remaining?: number; lockout_minutes?: number };
+        };
+      };
       const status = error.response?.status;
       const data = error.response?.data;
 
@@ -103,8 +117,9 @@ function LoginContent() {
           setLoginError(t('auth.lockedOut').replace('{minutes}', String(mins)));
         } else if (typeof remaining === 'number' && remaining < 4) {
           setLoginError(
-            t('auth.invalidCredentials') + ' ' +
-            t('auth.attemptsRemaining').replace('{count}', String(remaining))
+            t('auth.invalidCredentials') +
+              ' ' +
+              t('auth.attemptsRemaining').replace('{count}', String(remaining)),
           );
         } else {
           setLoginError(t('auth.invalidCredentials'));
@@ -121,14 +136,14 @@ function LoginContent() {
     }
   };
 
-  const shouldShowTenantSelect = !!(user && (tenants.length > 1 || searchParams.get('select_tenant') === 'true'));
+  const shouldShowTenantSelect = !!(
+    user &&
+    (tenants.length > 1 || searchParams.get('select_tenant') === 'true')
+  );
 
   if (shouldShowTenantSelect) {
     return (
-      <AuthShell
-        title={t('auth.selectBusiness')}
-        subtitle={t('auth.selectBusinessHint')}
-      >
+      <AuthShell title={t('auth.selectBusiness')} subtitle={t('auth.selectBusinessHint')}>
         <div className="space-y-3">
           {tenants.map((tenant) => (
             <button
@@ -138,9 +153,16 @@ function LoginContent() {
               disabled={loading}
               className="w-full rounded-flo-lg border border-flo-border bg-flo-surface p-4 text-left transition-colors hover:border-flo-brand-500 hover:bg-flo-brand-50/50 disabled:opacity-50 group"
             >
-              <div className="font-semibold text-flo-text group-hover:text-flo-brand-700">{tenant.business_name}</div>
+              <div className="font-semibold text-flo-text group-hover:text-flo-brand-700">
+                {tenant.business_name}
+              </div>
               <div className="text-sm text-flo-text-secondary mt-0.5">
-                {t(BUSINESS_TYPE_LABEL_KEYS[tenant.business_type ?? ''] ?? tenant.business_type ?? '')} &middot; {t(ROLE_LABEL_KEYS[tenant.role ?? ''] ?? tenant.role ?? '')}
+                {t(
+                  BUSINESS_TYPE_LABEL_KEYS[tenant.business_type ?? ''] ??
+                    tenant.business_type ??
+                    '',
+                )}{' '}
+                &middot; {t(ROLE_LABEL_KEYS[tenant.role ?? ''] ?? tenant.role ?? '')}
               </div>
             </button>
           ))}
@@ -163,12 +185,29 @@ function LoginContent() {
       <form onSubmit={handleLogin} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">{t('auth.email')}</Label>
-          <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('auth.emailPlaceholder')} required />
+          <Input
+            id="email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={t('auth.emailPlaceholder')}
+            required
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">{t('auth.password')}</Label>
           <div className="relative">
-            <Input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t('auth.passwordPlaceholder')} className="pr-10" required />
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={t('auth.passwordPlaceholder')}
+              className="pr-10"
+              required
+            />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
@@ -188,9 +227,7 @@ function LoginContent() {
           />
           {t('auth.rememberMe')}
         </label>
-        {loginError && (
-          <p className="text-sm text-flo-danger text-center">{loginError}</p>
-        )}
+        {loginError && <p className="text-sm text-flo-danger text-center">{loginError}</p>}
         <Button type="submit" disabled={loading} className="w-full" size="lg">
           {loading ? t('auth.signingIn') : t('auth.signIn')}
         </Button>

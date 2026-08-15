@@ -1,4 +1,5 @@
 'use client';
+import { getLandingPageForRole } from '@/lib/rbac';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -57,7 +58,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (currentTenant && !isOwner) {
-      router.replace('/pos');
+      router.replace(getLandingPageForRole(currentTenant?.role));
     }
   }, [currentTenant, isOwner, router]);
 

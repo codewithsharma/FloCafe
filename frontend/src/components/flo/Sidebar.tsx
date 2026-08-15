@@ -89,7 +89,7 @@ export default function FloSidebar() {
   const primaryItems = navItems.filter((i) => i.section === 'primary');
   const secondaryItems = navItems.filter((i) => i.section === 'secondary');
   const footerItems = navItems.filter((i) => i.section === 'footer');
-  const homeHref = getLandingPage();
+  const homeHref = getLandingPage(currentTenant?.role);
 
   useEffect(() => {
     const onOnline = () => setOnline(true);

@@ -948,6 +948,14 @@ export async function calculateTaxPreview(req: any, res: any): Promise<void> {
       }
     }
 
+    if (Array.isArray(items) && items.length > 0 && itemResults.length === 0) {
+      res.status(400).json({
+        error:
+          'No taxable products could be resolved for this cart. Cannot calculate payable total.',
+      });
+      return;
+    }
+
     const normalizeCharge = (value: unknown): number => {
       const parsed = Number(value);
       return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;

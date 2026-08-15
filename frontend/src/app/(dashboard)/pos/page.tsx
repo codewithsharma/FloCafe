@@ -46,6 +46,8 @@ import { placePostpaidOrder, placePrepaidOrder } from '@/lib/pos/checkout-coordi
 import { usePlatformComposition } from '@/hooks/usePlatformComposition';
 import { findProductByScanCode } from '@/lib/pos/product-search';
 import { canShowRestaurantEightySix, isProductInactive } from '@/lib/pos/eighty-six';
+import { canAccessPos, getLandingPageForRole } from '@/lib/rbac';
+import { useRouter } from 'next/navigation';
 
 const PREPAID_ATTEMPT_STORAGE_KEY = 'flo.prepaid.checkout.attempt';
 const POSTPAID_ATTEMPT_STORAGE_KEY = 'flo.postpaid.order.attempt';
@@ -70,7 +72,16 @@ interface PrepaidAttempt {
 
 export default function POSPage() {
   const { currentTenant, user } = useAuthStore();
-  const { data: composition } = usePlatformComposition(!!currentTenant);
+  const router = useRouter();
+  const canPos = canAccessPos(currentTenant?.role);
+
+  useEffect(() => {
+    if (currentTenant && !canPos) {
+      router.replace(getLandingPageForRole(currentTenant.role));
+    }
+  }, [currentTenant, canPos, router]);
+
+  const { data: composition } = usePlatformComposition(!!currentTenant && canPos);
   const verticalId = composition?.verticalId;
   const tablesModuleEnabled = isModuleEnabled('tables', verticalId);
   const addonsModuleEnabled = isModuleEnabled('addons', verticalId);
@@ -974,6 +985,10 @@ export default function POSPage() {
   };
 
   const itemCount = cart.itemCount();
+
+  if (currentTenant && !canPos) {
+    return null;
+  }
 
   return (
     <>

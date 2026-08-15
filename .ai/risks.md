@@ -6,6 +6,7 @@
 - ⚠️ RISK: **R12 void report** is audit-derived (not a second money ledger). Incomplete historical audits before H1/R1 audit coverage will under-count. Prefer CSV for full periods; UI shows first 25 rows.
 - ⚠️ RISK: **R10 guest QR** expands unauthenticated LAN surface to `/api/public/qr/*` (token-scoped). Mitigations: opaque tokens, rotate, inactive system user, no cost exposure, pay-at-counter only. Keep guest Wi‑Fi unsupported; use staff LAN / kiosk.
 - ⚠️ RISK: **R16 live Go-Live** remains **NO-GO** until signed/notarized RC + OPS-02 human/site gates — engineering completion of R-waves ≠ production PASS.
+- ⚠️ RISK: **Live GUI QA (2026-08-15)** — **PASS WITH CONDITIONS** (`FINAL-FULL-COVERAGE.md` + `FINAL-RBAC-RETEST.md`). GUI-0001…0006 closed (incl. GUI-0005 direct-URL RBAC + GUI-0006 chef Kitchen nav). Residual conditions: offline depth, Electron shell, printer HW, destructive restore/day-close.
 
 ## Production blockers (P0)
 

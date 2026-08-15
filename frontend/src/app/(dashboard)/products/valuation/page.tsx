@@ -1,4 +1,5 @@
 'use client';
+import { getLandingPageForRole } from '@/lib/rbac';
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -27,7 +28,7 @@ export default function InventoryValuationPage() {
 
   useEffect(() => {
     if (!isOwnerOrManager) {
-      router.replace('/pos');
+      router.replace(getLandingPageForRole(currentTenant?.role));
     }
   }, [isOwnerOrManager, router]);
 

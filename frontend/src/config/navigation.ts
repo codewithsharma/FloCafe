@@ -115,7 +115,8 @@ export const FLO_NAV_ITEMS: FloNavItem[] = [
     href: '/kds',
     labelKey: 'flo.nav.kitchen',
     icon: ChefHat,
-    roles: ['owner', 'manager'],
+    // GUI-0006: chef reaches KDS via the same kitchen nav item (not a duplicate board).
+    roles: ['owner', 'manager', 'chef'],
     // Capability gate is requiresModule=kds (+ kds_enabled flag); not business_type.
     businessTypes: null,
     section: 'primary',
@@ -237,6 +238,53 @@ export const FLO_NAV_ITEMS: FloNavItem[] = [
 
 export function getNavItemById(id: string): FloNavItem | undefined {
   return FLO_NAV_ITEMS.find((item) => item.id === id);
+}
+
+/** Map legacy/alias paths onto canonical app hrefs before role lookup. */
+const APP_PATH_ALIASES: Record<string, string> = {
+  '/inventory': '/products',
+  '/team': '/staff',
+  '/purchasing': '/products/purchasing',
+};
+
+/** Nested hubs without their own sidebar row inherit a parent nav item's roles. */
+const APP_PATH_ROLE_SOURCES: Array<{ prefix: string; sourceHref: string }> = [
+  { prefix: '/addon-groups', sourceHref: '/products' },
+];
+
+/**
+ * Roles allowed for an app path, derived from FLO_NAV_ITEMS (sidebar SoT).
+ * Returns null when the path is not nav-gated (auth/public/demo routes).
+ */
+export function getRolesForAppPath(pathname: string): FloNavRole[] | null {
+  let path = normalizePathname(pathname);
+  if (APP_PATH_ALIASES[path]) {
+    path = APP_PATH_ALIASES[path];
+  }
+
+  for (const extra of APP_PATH_ROLE_SOURCES) {
+    const prefix = normalizePathname(extra.prefix);
+    if (path === prefix || path.startsWith(`${prefix}/`)) {
+      const sourceHref = normalizePathname(extra.sourceHref);
+      const source = FLO_NAV_ITEMS.find(
+        (item) => normalizePathname(item.href.split('?')[0]) === sourceHref,
+      );
+      return source ? [...source.roles] : null;
+    }
+  }
+
+  let best: FloNavItem | null = null;
+  let bestLen = -1;
+  for (const item of FLO_NAV_ITEMS) {
+    const hrefPath = normalizePathname(item.href.split('?')[0]);
+    if (path === hrefPath || (hrefPath !== '/' && path.startsWith(`${hrefPath}/`))) {
+      if (hrefPath.length > bestLen) {
+        best = item;
+        bestLen = hrefPath.length;
+      }
+    }
+  }
+  return best ? [...best.roles] : null;
 }
 
 export function filterNavItems(ctx: NavFilterContext): FloNavItem[] {

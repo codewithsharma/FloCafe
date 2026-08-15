@@ -220,6 +220,13 @@ function rewriteNextExportPath(reqPath: string): string {
   return prefix + rewrittenName + extPart;
 }
 
+/**
+ * SPA HTML fallback for static export routes.
+ * Must NOT exclude /kds — WebSocket upgrade on /kds is separate from GET.
+ * /api stays excluded so API 404s are not replaced with index.html.
+ */
+export const SPA_FALLBACK_PATH = /^(?!\/api).*$/;
+
 /** Resolve a clean application route to its own Next.js static-export page. */
 export function resolveStaticPage(frontendDir: string, reqPath: string): string {
   const route = reqPath.replace(/^\/+|\/+$/g, '');
@@ -332,7 +339,8 @@ export function startServer(): Promise<void> {
       // Serve each Next.js static route's own index. Returning the root export
       // for /whatsapp (or any direct link/refresh) runs app/page.tsx and sends
       // the user to Dashboard instead of the requested page.
-      app.get(/^(?!\/api|\/kds).*$/, (req: Request, res: Response) => {
+      // /kds hard reload must hit this fallback (WS upgrade on /kds is separate).
+      app.get(SPA_FALLBACK_PATH, (req: Request, res: Response) => {
         res.sendFile(resolveStaticPage(frontendDir, req.path));
       });
     } else {

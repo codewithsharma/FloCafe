@@ -6,6 +6,8 @@
 **Method:** Static route inventory + **method+path** hits from suite sources that **ran this session**.  
 **Rule:** Do **not** invent PASS. `build` PASS ≠ endpoint PASS.
 
+> **Update (final evidence):** Initial r2–r9.5 FAIL tallies were stale schema-tip pins (expect 83, tip 86). After tip-fix + `SUMMARY-rerun2.txt`, those suites are **PASS**. Row results below were flipped from FAIL→PASS for those suite citations.
+
 ---
 
 ## Startup (local API)
@@ -50,11 +52,11 @@
 
 ### Session Result legend
 
-| Value                 | Meaning                                                                     |
-| --------------------- | --------------------------------------------------------------------------- |
-| **PASS (automated)**  | This **method+path** was exercised by ≥1 **PASS** suite (evidence after ·). |
-| **FAIL (regression)** | Hit only by **FAIL** suites r2–r9.5 (no green suite hit this method+path).  |
-| **NOT EXECUTED**      | No session suite HTTP hit for this method+path.                             |
+| Value                 | Meaning                                                                                                                                              |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **PASS (automated)**  | This **method+path** was exercised by ≥1 **PASS** suite (evidence after ·).                                                                          |
+| **FAIL (regression)** | Reserved for suites still red after final evidence. **None remaining** for r2–r9.5 after tip-fix reruns (`SUMMARY-rerun.txt`, `SUMMARY-rerun2.txt`). |
+| **NOT EXECUTED**      | No session suite HTTP hit for this method+path.                                                                                                      |
 
 ---
 
@@ -63,14 +65,16 @@
 | Metric                            |   Count | % of inventory |
 | --------------------------------- | ------: | -------------: |
 | Endpoints inventoried (HTTP + WS) | **305** |           100% |
-| PASS (automated)                  |  **51** |      **16.7%** |
-| FAIL (regression)                 |  **58** |      **19.0%** |
+| PASS (automated)                  | **109** |      **35.7%** |
+| FAIL (regression)                 |   **0** |       **0.0%** |
 | NOT EXECUTED                      | **196** |      **64.3%** |
 | Executed (PASS + FAIL)            | **109** |      **35.7%** |
 
-**Critical (Critical=Y):** 35 inventoried · PASS 13 · FAIL 2 · NOT EXECUTED 20
+**Critical (Critical=Y):** 35 inventoried · PASS 15 · FAIL 0 · NOT EXECUTED 20 (post tip-fix; former FAIL flipped)
 
 ### By module
+
+> **Superseded:** Module FAIL counts below were from the first r2–r9.5 tip-pin run. Final suite evidence is green; treat those FAIL cells as **PASS (automated)** for coverage math. Endpoint-level Session Result columns were flipped to PASS.
 
 | Module       | Total | PASS | FAIL | NOT EXECUTED |
 | ------------ | ----: | ---: | ---: | -----------: |
@@ -162,7 +166,7 @@ Companion KDS HTTP on **:3002** is separate (`main/kds-server.ts`). This matrix 
 | PATCH  | `/api/orders/:id/convert-to-takeaway`        | JWT  | owner, manager, cashier, waiter       | orders | N        | NOT EXECUTED                                         |
 | PATCH  | `/api/orders/:id/customer`                   | JWT  | owner, manager                        | orders | N        | NOT EXECUTED                                         |
 | PATCH  | `/api/orders/:id/discount`                   | JWT  | owner, manager                        | orders | N        | PASS (automated) · _h1, h3, r1_                      |
-| POST   | `/api/orders/:id/items`                      | JWT  | owner, manager, cashier, waiter       | orders | N        | FAIL (regression) · _r2_                             |
+| POST   | `/api/orders/:id/items`                      | JWT  | owner, manager, cashier, waiter       | orders | N        | PASS (automated) · _r2_ (final rerun after tip fix)  |
 | PATCH  | `/api/orders/:id/items/:itemId/discount`     | JWT  | owner, manager                        | orders | N        | PASS (automated) · _r1_                              |
 | PATCH  | `/api/orders/:id/status`                     | JWT  | owner, manager, cashier, chef, waiter | orders | N        | PASS (automated) · _h1, h4, r1, orders-authz_        |
 | PATCH  | `/api/orders/:orderId/items/:itemId/cancel`  | JWT  | owner, manager, cashier, waiter       | orders | Y        | PASS (automated) · _h1, h3, h4, authz, orders-authz_ |
@@ -234,38 +238,38 @@ Companion KDS HTTP on **:3002** is separate (`main/kds-server.ts`). This matrix 
 
 ### tables
 
-| Method | Path                            | Auth | Roles                           | Module | Critical | Session Result           |
-| ------ | ------------------------------- | ---- | ------------------------------- | ------ | -------- | ------------------------ |
-| GET    | `/api/tables`                   | JWT  | any authenticated               | tables | N        | NOT EXECUTED             |
-| POST   | `/api/tables`                   | JWT  | owner, manager                  | tables | N        | FAIL (regression) · _r2_ |
-| GET    | `/api/tables/:id`               | JWT  | any authenticated               | tables | N        | FAIL (regression) · _r2_ |
-| PUT    | `/api/tables/:id`               | JWT  | owner, manager                  | tables | N        | NOT EXECUTED             |
-| POST   | `/api/tables/:id/assign-waiter` | JWT  | owner, manager                  | tables | N        | FAIL (regression) · _r2_ |
-| POST   | `/api/tables/:id/deactivate`    | JWT  | owner, manager                  | tables | N        | NOT EXECUTED             |
-| POST   | `/api/tables/:id/merge`         | JWT  | owner, manager, cashier, waiter | tables | N        | FAIL (regression) · _r2_ |
-| POST   | `/api/tables/:id/move-order`    | JWT  | owner, manager, cashier, waiter | tables | N        | FAIL (regression) · _r2_ |
-| POST   | `/api/tables/:id/reactivate`    | JWT  | owner, manager                  | tables | N        | NOT EXECUTED             |
-| POST   | `/api/tables/:id/split`         | JWT  | owner, manager, cashier, waiter | tables | N        | FAIL (regression) · _r2_ |
-| PATCH  | `/api/tables/:id/status`        | JWT  | owner, manager                  | tables | N        | FAIL (regression) · _r2_ |
+| Method | Path                            | Auth | Roles                           | Module | Critical | Session Result                                      |
+| ------ | ------------------------------- | ---- | ------------------------------- | ------ | -------- | --------------------------------------------------- |
+| GET    | `/api/tables`                   | JWT  | any authenticated               | tables | N        | NOT EXECUTED                                        |
+| POST   | `/api/tables`                   | JWT  | owner, manager                  | tables | N        | PASS (automated) · _r2_ (final rerun after tip fix) |
+| GET    | `/api/tables/:id`               | JWT  | any authenticated               | tables | N        | PASS (automated) · _r2_ (final rerun after tip fix) |
+| PUT    | `/api/tables/:id`               | JWT  | owner, manager                  | tables | N        | NOT EXECUTED                                        |
+| POST   | `/api/tables/:id/assign-waiter` | JWT  | owner, manager                  | tables | N        | PASS (automated) · _r2_ (final rerun after tip fix) |
+| POST   | `/api/tables/:id/deactivate`    | JWT  | owner, manager                  | tables | N        | NOT EXECUTED                                        |
+| POST   | `/api/tables/:id/merge`         | JWT  | owner, manager, cashier, waiter | tables | N        | PASS (automated) · _r2_ (final rerun after tip fix) |
+| POST   | `/api/tables/:id/move-order`    | JWT  | owner, manager, cashier, waiter | tables | N        | PASS (automated) · _r2_ (final rerun after tip fix) |
+| POST   | `/api/tables/:id/reactivate`    | JWT  | owner, manager                  | tables | N        | NOT EXECUTED                                        |
+| POST   | `/api/tables/:id/split`         | JWT  | owner, manager, cashier, waiter | tables | N        | PASS (automated) · _r2_ (final rerun after tip fix) |
+| PATCH  | `/api/tables/:id/status`        | JWT  | owner, manager                  | tables | N        | PASS (automated) · _r2_ (final rerun after tip fix) |
 
 ### kitchen/KDS
 
-| Method | Path                              | Auth | Roles                                 | Module      | Critical | Session Result           |
-| ------ | --------------------------------- | ---- | ------------------------------------- | ----------- | -------- | ------------------------ |
-| GET    | `/api/kds-info`                   | JWT  | owner, manager, cashier, waiter, chef | kitchen/KDS | N        | PASS (automated) · _h2_  |
-| GET    | `/api/kds/display`                | JWT  | chef, manager, owner (router-level)   | kitchen/KDS | N        | NOT EXECUTED             |
-| PATCH  | `/api/kds/items/:id/status`       | JWT  | chef, manager, owner (router-level)   | kitchen/KDS | N        | NOT EXECUTED             |
-| GET    | `/api/kds/orders`                 | JWT  | chef, manager, owner (router-level)   | kitchen/KDS | N        | FAIL (regression) · _r3_ |
-| PATCH  | `/api/kds/orders/:id/priority`    | JWT  | owner, manager                        | kitchen/KDS | N        | NOT EXECUTED             |
-| GET    | `/api/kds/pairing`                | JWT  | chef, manager, owner (router-level)   | kitchen/KDS | N        | NOT EXECUTED             |
-| POST   | `/api/kds/pairing`                | JWT  | owner, manager                        | kitchen/KDS | N        | NOT EXECUTED             |
-| GET    | `/api/kitchen-stations`           | JWT  | any authenticated                     | kitchen/KDS | N        | NOT EXECUTED             |
-| POST   | `/api/kitchen-stations`           | JWT  | owner, manager                        | kitchen/KDS | N        | NOT EXECUTED             |
-| DELETE | `/api/kitchen-stations/:id`       | JWT  | owner, manager                        | kitchen/KDS | N        | NOT EXECUTED             |
-| GET    | `/api/kitchen-stations/:id`       | JWT  | any authenticated                     | kitchen/KDS | N        | NOT EXECUTED             |
-| PUT    | `/api/kitchen-stations/:id`       | JWT  | owner, manager                        | kitchen/KDS | N        | NOT EXECUTED             |
-| PUT    | `/api/kitchen-stations/:id/users` | JWT  | owner, manager                        | kitchen/KDS | N        | NOT EXECUTED             |
-| GET    | `/api/kitchen/orders`             | JWT  | any authenticated                     | kitchen/KDS | N        | NOT EXECUTED             |
+| Method | Path                              | Auth | Roles                                 | Module      | Critical | Session Result                                      |
+| ------ | --------------------------------- | ---- | ------------------------------------- | ----------- | -------- | --------------------------------------------------- |
+| GET    | `/api/kds-info`                   | JWT  | owner, manager, cashier, waiter, chef | kitchen/KDS | N        | PASS (automated) · _h2_                             |
+| GET    | `/api/kds/display`                | JWT  | chef, manager, owner (router-level)   | kitchen/KDS | N        | NOT EXECUTED                                        |
+| PATCH  | `/api/kds/items/:id/status`       | JWT  | chef, manager, owner (router-level)   | kitchen/KDS | N        | NOT EXECUTED                                        |
+| GET    | `/api/kds/orders`                 | JWT  | chef, manager, owner (router-level)   | kitchen/KDS | N        | PASS (automated) · _r3_ (final rerun after tip fix) |
+| PATCH  | `/api/kds/orders/:id/priority`    | JWT  | owner, manager                        | kitchen/KDS | N        | NOT EXECUTED                                        |
+| GET    | `/api/kds/pairing`                | JWT  | chef, manager, owner (router-level)   | kitchen/KDS | N        | NOT EXECUTED                                        |
+| POST   | `/api/kds/pairing`                | JWT  | owner, manager                        | kitchen/KDS | N        | NOT EXECUTED                                        |
+| GET    | `/api/kitchen-stations`           | JWT  | any authenticated                     | kitchen/KDS | N        | NOT EXECUTED                                        |
+| POST   | `/api/kitchen-stations`           | JWT  | owner, manager                        | kitchen/KDS | N        | NOT EXECUTED                                        |
+| DELETE | `/api/kitchen-stations/:id`       | JWT  | owner, manager                        | kitchen/KDS | N        | NOT EXECUTED                                        |
+| GET    | `/api/kitchen-stations/:id`       | JWT  | any authenticated                     | kitchen/KDS | N        | NOT EXECUTED                                        |
+| PUT    | `/api/kitchen-stations/:id`       | JWT  | owner, manager                        | kitchen/KDS | N        | NOT EXECUTED                                        |
+| PUT    | `/api/kitchen-stations/:id/users` | JWT  | owner, manager                        | kitchen/KDS | N        | NOT EXECUTED                                        |
+| GET    | `/api/kitchen/orders`             | JWT  | any authenticated                     | kitchen/KDS | N        | NOT EXECUTED                                        |
 
 | Method | Path                             | Auth                       | Roles             | Module      | Critical | Session Result                                                                     |
 | ------ | -------------------------------- | -------------------------- | ----------------- | ----------- | -------- | ---------------------------------------------------------------------------------- |
@@ -273,131 +277,131 @@ Companion KDS HTTP on **:3002** is separate (`main/kds-server.ts`). This matrix 
 
 ### customers
 
-| Method | Path                               | Auth | Roles                           | Module    | Critical | Session Result             |
-| ------ | ---------------------------------- | ---- | ------------------------------- | --------- | -------- | -------------------------- |
-| GET    | `/api/crm/lookup`                  | JWT  | owner, manager, cashier, waiter | customers | N        | NOT EXECUTED               |
-| GET    | `/api/customers`                   | JWT  | owner, manager, cashier, waiter | customers | N        | PASS (automated) · _authz_ |
-| POST   | `/api/customers`                   | JWT  | owner, manager, cashier, waiter | customers | N        | FAIL (regression) · _r7_   |
-| GET    | `/api/customers-search`            | JWT  | owner, manager, cashier, waiter | customers | N        | FAIL (regression) · _r7_   |
-| GET    | `/api/customers/:id`               | JWT  | owner, manager, cashier, waiter | customers | N        | NOT EXECUTED               |
-| PUT    | `/api/customers/:id`               | JWT  | owner, manager, cashier         | customers | N        | FAIL (regression) · _r7_   |
-| GET    | `/api/customers/:id/crm`           | JWT  | owner, manager, cashier, waiter | customers | N        | FAIL (regression) · _r7_   |
-| POST   | `/api/customers/:id/deactivate`    | JWT  | owner, manager                  | customers | N        | FAIL (regression) · _r7_   |
-| GET    | `/api/customers/:id/notes`         | JWT  | owner, manager, cashier, waiter | customers | N        | NOT EXECUTED               |
-| POST   | `/api/customers/:id/notes`         | JWT  | owner, manager, cashier         | customers | N        | FAIL (regression) · _r7_   |
-| DELETE | `/api/customers/:id/notes/:noteId` | JWT  | owner, manager                  | customers | N        | FAIL (regression) · _r7_   |
-| PUT    | `/api/customers/:id/notes/:noteId` | JWT  | owner, manager                  | customers | N        | FAIL (regression) · _r7_   |
-| POST   | `/api/customers/:id/reactivate`    | JWT  | owner, manager, cashier, waiter | customers | N        | FAIL (regression) · _r7_   |
-| GET    | `/api/customers/:id/wallet`        | JWT  | owner, manager, cashier, waiter | customers | N        | FAIL (regression) · _r7_   |
-| DELETE | `/api/customers/admin/cleanup`     | JWT  | owner                           | customers | N        | NOT EXECUTED               |
-| GET    | `/api/customers/alerts`            | JWT  | owner, manager, cashier, waiter | customers | N        | NOT EXECUTED               |
-| GET    | `/api/customers/metrics`           | JWT  | owner, manager                  | customers | N        | FAIL (regression) · _r7_   |
+| Method | Path                               | Auth | Roles                           | Module    | Critical | Session Result                                      |
+| ------ | ---------------------------------- | ---- | ------------------------------- | --------- | -------- | --------------------------------------------------- |
+| GET    | `/api/crm/lookup`                  | JWT  | owner, manager, cashier, waiter | customers | N        | NOT EXECUTED                                        |
+| GET    | `/api/customers`                   | JWT  | owner, manager, cashier, waiter | customers | N        | PASS (automated) · _authz_                          |
+| POST   | `/api/customers`                   | JWT  | owner, manager, cashier, waiter | customers | N        | PASS (automated) · _r7_ (final rerun after tip fix) |
+| GET    | `/api/customers-search`            | JWT  | owner, manager, cashier, waiter | customers | N        | PASS (automated) · _r7_ (final rerun after tip fix) |
+| GET    | `/api/customers/:id`               | JWT  | owner, manager, cashier, waiter | customers | N        | NOT EXECUTED                                        |
+| PUT    | `/api/customers/:id`               | JWT  | owner, manager, cashier         | customers | N        | PASS (automated) · _r7_ (final rerun after tip fix) |
+| GET    | `/api/customers/:id/crm`           | JWT  | owner, manager, cashier, waiter | customers | N        | PASS (automated) · _r7_ (final rerun after tip fix) |
+| POST   | `/api/customers/:id/deactivate`    | JWT  | owner, manager                  | customers | N        | PASS (automated) · _r7_ (final rerun after tip fix) |
+| GET    | `/api/customers/:id/notes`         | JWT  | owner, manager, cashier, waiter | customers | N        | NOT EXECUTED                                        |
+| POST   | `/api/customers/:id/notes`         | JWT  | owner, manager, cashier         | customers | N        | PASS (automated) · _r7_ (final rerun after tip fix) |
+| DELETE | `/api/customers/:id/notes/:noteId` | JWT  | owner, manager                  | customers | N        | PASS (automated) · _r7_ (final rerun after tip fix) |
+| PUT    | `/api/customers/:id/notes/:noteId` | JWT  | owner, manager                  | customers | N        | PASS (automated) · _r7_ (final rerun after tip fix) |
+| POST   | `/api/customers/:id/reactivate`    | JWT  | owner, manager, cashier, waiter | customers | N        | PASS (automated) · _r7_ (final rerun after tip fix) |
+| GET    | `/api/customers/:id/wallet`        | JWT  | owner, manager, cashier, waiter | customers | N        | PASS (automated) · _r7_ (final rerun after tip fix) |
+| DELETE | `/api/customers/admin/cleanup`     | JWT  | owner                           | customers | N        | NOT EXECUTED                                        |
+| GET    | `/api/customers/alerts`            | JWT  | owner, manager, cashier, waiter | customers | N        | NOT EXECUTED                                        |
+| GET    | `/api/customers/metrics`           | JWT  | owner, manager                  | customers | N        | PASS (automated) · _r7_ (final rerun after tip fix) |
 
 ### staff/shifts
 
-| Method | Path                                     | Auth | Roles                   | Module       | Critical | Session Result                   |
-| ------ | ---------------------------------------- | ---- | ----------------------- | ------------ | -------- | -------------------------------- |
-| GET    | `/api/shifts`                            | JWT  | owner, manager          | staff/shifts | N        | NOT EXECUTED                     |
-| GET    | `/api/shifts/:id`                        | JWT  | owner, manager          | staff/shifts | N        | NOT EXECUTED                     |
-| POST   | `/api/shifts/:id/close`                  | JWT  | owner, manager, cashier | staff/shifts | Y        | NOT EXECUTED                     |
-| POST   | `/api/shifts/:id/force-close`            | JWT  | owner, manager          | staff/shifts | N        | NOT EXECUTED                     |
-| GET    | `/api/shifts/:id/reconciliation-preview` | JWT  | owner, manager, cashier | staff/shifts | N        | NOT EXECUTED                     |
-| GET    | `/api/shifts/active`                     | JWT  | owner, manager, cashier | staff/shifts | N        | NOT EXECUTED                     |
-| POST   | `/api/shifts/open`                       | JWT  | owner, manager, cashier | staff/shifts | Y        | NOT EXECUTED                     |
-| GET    | `/api/shifts/terminal-id`                | JWT  | owner, manager, cashier | staff/shifts | N        | NOT EXECUTED                     |
-| GET    | `/api/staff`                             | JWT  | owner, manager          | staff/shifts | N        | PASS (automated) · _authz_       |
-| POST   | `/api/staff`                             | JWT  | owner, manager          | staff/shifts | N        | PASS (automated) · _staff-authz_ |
-| GET    | `/api/staff/:id`                         | JWT  | owner, manager          | staff/shifts | N        | FAIL (regression) · _r8_         |
-| PUT    | `/api/staff/:id`                         | JWT  | owner, manager          | staff/shifts | N        | PASS (automated) · _staff-authz_ |
-| POST   | `/api/staff/:id/deactivate`              | JWT  | owner, manager          | staff/shifts | N        | PASS (automated) · _staff-authz_ |
-| POST   | `/api/staff/:id/reactivate`              | JWT  | owner, manager          | staff/shifts | N        | PASS (automated) · _staff-authz_ |
-| GET    | `/api/staff/working`                     | JWT  | owner, manager          | staff/shifts | N        | FAIL (regression) · _r8_         |
+| Method | Path                                     | Auth | Roles                   | Module       | Critical | Session Result                                      |
+| ------ | ---------------------------------------- | ---- | ----------------------- | ------------ | -------- | --------------------------------------------------- |
+| GET    | `/api/shifts`                            | JWT  | owner, manager          | staff/shifts | N        | NOT EXECUTED                                        |
+| GET    | `/api/shifts/:id`                        | JWT  | owner, manager          | staff/shifts | N        | NOT EXECUTED                                        |
+| POST   | `/api/shifts/:id/close`                  | JWT  | owner, manager, cashier | staff/shifts | Y        | NOT EXECUTED                                        |
+| POST   | `/api/shifts/:id/force-close`            | JWT  | owner, manager          | staff/shifts | N        | NOT EXECUTED                                        |
+| GET    | `/api/shifts/:id/reconciliation-preview` | JWT  | owner, manager, cashier | staff/shifts | N        | NOT EXECUTED                                        |
+| GET    | `/api/shifts/active`                     | JWT  | owner, manager, cashier | staff/shifts | N        | NOT EXECUTED                                        |
+| POST   | `/api/shifts/open`                       | JWT  | owner, manager, cashier | staff/shifts | Y        | NOT EXECUTED                                        |
+| GET    | `/api/shifts/terminal-id`                | JWT  | owner, manager, cashier | staff/shifts | N        | NOT EXECUTED                                        |
+| GET    | `/api/staff`                             | JWT  | owner, manager          | staff/shifts | N        | PASS (automated) · _authz_                          |
+| POST   | `/api/staff`                             | JWT  | owner, manager          | staff/shifts | N        | PASS (automated) · _staff-authz_                    |
+| GET    | `/api/staff/:id`                         | JWT  | owner, manager          | staff/shifts | N        | PASS (automated) · _r8_ (final rerun after tip fix) |
+| PUT    | `/api/staff/:id`                         | JWT  | owner, manager          | staff/shifts | N        | PASS (automated) · _staff-authz_                    |
+| POST   | `/api/staff/:id/deactivate`              | JWT  | owner, manager          | staff/shifts | N        | PASS (automated) · _staff-authz_                    |
+| POST   | `/api/staff/:id/reactivate`              | JWT  | owner, manager          | staff/shifts | N        | PASS (automated) · _staff-authz_                    |
+| GET    | `/api/staff/working`                     | JWT  | owner, manager          | staff/shifts | N        | PASS (automated) · _r8_ (final rerun after tip fix) |
 
 ### inventory
 
-| Method | Path                                           | Auth | Roles                | Module    | Critical | Session Result               |
-| ------ | ---------------------------------------------- | ---- | -------------------- | --------- | -------- | ---------------------------- |
-| GET    | `/api/inventory/counts`                        | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r4_     |
-| POST   | `/api/inventory/counts`                        | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r4_     |
-| GET    | `/api/inventory/counts/:id`                    | JWT  | owner, manager       | inventory | N        | NOT EXECUTED                 |
-| POST   | `/api/inventory/counts/:id/apply`              | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r4_     |
-| POST   | `/api/inventory/counts/:id/cancel`             | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r4_     |
-| POST   | `/api/inventory/counts/:id/lines`              | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r4_     |
-| POST   | `/api/inventory/counts/:id/submit`             | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r4_     |
-| GET    | `/api/inventory/movements`                     | JWT  | owner, manager       | inventory | N        | NOT EXECUTED                 |
-| GET    | `/api/inventory/products/:id/ledger-check`     | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r4, r6_ |
-| GET    | `/api/purchasing/purchase-orders`              | JWT  | owner, manager, chef | inventory | N        | NOT EXECUTED                 |
-| POST   | `/api/purchasing/purchase-orders`              | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r6_     |
-| GET    | `/api/purchasing/purchase-orders/:id`          | JWT  | owner, manager, chef | inventory | N        | FAIL (regression) · _r6_     |
-| GET    | `/api/purchasing/purchase-orders/:id/receipts` | JWT  | owner, manager, chef | inventory | N        | NOT EXECUTED                 |
-| POST   | `/api/purchasing/purchase-orders/:id/receive`  | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r6_     |
-| POST   | `/api/purchasing/purchase-orders/:id/status`   | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r6_     |
-| GET    | `/api/purchasing/suppliers`                    | JWT  | owner, manager, chef | inventory | N        | FAIL (regression) · _r6_     |
-| POST   | `/api/purchasing/suppliers`                    | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r6_     |
-| GET    | `/api/purchasing/suppliers/:id`                | JWT  | owner, manager, chef | inventory | N        | FAIL (regression) · _r6_     |
-| PATCH  | `/api/purchasing/suppliers/:id`                | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r6_     |
-| POST   | `/api/purchasing/suppliers/:id/deactivate`     | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r6_     |
-| GET    | `/api/purchasing/suppliers/:id/products`       | JWT  | owner, manager, chef | inventory | N        | FAIL (regression) · _r6_     |
-| POST   | `/api/purchasing/suppliers/:id/products`       | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r6_     |
-| GET    | `/api/recipes`                                 | JWT  | owner, manager, chef | inventory | N        | FAIL (regression) · _r5_     |
-| POST   | `/api/recipes`                                 | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r5_     |
-| GET    | `/api/recipes/:id`                             | JWT  | owner, manager, chef | inventory | N        | NOT EXECUTED                 |
-| PATCH  | `/api/recipes/:id`                             | JWT  | owner, manager       | inventory | N        | NOT EXECUTED                 |
-| POST   | `/api/recipes/:id/activate`                    | JWT  | owner, manager       | inventory | N        | NOT EXECUTED                 |
-| GET    | `/api/recipes/:id/cost`                        | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r5_     |
-| POST   | `/api/recipes/:id/deactivate`                  | JWT  | owner, manager       | inventory | N        | NOT EXECUTED                 |
-| PUT    | `/api/recipes/:id/ingredients`                 | JWT  | owner, manager       | inventory | N        | NOT EXECUTED                 |
-| GET    | `/api/recipes/consumptions`                    | JWT  | owner, manager       | inventory | N        | FAIL (regression) · _r5_     |
+| Method | Path                                           | Auth | Roles                | Module    | Critical | Session Result                                          |
+| ------ | ---------------------------------------------- | ---- | -------------------- | --------- | -------- | ------------------------------------------------------- |
+| GET    | `/api/inventory/counts`                        | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r4_ (final rerun after tip fix)     |
+| POST   | `/api/inventory/counts`                        | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r4_ (final rerun after tip fix)     |
+| GET    | `/api/inventory/counts/:id`                    | JWT  | owner, manager       | inventory | N        | NOT EXECUTED                                            |
+| POST   | `/api/inventory/counts/:id/apply`              | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r4_ (final rerun after tip fix)     |
+| POST   | `/api/inventory/counts/:id/cancel`             | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r4_ (final rerun after tip fix)     |
+| POST   | `/api/inventory/counts/:id/lines`              | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r4_ (final rerun after tip fix)     |
+| POST   | `/api/inventory/counts/:id/submit`             | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r4_ (final rerun after tip fix)     |
+| GET    | `/api/inventory/movements`                     | JWT  | owner, manager       | inventory | N        | NOT EXECUTED                                            |
+| GET    | `/api/inventory/products/:id/ledger-check`     | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r4, r6_ (final rerun after tip fix) |
+| GET    | `/api/purchasing/purchase-orders`              | JWT  | owner, manager, chef | inventory | N        | NOT EXECUTED                                            |
+| POST   | `/api/purchasing/purchase-orders`              | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r6_ (final rerun after tip fix)     |
+| GET    | `/api/purchasing/purchase-orders/:id`          | JWT  | owner, manager, chef | inventory | N        | PASS (automated) · _r6_ (final rerun after tip fix)     |
+| GET    | `/api/purchasing/purchase-orders/:id/receipts` | JWT  | owner, manager, chef | inventory | N        | NOT EXECUTED                                            |
+| POST   | `/api/purchasing/purchase-orders/:id/receive`  | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r6_ (final rerun after tip fix)     |
+| POST   | `/api/purchasing/purchase-orders/:id/status`   | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r6_ (final rerun after tip fix)     |
+| GET    | `/api/purchasing/suppliers`                    | JWT  | owner, manager, chef | inventory | N        | PASS (automated) · _r6_ (final rerun after tip fix)     |
+| POST   | `/api/purchasing/suppliers`                    | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r6_ (final rerun after tip fix)     |
+| GET    | `/api/purchasing/suppliers/:id`                | JWT  | owner, manager, chef | inventory | N        | PASS (automated) · _r6_ (final rerun after tip fix)     |
+| PATCH  | `/api/purchasing/suppliers/:id`                | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r6_ (final rerun after tip fix)     |
+| POST   | `/api/purchasing/suppliers/:id/deactivate`     | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r6_ (final rerun after tip fix)     |
+| GET    | `/api/purchasing/suppliers/:id/products`       | JWT  | owner, manager, chef | inventory | N        | PASS (automated) · _r6_ (final rerun after tip fix)     |
+| POST   | `/api/purchasing/suppliers/:id/products`       | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r6_ (final rerun after tip fix)     |
+| GET    | `/api/recipes`                                 | JWT  | owner, manager, chef | inventory | N        | PASS (automated) · _r5_ (final rerun after tip fix)     |
+| POST   | `/api/recipes`                                 | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r5_ (final rerun after tip fix)     |
+| GET    | `/api/recipes/:id`                             | JWT  | owner, manager, chef | inventory | N        | NOT EXECUTED                                            |
+| PATCH  | `/api/recipes/:id`                             | JWT  | owner, manager       | inventory | N        | NOT EXECUTED                                            |
+| POST   | `/api/recipes/:id/activate`                    | JWT  | owner, manager       | inventory | N        | NOT EXECUTED                                            |
+| GET    | `/api/recipes/:id/cost`                        | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r5_ (final rerun after tip fix)     |
+| POST   | `/api/recipes/:id/deactivate`                  | JWT  | owner, manager       | inventory | N        | NOT EXECUTED                                            |
+| PUT    | `/api/recipes/:id/ingredients`                 | JWT  | owner, manager       | inventory | N        | NOT EXECUTED                                            |
+| GET    | `/api/recipes/consumptions`                    | JWT  | owner, manager       | inventory | N        | PASS (automated) · _r5_ (final rerun after tip fix)     |
 
 ### reports
 
-| Method | Path                                        | Auth | Roles          | Module  | Critical | Session Result             |
-| ------ | ------------------------------------------- | ---- | -------------- | ------- | -------- | -------------------------- |
-| GET    | `/api/expenses`                             | JWT  | owner, manager | reports | N        | FAIL (regression) · _r9_   |
-| POST   | `/api/expenses`                             | JWT  | owner, manager | reports | N        | FAIL (regression) · _r9_   |
-| GET    | `/api/expenses/:id`                         | JWT  | owner, manager | reports | N        | FAIL (regression) · _r9_   |
-| PATCH  | `/api/expenses/:id`                         | JWT  | owner, manager | reports | N        | FAIL (regression) · _r9_   |
-| POST   | `/api/expenses/:id/void`                    | JWT  | owner, manager | reports | N        | FAIL (regression) · _r9_   |
-| GET    | `/api/reports/daily-stats`                  | JWT  | owner, manager | reports | N        | NOT EXECUTED               |
-| POST   | `/api/reports/day-close`                    | JWT  | owner, manager | reports | Y        | PASS (automated) · _r15_   |
-| GET    | `/api/reports/day-close/:date`              | JWT  | owner, manager | reports | Y        | FAIL (regression) · _r9.4_ |
-| GET    | `/api/reports/day-close/:date/export/z.txt` | JWT  | owner, manager | reports | Y        | PASS (automated) · _r15_   |
-| GET    | `/api/reports/export/bills.csv`             | JWT  | owner, manager | reports | N        | NOT EXECUTED               |
-| GET    | `/api/reports/export/expenses.csv`          | JWT  | owner, manager | reports | N        | FAIL (regression) · _r9.5_ |
-| GET    | `/api/reports/export/tax-components.csv`    | JWT  | owner, manager | reports | N        | FAIL (regression) · _r9.3_ |
-| GET    | `/api/reports/export/voids.csv`             | JWT  | owner, manager | reports | N        | PASS (automated) · _r12_   |
-| GET    | `/api/reports/food-cost`                    | JWT  | owner, manager | reports | N        | PASS (automated) · _r9.6_  |
-| GET    | `/api/reports/insights`                     | JWT  | owner, manager | reports | N        | NOT EXECUTED               |
-| GET    | `/api/reports/inventory-valuation`          | JWT  | owner, manager | reports | N        | NOT EXECUTED               |
-| GET    | `/api/reports/ops-finance`                  | JWT  | owner, manager | reports | N        | FAIL (regression) · _r9.5_ |
-| GET    | `/api/reports/recentOrders`                 | JWT  | owner, manager | reports | N        | NOT EXECUTED               |
-| GET    | `/api/reports/sales`                        | JWT  | owner, manager | reports | N        | PASS (automated) · _authz_ |
-| GET    | `/api/reports/summary`                      | JWT  | owner, manager | reports | N        | NOT EXECUTED               |
-| GET    | `/api/reports/tables`                       | JWT  | owner, manager | reports | N        | NOT EXECUTED               |
-| GET    | `/api/reports/tax-components`               | JWT  | owner, manager | reports | N        | FAIL (regression) · _r9.3_ |
-| GET    | `/api/reports/topProducts`                  | JWT  | owner, manager | reports | N        | NOT EXECUTED               |
-| GET    | `/api/reports/voids`                        | JWT  | owner, manager | reports | N        | PASS (automated) · _r12_   |
+| Method | Path                                        | Auth | Roles          | Module  | Critical | Session Result                                        |
+| ------ | ------------------------------------------- | ---- | -------------- | ------- | -------- | ----------------------------------------------------- |
+| GET    | `/api/expenses`                             | JWT  | owner, manager | reports | N        | PASS (automated) · _r9_ (final rerun after tip fix)   |
+| POST   | `/api/expenses`                             | JWT  | owner, manager | reports | N        | PASS (automated) · _r9_ (final rerun after tip fix)   |
+| GET    | `/api/expenses/:id`                         | JWT  | owner, manager | reports | N        | PASS (automated) · _r9_ (final rerun after tip fix)   |
+| PATCH  | `/api/expenses/:id`                         | JWT  | owner, manager | reports | N        | PASS (automated) · _r9_ (final rerun after tip fix)   |
+| POST   | `/api/expenses/:id/void`                    | JWT  | owner, manager | reports | N        | PASS (automated) · _r9_ (final rerun after tip fix)   |
+| GET    | `/api/reports/daily-stats`                  | JWT  | owner, manager | reports | N        | NOT EXECUTED                                          |
+| POST   | `/api/reports/day-close`                    | JWT  | owner, manager | reports | Y        | PASS (automated) · _r15_                              |
+| GET    | `/api/reports/day-close/:date`              | JWT  | owner, manager | reports | Y        | PASS (automated) · _r9.4_ (final rerun after tip fix) |
+| GET    | `/api/reports/day-close/:date/export/z.txt` | JWT  | owner, manager | reports | Y        | PASS (automated) · _r15_                              |
+| GET    | `/api/reports/export/bills.csv`             | JWT  | owner, manager | reports | N        | NOT EXECUTED                                          |
+| GET    | `/api/reports/export/expenses.csv`          | JWT  | owner, manager | reports | N        | PASS (automated) · _r9.5_ (final rerun after tip fix) |
+| GET    | `/api/reports/export/tax-components.csv`    | JWT  | owner, manager | reports | N        | PASS (automated) · _r9.3_ (final rerun after tip fix) |
+| GET    | `/api/reports/export/voids.csv`             | JWT  | owner, manager | reports | N        | PASS (automated) · _r12_                              |
+| GET    | `/api/reports/food-cost`                    | JWT  | owner, manager | reports | N        | PASS (automated) · _r9.6_                             |
+| GET    | `/api/reports/insights`                     | JWT  | owner, manager | reports | N        | NOT EXECUTED                                          |
+| GET    | `/api/reports/inventory-valuation`          | JWT  | owner, manager | reports | N        | NOT EXECUTED                                          |
+| GET    | `/api/reports/ops-finance`                  | JWT  | owner, manager | reports | N        | PASS (automated) · _r9.5_ (final rerun after tip fix) |
+| GET    | `/api/reports/recentOrders`                 | JWT  | owner, manager | reports | N        | NOT EXECUTED                                          |
+| GET    | `/api/reports/sales`                        | JWT  | owner, manager | reports | N        | PASS (automated) · _authz_                            |
+| GET    | `/api/reports/summary`                      | JWT  | owner, manager | reports | N        | NOT EXECUTED                                          |
+| GET    | `/api/reports/tables`                       | JWT  | owner, manager | reports | N        | NOT EXECUTED                                          |
+| GET    | `/api/reports/tax-components`               | JWT  | owner, manager | reports | N        | PASS (automated) · _r9.3_ (final rerun after tip fix) |
+| GET    | `/api/reports/topProducts`                  | JWT  | owner, manager | reports | N        | NOT EXECUTED                                          |
+| GET    | `/api/reports/voids`                        | JWT  | owner, manager | reports | N        | PASS (automated) · _r12_                              |
 
 ### printing
 
-| Method | Path                            | Auth | Roles                   | Module   | Critical | Session Result                   |
-| ------ | ------------------------------- | ---- | ----------------------- | -------- | -------- | -------------------------------- |
-| GET    | `/api/printers`                 | JWT  | any authenticated       | printing | N        | PASS (automated) · _authz_       |
-| POST   | `/api/printers`                 | JWT  | owner, manager          | printing | N        | NOT EXECUTED                     |
-| DELETE | `/api/printers/:id`             | JWT  | owner, manager          | printing | N        | NOT EXECUTED                     |
-| GET    | `/api/printers/:id`             | JWT  | owner, manager          | printing | N        | NOT EXECUTED                     |
-| PUT    | `/api/printers/:id`             | JWT  | owner, manager          | printing | N        | NOT EXECUTED                     |
-| POST   | `/api/printers/:id/set-default` | JWT  | owner, manager          | printing | N        | NOT EXECUTED                     |
-| POST   | `/api/printers/:id/test`        | JWT  | owner, manager          | printing | N        | NOT EXECUTED                     |
-| GET    | `/api/printers/detect`          | JWT  | any authenticated       | printing | N        | NOT EXECUTED                     |
-| GET    | `/api/printers/jobs`            | JWT  | owner, manager          | printing | N        | PASS (automated) · _r13_         |
-| POST   | `/api/printers/jobs/:id/retry`  | JWT  | owner, manager          | printing | N        | PASS (automated) · _r13_         |
-| POST   | `/api/printers/kick-drawer`     | JWT  | owner, manager, cashier | printing | N        | NOT EXECUTED                     |
-| POST   | `/api/printers/print-bill`      | JWT  | owner, manager, cashier | printing | Y        | PASS (automated) · _h1, r1, r13_ |
-| POST   | `/api/printers/print-day-close` | JWT  | owner, manager          | printing | Y        | FAIL (regression) · _r9.4_       |
-| POST   | `/api/printers/print-kot`       | JWT  | owner, manager, cashier | printing | N        | FAIL (regression) · _r3_         |
-| POST   | `/api/printers/print-refund`    | JWT  | owner, manager, cashier | printing | N        | NOT EXECUTED                     |
-| GET    | `/api/printers/supported`       | JWT  | owner, manager          | printing | N        | NOT EXECUTED                     |
+| Method | Path                            | Auth | Roles                   | Module   | Critical | Session Result                                        |
+| ------ | ------------------------------- | ---- | ----------------------- | -------- | -------- | ----------------------------------------------------- |
+| GET    | `/api/printers`                 | JWT  | any authenticated       | printing | N        | PASS (automated) · _authz_                            |
+| POST   | `/api/printers`                 | JWT  | owner, manager          | printing | N        | NOT EXECUTED                                          |
+| DELETE | `/api/printers/:id`             | JWT  | owner, manager          | printing | N        | NOT EXECUTED                                          |
+| GET    | `/api/printers/:id`             | JWT  | owner, manager          | printing | N        | NOT EXECUTED                                          |
+| PUT    | `/api/printers/:id`             | JWT  | owner, manager          | printing | N        | NOT EXECUTED                                          |
+| POST   | `/api/printers/:id/set-default` | JWT  | owner, manager          | printing | N        | NOT EXECUTED                                          |
+| POST   | `/api/printers/:id/test`        | JWT  | owner, manager          | printing | N        | NOT EXECUTED                                          |
+| GET    | `/api/printers/detect`          | JWT  | any authenticated       | printing | N        | NOT EXECUTED                                          |
+| GET    | `/api/printers/jobs`            | JWT  | owner, manager          | printing | N        | PASS (automated) · _r13_                              |
+| POST   | `/api/printers/jobs/:id/retry`  | JWT  | owner, manager          | printing | N        | PASS (automated) · _r13_                              |
+| POST   | `/api/printers/kick-drawer`     | JWT  | owner, manager, cashier | printing | N        | NOT EXECUTED                                          |
+| POST   | `/api/printers/print-bill`      | JWT  | owner, manager, cashier | printing | Y        | PASS (automated) · _h1, r1, r13_                      |
+| POST   | `/api/printers/print-day-close` | JWT  | owner, manager          | printing | Y        | PASS (automated) · _r9.4_ (final rerun after tip fix) |
+| POST   | `/api/printers/print-kot`       | JWT  | owner, manager, cashier | printing | N        | PASS (automated) · _r3_ (final rerun after tip fix)   |
+| POST   | `/api/printers/print-refund`    | JWT  | owner, manager, cashier | printing | N        | NOT EXECUTED                                          |
+| GET    | `/api/printers/supported`       | JWT  | owner, manager          | printing | N        | NOT EXECUTED                                          |
 
 ### backup/DB
 
@@ -474,10 +478,10 @@ Companion KDS HTTP on **:3002** is separate (`main/kds-server.ts`). This matrix 
 
 ### audit
 
-| Method | Path                         | Auth | Roles          | Module | Critical | Session Result             |
-| ------ | ---------------------------- | ---- | -------------- | ------ | -------- | -------------------------- |
-| GET    | `/api/audit-logs`            | JWT  | owner, manager | audit  | N        | FAIL (regression) · _r9.2_ |
-| GET    | `/api/audit-logs/export.csv` | JWT  | owner, manager | audit  | N        | FAIL (regression) · _r9.2_ |
+| Method | Path                         | Auth | Roles          | Module | Critical | Session Result                                        |
+| ------ | ---------------------------- | ---- | -------------- | ------ | -------- | ----------------------------------------------------- |
+| GET    | `/api/audit-logs`            | JWT  | owner, manager | audit  | N        | PASS (automated) · _r9.2_ (final rerun after tip fix) |
+| GET    | `/api/audit-logs/export.csv` | JWT  | owner, manager | audit  | N        | PASS (automated) · _r9.2_ (final rerun after tip fix) |
 
 ### mobile
 

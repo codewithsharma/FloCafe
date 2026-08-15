@@ -5,9 +5,10 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import api from '@/lib/api';
 import { useI18n } from '@/hooks/useI18n';
+import { canAccessAppPath, getLandingPageForRole } from '@/lib/rbac';
 
-export function getLandingPage(): string {
-  return '/pos';
+export function getLandingPage(role?: string | null): string {
+  return getLandingPageForRole(role);
 }
 
 const PUBLIC_PATHS = [
@@ -21,6 +22,12 @@ const PUBLIC_PATHS = [
   '/qr',
 ];
 
+function normalizePath(pathname: string | null): string {
+  if (!pathname) return '/';
+  if (pathname.length > 1 && pathname.endsWith('/')) return pathname.slice(0, -1);
+  return pathname;
+}
+
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
   const { user, currentTenant, loading, loadFromStorage } = useAuthStore();
@@ -33,6 +40,12 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const isSetupPath = pathname === '/setup' || pathname?.startsWith('/setup/');
   const isRecoveryPath = pathname === '/recovery' || pathname?.startsWith('/recovery/');
   const isKdsPath = pathname?.startsWith('/kds');
+  const isStandaloneKds = pathname?.startsWith('/kds-standalone');
+  const role = currentTenant?.role;
+  const path = normalizePath(pathname);
+  const routeAllowed = canAccessAppPath(role, path);
+  // /kds stays public for unauthenticated kitchen tablets; logged-in users still need role.
+  const authenticatedRouteDenied = Boolean(user && currentTenant && !routeAllowed);
 
   useEffect(() => {
     loadFromStorage();
@@ -84,6 +97,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    if (authenticatedRouteDenied) {
+      router.replace(getLandingPageForRole(role));
+      return;
+    }
+
     if (isPublicPath) return;
 
     if (!user) {
@@ -99,12 +117,24 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     isSetupPath,
     isRecoveryPath,
     isKdsPath,
+    authenticatedRouteDenied,
+    role,
     needsSetup,
     recoveryRequired,
     router,
   ]);
 
-  if (isKdsPath || isSetupPath || isRecoveryPath) {
+  if (isStandaloneKds || isSetupPath || isRecoveryPath) {
+    return <>{children}</>;
+  }
+
+  // Authenticated user on a role-gated path (incl. /kds) — never render protected UI.
+  if (authenticatedRouteDenied) {
+    return null;
+  }
+
+  // /kds: unauthenticated kiosk OR authorized staff — skip setup spinner gate.
+  if (isKdsPath) {
     return <>{children}</>;
   }
 
@@ -130,6 +160,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   }
 
   if (!user || !currentTenant) return null;
+
+  if (!routeAllowed) return null;
 
   return <>{children}</>;
 }

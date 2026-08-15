@@ -1,4 +1,5 @@
 'use client';
+import { getLandingPageForRole } from '@/lib/rbac';
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -57,7 +58,7 @@ export default function CustomerCrmDetailPage() {
 
   useEffect(() => {
     if (role === 'chef') {
-      router.replace('/pos');
+      router.replace(getLandingPageForRole(currentTenant?.role));
       return;
     }
     if (!id) {
