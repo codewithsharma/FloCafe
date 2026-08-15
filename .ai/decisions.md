@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — H3 Permissions / RBAC Hardening (Implemented)
+
+Authorized slice: permissions / RBAC. Explicit `requireRole` on item cancel (O/M/C/W), restore (O/M), order-items status (chef/M/O). POS discount UI + Settings deep-link gated to owner/manager. Test `createApp` matches production DB-role-over-JWT. Schema v75 unchanged. Tests: `npm run test:h3`. Doc: `docs/05-production/h3-permissions-rbac-hardening.md`. Matrix Permissions / Authorization / Role-based access remain Hardening with H3 depth. No auth rewrite. No new framework. STOP after H3 (do not auto-start restore/conflict).
+
 ## 2026-08-15 — H2 KDS Offline / Recovery Hardening (Implemented)
 
 Authorized slice: KDS offline → reconnect → recovery. Live-companion advertise only (`GET /api/kds-info` 503 `KDS_SERVER_NOT_RUNNING`; mDNS skip/omit when companion down). KDS UI `dataStale` + `kds.connectionStale`. One silent chef status PATCH retry via `pendingRetryRef` after WS/REST reconnect. Preserved: SQLite SoR, coalesced `notifyKdsUpdate`, cancelled exclusion, CAS 409, bind-degrade. Schema v75 unchanged. Tests: `npm run test:h2`. Doc: `docs/05-production/h2-kds-offline-recovery.md`. Matrix Offline KDS / KDS recovery remain Hardening with H2 depth. No Phase 4.16. No frozen features. STOP after H2 (do not auto-start H3 permissions/restore).

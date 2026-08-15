@@ -85,5 +85,5 @@ Do not invent 4.16. Do not auto-start features. Do not push. Do not fake signing
 
 - **Human/RELEASE:** isolate RC (branding dirty-tree decision), bump past 3.0.5, sign+notarize.
 - **Human/OPS on site:** Phases 2–10 on the dry-run result sheet.
-- **If software slice authorized next:** Prefer remaining Hardening (permissions/RBAC/audit; restore/conflict/restart). **H1 POS void/discount/receipt integrity CLOSED** (`docs/05-production/h1-pos-transaction-integrity.md`). **H2 KDS offline/recovery CLOSED** (`docs/05-production/h2-kds-offline-recovery.md`). Do not auto-start H3.
+- **If software slice authorized next:** Prefer remaining Hardening (audit trail; restore/conflict/restart; reliability error handling + restore). **H1 POS void/discount/receipt integrity CLOSED** (`docs/05-production/h1-pos-transaction-integrity.md`). **H2 KDS offline/recovery CLOSED** (`docs/05-production/h2-kds-offline-recovery.md`). **H3 Permissions/RBAC CLOSED** (`docs/05-production/h3-permissions-rbac-hardening.md`). Do not auto-start the next slice.
 - ADR-014 remains **Proposed**. Schema v75. Baseline `0200cae`.

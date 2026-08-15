@@ -54,6 +54,10 @@ function seedUser(db: any, id: string, role: string, pin = '1234') {
     now(),
   );
 
+  return authHeaderFor(id, email, role);
+}
+
+function authHeaderFor(id: string, email: string, role: string) {
   const token = jwt.sign({ userId: id, email, role }, getJWTSecret(), { expiresIn: '1h' });
   return { Authorization: `Bearer ${token}` };
 }
@@ -159,16 +163,23 @@ async function main() {
   result = await request(app).put('/api/staff/owner-145').set(ownerAuth).send({ role: 'cashier' });
   assertEqual(result.status, 200, 'owner can demote after another active owner exists');
 
+  // After self-demotion, owner-145 is a cashier — use the remaining owner for owner-only ops.
+  const remainingOwnerAuth = authHeaderFor(
+    'owner-145-second',
+    'owner-145-second@test.local',
+    'owner',
+  );
+
   console.log('\n── Owner full access ───────────────────────────────────────────');
-  result = await request(app).post('/api/staff').set(ownerAuth).send({
+  result = await request(app).post('/api/staff').set(remainingOwnerAuth).send({
     name: 'Owner-created manager', email: 'owner-created-manager@test.local', password: 'StrongPass1', role: 'manager', pin: '9876',
   });
   assertEqual(result.status, 201, 'owner can create a manager with a valid PIN');
   assertEqual(result.body.staff.has_pin, 1, 'staff responses expose has_pin for configured PINs');
 
-  result = await request(app).post('/api/staff/cashier-target-145/deactivate').set(ownerAuth);
+  result = await request(app).post('/api/staff/cashier-target-145/deactivate').set(remainingOwnerAuth);
   assertEqual(result.status, 200, 'owner can deactivate operational staff');
-  result = await request(app).post('/api/staff/cashier-target-145/reactivate').set(ownerAuth);
+  result = await request(app).post('/api/staff/cashier-target-145/reactivate').set(remainingOwnerAuth);
   assertEqual(result.status, 200, 'owner can reactivate operational staff');
 
   const results = getResults();

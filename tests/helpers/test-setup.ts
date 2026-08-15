@@ -131,8 +131,9 @@ function createApp(routeModules: Record<string, any>, options?: { authRole?: str
   }
 
   const { getJWTSecret } = require('../../main/routes/auth');
+  const { getUserAuthStatus, isTokenRevoked, isTokenStale } = require('../../main/middleware/security');
 
-  // Auth middleware — matches production behavior
+  // Auth middleware — matches production (DB role over JWT claim; revoke/stale checks)
   app.use((req: any, res: any, next: any) => {
     if (!req.path.startsWith('/api')) { next(); return; }
     if (req.path === '/api/health') { next(); return; }
@@ -144,8 +145,31 @@ function createApp(routeModules: Record<string, any>, options?: { authRole?: str
       return;
     }
     try {
-      const payload = jwt.verify(authHeader.split(' ')[1], getJWTSecret());
-      (req as any).user = payload;
+      const token = authHeader.split(' ')[1];
+      if (isTokenRevoked(token)) {
+        res.status(401).json({ error: 'Invalid or expired token' });
+        return;
+      }
+      const payload = jwt.verify(token, getJWTSecret()) as any;
+      const status = getUserAuthStatus(payload.userId, {
+        fresh:
+          req.path.startsWith('/api/kds') ||
+          req.path.startsWith('/api/kitchen') ||
+          req.path.startsWith('/api/order-items'),
+      });
+      if (!status || !status.isActive) {
+        res.status(401).json({ error: 'Invalid or expired token' });
+        return;
+      }
+      if (isTokenStale(payload.iat, status.tokensValidAfter)) {
+        res.status(401).json({ error: 'Invalid or expired token' });
+        return;
+      }
+      // Prefer optional test override, else live DB role (never trust JWT role claim alone).
+      (req as any).user = {
+        ...payload,
+        role: options?.authRole || status.role,
+      };
       next();
     } catch {
       res.status(401).json({ error: 'Invalid or expired token' });

@@ -10,7 +10,8 @@ Product plan: `docs/00-product/capability-matrix.md`. Do not auto-implement Plan
 - [x] Adopt capability matrix as canonical product plan (docs + `.ai` + `prompts/` pointers). No production code.
 - [x] **H1 POS Transaction Integrity (2026-08-15):** void order audit; item cancel + discount post-tender 409; discount audit; print-bill `print_logs`. `npm run test:h1`.
 - [x] **H2 KDS Offline / Recovery (2026-08-15):** live-companion advertise; stale-board UX; one silent status retry on reconnect. `npm run test:h2`. Doc: `docs/05-production/h2-kds-offline-recovery.md`.
-- [ ] **Hardening (prefer next, authorized slice only):** permissions/RBAC/audit; offline conflict + app restart recovery; reliability error handling + restore; data integrity + audit logging. POS H1 + KDS H2 closed (depth remains Hardening where noted).
+- [x] **H3 Permissions / RBAC (2026-08-15):** item cancel/restore/status `requireRole`; POS discount UI owner/manager; Settings deep-link gate; test `createApp` DB role. `npm run test:h3`. Doc: `docs/05-production/h3-permissions-rbac-hardening.md`.
+- [ ] **Hardening (prefer next, authorized slice only):** audit trail; offline conflict + app restart recovery; reliability error handling + restore; data integrity + audit logging. POS H1 + KDS H2 + RBAC H3 closed (depth remains Hardening where noted).
 - [ ] **Planned (not started):** see matrix — 86 depth, notes, combos, courses, QR ordering, recipes/BOM, PO/suppliers, floor plan/merge/seats, KDS routing/timers, print queue/retry, reports, workflow tests. Reuse shipped slices; do not rebuild.
 - [ ] **Frozen / later / out of scope:** terminals, gateways, online payment, multi-location, payroll, aggregators, AI — do not start.
 

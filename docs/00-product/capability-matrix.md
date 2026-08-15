@@ -480,9 +480,9 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 
 - POS: void order, discounts, receipt generation — **H1 (2026-08-15) closed audit + paid-tender guards + print-bill `print_logs`**; remaining depth below
 - KDS: offline KDS, KDS recovery — **H2 (2026-08-15) closed live-companion advertise, stale-board UX, one silent status retry on reconnect**; remaining depth below
-- Staff: permissions
+- Staff: permissions — **H3 (2026-08-15) closed cancel/restore/status `requireRole` + POS discount UI + Settings deep-link**; remaining depth below
 - Offline: conflict handling, app restart recovery, KDS offline behavior — **H2 covers KDS offline advertise/reconnect UI; POS conflict/restore still open**
-- Security: authorization, role-based access, audit trail
+- Security: authorization, role-based access — **H3 (2026-08-15) closed same RBAC depth + test DB-role parity**; audit trail still open
 - Reliability: error handling, restore
 - Data: integrity validation, audit logging
 
@@ -506,6 +506,16 @@ Remaining after H1 (not falsely marked Existing): cancel/discount Idempotency-Ke
 | KDS offline behavior | 🟡 Hardening | Same advertise + stale UX + reconnect retry as above                                                                                  |
 
 Remaining after H2 (not falsely marked Existing): durable offline ticket outbox, exponential reconnect backoff, kitchen routing/stations/timers (Planned), POS-wide conflict/restore (separate Hardening).
+
+### H3 delivered depth (2026-08-15)
+
+| Row               | Still        | H3 closed                                                                                                                           |
+| ----------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Permissions       | 🟡 Hardening | Item cancel `requireRole` O/M/C/W; restore O/M; order-items status chef/M/O; POS discount UI owner/manager; Settings deep-link gate |
+| Authorization     | 🟡 Hardening | Same server `requireRole` + UI gates; test `createApp` uses DB role over JWT claim                                                  |
+| Role-based access | 🟡 Hardening | Role gates aligned on cancel/restore/status + discount/settings; no auth rewrite                                                    |
+
+Remaining after H3 (not falsely marked Existing): Sensitive-action controls (Planned); authz-denial audit flood; cashier in-progress void UI; manager settings save UX quirks; broader audit-trail Hardening.
 
 ### Frozen (do not start)
 

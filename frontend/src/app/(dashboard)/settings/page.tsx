@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
+import { canAccessSettings } from '@/lib/rbac';
 import { usePosSettingsStore, type PaperSize, type BillTemplate } from '@/store/pos-settings';
 import { usePrinterStore, usePrinterStatusSync } from '@/hooks/usePrinter';
 import {
@@ -310,6 +311,7 @@ function KdsDefaultViewCard() {
 }
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { currentTenant, user, updateCurrentTenant } = useAuthStore();
   const posSettings = usePosSettingsStore();
   const whatsappEnabled = posSettings.whatsappEnabled;
@@ -320,6 +322,7 @@ export default function SettingsPage() {
   const { t: tCommon } = useTranslation('common');
   const { formatDate, formatTime, formatDateTime } = useFormatDate();
   const isAdmin = currentTenant?.role === 'admin' || currentTenant?.role === 'owner';
+  const canViewSettings = canAccessSettings(currentTenant?.role);
   const canViewTaxConfiguration =
     currentTenant?.role === 'owner' || currentTenant?.role === 'manager';
   const { data: composition } = usePlatformComposition(!!currentTenant);
@@ -337,6 +340,12 @@ export default function SettingsPage() {
   /** Phase 4.1 — Restaurant floor control; hidden when tables module is off (Retail). */
   const showTablesBusinessControls = isModuleEnabled('tables', settingsVerticalId);
   const { confirm, ConfirmDialog } = useConfirm();
+
+  useEffect(() => {
+    if (currentTenant && !canViewSettings) {
+      router.replace('/');
+    }
+  }, [currentTenant, canViewSettings, router]);
 
   const [loyaltyEnabled, setLoyaltyEnabled] = useState(false);
   const [savedLoyaltyEnabled, setSavedLoyaltyEnabled] = useState(false);
@@ -2612,6 +2621,10 @@ export default function SettingsPage() {
       document.removeEventListener('click', handleClick, { capture: true });
     };
   }, [isDirty]);
+
+  if (currentTenant && !canViewSettings) {
+    return null;
+  }
 
   return (
     <div>

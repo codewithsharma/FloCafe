@@ -26,6 +26,7 @@ import { useWhatsAppReady } from '@/hooks/useWhatsAppReady';
 import { sendBillViaFlo, shareBillViaWhatsApp } from '@/lib/whatsapp-share';
 import { useAuthStore } from '@/store/auth';
 import { collectibleOutstanding } from '@/lib/bill-collectible';
+import { canApplyOrderDiscount } from '@/lib/rbac';
 
 interface Props {
   bill: Bill;
@@ -53,6 +54,7 @@ export default function PaymentModal({ bill, currency, onClose, onPaid, onBillUp
   const { confirm, ConfirmDialog } = useConfirm();
   const { t } = useI18n();
   const { currentTenant } = useAuthStore();
+  const canDiscount = canApplyOrderDiscount(currentTenant?.role);
   const isWhatsAppReady = useWhatsAppReady();
   const idempotencyKeyRef = useRef<string | null>(null);
   useEffect(() => {
@@ -473,8 +475,8 @@ export default function PaymentModal({ bill, currency, onClose, onPaid, onBillUp
               </div>
             )}
 
-            {/* Discount */}
-            {!bill.split_group_id && (
+            {/* Discount — owner/manager only (matches PATCH /orders/:id/discount) */}
+            {!bill.split_group_id && canDiscount && (
               <div className="rounded-xl border border-flo-border overflow-hidden">
                 <button
                   type="button"

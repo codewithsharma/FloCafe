@@ -21,6 +21,8 @@ import TaxBreakdown from '@/components/pos/TaxBreakdown';
 import toast from 'react-hot-toast';
 import { PAYMENT_METHODS, type CustomPaymentMethod } from '@/lib/payment-methods';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useAuthStore } from '@/store/auth';
+import { canApplyOrderDiscount } from '@/lib/rbac';
 
 interface LoyaltySettings {
   loyalty_enabled: boolean;
@@ -65,6 +67,8 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
   const { t } = useI18n();
   const { t: tPos } = useTranslation('pos');
   const currencyFmt = useFormatCurrency();
+  const { currentTenant } = useAuthStore();
+  const canDiscount = canApplyOrderDiscount(currentTenant?.role);
 
   const [loyaltySettings, setLoyaltySettings] = useState<LoyaltySettings | null>(null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
@@ -282,7 +286,7 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
       .filter((p) => p.amount > 0);
 
     const discount: PrepaidDiscount | null =
-      preview.discountAmount > 0
+      canDiscount && preview.discountAmount > 0
         ? {
             type: discountType,
             value: previewDiscount?.value || 0,
@@ -395,91 +399,93 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
             </div>
           )}
 
-          {/* Discount */}
-          <div className="rounded-xl border border-flo-border overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setDiscountOpen((open) => !open)}
-              className="w-full flex items-center justify-between gap-3 px-3 py-2.5 bg-flo-bg text-left"
-            >
-              <span className="text-sm font-medium text-flo-text">
-                {preview?.discountAmount
-                  ? `${t('pos.discount')}: -${currencyFmt(preview.discountAmount)}`
-                  : t('pos.applyDiscount')}
-              </span>
-              <ChevronDown
-                size={16}
-                className={`text-flo-text-muted transition-transform ${discountOpen ? 'rotate-180' : ''}`}
-              />
-            </button>
-
-            {discountOpen && (
-              <div className="bg-purple-50 border-t border-purple-200 p-3 space-y-2">
-                <div className="flex rounded-lg overflow-hidden border border-purple-200">
-                  <button
-                    onClick={() => setDiscountType('percentage')}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${discountType === 'percentage' ? 'bg-purple-600 text-white' : 'bg-flo-surface text-flo-text-secondary hover:bg-flo-bg'}`}
-                  >
-                    <Percent size={14} />
-                    {t('pos.percentage')}
-                  </button>
-                  <button
-                    onClick={() => setDiscountType('amount')}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${discountType === 'amount' ? 'bg-purple-600 text-white' : 'bg-flo-surface text-flo-text-secondary hover:bg-flo-bg'}`}
-                  >
-                    {t('pos.flatAmount')}
-                  </button>
-                </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-flo-text-muted text-sm">
-                    {discountType === 'percentage' ? '%' : currency}
-                  </span>
-                  <input
-                    type="number"
-                    value={discountValue}
-                    onChange={(e) => setDiscountValue(e.target.value)}
-                    placeholder={discountType === 'percentage' ? '0' : '0.00'}
-                    min="0"
-                    max={discountType === 'percentage' ? 100 : (preview?.subtotal ?? undefined)}
-                    step={discountType === 'percentage' ? 1 : 0.01}
-                    className="w-full pl-8 pr-3 py-2 text-sm border border-purple-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-flo-surface"
-                  />
-                </div>
-                <input
-                  type="text"
-                  value={discountReason}
-                  onChange={(e) => setDiscountReason(e.target.value)}
-                  placeholder={t('pos.discountReasonPlaceholder')}
-                  className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-flo-surface"
+          {/* Discount — owner/manager only (matches PATCH /orders/:id/discount) */}
+          {canDiscount && (
+            <div className="rounded-xl border border-flo-border overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setDiscountOpen((open) => !open)}
+                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 bg-flo-bg text-left"
+              >
+                <span className="text-sm font-medium text-flo-text">
+                  {preview?.discountAmount
+                    ? `${t('pos.discount')}: -${currencyFmt(preview.discountAmount)}`
+                    : t('pos.applyDiscount')}
+                </span>
+                <ChevronDown
+                  size={16}
+                  className={`text-flo-text-muted transition-transform ${discountOpen ? 'rotate-180' : ''}`}
                 />
-                {discountRequiresApproval && parseFloat(discountValue) > 0 && (
+              </button>
+
+              {discountOpen && (
+                <div className="bg-purple-50 border-t border-purple-200 p-3 space-y-2">
+                  <div className="flex rounded-lg overflow-hidden border border-purple-200">
+                    <button
+                      onClick={() => setDiscountType('percentage')}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${discountType === 'percentage' ? 'bg-purple-600 text-white' : 'bg-flo-surface text-flo-text-secondary hover:bg-flo-bg'}`}
+                    >
+                      <Percent size={14} />
+                      {t('pos.percentage')}
+                    </button>
+                    <button
+                      onClick={() => setDiscountType('amount')}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${discountType === 'amount' ? 'bg-purple-600 text-white' : 'bg-flo-surface text-flo-text-secondary hover:bg-flo-bg'}`}
+                    >
+                      {t('pos.flatAmount')}
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-flo-text-muted text-sm">
+                      {discountType === 'percentage' ? '%' : currency}
+                    </span>
+                    <input
+                      type="number"
+                      value={discountValue}
+                      onChange={(e) => setDiscountValue(e.target.value)}
+                      placeholder={discountType === 'percentage' ? '0' : '0.00'}
+                      min="0"
+                      max={discountType === 'percentage' ? 100 : (preview?.subtotal ?? undefined)}
+                      step={discountType === 'percentage' ? 1 : 0.01}
+                      className="w-full pl-8 pr-3 py-2 text-sm border border-purple-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-flo-surface"
+                    />
+                  </div>
                   <input
-                    type="password"
-                    value={discountPin}
-                    onChange={(e) => setDiscountPin(e.target.value)}
-                    placeholder={t('pos.managerPin')}
-                    maxLength={6}
+                    type="text"
+                    value={discountReason}
+                    onChange={(e) => setDiscountReason(e.target.value)}
+                    placeholder={t('pos.discountReasonPlaceholder')}
                     className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-flo-surface"
                   />
-                )}
-                {discountValue && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => {
-                      setDiscountValue('');
-                      setDiscountReason('');
-                      setDiscountPin('');
-                      setPaymentsTouched(false);
-                    }}
-                  >
-                    {t('pos.remove')}
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
+                  {discountRequiresApproval && parseFloat(discountValue) > 0 && (
+                    <input
+                      type="password"
+                      value={discountPin}
+                      onChange={(e) => setDiscountPin(e.target.value)}
+                      placeholder={t('pos.managerPin')}
+                      maxLength={6}
+                      className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-400 bg-flo-surface"
+                    />
+                  )}
+                  {discountValue && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        setDiscountValue('');
+                        setDiscountReason('');
+                        setDiscountPin('');
+                        setPaymentsTouched(false);
+                      }}
+                    >
+                      {t('pos.remove')}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Every method has one compact amount row; clicking its label fills the unallocated balance. */}
           <div className="space-y-2">
