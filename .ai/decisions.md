@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — R8 Staff & Workforce OS (Implemented)
+
+Authorized R8. Deepened existing `users` staff APIs + UI (search/filter, detail with shift history, currently working). Audits: `staff.activated`, `role.changed`. Zod on lifecycle params. No second staff store; no auth rewrite; schema remains **v82**. Suite `npm run test:r8`. Doc: `docs/05-production/r8-staff-workforce-os.md`. **Do not start R9 / payroll / scheduling.**
+
 ## 2026-08-15 — R7 Customer & CRM OS (Implemented)
 
 Authorized R7. Schema **v82**: `customer_notes` + `crm_segment_rules`. Customer 360 (`GET /customers/:id/crm`), deterministic segments, derived preferences, audited notes, CRM metrics, loyalty wallet integrated (not rebuilt). UI `/customers` + `/customers/detail/?id=`. Money via cents-preferred readers. Suite `npm run test:r7`. Doc: `docs/05-production/r7-customer-crm-os.md`. **Do not start R8 / marketing / BI.**

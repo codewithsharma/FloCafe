@@ -21,9 +21,9 @@ North-star KPI unchanged: **3 cafés × 30 days × zero critical failures** ([`S
 | **R3**  | Kitchen OS                        | Hardening residual + Planned stations        | R1; KDS SoR rule             |
 | **R4**  | Inventory depth                   | Planned inventory                            | R1 stock guards              |
 | **R5**  | Recipes / BOM / Food Cost         | **COMPLETE** (Existing depth)                | R4 ingredients               |
-| **R6**  | Purchasing                        | Planned + **ADR**                            | R4/R5                        |
+| **R6**  | Purchasing                        | **COMPLETE** (2026-08-15)                    | R4/R5                        |
 | **R7**  | Customer / CRM / Loyalty          | **COMPLETE** (2026-08-15)                    | R1 payments                  |
-| **R8**  | Staff / Shift / Attendance        | Planned staff depth                          | R1 RBAC                      |
+| **R8**  | Staff / Shift / Attendance        | **COMPLETE** (2026-08-15)                    | R1 RBAC                      |
 | **R9**  | Finance / Compliance              | Hardening audit + Planned expenses/tax depth | R1 finance                   |
 | **R10** | Online / QR Ordering              | Planned; online pay Frozen                   | R1–R3; no gateway            |
 | **R11** | Marketing                         | Planned/Later                                | R7                           |
@@ -112,7 +112,7 @@ Suppliers, supplier↔SKU mapping, PO lifecycle, partial/full receiving, invento
 
 **Exclude / remaining:** supplier returns, auto-reorder, forecasting, multi-location, WAC/FIFO ADR, supplier portal.
 
-**Next (if authorized):** R8 — do not start without explicit authorization. R7 CRM COMPLETE (`docs/05-production/r7-customer-crm-os.md`).
+**Next (if authorized):** R9 — do not start without explicit authorization. R8 Staff COMPLETE (`docs/05-production/r8-staff-workforce-os.md`).
 
 ---
 
@@ -126,7 +126,11 @@ Deepen profiles, preferences, points/cashback/wallet, rewards, gift cards (if au
 
 ## R8 — Staff / Shift / Attendance
 
-Fine-grained permissions product, attendance, scheduling, leave (Later items stay Later unless matrix edited). Keep shift cash model (ADR-007/008).
+**Status (2026-08-15):** COMPLETE for authorized deepen (no payroll / scheduling / biometric attendance). See `docs/05-production/r8-staff-workforce-os.md`.
+
+Fine-grained permissions product, attendance clocks, scheduling, leave remain Later/Planned unless matrix edited. Keep shift cash model (ADR-007/008).
+
+**Next (if authorized):** R9 — do not start without explicit authorization.
 
 ---
 

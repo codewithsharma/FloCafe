@@ -9,6 +9,7 @@ export const staffRoleSchema = z.enum(['owner', 'manager', 'cashier', 'waiter', 
 export const staffListQuerySchema = z.object({
   role: staffRoleSchema.optional(),
   active: z.enum(['true', 'false']).optional(),
+  search: z.string().trim().max(200).optional(),
 });
 
 export const staffIdParamsSchema = z.object({
@@ -20,7 +21,11 @@ export const staffCreateBodySchema = z.object({
   email: z.string().email().max(200).optional().nullable(),
   password: z.string().min(8).max(200),
   role: staffRoleSchema,
-  pin: z.string().regex(/^\d{4,6}$/).optional().nullable(),
+  pin: z
+    .string()
+    .regex(/^\d{4,6}$/)
+    .optional()
+    .nullable(),
 });
 
 export const staffUpdateBodySchema = z
@@ -29,6 +34,10 @@ export const staffUpdateBodySchema = z
     email: z.string().email().max(200).optional().nullable(),
     password: z.string().min(8).max(200).optional(),
     role: staffRoleSchema.optional(),
-    pin: z.string().regex(/^\d{4,6}$/).optional().nullable(),
+    pin: z
+      .string()
+      .regex(/^\d{4,6}$/)
+      .optional()
+      .nullable(),
   })
   .strict();

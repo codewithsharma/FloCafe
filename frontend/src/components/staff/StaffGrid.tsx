@@ -1,6 +1,7 @@
 'use client';
 
-import { Edit, RotateCcw } from 'lucide-react';
+import { Edit, RotateCcw, UserRound } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Panel, StatusBadge, EmptyState } from '@/components/flo';
 import { staffRoleVariant } from '@/lib/flo-display';
@@ -62,6 +63,11 @@ export function StaffGrid({
           }
           footer={
             <div className="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" className="min-h-11" asChild>
+                <Link href={`/staff/detail/?id=${encodeURIComponent(String(s.id))}`}>
+                  <UserRound size={14} className="mr-1" /> Detail
+                </Link>
+              </Button>
               <Button variant="outline" size="sm" className="min-h-11" onClick={() => onEdit(s)}>
                 <Edit size={14} className="mr-1" /> {t('common.edit')}
               </Button>

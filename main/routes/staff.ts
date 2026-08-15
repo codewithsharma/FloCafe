@@ -8,7 +8,12 @@ import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabase, now } from '../db';
-import { requireRole, validatePassword, authRateLimit, invalidateUserAuthCache } from '../middleware/security';
+import {
+  requireRole,
+  validatePassword,
+  authRateLimit,
+  invalidateUserAuthCache,
+} from '../middleware/security';
 import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
 import { validateBody, validateParams, validateQuery } from '../middleware/validate';
@@ -18,12 +23,18 @@ import {
   staffListQuerySchema,
   staffUpdateBodySchema,
 } from '../validation/staff';
+import {
+  STAFF_SELECT_FIELDS,
+  VALID_STAFF_ROLES,
+  buildStaffDetail,
+  listCurrentlyWorkingStaff,
+  listStaffMembers,
+} from '../services/staff-workforce';
 
 const router = Router();
 
 const OPERATIONAL_ROLES = ['cashier', 'waiter', 'chef'];
-const VALID_ROLES = ['owner', 'manager', ...OPERATIONAL_ROLES];
-const STAFF_SELECT_FIELDS = 'id, name, email, role, (pin_hash IS NOT NULL) AS has_pin, is_active, created_at, updated_at';
+const VALID_ROLES = [...VALID_STAFF_ROLES];
 
 function canModifyTargetStaff(requesterRole: string, targetRole: string): boolean {
   if (requesterRole === 'owner') return true;
@@ -50,197 +61,234 @@ function isValidPin(pin: unknown): boolean {
   return /^\d{4,6}$/.test(String(pin));
 }
 
+function actorUserId(req: Request): string | null {
+  return (req as Request & { user?: { userId?: string } }).user?.userId ?? null;
+}
+
+function actorRole(req: Request): string {
+  return String((req as Request & { user?: { role?: string } }).user?.role || '');
+}
+
 // ── List ──────────────────────────────────────────────────────────────────────
 
-router.get('/', requireRole('owner', 'manager'), validateQuery(staffListQuerySchema), (req: Request, res: Response) => {
-  try {
-    const db = getDatabase();
-    let query = `SELECT ${STAFF_SELECT_FIELDS} FROM users WHERE 1=1`;
-    const params: any[] = [];
-
-    if (req.query.role) {
-      if (typeof req.query.role !== 'string' || !VALID_ROLES.includes(req.query.role)) {
+router.get(
+  '/',
+  requireRole('owner', 'manager'),
+  validateQuery(staffListQuerySchema),
+  (req: Request, res: Response) => {
+    try {
+      const role = typeof req.query.role === 'string' ? req.query.role : undefined;
+      if (role && !VALID_ROLES.includes(role as (typeof VALID_ROLES)[number])) {
         return res.status(400).json({ error: `role must be one of: ${VALID_ROLES.join(', ')}` });
       }
-      query += ' AND role = ?';
-      params.push(req.query.role);
+      const staff = listStaffMembers({
+        role,
+        active: req.query.active as 'true' | 'false' | undefined,
+        search: typeof req.query.search === 'string' ? req.query.search : undefined,
+      });
+      res.json({ staff });
+    } catch (error: unknown) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-    if (req.query.active === 'true') {
-      query += ' AND is_active = 1';
-    }
-    if (req.query.active === 'false') {
-      query += ' AND is_active = 0';
-    }
+  },
+);
 
-    query += ' ORDER BY role, name';
+// ── Currently working (must be before /:id) ───────────────────────────────────
 
-    const staff = db.prepare(query).all(...params);
-    res.json({ staff });
+router.get('/working', requireRole('owner', 'manager'), (_req: Request, res: Response) => {
+  try {
+    res.json({ working: listCurrentlyWorkingStaff() });
   } catch (error: unknown) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // ── Get one ───────────────────────────────────────────────────────────────────
 
-router.get('/:id', requireRole('owner', 'manager'), validateParams(staffIdParamsSchema), (req: Request, res: Response) => {
-  try {
-    const db = getDatabase();
-    const member = db.prepare(
-      `SELECT ${STAFF_SELECT_FIELDS} FROM users WHERE id = ?`
-    ).get(req.params.id) as any;
-
-    if (!member) {
-      return res.status(404).json({ error: 'Staff member not found' });
+router.get(
+  '/:id',
+  requireRole('owner', 'manager'),
+  validateParams(staffIdParamsSchema),
+  (req: Request, res: Response) => {
+    try {
+      const staff = buildStaffDetail(String(req.params.id));
+      if (!staff) {
+        return res.status(404).json({ error: 'Staff member not found' });
+      }
+      res.json({ staff });
+    } catch (error: unknown) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    const performance = db.prepare(`
-      SELECT COUNT(*) as orders_served, COALESCE(SUM(total), 0) as total_sales
-      FROM orders
-      WHERE user_id = ? AND date(created_at) = date('now')
-    `).get(req.params.id);
-
-    res.json({ staff: { ...member, performance } });
-  } catch (error: unknown) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+  },
+);
 
 // ── Create ────────────────────────────────────────────────────────────────────
 
-router.post('/', requireRole('owner', 'manager'), validateBody(staffCreateBodySchema), authRateLimit(), (req: Request, res: Response) => {
-  try {
-    const { name, email, password, role, pin } = req.body;
+router.post(
+  '/',
+  requireRole('owner', 'manager'),
+  validateBody(staffCreateBodySchema),
+  authRateLimit(),
+  (req: Request, res: Response) => {
+    try {
+      const { name, email, password, role, pin } = req.body;
 
-    if (!name || !password || !role) {
-      return res.status(400).json({ error: 'name, password, and role are required' });
-    }
-    if (!validatePassword(password)) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.' });
-    }
-
-    if (!VALID_ROLES.includes(role)) {
-      return res.status(400).json({ error: `role must be one of: ${VALID_ROLES.join(', ')}` });
-    }
-
-    const requesterRole = (req as any).user.role;
-    if (requesterRole === 'manager' && !isOperationalRole(role)) {
-      return res.status(403).json({ error: 'Managers can only create operational staff accounts (cashier, server, chef)' });
-    }
-
-    if (isOperationalRole(role) && hasNonEmptyPin(pin)) {
-      return res.status(400).json({ error: 'PINs are only permitted for owner and manager roles' });
-    }
-    if (hasNonEmptyPin(pin) && !isValidPin(pin)) {
-      return res.status(400).json({ error: 'PIN must be between 4 and 6 numeric digits' });
-    }
-
-    const db = getDatabase();
-
-    if (email) {
-      const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-      if (existing) {
-        return res.status(400).json({ error: 'Email already in use' });
+      if (!name || !password || !role) {
+        return res.status(400).json({ error: 'name, password, and role are required' });
       }
-    }
+      if (!validatePassword(password)) {
+        return res.status(400).json({
+          error:
+            'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.',
+        });
+      }
 
-    const id = uuidv4();
-    const hashedPassword = bcrypt.hashSync(password, 10);
-
-    const hashedPin = hasNonEmptyPin(pin) ? bcrypt.hashSync(String(pin), 10) : null;
-
-    db.prepare(`
-      INSERT INTO users (id, name, email, password, role, pin_hash, is_active, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)
-    `).run(id, name, email || null, hashedPassword, role, hashedPin, now(), now());
-
-    const member = db.prepare(
-      `SELECT ${STAFF_SELECT_FIELDS} FROM users WHERE id = ?`
-    ).get(id);
-
-    logAuditEvent({
-      actorUserId: (req as any).user?.userId ?? null,
-      action: 'staff.created',
-      entityType: 'user',
-      entityId: id,
-      result: 'success',
-      metadata: { role, name },
-      context: auditStaffContext(req),
-    });
-
-    res.status(201).json({ staff: member });
-  } catch (error: unknown) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-// ── Update ────────────────────────────────────────────────────────────────────
-
-router.put('/:id', requireRole('owner', 'manager'), validateParams(staffIdParamsSchema), validateBody(staffUpdateBodySchema), authRateLimit(), (req: Request, res: Response) => {
-  try {
-    const { name, email, password, role, pin, is_active } = req.body;
-    const db = getDatabase();
-
-    if (is_active !== undefined) {
-      return res.status(400).json({ error: 'Use /deactivate or /reactivate endpoints to change account status' });
-    }
-
-    const member = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id) as any;
-    if (!member) {
-      return res.status(404).json({ error: 'Staff member not found' });
-    }
-
-    const requesterRole = (req as any).user.role;
-    if (!canModifyTargetStaff(requesterRole, member.role)) {
-      return res.status(403).json({ error: 'Managers cannot modify owner or manager accounts' });
-    }
-
-    if (role !== undefined) {
       if (!VALID_ROLES.includes(role)) {
         return res.status(400).json({ error: `role must be one of: ${VALID_ROLES.join(', ')}` });
       }
-      if (role !== member.role && requesterRole !== 'owner') {
-        return res.status(403).json({ error: 'Only owners can change roles' });
+
+      const requesterRole = actorRole(req);
+      if (requesterRole === 'manager' && !isOperationalRole(role)) {
+        return res.status(403).json({
+          error: 'Managers can only create operational staff accounts (cashier, server, chef)',
+        });
       }
-    }
 
-    const targetRole = role ?? member.role;
-    if (isOperationalRole(targetRole) && hasNonEmptyPin(pin)) {
-      return res.status(400).json({ error: 'PINs are only permitted for owner and manager roles' });
-    }
-    if (hasNonEmptyPin(pin) && !isValidPin(pin)) {
-      return res.status(400).json({ error: 'PIN must be between 4 and 6 numeric digits' });
-    }
-
-    if (email && email !== member.email) {
-      const existing = db.prepare('SELECT id FROM users WHERE email = ? AND id != ?').get(email, req.params.id);
-      if (existing) {
-        return res.status(400).json({ error: 'Email already in use' });
+      if (isOperationalRole(role) && hasNonEmptyPin(pin)) {
+        return res
+          .status(400)
+          .json({ error: 'PINs are only permitted for owner and manager roles' });
       }
+      if (hasNonEmptyPin(pin) && !isValidPin(pin)) {
+        return res.status(400).json({ error: 'PIN must be between 4 and 6 numeric digits' });
+      }
+
+      const db = getDatabase();
+
+      if (email) {
+        const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+        if (existing) {
+          return res.status(400).json({ error: 'Email already in use' });
+        }
+      }
+
+      const id = uuidv4();
+      const hashedPassword = bcrypt.hashSync(password, 10);
+      const hashedPin = hasNonEmptyPin(pin) ? bcrypt.hashSync(String(pin), 10) : null;
+
+      db.prepare(
+        `
+      INSERT INTO users (id, name, email, password, role, pin_hash, is_active, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, 1, ?, ?)
+    `,
+      ).run(id, name, email || null, hashedPassword, role, hashedPin, now(), now());
+
+      const member = db.prepare(`SELECT ${STAFF_SELECT_FIELDS} FROM users WHERE id = ?`).get(id);
+
+      logAuditEvent({
+        actorUserId: actorUserId(req),
+        action: 'staff.created',
+        entityType: 'user',
+        entityId: id,
+        result: 'success',
+        metadata: { role, name },
+        context: auditStaffContext(req),
+      });
+
+      res.status(201).json({ staff: member });
+    } catch (error: unknown) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
+  },
+);
 
-    if (password && !validatePassword(password)) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.' });
-    }
+// ── Update ────────────────────────────────────────────────────────────────────
 
-    const hashedPassword = password ? bcrypt.hashSync(password, 10) : member.password;
-    const hashedPin = isOperationalRole(targetRole)
-      ? null
-      : pin !== undefined
-        ? (hasNonEmptyPin(pin) ? bcrypt.hashSync(String(pin), 10) : null)
-        : member.pin_hash;
+router.put(
+  '/:id',
+  requireRole('owner', 'manager'),
+  validateParams(staffIdParamsSchema),
+  validateBody(staffUpdateBodySchema),
+  authRateLimit(),
+  (req: Request, res: Response) => {
+    try {
+      const { name, email, password, role, pin, is_active } = req.body;
+      const db = getDatabase();
 
-    // Revoke this user's outstanding sessions only when a credential actually
-    // changed (not on a bare name/email/role edit) — matches auth.ts's
-    // password/change and recover-password (#173).
-    const credentialsChanged = hashedPassword !== member.password || hashedPin !== member.pin_hash;
-    const tokensValidAfter = credentialsChanged ? now() : member.tokens_valid_after;
+      if (is_active !== undefined) {
+        return res
+          .status(400)
+          .json({ error: 'Use /deactivate or /reactivate endpoints to change account status' });
+      }
 
-    const demotesActiveOwner = member.role === 'owner' && member.is_active === 1 && targetRole !== 'owner';
-    const result = db.prepare(`
+      const member = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id) as
+        Record<string, unknown> | undefined;
+      if (!member) {
+        return res.status(404).json({ error: 'Staff member not found' });
+      }
+
+      const requesterRole = actorRole(req);
+      if (!canModifyTargetStaff(requesterRole, String(member.role))) {
+        return res.status(403).json({ error: 'Managers cannot modify owner or manager accounts' });
+      }
+
+      if (role !== undefined) {
+        if (!VALID_ROLES.includes(role)) {
+          return res.status(400).json({ error: `role must be one of: ${VALID_ROLES.join(', ')}` });
+        }
+        if (role !== member.role && requesterRole !== 'owner') {
+          return res.status(403).json({ error: 'Only owners can change roles' });
+        }
+      }
+
+      const targetRole = role ?? String(member.role);
+      if (isOperationalRole(targetRole) && hasNonEmptyPin(pin)) {
+        return res
+          .status(400)
+          .json({ error: 'PINs are only permitted for owner and manager roles' });
+      }
+      if (hasNonEmptyPin(pin) && !isValidPin(pin)) {
+        return res.status(400).json({ error: 'PIN must be between 4 and 6 numeric digits' });
+      }
+
+      if (email && email !== member.email) {
+        const existing = db
+          .prepare('SELECT id FROM users WHERE email = ? AND id != ?')
+          .get(email, req.params.id);
+        if (existing) {
+          return res.status(400).json({ error: 'Email already in use' });
+        }
+      }
+
+      if (password && !validatePassword(password)) {
+        return res.status(400).json({
+          error:
+            'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.',
+        });
+      }
+
+      const hashedPassword = password ? bcrypt.hashSync(password, 10) : member.password;
+      const hashedPin = isOperationalRole(targetRole)
+        ? null
+        : pin !== undefined
+          ? hasNonEmptyPin(pin)
+            ? bcrypt.hashSync(String(pin), 10)
+            : null
+          : member.pin_hash;
+
+      const credentialsChanged =
+        hashedPassword !== member.password || hashedPin !== member.pin_hash;
+      const tokensValidAfter = credentialsChanged ? now() : member.tokens_valid_after;
+
+      const demotesActiveOwner =
+        member.role === 'owner' && Number(member.is_active) === 1 && targetRole !== 'owner';
+      const result = db
+        .prepare(
+          `
       UPDATE users SET
         name       = COALESCE(?, name),
         email      = COALESCE(?, email),
@@ -254,122 +302,172 @@ router.put('/:id', requireRole('owner', 'manager'), validateParams(staffIdParams
           ? = 0
           OR (SELECT COUNT(*) FROM users WHERE role = 'owner' AND is_active = 1) > 1
         )
-    `).run(
-      name || null, email || null, hashedPassword,
-      role || null, hashedPin, tokensValidAfter,
-      now(), req.params.id, demotesActiveOwner ? 1 : 0,
-    );
-    if (result.changes === 0) {
-      return res.status(400).json({ error: 'Cannot change the role of the last active owner. Create or promote another active owner first.' });
+    `,
+        )
+        .run(
+          name || null,
+          email || null,
+          hashedPassword,
+          role || null,
+          hashedPin,
+          tokensValidAfter,
+          now(),
+          req.params.id,
+          demotesActiveOwner ? 1 : 0,
+        );
+      if (result.changes === 0) {
+        return res.status(400).json({
+          error:
+            'Cannot change the role of the last active owner. Create or promote another active owner first.',
+        });
+      }
+      invalidateUserAuthCache(req.params.id as string);
+
+      const updated = db
+        .prepare(`SELECT ${STAFF_SELECT_FIELDS} FROM users WHERE id = ?`)
+        .get(req.params.id);
+
+      const roleChanged = role !== undefined && role !== member.role;
+      logAuditEvent({
+        actorUserId: actorUserId(req),
+        action: 'staff.updated',
+        entityType: 'user',
+        entityId: String(req.params.id),
+        result: 'success',
+        metadata: {
+          role: targetRole,
+          fields_changed: [
+            name !== undefined ? 'name' : null,
+            email !== undefined ? 'email' : null,
+            role !== undefined ? 'role' : null,
+            password ? 'password' : null,
+            pin !== undefined ? 'pin' : null,
+          ].filter(Boolean),
+          credentials_changed: credentialsChanged,
+        },
+        context: auditStaffContext(req),
+      });
+      if (roleChanged) {
+        logAuditEvent({
+          actorUserId: actorUserId(req),
+          action: 'role.changed',
+          entityType: 'user',
+          entityId: String(req.params.id),
+          result: 'success',
+          metadata: { from: member.role, to: role },
+          context: auditStaffContext(req),
+        });
+      }
+
+      res.json({ staff: updated });
+    } catch (error: unknown) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-    invalidateUserAuthCache(req.params.id as string);
-
-    const updated = db.prepare(
-      `SELECT ${STAFF_SELECT_FIELDS} FROM users WHERE id = ?`
-    ).get(req.params.id);
-
-    logAuditEvent({
-      actorUserId: (req as any).user?.userId ?? null,
-      action: 'staff.updated',
-      entityType: 'user',
-      entityId: String(req.params.id),
-      result: 'success',
-      metadata: {
-        role: targetRole,
-        fields_changed: [
-          name !== undefined ? 'name' : null,
-          email !== undefined ? 'email' : null,
-          role !== undefined ? 'role' : null,
-          password ? 'password' : null,
-          pin !== undefined ? 'pin' : null,
-        ].filter(Boolean),
-        credentials_changed: credentialsChanged,
-      },
-      context: auditStaffContext(req),
-    });
-
-    res.json({ staff: updated });
-  } catch (error: unknown) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+  },
+);
 
 // ── Activate / Deactivate ─────────────────────────────────────────────────────
 // Staff are never hard-deleted — orders.user_id and print_logs.user_id reference
 // them, and losing the row would orphan historical order/print records.
 // Deactivating is the only removal path.
 
-router.post('/:id/deactivate', requireRole('owner', 'manager'), (req: Request, res: Response) => {
-  try {
-    const db = getDatabase();
-    const member = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id) as any;
-    if (!member) return res.status(404).json({ error: 'Staff member not found' });
-    if (member.is_active === 0) return res.status(400).json({ error: 'Already deactivated' });
+router.post(
+  '/:id/deactivate',
+  requireRole('owner', 'manager'),
+  validateParams(staffIdParamsSchema),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const member = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id) as
+        Record<string, unknown> | undefined;
+      if (!member) return res.status(404).json({ error: 'Staff member not found' });
+      if (Number(member.is_active) === 0)
+        return res.status(400).json({ error: 'Already deactivated' });
 
-    if (!canModifyTargetStaff((req as any).user.role, member.role)) {
-      return res.status(403).json({ error: 'Managers cannot deactivate or reactivate owner or manager accounts' });
-    }
+      if (!canModifyTargetStaff(actorRole(req), String(member.role))) {
+        return res
+          .status(403)
+          .json({ error: 'Managers cannot deactivate or reactivate owner or manager accounts' });
+      }
 
-    const changedAt = now();
-    const result = db.prepare(`
+      const changedAt = now();
+      const result = db
+        .prepare(
+          `
       UPDATE users SET is_active = 0, tokens_valid_after = ?, updated_at = ?
       WHERE id = ? AND is_active = 1
         AND (role != 'owner' OR (SELECT COUNT(*) FROM users WHERE role = 'owner' AND is_active = 1) > 1)
-    `).run(changedAt, changedAt, req.params.id);
-    if (result.changes === 0) {
-      return res.status(400).json({ error: 'Cannot deactivate the last owner account' });
+    `,
+        )
+        .run(changedAt, changedAt, req.params.id);
+      if (result.changes === 0) {
+        return res.status(400).json({ error: 'Cannot deactivate the last owner account' });
+      }
+      invalidateUserAuthCache(req.params.id as string);
+      const updated = db
+        .prepare(`SELECT ${STAFF_SELECT_FIELDS} FROM users WHERE id = ?`)
+        .get(req.params.id);
+      logAuditEvent({
+        actorUserId: actorUserId(req),
+        action: 'staff.deactivated',
+        entityType: 'user',
+        entityId: String(req.params.id),
+        result: 'success',
+        metadata: { role: member.role },
+        context: auditStaffContext(req),
+      });
+      res.json({ staff: updated });
+    } catch (error: unknown) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-    invalidateUserAuthCache(req.params.id as string);
-    const updated = db.prepare(
-      `SELECT ${STAFF_SELECT_FIELDS} FROM users WHERE id = ?`
-    ).get(req.params.id);
-    logAuditEvent({
-      actorUserId: (req as any).user?.userId ?? null,
-      action: 'staff.deactivated',
-      entityType: 'user',
-      entityId: String(req.params.id),
-      result: 'success',
-      metadata: { role: member.role },
-      context: auditStaffContext(req),
-    });
-    res.json({ staff: updated });
-  } catch (error: unknown) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+  },
+);
 
-router.post('/:id/reactivate', requireRole('owner', 'manager'), (req: Request, res: Response) => {
-  try {
-    const db = getDatabase();
-    const member = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id) as any;
-    if (!member) return res.status(404).json({ error: 'Staff member not found' });
-    if (member.is_active === 1) return res.status(400).json({ error: 'Already active' });
+router.post(
+  '/:id/reactivate',
+  requireRole('owner', 'manager'),
+  validateParams(staffIdParamsSchema),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const member = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id) as
+        Record<string, unknown> | undefined;
+      if (!member) return res.status(404).json({ error: 'Staff member not found' });
+      if (Number(member.is_active) === 1) return res.status(400).json({ error: 'Already active' });
 
-    if (!canModifyTargetStaff((req as any).user.role, member.role)) {
-      return res.status(403).json({ error: 'Managers cannot deactivate or reactivate owner or manager accounts' });
+      if (!canModifyTargetStaff(actorRole(req), String(member.role))) {
+        return res
+          .status(403)
+          .json({ error: 'Managers cannot deactivate or reactivate owner or manager accounts' });
+      }
+
+      const result = db
+        .prepare('UPDATE users SET is_active = 1, updated_at = ? WHERE id = ? AND is_active = 0')
+        .run(now(), req.params.id);
+      if (result.changes === 0) {
+        return res.status(400).json({ error: 'Already active' });
+      }
+      invalidateUserAuthCache(req.params.id as string);
+      const updated = db
+        .prepare(`SELECT ${STAFF_SELECT_FIELDS} FROM users WHERE id = ?`)
+        .get(req.params.id);
+      logAuditEvent({
+        actorUserId: actorUserId(req),
+        action: 'staff.activated',
+        entityType: 'user',
+        entityId: String(req.params.id),
+        result: 'success',
+        metadata: { role: member.role },
+        context: auditStaffContext(req),
+      });
+      res.json({ staff: updated });
+    } catch (error: unknown) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    db.prepare('UPDATE users SET is_active = 1, updated_at = ? WHERE id = ?').run(now(), req.params.id);
-    invalidateUserAuthCache(req.params.id as string);
-    const updated = db.prepare(
-      `SELECT ${STAFF_SELECT_FIELDS} FROM users WHERE id = ?`
-    ).get(req.params.id);
-    logAuditEvent({
-      actorUserId: (req as any).user?.userId ?? null,
-      action: 'staff.reactivated',
-      entityType: 'user',
-      entityId: String(req.params.id),
-      result: 'success',
-      metadata: { role: member.role },
-      context: auditStaffContext(req),
-    });
-    res.json({ staff: updated });
-  } catch (error: unknown) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
+  },
+);
 
 export const staffRoutes = router;

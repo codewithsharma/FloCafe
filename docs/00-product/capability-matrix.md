@@ -261,6 +261,8 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | Tips               | ⚪ Later                |
 | Payroll            | 🔴 Out of initial scope |
 
+R8 (2026-08-15) deepened Existing staff management (search/filter, detail, shift visibility / currently working, audits) without promoting Attendance, Scheduling, Tips, or Payroll. See `docs/05-production/r8-staff-workforce-os.md`.
+
 ## Digital Ordering
 
 | Feature                 | Status              |

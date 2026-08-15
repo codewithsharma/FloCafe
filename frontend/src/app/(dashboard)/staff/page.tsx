@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button';
 import toast from 'react-hot-toast';
 import type { Staff } from '@/lib/types';
 import { useI18n } from '@/hooks/useI18n';
-import { PageHeader, LoadingState } from '@/components/flo';
+import { PageHeader, LoadingState, Panel } from '@/components/flo';
 import {
   StaffGrid,
   StaffFormDialog,
   StaffResetPasswordDialog,
   type StaffFormState,
 } from '@/components/staff';
+import { fetchWorkingStaff } from '@/lib/staff-workforce';
 
 const DEFAULT_FORM: StaffFormState = {
   name: '',
@@ -28,6 +29,10 @@ export default function StaffPage() {
   const { t } = useI18n();
   const [staff, setStaff] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [activeFilter, setActiveFilter] = useState('');
+  const [working, setWorking] = useState<Array<Record<string, unknown>>>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const [showResetPw, setShowResetPw] = useState(false);
@@ -38,26 +43,49 @@ export default function StaffPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPin, setShowPin] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
-
-  const fetchStaff = async () => {
-    try {
-      const { data } = await api.get('/staff');
-      setStaff(data.staff || []);
-    } catch {
-      toast.error(t('staff.failedToLoad'));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    api
-      .get('/staff')
-      .then(({ data }) => setStaff(data.staff || []))
-      .catch(() => toast.error(t('staff.failedToLoad')))
-      .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      const params: Record<string, string> = {};
+      if (search) params.search = search;
+      if (roleFilter) params.role = roleFilter;
+      if (activeFilter) params.active = activeFilter;
+      api
+        .get('/staff', { params, signal: controller.signal })
+        .then(({ data }) => setStaff(data.staff || []))
+        .catch((err: unknown) => {
+          if (!(
+            err instanceof Error &&
+            (err.name === 'CanceledError' || err.name === 'AbortError')
+          )) {
+            toast.error(t('staff.failedToLoad'));
+          }
+        })
+        .finally(() => setLoading(false));
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [search, roleFilter, activeFilter, refreshKey, t]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchWorkingStaff()
+      .then((rows) => {
+        if (!cancelled) setWorking(rows);
+      })
+      .catch(() => {
+        /* optional when shifts disabled */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
+
+  const fetchStaff = () => setRefreshKey((k) => k + 1);
 
   const openAdd = () => {
     setEditingStaff(null);
@@ -175,6 +203,60 @@ export default function StaffPage() {
           </Button>
         }
       />
+
+      {working.length > 0 ? (
+        <Panel title="Currently working" className="mb-4">
+          <ul className="text-sm space-y-1">
+            {working.map((w) => (
+              <li key={`${w.user_id}-${w.shift_id}`}>
+                {String(w.name)} · {String(w.role)} · terminal {String(w.terminal_id)}
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      ) : null}
+
+      <div className="mb-3 flex flex-wrap gap-3 items-end">
+        <div>
+          <label className="block text-sm text-flo-text-secondary mb-1" htmlFor="staff-search">
+            Search
+          </label>
+          <input
+            id="staff-search"
+            className="min-h-11 rounded-flo-md border border-flo-border bg-flo-surface px-3 text-sm"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Name or email"
+          />
+        </div>
+        <div>
+          <label className="block text-sm text-flo-text-secondary mb-1">Role</label>
+          <select
+            className="min-h-11 rounded-flo-md border border-flo-border bg-flo-surface px-3 text-sm"
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="owner">Owner</option>
+            <option value="manager">Manager</option>
+            <option value="cashier">Cashier</option>
+            <option value="waiter">Waiter</option>
+            <option value="chef">Chef</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm text-flo-text-secondary mb-1">Active</label>
+          <select
+            className="min-h-11 rounded-flo-md border border-flo-border bg-flo-surface px-3 text-sm"
+            value={activeFilter}
+            onChange={(e) => setActiveFilter(e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
+      </div>
 
       {loading ? (
         <LoadingState />

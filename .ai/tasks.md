@@ -25,7 +25,8 @@ Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `
 - [x] **Foundation priority deepen Phase 1 (2026-08-15):** migrations extract; orders package split; P0.3 dual-write v81; categories Zod; P1.3 closed. Doc: `foundation-priority-deepen.md`. Remaining: full any wipe, Zod residual routes, REAL cutover.
 - [x] **Foundation priority deepen Phase 2 (2026-08-15):** prefer-cents readers + dual-write writers; process-kill harness; Zod staff/tables/shifts/KDS/settings/payment-methods; `any` main&lt;600 / orders&lt;50. Doc: `foundation-priority-deepen-phase2.md`. **Ready for R7 authorization — do not auto-start R7.**
 - [x] **R7 Customer & CRM OS GREEN (2026-08-15):** schema v82 notes + segment rules; 360; segments; preferences; notes RBAC/audit; loyalty integrate; metrics; `npm run test:r7`. Doc: `r7-customer-crm-os.md`. Do not start R8.
-- [ ] **Hardening (prefer next, authorized slice only):** REAL money cutover (drop REAL); residual Zod bodies; durable KDS outbox — or next authorized R-wave. R0–R7 + foundation Phase 1–2 closed.
+- [x] **R8 Staff & Workforce OS GREEN (2026-08-15):** deepen users staff + shift visibility; search/filters; detail; working; audits; `npm run test:r8`. Doc: `r8-staff-workforce-os.md`. Do not start R9.
+- [ ] **Hardening (prefer next, authorized slice only):** REAL money cutover (drop REAL); residual Zod bodies; durable KDS outbox — or next authorized R-wave. R0–R8 + foundation Phase 1–2 closed.
 - [ ] **Planned (not started):** see matrix — expediter, QR, marketing (R11), full BI (R12), gift cards, etc. Reuse shipped slices; do not rebuild.
 - [ ] **Frozen / later / out of scope:** terminals, gateways, online payment, multi-location, payroll, aggregators, AI — do not start.
 

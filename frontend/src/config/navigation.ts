@@ -273,5 +273,6 @@ export function getRouteTitleKey(pathname: string): string {
   if (path === '/products/recipes') return 'recipes.title';
   if (path === '/products/purchasing') return 'purchasing.title';
   if (path.startsWith('/customers/detail')) return 'flo.nav.customers';
+  if (path.startsWith('/staff/detail')) return 'flo.nav.team';
   return 'flo.nav.home';
 }

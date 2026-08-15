@@ -222,6 +222,7 @@
     "test:r5": "node tests/run-electron-node-test.cjs tests/r5-bom-recipes-food-cost.test.ts",
     "test:r6": "node tests/run-electron-node-test.cjs tests/r6-purchasing.test.ts",
     "test:r7": "node tests/run-electron-node-test.cjs tests/r7-customer-crm.test.ts",
+    "test:r8": "node tests/run-electron-node-test.cjs tests/r8-staff-workforce.test.ts",
     "test:r4.1": "node tests/run-electron-node-test.cjs tests/r4-1-foundation-stabilization.test.ts",
     "test:process-kill": "node tests/run-electron-node-test.cjs tests/process-kill-recovery.test.ts",
     "test:money-cents": "node tests/run-electron-node-test.cjs tests/money-cents-phase2.test.ts"
