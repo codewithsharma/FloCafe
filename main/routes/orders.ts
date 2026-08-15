@@ -1239,7 +1239,11 @@ router.patch(
             break;
 
           case 'cancelled': {
-            if ((order as any).status === 'cancelled') {
+            // H4: re-read under the txn lock so concurrent cancels cannot double-restock.
+            const locked = db
+              .prepare('SELECT status FROM orders WHERE id = ?')
+              .get(req.params.id) as { status: string } | undefined;
+            if (!locked || locked.status === 'cancelled') {
               break;
             }
             const items = db
@@ -2075,6 +2079,15 @@ router.patch(
           return res.status(404).json({ error: 'Item not found in this order' });
         }
 
+        // H4: duplicate cancel/void retries are no-ops (lost-response safe).
+        if (item.status === 'cancelled' || item.status === 'voided') {
+          const items = db
+            .prepare('SELECT * FROM order_items WHERE order_id = ?')
+            .all(orderId)
+            .map(parseItemJson) as any[];
+          return res.json({ order: { ...order, items }, already_cancelled: true });
+        }
+
         // #150: an item the kitchen has already started on (preparing/ready)
         // can't be silently deleted like a pending one — the ingredients are
         // already consumed. Voiding it instead requires a manager PIN, mirrors
@@ -2452,20 +2465,37 @@ router.patch('/:orderId/items/:itemId/restore', requireRole('owner', 'manager'),
       return res.status(404).json({ error: 'Item not found in this order' });
     }
 
+    if (item.status !== 'cancelled') {
+      return res.status(409).json({
+        error: 'Only cancelled items can be restored',
+        code: 'ITEM_STATUS_CONFLICT',
+      });
+    }
+
     if (['completed', 'cancelled'].includes(order.status)) {
       return res
         .status(400)
         .json({ error: 'Cannot restore items on completed or cancelled orders' });
     }
-    const paidBill = db
-      .prepare("SELECT id FROM bills WHERE order_id = ? AND payment_status = 'paid'")
-      .get(orderId);
-    if (paidBill) {
-      return res.status(400).json({ error: 'Cannot restore items on a paid order' });
+    if (orderHasSuccessfulTender(db, orderId as string)) {
+      return res.status(409).json({
+        error: 'Cannot restore items on an order with successful tender; refund the bill instead',
+        code: 'ORDER_HAS_SUCCESSFUL_TENDER',
+      });
     }
 
     // BUG #17 FIX: Wrap restore + total recalc in transaction
     const result = withTxn(() => {
+      // H4: re-check under lock so a concurrent restore/cancel cannot stale-write.
+      const locked = db
+        .prepare('SELECT status FROM order_items WHERE id = ? AND order_id = ?')
+        .get(itemId, orderId) as { status: string } | undefined;
+      if (!locked || locked.status !== 'cancelled') {
+        throw Object.assign(new Error('Only cancelled items can be restored'), {
+          statusCode: 409,
+          code: 'ITEM_STATUS_CONFLICT',
+        });
+      }
       // Restore - mark as pending
       db.prepare("UPDATE order_items SET status = 'pending', updated_at = ? WHERE id = ?").run(
         now(),
@@ -2609,9 +2639,10 @@ router.patch('/:orderId/items/:itemId/restore', requireRole('owner', 'manager'),
   } catch (error: any) {
     console.error('[Orders] Restore item error:', error);
     console.error('[API] Internal error:', error);
-    res
-      .status(error.statusCode || 500)
-      .json({ error: error.statusCode ? error.message : 'Internal server error' });
+    res.status(error.statusCode || 500).json({
+      error: error.statusCode ? error.message : 'Internal server error',
+      ...(error.code ? { code: error.code } : {}),
+    });
   }
 });
 

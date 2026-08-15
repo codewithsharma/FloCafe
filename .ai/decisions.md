@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — H4 Restore / Conflict Hardening (Implemented)
+
+Authorized slice: restore → conflict detection → conflict-safe recovery. Create-time backup `integrity_check`; HTTP `backup.created` + IPC `restore.completed|failed` audits; order cancel re-reads status in txn before restock; item cancel no-op; item restore only from cancelled + tender guard + 409 conflict. Schema v75 unchanged. Tests: `npm run test:h4` + `test:backup`. Doc: `docs/05-production/h4-restore-conflict-hardening.md`. Matrix Conflict/Restore/App restart remain Hardening with H4 depth. No durable KDS outbox. No architecture rewrite. STOP after H4.
+
 ## 2026-08-15 — H3 Permissions / RBAC Hardening (Implemented)
 
 Authorized slice: permissions / RBAC. Explicit `requireRole` on item cancel (O/M/C/W), restore (O/M), order-items status (chef/M/O). POS discount UI + Settings deep-link gated to owner/manager. Test `createApp` matches production DB-role-over-JWT. Schema v75 unchanged. Tests: `npm run test:h3`. Doc: `docs/05-production/h3-permissions-rbac-hardening.md`. Matrix Permissions / Authorization / Role-based access remain Hardening with H3 depth. No auth rewrite. No new framework. STOP after H3 (do not auto-start restore/conflict).

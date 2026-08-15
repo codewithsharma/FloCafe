@@ -1061,6 +1061,16 @@ export async function createBackupUnlocked(
       backupDb
         .prepare(`INSERT OR REPLACE INTO _flo_meta (key, value) VALUES (?, ?)`)
         .run('app_version', app.getVersion());
+
+      // H4: verify the artifact is restore-worthy before reporting success.
+      const integrity = backupDb.prepare('PRAGMA integrity_check').all() as {
+        integrity_check: string;
+      }[];
+      if (integrity.some((row) => row.integrity_check !== 'ok')) {
+        throw new Error(
+          `Backup integrity check failed: ${integrity.map((row) => row.integrity_check).join('; ')}`,
+        );
+      }
     } finally {
       backupDb?.close();
     }

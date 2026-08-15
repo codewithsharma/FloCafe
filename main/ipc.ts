@@ -19,11 +19,42 @@ import {
 import { clearInMemoryRevokedTokens, clearUserAuthCache } from './middleware/security';
 import { clearJWTSecretCache } from './routes/auth';
 import { authorizeMasterPin, isMasterPinAvailable, isMasterPinSet } from './services/master-pin';
+import { logAuditEvent } from './services/audit-log';
+import { resolveManagedBackupPath, validateExternalRestorePath } from './security/restore-path';
 import {
-  resolveManagedBackupPath,
-  validateExternalRestorePath,
-} from './security/restore-path';
-import { isRecoveryRequired, markInstallationInitialized, clearRecoveryRequired } from './services/install-state';
+  isRecoveryRequired,
+  markInstallationInitialized,
+  clearRecoveryRequired,
+} from './services/install-state';
+
+function auditRestore(
+  result: {
+    success: boolean;
+    mode?: string;
+    backupVersion?: number | null;
+    tablesRestored?: number;
+    error?: string;
+  },
+  backupPath: string,
+): void {
+  try {
+    logAuditEvent({
+      actorUserId: null,
+      action: result.success ? 'restore.completed' : 'restore.failed',
+      entityType: 'database',
+      entityId: path.basename(backupPath),
+      result: result.success ? 'success' : 'failure',
+      reason: result.error || null,
+      metadata: {
+        mode: result.mode || null,
+        backup_schema_version: result.backupVersion ?? null,
+        tables_restored: result.tablesRestored ?? null,
+      },
+    });
+  } catch (error) {
+    console.warn('[IPC] restore audit failed:', error);
+  }
+}
 
 async function performRestore(backupPath: string): Promise<{
   success: boolean;
@@ -40,7 +71,8 @@ async function performRestore(backupPath: string): Promise<{
   if (backupVersion === null) {
     return {
       success: false,
-      error: 'Invalid backup file: missing schema version metadata. This backup may have been created with an older version of FloDesktop.',
+      error:
+        'Invalid backup file: missing schema version metadata. This backup may have been created with an older version of FloDesktop.',
     };
   }
 
@@ -65,7 +97,8 @@ async function performRestore(backupPath: string): Promise<{
     if (!isDatabaseOpen()) {
       return {
         success: false,
-        error: 'Cannot perform data-only restore while the operational database is missing. Use a same-schema backup, or reinstall matching app version.',
+        error:
+          'Cannot perform data-only restore while the operational database is missing. Use a same-schema backup, or reinstall matching app version.',
       };
     }
 
@@ -77,7 +110,7 @@ async function performRestore(backupPath: string): Promise<{
       markInstallationInitialized();
       clearRecoveryRequired();
     }
-    return {
+    const payload = {
       success: restoreResult.success,
       mode: restoreResult.mode,
       backupVersion,
@@ -89,6 +122,8 @@ async function performRestore(backupPath: string): Promise<{
       error: restoreResult.error,
       relaunch: restoreResult.success && wasRecovery,
     };
+    auditRestore(payload, backupPath);
+    return payload;
   }
 
   const restoreResult = await withDatabaseMaintenanceLock(() => restoreBackup(backupPath, true));
@@ -99,16 +134,20 @@ async function performRestore(backupPath: string): Promise<{
     markInstallationInitialized();
     clearRecoveryRequired();
   }
-  return {
+  const payload = {
     success: restoreResult.success,
     mode: restoreResult.mode,
     backupVersion,
     currentVersion: isDatabaseOpen() ? getCurrentSchemaVersion() : currentVersion,
     tablesRestored: restoreResult.tablesRestored,
-    message: restoreResult.success ? 'Database restored successfully' : `Restore failed: ${restoreResult.error}`,
+    message: restoreResult.success
+      ? 'Database restored successfully'
+      : `Restore failed: ${restoreResult.error}`,
     error: restoreResult.error,
     relaunch: restoreResult.success && wasRecovery,
   };
+  auditRestore(payload, backupPath);
+  return payload;
 }
 
 export function registerIpcHandlers(): void {

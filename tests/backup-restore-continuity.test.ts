@@ -414,6 +414,14 @@ async function main(): Promise<void> {
   assert.equal(Number(refund.shift_id), snap.closedShiftId, 'C5 refund shift association');
   console.log('   ✓ C5 orders/bills/payments/refunds restored');
 
+  // H4: after restore onto a fresh install, backup-only staff stay inactive until reactivated.
+  const mgrAfterRestore = db
+    .prepare('SELECT is_active FROM users WHERE id = ?')
+    .get('mgr-p12') as { is_active: number } | undefined;
+  assert.ok(mgrAfterRestore, 'C6a mgr-p12 exists after restore');
+  assert.equal(mgrAfterRestore.is_active, 0, 'C6a backup-only manager is inactive after restore');
+  db.prepare('UPDATE users SET is_active = 1, tokens_valid_after = NULL WHERE id = ?').run('mgr-p12');
+
   // C6 FIN-01 after restore
   const afterFin = assertMoneyInvariants(snap.fin01BillId);
   assert.equal(afterFin.gross, 600);

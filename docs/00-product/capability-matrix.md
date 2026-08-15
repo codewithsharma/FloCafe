@@ -481,9 +481,9 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 - POS: void order, discounts, receipt generation — **H1 (2026-08-15) closed audit + paid-tender guards + print-bill `print_logs`**; remaining depth below
 - KDS: offline KDS, KDS recovery — **H2 (2026-08-15) closed live-companion advertise, stale-board UX, one silent status retry on reconnect**; remaining depth below
 - Staff: permissions — **H3 (2026-08-15) closed cancel/restore/status `requireRole` + POS discount UI + Settings deep-link**; remaining depth below
-- Offline: conflict handling, app restart recovery, KDS offline behavior — **H2 covers KDS offline advertise/reconnect UI; POS conflict/restore still open**
+- Offline: conflict handling, app restart recovery, KDS offline behavior — **H2 covers KDS; H4 (2026-08-15) closed cancel TOCTOU + item cancel/restore conflict guards**; remaining depth below
 - Security: authorization, role-based access — **H3 (2026-08-15) closed same RBAC depth + test DB-role parity**; audit trail still open
-- Reliability: error handling, restore
+- Reliability: error handling, restore — **H4 (2026-08-15) closed create-time backup integrity + backup/restore audit**; remaining depth below
 - Data: integrity validation, audit logging
 
 ### H1 delivered depth (2026-08-15)
@@ -516,6 +516,16 @@ Remaining after H2 (not falsely marked Existing): durable offline ticket outbox,
 | Role-based access | 🟡 Hardening | Role gates aligned on cancel/restore/status + discount/settings; no auth rewrite                                                    |
 
 Remaining after H3 (not falsely marked Existing): Sensitive-action controls (Planned); authz-denial audit flood; cashier in-progress void UI; manager settings save UX quirks; broader audit-trail Hardening.
+
+### H4 delivered depth (2026-08-15)
+
+| Row                  | Still        | H4 closed                                                                         |
+| -------------------- | ------------ | --------------------------------------------------------------------------------- |
+| Conflict handling    | 🟡 Hardening | Cancel re-check in txn; item cancel no-op; item restore status conflict 409       |
+| App restart recovery | 🟡 Hardening | Restore audit + create-time backup integrity; interrupted swap recovery preserved |
+| Restore              | 🟡 Hardening | Backup integrity before success; `backup.created` / `restore.completed            | failed` audits |
+
+Remaining after H4 (not falsely marked Existing): order-status CAS, stock adjust idempotency, Drive backup-now PIN, corrupt-openable live DB fail-closed, durable KDS outbox, disaster recovery (Planned).
 
 ### Frozen (do not start)
 
