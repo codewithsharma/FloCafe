@@ -188,6 +188,8 @@ Corrupt-openable DB policy, DR product depth, Drive PIN (DRV-01), observability.
 
 Virtual café: seeds, scenarios, Playwright, failure injection. See [`restaurant-simulation.md`](restaurant-simulation.md). Build incrementally beside R1+.
 
+**S1 foundation (2026-08-15):** COMPLETE — deterministic API pack `npm run test:r15` (`tests/r15-sim-s1-normal-sale.test.ts`): open shift → order → pay → close → day-close/Z → local backup on clean userdata. Fixtures under `tests/fixtures/restaurant-sim/`. Doc: [`docs/05-production/r15-simulation-s1.md`](../05-production/r15-simulation-s1.md). **Banner: simulation ≠ OPS-02 signed café pilot.** KDS companion, receipt thermal, and S2–S10 remain later packs.
+
 ---
 
 ## R16 — Production Release

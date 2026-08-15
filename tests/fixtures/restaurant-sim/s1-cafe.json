@@ -1,0 +1,23 @@
+{
+  "id": "sim-s1-cafe",
+  "scenario": "S1",
+  "name": "Operavia Sim Café (S1)",
+  "timezone": "UTC",
+  "terminal_id": "sim-s1-terminal",
+  "opening_float_cents": 10000,
+  "master_pin": "1234",
+  "category": {
+    "id": "sim-s1-cat",
+    "name": "Sim Beverages"
+  },
+  "product": {
+    "id": "sim-s1-latte",
+    "name": "Sim Latte",
+    "price": 150
+  },
+  "order": {
+    "type": "takeaway",
+    "quantity": 1
+  },
+  "banner": "SIMULATION ≠ OPS-02 SIGNED CAFÉ PILOT — CI/local virtual café only"
+}

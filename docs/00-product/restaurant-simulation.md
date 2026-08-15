@@ -1,11 +1,14 @@
-<!-- Last updated: 2026-08-15, schema v80 -->
+<!-- Last updated: 2026-08-15 -->
 
 # Operavia Restaurant Simulation Environment
 
-**Status:** Design for virtual café (docs only)  
+**Status:** S1 foundation shipped (API pack); remaining scenarios design/later  
 **Why:** OPS-02 **NO-GO** — no physical café/signing host in engineering environment. Simulation is the standing substitute for site drills until real pilots exist.  
 **Roadmap wave:** R15 (build incrementally from R1)  
-**Blueprint:** [`restaurant-os-blueprint.md`](restaurant-os-blueprint.md)
+**Blueprint:** [`restaurant-os-blueprint.md`](restaurant-os-blueprint.md)  
+**S1 pack:** [`docs/05-production/r15-simulation-s1.md`](../05-production/r15-simulation-s1.md) · `npm run test:r15`
+
+> **BANNER: simulation ≠ OPS-02 signed café pilot**
 
 ---
 
@@ -59,7 +62,7 @@
 | Unit/service      | Vitest/tsx patterns already in repo                                                       |
 | UI E2E            | Playwright against static export + local API (existing `test:e2e` path)                   |
 | Failure injection | Env flags / mock printers / stop KDS port / deny network to cloud hosts                   |
-| Fixtures          | Versioned JSON/SQL seeds under `tests/fixtures/restaurant-sim/` (created when R15 starts) |
+| Fixtures          | Versioned JSON seeds under `tests/fixtures/restaurant-sim/` (S1 café + mock printer sink) |
 
 ---
 

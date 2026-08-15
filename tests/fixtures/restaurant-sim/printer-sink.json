@@ -1,0 +1,7 @@
+{
+  "id": "sim-printer-sink",
+  "kind": "mock-escpos-sink",
+  "description": "Placeholder mock printer sink for restaurant simulation. R15 S1 does not exercise thermal print; real hardware and printers.ts paths are out of scope for this foundation pack.",
+  "device_required": false,
+  "captures": []
+}

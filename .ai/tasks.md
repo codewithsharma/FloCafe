@@ -43,7 +43,7 @@ Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `
 - [x] **R12 Reporting / BI thin deepen GREEN (2026-08-15):** Void/Cancel report from `audit_logs`; JSON+CSV; `report.voids_exported`; Reports UI; no schema bump; `npm run test:r12`. Doc: `r12-void-cancel-report.md`. Advanced BI warehouse remains Later.
 - [ ] **R13 Integrations / Hardware** — Planned print queue/retry (terminals Frozen).
 - [ ] **R14 Reliability / DR** — Hardening corrupt-DB fail-closed deepen.
-- [ ] **R15 Simulation** — S1 sim pack foundation.
+- [x] **R15 Simulation S1 foundation GREEN (2026-08-15):** test/fixture/docs only; `npm run test:r15` 27/27; open shift → order → pay → close → day-close/Z → local backup; fixtures `tests/fixtures/restaurant-sim/`; banner simulation ≠ OPS-02. Doc: `r15-simulation-s1.md`. KDS/receipt/S2–S10 later.
 - [ ] **R16 Production Release** — **HUMAN BLOCKED** (signed RC + OPS-02 site gates).
 - [ ] **Next program:** R13 Integrations / Hardware (if authorized) — or OPS-02 signed RC when credentials available.
 - [ ] **Hardening (prefer next, authorized slice only):** REAL money cutover (drop REAL); residual Zod; durable KDS ticket outbox (still deferred) — or next authorized R-wave. R0–R12 closed.
