@@ -6,7 +6,8 @@
 **Schema tip:** v86  
 **Prior readiness report:** [`FINAL-PRODUCTION-READINESS-AUDIT.md`](./FINAL-PRODUCTION-READINESS-AUDIT.md)  
 **Live e2e server:** `http://localhost:3001` — **PID 47633** — health **200** (not restarted this pass)  
-**Branch:** `restaurant-vertical`
+**Branch:** `restaurant-vertical`  
+**Hardening commit:** `57330cd29e9278ccdffa1b9f163112f99126f874`
 
 ---
 
