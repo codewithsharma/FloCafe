@@ -527,6 +527,10 @@ Remaining after H3 (not falsely marked Existing): Sensitive-action controls (Pla
 
 Remaining after H4 (not falsely marked Existing): order-status CAS, stock adjust idempotency, Drive backup-now PIN, corrupt-openable live DB fail-closed, durable KDS outbox, disaster recovery (Planned).
 
+### OPS-01 operations closure (2026-08-15)
+
+Pilot **release/ops documentation** closed for baseline `24966ba` (config, runbook, checklist, gates, drill evidence). Does **not** promote H1–H4 rows to Existing. Does **not** create Phase 4.16. Live café still requires signed RC + human sign-off gates. Docs: `docs/05-production/ops-01-pilot-release-operations-closure.md`, `docs/13-operations/ops-01-pilot-configuration.md`, `docs/16-release/ops-01-pilot-release-checklist.md`.
+
 ### Frozen (do not start)
 
 Card terminal, payment gateway, online payment, multi-location (central menu/inventory/transfers/reporting/franchise), payroll.

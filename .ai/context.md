@@ -79,11 +79,14 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 **Product plan (2026-08-14):** Canonical matrix `docs/00-product/capability-matrix.md`. Prefer 🟡 Hardening over 🔵 Planned. Do not invent 4.16. Do not auto-start.
 
-**First café dry run (2026-08-14): NO-GO.** Signing unavailable (0 identities; CSC_*/APPLE_* UNSET). No café access. Sheet: `docs/05-production/first-cafe-dry-run-result.md`.
+**OPS-01 (2026-08-15): CLOSED (docs/ops).** Baseline `24966ba` (H1–H4). Verdict remains **PILOT READY WITH CONDITIONS**. Closure: `docs/05-production/ops-01-pilot-release-operations-closure.md`.
 
-Do not invent 4.16. Do not auto-start features. Do not push. Do not fake signing.
+**First café dry run (2026-08-14): NO-GO for live.** Signing still required. Sheet: `docs/05-production/first-cafe-dry-run-result.md` (historical; prefer OPS-01 baseline).
 
-- **Human/RELEASE:** isolate RC (branding dirty-tree decision), bump past 3.0.5, sign+notarize.
-- **Human/OPS on site:** Phases 2–10 on the dry-run result sheet.
-- **If software slice authorized next:** Prefer remaining Hardening (audit trail; reliability error handling depth; data integrity validation). **H1–H4 CLOSED** — POS integrity, KDS offline/recovery, Permissions/RBAC, Restore/Conflict (`docs/05-production/h1-…` through `h4-restore-conflict-hardening.md`). Do not auto-start the next slice.
-- ADR-014 remains **Proposed**. Schema v75. Baseline `0200cae`.
+Do not invent 4.16. Do not auto-start features. Do not push. Do not fake signing. Do not start H5 unless authorized.
+
+- **Human/RELEASE:** signed/notarized RC from `24966ba` (or approved clean descendant); do not retag unrelated older `3.0.5` builds.
+- **Human/OPS on site:** PIN escrow, OPS-01 network, backup policy, hardware drills — `pilot-signoff.md`.
+- **If software slice authorized next:** Prefer remaining Hardening (audit trail; reliability error handling depth; data integrity validation). **H1–H4 CLOSED**; **OPS-01 CLOSED**.
+- ADR-014 remains **Proposed**. Schema v75. Baseline **`24966ba`**.
+- **Test debt (not blocker):** `security-hardening.test.ts` rate-limit/orders 401 after password-change JWT invalidation — isolation only.

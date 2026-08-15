@@ -1,13 +1,16 @@
 # Operavia — Café Pilot Runbook
 
-**Audience:** Café owner / manager for a **controlled pilot**.
-**Product:** Operavia Restaurant (café). Schema **v75**.
-**Engineering baseline:** `0200cae` — H1 paid-cancel 409, FIN-02 reporting, H3 chef cancel PIN.
-**Authorization:** Engineering hardening COMPLETE. Live service requires human/ops gates on [`pilot-signoff.md`](./pilot-signoff.md).
+**Audience:** Café owner / manager for a **controlled pilot**.  
+**Product:** Operavia Restaurant (café). Schema **v75**.  
+**Engineering baseline:** `24966ba7272aa4e0e6650796ec469a3cd60ed423` — matrix hardening **H1–H4** (void/discount/receipt · KDS offline · RBAC · restore/conflict). App **3.0.5**.  
+**OPS-01 package:** [`ops-01-pilot-configuration.md`](./ops-01-pilot-configuration.md) · [`../05-production/ops-01-pilot-release-operations-closure.md`](../05-production/ops-01-pilot-release-operations-closure.md) · [`../16-release/ops-01-pilot-release-checklist.md`](../16-release/ops-01-pilot-release-checklist.md).  
+**Authorization:** Engineering bar for supervised pilot is met with conditions. Live service still requires human/ops gates on [`pilot-signoff.md`](./pilot-signoff.md).
 
 **Related:** [`backup-restore.md`](./backup-restore.md) · [`disaster-recovery.md`](./disaster-recovery.md) · [`dr-drill-worksheet.md`](./dr-drill-worksheet.md) · [`incident-response.md`](./incident-response.md) · [`pilot-staff-training-checklist.md`](./pilot-staff-training-checklist.md) · [`pilot-success-criteria.md`](./pilot-success-criteria.md) · [`pilot-handoff-first-cafe.md`](./pilot-handoff-first-cafe.md)
 
 Prefer this document for café day operations. Do not invent policy numbers. Do not install adhoc TRAINING binaries for live service.
+
+> **Naming note:** Older docs used “H1/H2/H3” for paid-cancel / FIN-02 / chef-PIN at `0200cae`. Those behaviors remain. Current pilot stack also includes matrix slices **H1–H4** through `24966ba`.
 
 ---
 
@@ -201,26 +204,47 @@ Canonical detail: [`incident-response.md`](./incident-response.md).
 
 ### Opening
 
-1. Launch app; staff login.
-2. Confirm `network_mode` / KDS reachability if used (OPS-01).
-3. Open shift / float.
-4. Quick printer check if prior issues.
-5. Glance low-stock attention (owner/manager).
+1. Launch app (API :3001; KDS companion :3002 if enabled).
+2. Staff login (correct role).
+3. Confirm `network_mode` / KDS reachability if used (OPS-01 network table below).
+4. Printer Test Print if receipts/KOT are used.
+5. Open shift; enter / verify cash float (`shifts_enabled` + cash gate **REQUIRED** for pilot — see configuration doc).
+6. Glance low-stock attention (owner/manager).
 
-### During service
+### During service (normal path)
 
-- Orders / payments / refunds through the app.
-- Do not double-submit pay on retry.
-- Paid mistakes → **refund**, never cancel-after-tender.
-- Chef cancel → manager PIN (H3).
-- Unexpected setup/recovery mid-day → **STOP RULE**.
+1. Create order → modify as needed.
+2. Send to KDS (or KOT paper).
+3. Kitchen: preparing → ready.
+4. Discount only if **owner/manager**.
+5. Take payment (do not double-submit; reuse Idempotency-Key on retry).
+6. Print / reprint receipt as needed.
+7. Complete order **after** settle (ops discipline).
+8. Paid mistakes → **refund**, never cancel-after-tender.
+9. Chef cancel → manager PIN.
+10. Unexpected setup/recovery mid-day → **STOP RULE**.
+
+### KDS failure
+
+1. Board shows last-known tickets with **stale** connection (H2).
+2. Continue POS billing; use **paper/verbal** tickets.
+3. Restart companion / app; confirm `kds-info` / tickets resume.
+4. Do not re-fire duplicate tickets for the same paid line after recovery.
+
+### Printer failure
+
+1. Complete the sale — **payment is not blocked**.
+2. Failed print must not be treated as printed (no false success log).
+3. Fix printer → **reprint** from Orders / print-bill.
+4. If hardware swapped: Settings → printers → Test Print.
 
 ### Closing
 
-1. Close shift; day close / Z.
-2. Review Gross / Refunds / Net (reports) vs cash Z (tender-based) — different views.
-3. Local backup spot-check (or confirm Drive ran).
-4. Log incidents before leaving.
+1. Stop taking new orders.
+2. Count cash; close shift; review variance.
+3. Day close / Z-report.
+4. **Local** backup (Master PIN) — Drive alone is **not** enough (DRV-01).
+5. Log incidents before leaving.
 
 ---
 
@@ -253,13 +277,16 @@ Café docs above assume **Restaurant**. For a controlled **Retail** pilot only:
 
 ## Quick links
 
-| Need                  | Doc                                                     |
-| --------------------- | ------------------------------------------------------- |
-| Staff training        | `pilot-staff-training-checklist.md`                     |
-| Success criteria      | `pilot-success-criteria.md`                             |
-| Sign-off              | `pilot-signoff.md`                                      |
-| Backup mechanics      | `backup-restore.md`                                     |
-| DR drill              | `dr-drill-worksheet.md`                                 |
-| First-café handoff    | `pilot-handoff-first-cafe.md`                           |
-| Ops readiness report  | `../05-production/pilot-operations-readiness-report.md` |
-| Short troubleshooting | `runbook.md`                                            |
+| Need                  | Doc                                                                                              |
+| --------------------- | ------------------------------------------------------------------------------------------------ |
+| OPS-01 configuration  | `ops-01-pilot-configuration.md`                                                                  |
+| OPS-01 closure report | `../05-production/ops-01-pilot-release-operations-closure.md`                                    |
+| OPS-01 checklist      | `../16-release/ops-01-pilot-release-checklist.md`                                                |
+| Staff training        | `pilot-staff-training-checklist.md`                                                              |
+| Success criteria      | `pilot-success-criteria.md`                                                                      |
+| Sign-off              | `pilot-signoff.md`                                                                               |
+| Backup mechanics      | `backup-restore.md`                                                                              |
+| DR drill              | `dr-drill-worksheet.md`                                                                          |
+| First-café handoff    | `pilot-handoff-first-cafe.md`                                                                    |
+| Ops readiness report  | `../05-production/pilot-operations-readiness-report.md` (stale baseline — prefer OPS-01 closure) |
+| Short troubleshooting | `runbook.md`                                                                                     |

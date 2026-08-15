@@ -14,25 +14,26 @@ Do **not** mark `PASS` without evidence (artifact path, worksheet, log, screensh
 
 ## Release identity (fill at sign-off)
 
-| Field                       | Value                                                                                                                           |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| App version                 | 3.0.5 (bump required before RC — do not retag `3.0.5` @ `241d6ca`)                                                              |
-| Git commit / tag            | Engineering baseline **`0200cae`** (H1/H2/H3). **Pilot install must use a signed/notarized RC tag — not an adhoc local build.** |
-| Artifact path / release URL |                                                                                                                                 |
-| Platform(s) for this pilot  |                                                                                                                                 |
-| Artifact class              | TRAINING/QA · **PILOT/PRODUCTION** (must be PILOT/PRODUCTION for live café)                                                     |
-| `ACTIVE_VERTICAL_ID`        | unset or `restaurant`                                                                                                           |
+| Field                       | Value                                                                                                                                                     |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| App version                 | 3.0.5 (commit is authoritative; do not assume older `3.0.5` builds match this tree)                                                                       |
+| Git commit / tag            | Engineering baseline **`24966ba7272aa4e0e6650796ec469a3cd60ed423`** (H1–H4). **Pilot install must use a signed/notarized RC — not an adhoc local build.** |
+| Artifact path / release URL |                                                                                                                                                           |
+| Platform(s) for this pilot  |                                                                                                                                                           |
+| Artifact class              | TRAINING/QA · **PILOT/PRODUCTION** (must be PILOT/PRODUCTION for live café)                                                                               |
+| `ACTIVE_VERTICAL_ID`        | unset or `restaurant`                                                                                                                                     |
+| OPS-01 docs                 | Configuration + checklist + closure report (2026-08-15) — site gates below still **PENDING**                                                              |
 
 ---
 
 ## Approval layers (do not conflate)
 
-| Layer                    | Meaning                                            | Status                                                                                                                                              |
-| ------------------------ | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ENGINEERING APPROVAL** | Code + tests meet supervised-pilot engineering bar | **PASS** (2026-08-14) — HEAD `0200cae`; H1/H2/H3 green; `npm test` EXIT 0; lint 0 errors; `build` + `build:frontend` PASS. Ops gates still PENDING. |
-| **OPERATIONAL APPROVAL** | Site network, escrow, training, backup policy      | **PENDING** — human/ops                                                                                                                             |
-| **CTO APPROVAL**         | Release control signature below                    | **PENDING**                                                                                                                                         |
-| **CEO APPROVAL**         | Business authorization signature below             | **PENDING**                                                                                                                                         |
+| Layer                    | Meaning                                            | Status                                                                                                                                                                                                 |
+| ------------------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **ENGINEERING APPROVAL** | Code + tests meet supervised-pilot engineering bar | **PASS WITH CONDITIONS** (2026-08-15) — HEAD `24966ba` (H1–H4); focused `test:h1`–`h4`, `test:backup`, payment/refund/shift/KDS/authz suites green. OPS-01 docs closed. Ops/human gates still PENDING. |
+| **OPERATIONAL APPROVAL** | Site network, escrow, training, backup policy      | **PENDING** — human/ops                                                                                                                                                                                |
+| **CTO APPROVAL**         | Release control signature below                    | **PENDING**                                                                                                                                                                                            |
+| **CEO APPROVAL**         | Business authorization signature below             | **PENDING**                                                                                                                                                                                            |
 
 Engineering PASS does **not** authorize live service.
 
@@ -42,7 +43,7 @@ Engineering PASS does **not** authorize live service.
 
 | Gate                                             | Status                                                                   | Evidence / notes                                                                                                                                                                                                                                                      |
 | ------------------------------------------------ | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [x] Phase 3.4 correctness residuals              | **PASS**                                                                 | Historical commit `053421e` + later hardening through `0200cae`. Default `npm test` EXIT 0 (2026-08-14 ops pass). Focused H1/H2/H3 suites PASS. Do not claim every boundary suite is inside default `npm test`.                                                       |
+| [x] Phase 3.4 correctness residuals              | **PASS**                                                                 | Historical through H1–H4 (`24966ba`). Focused H1–H4 + backup/payment/refund/shift suites PASS (2026-08-15 OPS-01). Do not claim every boundary suite is inside default `npm test`.                                                                                    |
 | [x] Restaurant vertical safety                   | **PASS**                                                                 | Unset `ACTIVE_VERTICAL_ID` → restaurant (`vertical-config.ts`); documented in `.env.example` + local-setup                                                                                                                                                            |
 | [ ] P1.5 DR drill (café / signed RC)             | **PENDING**                                                              | Historical lab note (TRAINING binary 2026-08-13): RTO 6.12 min; RPO 18 s — **not** café/signed PASS. Re-run `dr-drill-worksheet.md` on signed RC; attach filled sheet.                                                                                                |
 | [ ] Master PIN escrow completed                  | **PENDING**                                                              | Offline paper/envelope per café — **human/operator action**. Do not store PIN in DB, chat, Drive, or this repo. Procedure: `pilot-runbook.md` §3 / §5.                                                                                                                |

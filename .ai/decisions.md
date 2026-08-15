@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — OPS-01 Pilot release & operations closure (Docs)
+
+Authorized ops/release closure after H1–H4. Baseline `24966ba`. Delivered: pilot configuration (REQUIRED/OPTIONAL/NOT SUPPORTED/FROZEN), runbook refresh, release checklist, acceptance gates, drill evidence from existing suites, `security-hardening` debt classified as test isolation (not production blocker). No production code, schema, money, Phase 4.16, H5, or Frozen/Planned features. Verdict remains **PILOT READY WITH CONDITIONS** (signed RC + human gates still required). Docs: `ops-01-pilot-release-operations-closure.md`, `ops-01-pilot-configuration.md`, `ops-01-pilot-release-checklist.md`. STOP after OPS-01.
+
 ## 2026-08-15 — H4 Restore / Conflict Hardening (Implemented)
 
 Authorized slice: restore → conflict detection → conflict-safe recovery. Create-time backup `integrity_check`; HTTP `backup.created` + IPC `restore.completed|failed` audits; order cancel re-reads status in txn before restock; item cancel no-op; item restore only from cancelled + tender guard + 409 conflict. Schema v75 unchanged. Tests: `npm run test:h4` + `test:backup`. Doc: `docs/05-production/h4-restore-conflict-hardening.md`. Matrix Conflict/Restore/App restart remain Hardening with H4 depth. No durable KDS outbox. No architecture rewrite. STOP after H4.

@@ -15,10 +15,12 @@ All notable changes to Opervia (repo/package legacy: Flo Cafe / flo-desktop) are
 - H2 KDS offline/recovery: live-companion advertise (`kds-info` 503 + mDNS honesty), stale-board UX, one silent status retry on reconnect (`docs/05-production/h2-kds-offline-recovery.md`).
 - H3 Permissions/RBAC: cancel/restore/status `requireRole`, POS discount UI owner/manager, Settings deep-link gate, test DB-role parity (`docs/05-production/h3-permissions-rbac-hardening.md`).
 - H4 restore/conflict: create-time backup integrity, backup/restore audit, cancel TOCTOU + item cancel/restore conflict guards (`docs/05-production/h4-restore-conflict-hardening.md`).
+- OPS-01 pilot release/ops closure: baseline `24966ba`, configuration, runbook/checklist/gates, drill evidence (`docs/05-production/ops-01-pilot-release-operations-closure.md`).
 
 ### Changed
 
 - Modular platform Phase 2 closed; Phase 3.1–3.4 composition/correctness work landed in tree (see `docs/03-architecture/`).
+- Pilot ops docs refreshed from stale `0200cae` baseline to H1–H4 `24966ba`.
 
 ## [3.0.5] - 2026-08-12
 
