@@ -18,7 +18,7 @@ Determine whether Operavia Restaurant can **safely be installed and run at the f
 
 **In scope:** RC identity, site/hardware/network/KDS/printer readiness, staff/PIN/escrow, backup/restore site drills, operator acceptance, live go/no-go gates, documentation.
 
-**Out of scope:** H5, Phase 4.16, Planned/Later/Frozen features, durable KDS ticket outbox redesign, schema/money rewrite, inventing hardware, faking site PASS, creating a release tag without authorization, signing without credentials, **R9 Slice 2+** (tax depth, Z polish, ops reports, food-cost) until separately authorized.
+**Out of scope:** H5, Phase 4.16, Planned/Later/Frozen features, durable KDS ticket outbox redesign, schema/money rewrite, inventing hardware, faking site PASS, creating a release tag without authorization, signing without credentials, **R9 Slice 3+** (tax depth, Z polish, ops reports, food-cost) until separately authorized.
 
 ---
 

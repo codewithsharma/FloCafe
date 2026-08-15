@@ -136,11 +136,13 @@ Fine-grained permissions product, attendance clocks, scheduling, leave remain La
 
 ## R9 — Finance / Compliance
 
-**Status:** IN PROGRESS — **Slice 1 Expenses COMPLETE** (2026-08-15). Schema **v83**. Suite `npm run test:r9`. Doc: [`../05-production/r9-expenses-slice-1.md`](../05-production/r9-expenses-slice-1.md).
+**Status:** IN PROGRESS — **Slice 1 Expenses COMPLETE**; **Slice 2 Financial Audit-Trail Hardening COMPLETE** (2026-08-15). Schema **v83** (unchanged for Slice 2). Suites `npm run test:r9` / `npm run test:r9.2`. Docs: [`../05-production/r9-expenses-slice-1.md`](../05-production/r9-expenses-slice-1.md), [`../05-production/r9-audit-trail-slice-2.md`](../05-production/r9-audit-trail-slice-2.md).
 
 **Slice 1 delivered:** expenses table (integer cents), API, Owner/Manager UI, RBAC, audits, offline SQLite.
 
-**Remaining R9 (not started):** tax reporting depth + accountant export; financial audit-trail hardening; day-close/Z polish; ops finance reports v1; food-cost report v1.
+**Slice 2 delivered:** audit viewer + CSV export + `until` filter + `audit.exported`; Owner/Manager; schema tip remains v83.
+
+**Remaining R9 (not started):** tax reporting depth + accountant export; day-close/Z polish; ops finance reports v1; food-cost report v1.
 
 **Out:** Service charge (ADR-014 Proposed); tips; QR; gift cards; REAL→cents cutover; Frozen rows.
 

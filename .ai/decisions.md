@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — R9 Slice 2 Financial Audit-Trail Hardening (Implemented)
+
+Authorized deepen of existing `audit_logs` (no schema bump; tip remains **v83**). `until` filter; `GET /api/audit-logs/export.csv`; `audit.exported` on success; Owner/Manager UI `/audit`; Cashier/Waiter/Chef 403. No money-path / tax-engine / day-close formula changes. Suite `npm run test:r9.2`. Doc: `docs/05-production/r9-audit-trail-slice-2.md`. **Do not start R9 Slice 3+ / tax export / Z polish without slice auth.**
+
 ## 2026-08-15 — R9 Slice 1 Expenses OS (Implemented)
 
 Authorized under engineering development waiver (not live go-live). Schema **v83** `expenses` (integer `amount_cents` only; posted/voided lifecycle). Service + `/api/expenses` Owner/Manager RBAC; audits `expense.created|updated|voided`; UI `/expenses`; offline SQLite SoR. Suite `npm run test:r9`. Doc: `docs/05-production/r9-expenses-slice-1.md`. **Do not start R9 Slice 2+ / service charge / REAL cutover.**

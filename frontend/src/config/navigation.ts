@@ -179,6 +179,17 @@ export const FLO_NAV_ITEMS: FloNavItem[] = [
     requiresModule: 'core',
   },
   {
+    id: 'audit',
+    href: '/audit',
+    labelKey: 'flo.nav.audit',
+    icon: ClipboardList,
+    roles: ['owner', 'manager'],
+    businessTypes: null,
+    section: 'primary',
+    status: 'live',
+    requiresModule: 'core',
+  },
+  {
     id: 'team',
     href: '/staff',
     labelKey: 'flo.nav.team',
@@ -284,6 +295,7 @@ export function getRouteTitleKey(pathname: string): string {
   if (path === '/products/recipes') return 'recipes.title';
   if (path === '/products/purchasing') return 'purchasing.title';
   if (path === '/expenses') return 'expenses.title';
+  if (path === '/audit') return 'audit.title';
   if (path.startsWith('/customers/detail')) return 'flo.nav.customers';
   if (path.startsWith('/staff/detail')) return 'flo.nav.team';
   return 'flo.nav.home';

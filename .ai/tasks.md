@@ -32,7 +32,8 @@ Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `
 - [x] **RC packaging verification (2026-08-15):** unsigned `release/mac-arm64/Operavia.app` VERIFIED; signing/notarization BLOCKED. No production source change. R9 unauthorized.
 - [x] **Final RC handoff audit (2026-08-15):** Artifact inventory + release-owner signing procedure + pilot matrix documented in OPS-02. Live **NO-GO** until signed RC + site gates. R9 unauthorized. No commit.
 - [x] **R9 Slice 1 Expenses GREEN (2026-08-15):** schema **v83**; expenses CRUD+void; Owner/Manager RBAC; audits; `npm run test:r9` 38/38. Remaining R9 slices not started. Live **NO-GO**. Engineering waiver = development only.
-- [ ] **Authorized next:** R9 remaining slices (tax export / audit harden / Z polish / ops reports / food-cost) — only with explicit slice auth. Or OPS-02 signed RC when credentials available.
+- [x] **R9 Slice 2 Audit-Trail Hardening GREEN (2026-08-15):** schema tip **v83** unchanged; `/audit` UI; CSV export; `audit.exported`; `npm run test:r9.2`. Remaining R9 (tax/Z/ops reports/food-cost) not started. Live **NO-GO**.
+- [ ] **Authorized next:** R9 remaining slices (tax export / Z polish / ops reports / food-cost) — only with explicit slice auth. Or OPS-02 signed RC when credentials available.
 - [ ] **Hardening (prefer next, authorized slice only):** REAL money cutover (drop REAL); residual Zod; durable KDS ticket outbox (still deferred) — or next authorized R-wave. R0–R8 closed.
 - [ ] **Planned (not started):** see matrix — expediter, QR, marketing (R11), full BI (R12), gift cards, etc. Reuse shipped slices; do not rebuild.
 - [ ] **Frozen / later / out of scope:** terminals, gateways, online payment, multi-location, payroll, aggregators, AI — do not start.

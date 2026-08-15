@@ -14,7 +14,8 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 **R0 note (2026-08-15):** Blueprint documents the complete Restaurant OS. **No row statuses were promoted** to Existing solely because of R0. H1–H4 remain Hardening depth where listed. Live pilot remains OPS-02 **NO-GO** until signed RC + site gates.
 
 **R5–R8 note (2026-08-15):** R5 BOM (v79), R6 purchasing (v80), R7 CRM (v82), R8 staff workforce — **COMPLETE**.  
-**R9 Slice 1 note (2026-08-15):** Expenses **COMPLETE** — schema tip **v83**. Remaining R9 slices not started. Live go-live still **NO-GO** (OPS-02). ADR-014 service charge remains out.
+**R9 Slice 1 note (2026-08-15):** Expenses **COMPLETE** — schema tip **v83**.  
+**R9 Slice 2 note (2026-08-15):** Financial Audit-Trail Hardening **COMPLETE** — schema tip remains **v83**. Remaining R9 slices not started. Live go-live still **NO-GO** (OPS-02). ADR-014 service charge remains out.
 ---
 
 ## Legend
@@ -362,7 +363,7 @@ R8 (2026-08-15) deepened Existing staff management (search/filter, detail, shift
 | Authorization             | 🟡 Hardening |
 | Role-based access         | 🟡 Hardening |
 | Sensitive-action controls | 🔵 Planned   |
-| Audit trail               | 🟡 Hardening |
+| Audit trail               | 🟢 Existing  |
 | Financial auditability    | 🟢 Existing  |
 
 ## Reliability

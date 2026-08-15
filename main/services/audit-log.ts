@@ -30,7 +30,8 @@ export interface AuditLogInput {
   context?: AuditContext | null;
 }
 
-const SENSITIVE_KEY_PATTERN = /(password|pin|token|secret|authorization|jwt|card|cvv|access_token|refresh_token|api_key|device_secret)/i;
+const SENSITIVE_KEY_PATTERN =
+  /(password|pin|token|secret|authorization|jwt|card|cvv|access_token|refresh_token|api_key|device_secret)/i;
 const MAX_ACTION_LENGTH = 128;
 const MAX_ENTITY_TYPE_LENGTH = 64;
 const MAX_ENTITY_ID_LENGTH = 128;
@@ -64,7 +65,9 @@ function sanitizeMetadataValue(value: unknown, depth: number): unknown {
   return String(value).slice(0, MAX_STRING_VALUE_LENGTH);
 }
 
-export function sanitizeAuditMetadata(metadata: Record<string, unknown> | null | undefined): Record<string, unknown> | null {
+export function sanitizeAuditMetadata(
+  metadata: Record<string, unknown> | null | undefined,
+): Record<string, unknown> | null {
   if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
   const sanitized = sanitizeMetadataValue(metadata, 0) as Record<string, unknown>;
   const json = JSON.stringify(sanitized);
@@ -83,48 +86,61 @@ export function logAuditEvent(input: AuditLogInput): number {
   const action = truncate(String(input.action || '').trim(), MAX_ACTION_LENGTH);
   if (!action) throw new Error('Audit action is required');
 
-  const entityType = input.entityType ? truncate(String(input.entityType), MAX_ENTITY_TYPE_LENGTH) : null;
-  const entityId = input.entityId === null || input.entityId === undefined
-    ? null
-    : truncate(String(input.entityId), MAX_ENTITY_ID_LENGTH);
+  const entityType = input.entityType
+    ? truncate(String(input.entityType), MAX_ENTITY_TYPE_LENGTH)
+    : null;
+  const entityId =
+    input.entityId === null || input.entityId === undefined
+      ? null
+      : truncate(String(input.entityId), MAX_ENTITY_ID_LENGTH);
   const result: AuditResult = input.result === 'failure' ? 'failure' : 'success';
   const reason = input.reason ? truncate(String(input.reason), MAX_REASON_LENGTH) : null;
   const metadata = sanitizeAuditMetadata(input.metadata || null);
   const metadataJson = metadata ? JSON.stringify(metadata) : null;
 
   const context = input.context || {};
-  const terminalId = context.terminalId !== undefined
-    ? (context.terminalId ? truncate(String(context.terminalId), MAX_TERMINAL_ID_LENGTH) : null)
-    : defaultTerminalId();
-  const requestId = context.requestId ? truncate(String(context.requestId), MAX_REQUEST_ID_LENGTH) : null;
+  const terminalId =
+    context.terminalId !== undefined
+      ? context.terminalId
+        ? truncate(String(context.terminalId), MAX_TERMINAL_ID_LENGTH)
+        : null
+      : defaultTerminalId();
+  const requestId = context.requestId
+    ? truncate(String(context.requestId), MAX_REQUEST_ID_LENGTH)
+    : null;
   const clientIp = context.clientIp ? truncate(String(context.clientIp), 64) : null;
 
-  const mergedMetadata = clientIp
-    ? { ...(metadata || {}), client_ip: clientIp }
-    : metadata;
+  const mergedMetadata = clientIp ? { ...(metadata || {}), client_ip: clientIp } : metadata;
 
   const resultMetadataJson = mergedMetadata ? JSON.stringify(mergedMetadata) : null;
-  if (resultMetadataJson && Buffer.byteLength(resultMetadataJson, 'utf8') > MAX_METADATA_JSON_BYTES) {
+  if (
+    resultMetadataJson &&
+    Buffer.byteLength(resultMetadataJson, 'utf8') > MAX_METADATA_JSON_BYTES
+  ) {
     throw new Error('Audit metadata exceeds maximum allowed size');
   }
 
-  const info = getDatabase().prepare(`
+  const info = getDatabase()
+    .prepare(
+      `
     INSERT INTO audit_logs (
       actor_user_id, action, entity_type, entity_id, result, reason,
       metadata_json, terminal_id, request_id, created_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    input.actorUserId ?? null,
-    action,
-    entityType,
-    entityId,
-    result,
-    reason,
-    resultMetadataJson,
-    terminalId,
-    requestId,
-    now(),
-  );
+  `,
+    )
+    .run(
+      input.actorUserId ?? null,
+      action,
+      entityType,
+      entityId,
+      result,
+      reason,
+      resultMetadataJson,
+      terminalId,
+      requestId,
+      now(),
+    );
 
   return Number(info.lastInsertRowid);
 }
@@ -137,7 +153,24 @@ export interface AuditLogQuery {
   entityId?: string;
   actorUserId?: string;
   since?: string;
+  /** Inclusive upper bound on `created_at` (ISO / SQLite timestamp string). */
+  until?: string;
 }
+
+export const AUDIT_CSV_COLUMNS = [
+  'id',
+  'created_at',
+  'actor_user_id',
+  'actor_name',
+  'action',
+  'entity_type',
+  'entity_id',
+  'result',
+  'reason',
+  'metadata_json',
+  'terminal_id',
+  'request_id',
+] as const;
 
 export function queryAuditLogs(query: AuditLogQuery = {}): Array<Record<string, unknown>> {
   const limit = Math.min(Math.max(Number(query.limit) || 100, 1), 500);
@@ -165,11 +198,17 @@ export function queryAuditLogs(query: AuditLogQuery = {}): Array<Record<string, 
     clauses.push('audit.created_at >= ?');
     params.push(query.since);
   }
+  if (query.until) {
+    clauses.push('audit.created_at <= ?');
+    params.push(query.until);
+  }
 
   const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
   params.push(limit, offset);
 
-  const rows = getDatabase().prepare(`
+  const rows = getDatabase()
+    .prepare(
+      `
     SELECT
       audit.id,
       audit.actor_user_id,
@@ -188,7 +227,9 @@ export function queryAuditLogs(query: AuditLogQuery = {}): Array<Record<string, 
     ${where}
     ORDER BY audit.id DESC
     LIMIT ? OFFSET ?
-  `).all(...params) as Array<Record<string, unknown>>;
+  `,
+    )
+    .all(...params) as Array<Record<string, unknown>>;
 
   return rows.map((row) => ({
     id: row.id,
@@ -200,10 +241,30 @@ export function queryAuditLogs(query: AuditLogQuery = {}): Array<Record<string, 
     result: row.result,
     reason: row.reason,
     metadata: parseAuditMetadata(row.metadata_json),
+    metadata_json:
+      typeof row.metadata_json === 'string' && row.metadata_json
+        ? row.metadata_json
+        : row.metadata_json == null
+          ? null
+          : String(row.metadata_json),
     terminal_id: row.terminal_id,
     request_id: row.request_id,
     created_at: row.created_at,
   }));
+}
+
+/** Sanitize filter summary for `audit.exported` metadata (no secrets). */
+export function sanitizeAuditExportFilters(query: AuditLogQuery): Record<string, string | number> {
+  const out: Record<string, string | number> = {};
+  if (query.action) out.action = String(query.action);
+  if (query.entityType) out.entity_type = String(query.entityType);
+  if (query.entityId) out.entity_id = String(query.entityId);
+  if (query.actorUserId) out.actor_user_id = String(query.actorUserId);
+  if (query.since) out.since = String(query.since);
+  if (query.until) out.until = String(query.until);
+  if (query.limit !== undefined) out.limit = Number(query.limit);
+  if (query.offset !== undefined) out.offset = Number(query.offset);
+  return out;
 }
 
 function parseAuditMetadata(value: unknown): Record<string, unknown> | null {
@@ -211,7 +272,7 @@ function parseAuditMetadata(value: unknown): Record<string, unknown> | null {
   try {
     const parsed = JSON.parse(value);
     return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-      ? parsed as Record<string, unknown>
+      ? (parsed as Record<string, unknown>)
       : null;
   } catch {
     return null;

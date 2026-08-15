@@ -1,5 +1,6 @@
 # Patterns
 
+- **R9 audit trail:** Reuse `audit_logs` + `logAuditEvent`; Owner/Manager list + CSV export; `until` upper bound; successful export emits `audit.exported` (never on 403). No second audit system; no schema bump for viewer/export.
 - **R9 expenses:** Integer `amount_cents` only; posted→voided lifecycle (no hard delete); Owner/Manager via `requireRole`; audits `expense.created|updated|voided`; mount under reporting module; local SQLite SoR.
 - **R8 workforce:** Staff SoR = `users`; reads in `staff-workforce.ts`; mutations stay in `staff.ts` with last-owner CAS; `staff.activated` on reactivate; emit `role.changed` only when role actually changes.
 - **R7 CRM:** Customer 360 from orders SoR + cents spend; segments only via `customer-segments.ts` / `crm_segment_rules`; audited notes in `customer_notes` (soft delete); do not rebuild loyalty_ledger earn/redeem.
