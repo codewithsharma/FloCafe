@@ -166,7 +166,7 @@ export function withDatabaseMaintenanceLock<T>(operation: () => T | Promise<T>):
       for (const listener of databaseMaintenanceStartListeners) {
         try {
           listener();
-        } catch (error) {
+        } catch (error: unknown) {
           console.error('[DB] Maintenance listener failed:', error);
         }
       }
@@ -183,7 +183,7 @@ export function withDatabaseMaintenanceLock<T>(operation: () => T | Promise<T>):
         for (const listener of databaseMaintenanceEndListeners) {
           try {
             listener();
-          } catch (error) {
+          } catch (error: unknown) {
             console.error('[DB] Maintenance end listener failed:', error);
           }
         }
@@ -460,7 +460,7 @@ function removeOlderReplacementJournals(
         throw new Error('invalid stale replacement journal');
       }
       removeReplacementArtifacts(journalPath, journal.recoveryPath);
-    } catch (error) {
+    } catch (error: unknown) {
       // The newest journal has already established the recovery decision. Do
       // not let an unrelated stale/corrupt older journal brick every startup;
       // remove only that journal and its same-basename snapshot.
@@ -479,7 +479,7 @@ function recoverInterruptedDatabaseReplacement(dbPath: string, backupDir: string
       .filter((name) => /^(?:flo-restore|flo-reset)-recovery-.+\.json$/.test(name))
       .map((name) => path.join(backupDir, name))
       .sort((a, b) => fs.lstatSync(b).mtimeMs - fs.lstatSync(a).mtimeMs);
-  } catch (error) {
+  } catch (error: unknown) {
     throw new Error(
       `Could not inspect database replacement journals: ${error instanceof Error ? error.message : 'unknown error'}`,
     );
@@ -518,7 +518,7 @@ function recoverInterruptedDatabaseReplacement(dbPath: string, backupDir: string
         throw new Error('invalid phase or paths');
       }
       journal = parsed as ReplacementJournal;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new Error(
         `Interrupted database replacement journal is invalid: ${error instanceof Error ? error.message : 'unknown error'}`,
       );
@@ -931,8 +931,9 @@ function autoRepairPaymentDetails(): void {
       }
       if (!Array.isArray(parsed)) continue;
 
-      const deduped: unknown[] = [];
-      for (const p of parsed) {
+      type PayDetail = { method?: unknown; amount?: unknown; timestamp?: unknown };
+      const deduped: PayDetail[] = [];
+      for (const p of parsed as PayDetail[]) {
         const prev = deduped[deduped.length - 1];
         if (
           prev &&
@@ -945,7 +946,7 @@ function autoRepairPaymentDetails(): void {
       }
 
       const dedupedSum = deduped.reduce((s, p) => s + (Number(p.amount) || 0), 0);
-      const rawSum = parsed.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+      const rawSum = (parsed as PayDetail[]).reduce((s, p) => s + (Number(p.amount) || 0), 0);
       const chosen =
         Math.abs(dedupedSum - row.paid_amount) <= 0.02
           ? deduped
@@ -968,7 +969,10 @@ function autoRepairPaymentDetails(): void {
     tx(toFix);
     console.log(`[DB] auto-repaired payment_details on ${toFix.length} bill(s)`);
   } catch (err: unknown) {
-    console.error('[DB] autoRepairPaymentDetails failed:', err.message);
+    console.error(
+      '[DB] autoRepairPaymentDetails failed:',
+      err instanceof Error ? err.message : err,
+    );
   }
 }
 
@@ -1003,7 +1007,10 @@ function autoRepairDefaultPrinter(): void {
 
     console.log(`[DB] auto-repaired default printers; kept ${keepId}`);
   } catch (err: unknown) {
-    console.error('[DB] autoRepairDefaultPrinter failed:', err.message);
+    console.error(
+      '[DB] autoRepairDefaultPrinter failed:',
+      err instanceof Error ? err.message : err,
+    );
   }
 }
 
@@ -1108,7 +1115,7 @@ export async function createBackupUnlocked(
       }
       try {
         fs.renameSync(stagedTargetPath, finalPath);
-      } catch (error) {
+      } catch (error: unknown) {
         if (process.platform !== 'win32' || !fs.existsSync(finalPath)) throw error;
         fs.unlinkSync(finalPath);
         fs.renameSync(stagedTargetPath, finalPath);
@@ -1250,8 +1257,8 @@ export async function resetDatabaseWithBackup(options?: {
         recoveryCompleted = true;
       } catch (recoveryError: any) {
         throw new Error(
-          `Database reset failed: ${error?.message || 'unknown error'}; ` +
-            `database recovery also failed: ${recoveryError?.message || 'unknown error'}`,
+          `Database reset failed: ${error instanceof Error ? error.message : 'unknown error'}; ` +
+            `database recovery also failed: ${recoveryError instanceof Error ? recoveryError.message : 'unknown error'}`,
         );
       }
       throw error;
@@ -1469,7 +1476,7 @@ function validateDirectBackup(
     }
     return null;
   } catch (error: unknown) {
-    return `Backup validation failed: ${error?.message || 'unknown error'}`;
+    return `Backup validation failed: ${error instanceof Error ? error.message : 'unknown error'}`;
   } finally {
     backupDb?.close();
   }
@@ -2098,7 +2105,7 @@ function restoreBackupWithNoLiveDatabase(
       backupSchemaVersion,
       currentSchemaVersion: supportedVersion,
       tablesRestored: 0,
-      error: error?.message || 'Invalid or corrupt backup file',
+      error: error instanceof Error ? error.message : 'Invalid or corrupt backup file',
     };
   } finally {
     probe?.close();
@@ -2157,7 +2164,7 @@ function restoreBackupWithNoLiveDatabase(
       backupSchemaVersion,
       currentSchemaVersion: supportedVersion,
       tablesRestored: 0,
-      error: error?.message || 'Restore failed',
+      error: error instanceof Error ? error.message : 'Restore failed',
     };
   }
 }
@@ -2175,7 +2182,7 @@ export function restoreBackup(backupPath: string, forceDirect: boolean = false):
       backupSchemaVersion: 0,
       currentSchemaVersion: currentVersion,
       tablesRestored: 0,
-      error: error?.message || 'Invalid restore source',
+      error: error instanceof Error ? error.message : 'Invalid restore source',
     };
   }
 
@@ -2200,7 +2207,7 @@ export function restoreBackup(backupPath: string, forceDirect: boolean = false):
       backupSchemaVersion: 0,
       currentSchemaVersion: currentVersion,
       tablesRestored: 0,
-      error: error?.message || 'Invalid or corrupt backup file',
+      error: error instanceof Error ? error.message : 'Invalid or corrupt backup file',
     };
   } finally {
     backupDb?.close();
@@ -2380,8 +2387,8 @@ export function restoreBackup(backupPath: string, forceDirect: boolean = false):
         recoveryCompleted = true;
       } catch (recoveryError: any) {
         throw new Error(
-          `Direct restore failed: ${error?.message || 'unknown error'}; ` +
-            `live database recovery failed: ${recoveryError?.message || 'unknown error'}`,
+          `Direct restore failed: ${error instanceof Error ? error.message : 'unknown error'}; ` +
+            `live database recovery failed: ${recoveryError instanceof Error ? recoveryError.message : 'unknown error'}`,
         );
       }
       throw error;
@@ -2563,7 +2570,7 @@ function dataOnlyRestore(
       backupSchemaVersion: backupVersion,
       currentSchemaVersion: currentVersion,
       tablesRestored: 0,
-      error: error?.message || 'Invalid data-only restore source',
+      error: error instanceof Error ? error.message : 'Invalid data-only restore source',
     };
   }
   let backupDb: Database.Database | undefined;
@@ -2603,7 +2610,7 @@ function dataOnlyRestore(
       backupSchemaVersion: backupVersion,
       currentSchemaVersion: currentVersion,
       tablesRestored: 0,
-      error: `Could not clear a previous restore attachment: ${error?.message || 'unknown error'}`,
+      error: `Could not clear a previous restore attachment: ${error instanceof Error ? error.message : 'unknown error'}`,
     };
   }
 
@@ -2688,7 +2695,7 @@ function dataOnlyRestore(
       } catch (recoveryError: any) {
         throw new Error(
           `Restore committed but source cleanup failed: ${detachError?.message || 'unknown error'}; ` +
-            `database reopen also failed: ${recoveryError?.message || 'unknown error'}`,
+            `database reopen also failed: ${recoveryError instanceof Error ? recoveryError.message : 'unknown error'}`,
         );
       }
     }
@@ -2731,8 +2738,8 @@ function dataOnlyRestore(
         attached = false;
       } catch (recoveryError: any) {
         error = new Error(
-          `${error?.message || 'Restore failed'}; cleanup failed: ${cleanupFailure instanceof Error ? cleanupFailure.message : 'unknown error'}; ` +
-            `database reopen failed: ${recoveryError?.message || 'unknown error'}`,
+          `${error instanceof Error ? error.message : 'Restore failed'}; cleanup failed: ${cleanupFailure instanceof Error ? cleanupFailure.message : 'unknown error'}; ` +
+            `database reopen failed: ${recoveryError instanceof Error ? recoveryError.message : 'unknown error'}`,
         );
       }
     }
@@ -2743,7 +2750,7 @@ function dataOnlyRestore(
       backupSchemaVersion: backupVersion,
       currentSchemaVersion: currentVersion,
       tablesRestored: 0,
-      error: error?.message || 'Restore failed',
+      error: error instanceof Error ? error.message : 'Restore failed',
     };
   } finally {
     if (attached) {
@@ -2891,9 +2898,12 @@ function syncBackupBeforeMigration(fromVersion: number, toVersion: number): void
       `[DB] Auto-backup before migrating v${fromVersion} → v${toVersion} created at ${targetPath}`,
     );
   } catch (err: unknown) {
-    console.error(`[DB] Auto-backup before migration failed:`, err.message);
+    console.error(
+      `[DB] Auto-backup before migration failed:`,
+      err instanceof Error ? err.message : err,
+    );
     throw new Error(
-      `Pre-migration backup failed; refusing to migrate the database: ${err.message}`,
+      `Pre-migration backup failed; refusing to migrate the database: ${err instanceof Error ? err.message : String(err)}`,
     );
   } finally {
     if (!completed && targetPath) {
