@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — R9 Slice 5 Operations Finance Reports v1 (Implemented)
+
+Authorized under R9 program. Composed Gross/Refunds/Net via shared `queryDaySalesSemantics` + posted expenses by category; `GET /ops-finance`; expenses CSV + `expense.exported`; Reports UI. Schema tip **v83**. Suite `npm run test:r9.5`. Doc: `docs/05-production/r9-ops-finance-reports-slice-5.md`. **Do not pull R12 BI.** Next: Slice 6 food-cost report (theoretical only).
+
 ## 2026-08-15 — R9 Slice 4 Day-close / Z Polish (Implemented)
 
 Authorized under the R9 program (development only; not live go-live). Formula-preserving polish: close confirmation; cash Z clarity; historical frozen load; opening float + per-shift display; `GET .../export/z.txt` + `day_close.z_downloaded`; print success `day_close.z_printed`. Schema tip remains **v83**. Suite `npm run test:r9.4`. Doc: `docs/05-production/r9-day-close-z-polish-slice-4.md`. **Do not start R9 Slice 5+ / ops finance / food-cost without slice auth (create internal R9 governance ADR when executing).**

@@ -136,17 +136,11 @@ Fine-grained permissions product, attendance clocks, scheduling, leave remain La
 
 ## R9 — Finance / Compliance
 
-**Status:** IN PROGRESS — Slice 1–4 COMPLETE (2026-08-15). Schema **v83**. Suites `test:r9` / `test:r9.2` / `test:r9.3` / `test:r9.4`. Docs: expenses / audit-trail / tax-export / [`r9-day-close-z-polish-slice-4.md`](../05-production/r9-day-close-z-polish-slice-4.md).
+**Status:** IN PROGRESS — Slice 1–5 COMPLETE (2026-08-15). Schema **v83**. Suites `test:r9` … `test:r9.5`.
 
-**Slice 1 delivered:** expenses table (integer cents), API, Owner/Manager UI, RBAC, audits, offline SQLite.
+**Slice 5 delivered:** Ops finance compose (Gross/Refunds/Net + posted expenses) + expenses CSV; Reports UI; schema tip remains v83.
 
-**Slice 2 delivered:** audit viewer + CSV export + `until` filter + `audit.exported`; Owner/Manager; schema tip remains v83.
-
-**Slice 3 delivered:** Reports tax-components UI + tax-components CSV + `tax.exported`; shared aggregator; schema tip remains v83.
-
-**Slice 4 delivered:** Day-close confirm + cash Z clarity + historical date + float/shifts display + Z txt export audits; formulas unchanged; schema tip remains v83.
-
-**Remaining R9 (not started):** ops finance reports v1; food-cost report v1.
+**Remaining R9 (not started):** food-cost report v1.
 
 **Out:** Service charge (ADR-014 Proposed); tips; QR; gift cards; REAL→cents cutover; Frozen rows.
 

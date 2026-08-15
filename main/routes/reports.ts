@@ -7,6 +7,12 @@ import {
 } from '../services/tax-components-report';
 import { DayCloseServiceError, closeBusinessDay, getDayClose } from '../services/day-close';
 import { formatDayCloseZPlainText } from '../services/day-close-z-text';
+import { queryDaySalesSemantics } from '../services/day-sales-semantics';
+import {
+  expensesReportToCsv,
+  listPostedExpensesForCsv,
+  queryOpsFinanceReport,
+} from '../services/ops-finance-report';
 import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
 import { toCsvRow } from '../lib/csv';
@@ -256,64 +262,13 @@ function paymentMethodBreakdown(
     .all(end, start, paidOnly ? 1 : 0, start, end);
 }
 
-/** Day-window sales truth: Gross / Refunds / Net. paid_amount alone is Net Sales. */
+/** Day-window sales truth: Gross / Refunds / Net — owned by day-sales-semantics service. */
 function daySalesSemantics(
   db: ReturnType<typeof getDatabase>,
   start: string,
   end: string,
 ): { grossSales: number; refunds: number; netSales: number } {
-  const settled = db
-    .prepare(
-      `
-    SELECT
-      COALESCE(SUM(COALESCE(total_cents, CAST(ROUND(COALESCE(total, 0) * 100) AS INTEGER))) / 100.0, 0) AS grossSales,
-      COALESCE(SUM(COALESCE(paid_amount_cents, CAST(ROUND(COALESCE(paid_amount, 0) * 100) AS INTEGER))) / 100.0, 0) AS netSales
-    FROM bills
-    WHERE created_at >= ? AND created_at < ?
-      AND (
-        payment_status IN ('paid', 'partially_refunded', 'refunded')
-        OR (
-          payment_status = 'partial'
-          AND ROUND(total * 100) <= COALESCE((
-            SELECT SUM(
-              CASE
-                WHEN typeof(json_extract(je.value, '$.amount')) IN ('integer', 'real')
-                  THEN ROUND(json_extract(je.value, '$.amount') * 100)
-                ELSE 0
-              END
-            )
-            FROM json_each(CASE
-              WHEN json_valid(payment_details) AND json_type(payment_details) = 'array'
-                THEN payment_details
-              WHEN json_valid(payment_details)
-                THEN json_array(payment_details)
-              ELSE '[]'
-            END) je
-            WHERE json_type(je.value) = 'object'
-          ), 0)
-        )
-      )
-  `,
-    )
-    .get(start, end) as { grossSales: number; netSales: number };
-
-  const refundsRow = db
-    .prepare(
-      `
-    SELECT COALESCE(SUM(amount_cents), 0) AS refundsCents
-    FROM refunds
-    WHERE status = 'completed'
-      AND created_at >= ? AND created_at < ?
-  `,
-    )
-    .get(start, end) as { refundsCents: number };
-
-  const refunds = Number(refundsRow.refundsCents || 0) / 100;
-  return {
-    grossSales: Number(settled.grossSales || 0),
-    refunds,
-    netSales: Number(settled.netSales || 0),
-  };
+  return queryDaySalesSemantics(db, start, end);
 }
 
 /** argmax/argmin over counts, restricted to indices where include(count) is true. Returns null if nothing qualifies. */
@@ -533,6 +488,67 @@ router.get(
     }
   },
 );
+
+router.get('/ops-finance', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const today = utcTodayDate();
+    const startDate = reportDate(req.query.start_date, today);
+    const endDate = reportDate(req.query.end_date, today);
+    if (startDate > endDate) {
+      return res.status(400).json({ error: 'start_date must be on or before end_date' });
+    }
+    const report = queryOpsFinanceReport(db, startDate, endDate);
+    res.json({ opsFinance: report });
+  } catch (error: unknown) {
+    console.error('[API] Ops finance report failed:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get(
+  '/export/expenses.csv',
+  requireRole('owner', 'manager'),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const today = utcTodayDate();
+      const startDate = reportDate(req.query.start_date, today);
+      const endDate = reportDate(req.query.end_date, today);
+      if (startDate > endDate) {
+        return res.status(400).json({ error: 'start_date must be on or before end_date' });
+      }
+
+      const rows = listPostedExpensesForCsv(db, startDate, endDate);
+      const csv = expensesReportToCsv(startDate, endDate, rows);
+
+      logAuditEvent({
+        actorUserId: (req as { user?: { userId?: string } }).user?.userId ?? null,
+        action: 'expense.exported',
+        entityType: 'expense_report',
+        entityId: `${startDate}_${endDate}`,
+        result: 'success',
+        metadata: {
+          format: 'csv',
+          start_date: startDate,
+          end_date: endDate,
+          row_count: rows.length,
+        },
+      });
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="operavia-expenses-${startDate}-to-${endDate}.csv"`,
+      );
+      res.status(200).send(csv);
+    } catch (error: unknown) {
+      console.error('[API] Expenses CSV export failed:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
 router.get('/sales', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
     const db = getDatabase();

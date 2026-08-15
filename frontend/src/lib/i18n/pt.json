@@ -2072,5 +2072,20 @@
   "reports.taxExportCsv": "Exportar CSV de impostos",
   "reports.taxExporting": "Exportando impostos…",
   "reports.taxExportSuccess": "CSV de impostos baixado",
-  "reports.taxExportFailed": "Não foi possível exportar os componentes de imposto"
+  "reports.taxExportFailed": "Não foi possível exportar os componentes de imposto",
+  "reports.opsFinanceTitle": "Finanças operacionais",
+  "reports.opsFinanceEmpty": "Não foi possível carregar as finanças operacionais.",
+  "reports.opsFinanceNoExpenses": "Sem despesas lançadas neste intervalo.",
+  "reports.opsGross": "Vendas brutas",
+  "reports.opsRefunds": "Reembolsos",
+  "reports.opsNet": "Vendas líquidas",
+  "reports.opsExpenses": "Despesas lançadas",
+  "reports.opsNetAfterExpenses": "Líquido após despesas: {amount}",
+  "reports.opsColCategory": "Categoria",
+  "reports.opsColCount": "Contagem",
+  "reports.opsColAmount": "Valor",
+  "reports.expensesExportCsv": "Exportar despesas CSV",
+  "reports.expensesExporting": "Exportando despesas…",
+  "reports.expensesExportSuccess": "CSV de despesas baixado",
+  "reports.expensesExportFailed": "Não foi possível exportar despesas"
 }

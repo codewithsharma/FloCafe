@@ -2244,5 +2244,20 @@
   "reports.taxExportCsv": "Export tax CSV",
   "reports.taxExporting": "Exporting tax…",
   "reports.taxExportSuccess": "Tax components CSV downloaded",
-  "reports.taxExportFailed": "Could not export tax components"
+  "reports.taxExportFailed": "Could not export tax components",
+  "reports.opsFinanceTitle": "Operations finance",
+  "reports.opsFinanceEmpty": "Could not load operations finance for this range.",
+  "reports.opsFinanceNoExpenses": "No posted expenses in this date range.",
+  "reports.opsGross": "Gross sales",
+  "reports.opsRefunds": "Refunds",
+  "reports.opsNet": "Net sales",
+  "reports.opsExpenses": "Posted expenses",
+  "reports.opsNetAfterExpenses": "Net after expenses: {amount}",
+  "reports.opsColCategory": "Category",
+  "reports.opsColCount": "Count",
+  "reports.opsColAmount": "Amount",
+  "reports.expensesExportCsv": "Export expenses CSV",
+  "reports.expensesExporting": "Exporting expenses…",
+  "reports.expensesExportSuccess": "Expenses CSV downloaded",
+  "reports.expensesExportFailed": "Could not export expenses"
 }

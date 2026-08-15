@@ -14,7 +14,8 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 **R9 Slice 1 Expenses (2026-08-15):** COMPLETE — schema **v83** `expenses`; Owner/Manager API+UI; cents-only; audits; `npm run test:r9`.
 **R9 Slice 2 Financial Audit-Trail Hardening (2026-08-15):** COMPLETE — `/audit` UI + CSV export + `until` + `audit.exported`; schema tip remains **v83**; `npm run test:r9.2`.
 **R9 Slice 3 Tax Reporting Depth + Accountant Export (2026-08-15):** COMPLETE — Reports tax UI + `export/tax-components.csv` + `tax.exported`; schema tip remains **v83**; `npm run test:r9.3`.
-**R9 Slice 4 Day-close / Z Polish (2026-08-15):** COMPLETE — confirm + cash clarity + historical date + float/shifts display + Z txt export/`day_close.z_*` audits; schema tip remains **v83**; `npm run test:r9.4`. Remaining R9 slices NOT STARTED. Live Go-Live **NO-GO**. Doc: `docs/05-production/r9-day-close-z-polish-slice-4.md`.
+**R9 Slice 4 Day-close / Z Polish (2026-08-15):** COMPLETE — confirm + cash clarity + historical date + float/shifts display + Z txt export/`day_close.z_*` audits; schema tip remains **v83**; `npm run test:r9.4`.
+**R9 Slice 5 Operations Finance Reports v1 (2026-08-15):** COMPLETE — ops-finance compose + expenses CSV; schema tip remains **v83**; `npm run test:r9.5`. Remaining R9: food-cost report. Live Go-Live **NO-GO**. Doc: `docs/05-production/r9-ops-finance-reports-slice-5.md`.
 
 **Foundation Phase 2 (2026-08-15):** COMPLETE — prefer-cents readers + dual-write writers; process-kill harness; Zod expansion; `any` main&lt;600 / orders&lt;50. Doc: `docs/05-production/foundation-priority-deepen-phase2.md`.
 

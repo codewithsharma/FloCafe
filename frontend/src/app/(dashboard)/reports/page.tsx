@@ -45,6 +45,11 @@ import {
   fetchTaxComponents,
   type TaxComponentsPayload,
 } from '@/lib/tax-components-report';
+import {
+  downloadExpensesCsv,
+  fetchOpsFinance,
+  type OpsFinancePayload,
+} from '@/lib/ops-finance-report';
 
 interface PaymentMethodBreakdown {
   method: string | null;
@@ -186,9 +191,11 @@ export default function ReportsPage() {
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [insights, setInsights] = useState<Insights | null>(null);
   const [taxComponents, setTaxComponents] = useState<TaxComponentsPayload | null>(null);
+  const [opsFinance, setOpsFinance] = useState<OpsFinancePayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [exportingCsv, setExportingCsv] = useState(false);
   const [exportingTaxCsv, setExportingTaxCsv] = useState(false);
+  const [exportingExpensesCsv, setExportingExpensesCsv] = useState(false);
 
   const role = currentTenant?.role;
   const canView = role === 'owner' || role === 'manager';
@@ -235,14 +242,16 @@ export default function ReportsPage() {
       }),
       api.get('/reports/insights', { params: { days: 30 }, signal: controller.signal }),
       fetchTaxComponents(selectedDate, endDate),
+      fetchOpsFinance(selectedDate, endDate),
     ])
-      .then(([statsRes, topRes, recentRes, insightsRes, taxRes]) => {
+      .then(([statsRes, topRes, recentRes, insightsRes, taxRes, opsRes]) => {
         setStats(isToday ? statsRes.data : null);
         setDaySummary(isToday ? null : statsRes.data.summary);
         setTopProducts(topRes.data.topProducts || []);
         setRecentOrders(recentRes.data.recentOrders || []);
         setInsights(insightsRes.data);
         setTaxComponents(taxRes);
+        setOpsFinance(opsRes);
       })
       .catch((err: unknown) => {
         if (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))
@@ -284,6 +293,18 @@ export default function ReportsPage() {
       toast.error(err instanceof Error ? err.message : t('reports.taxExportFailed'));
     } finally {
       setExportingTaxCsv(false);
+    }
+  };
+
+  const handleExportExpensesCsv = async () => {
+    setExportingExpensesCsv(true);
+    try {
+      await downloadExpensesCsv(selectedDate, endDate);
+      toast.success(t('reports.expensesExportSuccess'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('reports.expensesExportFailed'));
+    } finally {
+      setExportingExpensesCsv(false);
     }
   };
 
@@ -457,6 +478,98 @@ export default function ReportsPage() {
                 />
               ))}
             </div>
+          </section>
+
+          <section className="mb-6" aria-label={t('reports.opsFinanceTitle')}>
+            <Panel
+              title={t('reports.opsFinanceTitle')}
+              actions={
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleExportExpensesCsv()}
+                  disabled={exportingExpensesCsv || loading}
+                  className="min-h-11"
+                >
+                  {exportingExpensesCsv ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin mr-2" aria-hidden />
+                      {t('reports.expensesExporting')}
+                    </>
+                  ) : (
+                    <>
+                      <Download className="size-4 mr-2" aria-hidden />
+                      {t('reports.expensesExportCsv')}
+                    </>
+                  )}
+                </Button>
+              }
+            >
+              {!opsFinance ? (
+                <EmptyState title={t('reports.opsFinanceEmpty')} className="min-h-[120px] py-6" />
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div>
+                      <p className="text-caption text-flo-text-muted mb-1">
+                        {t('reports.opsGross')}
+                      </p>
+                      <p className="text-numeric-lg">{fmt(opsFinance.sales.grossSales)}</p>
+                    </div>
+                    <div>
+                      <p className="text-caption text-flo-text-muted mb-1">
+                        {t('reports.opsRefunds')}
+                      </p>
+                      <p className="text-numeric-lg">{fmt(opsFinance.sales.refunds)}</p>
+                    </div>
+                    <div>
+                      <p className="text-caption text-flo-text-muted mb-1">{t('reports.opsNet')}</p>
+                      <p className="text-numeric-lg">{fmt(opsFinance.sales.netSales)}</p>
+                    </div>
+                    <div>
+                      <p className="text-caption text-flo-text-muted mb-1">
+                        {t('reports.opsExpenses')}
+                      </p>
+                      <p className="text-numeric-lg">
+                        {fmt(opsFinance.expenses.posted_total_cents / 100)}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-caption text-flo-text-muted">
+                    {t('reports.opsNetAfterExpenses', {
+                      amount: fmt(opsFinance.net_after_expenses),
+                    })}
+                  </p>
+                  {opsFinance.expenses.by_category.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead>
+                          <tr className="border-b text-muted-foreground">
+                            <th className="py-2 pr-3">{t('reports.opsColCategory')}</th>
+                            <th className="py-2 pr-3">{t('reports.opsColCount')}</th>
+                            <th className="py-2">{t('reports.opsColAmount')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {opsFinance.expenses.by_category.map((row) => (
+                            <tr key={row.category} className="border-b border-border/60">
+                              <td className="py-2 pr-3">{row.category}</td>
+                              <td className="py-2 pr-3">{row.count}</td>
+                              <td className="py-2">{fmt(row.amount_cents / 100)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-body text-flo-text-secondary">
+                      {t('reports.opsFinanceNoExpenses')}
+                    </p>
+                  )}
+                </div>
+              )}
+            </Panel>
           </section>
 
           <section className="mb-6" aria-label={t('reports.taxComponentsTitle')}>

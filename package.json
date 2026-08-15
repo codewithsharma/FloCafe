@@ -229,7 +229,8 @@
     "test:r4.1": "node tests/run-electron-node-test.cjs tests/r4-1-foundation-stabilization.test.ts",
     "test:process-kill": "node tests/run-electron-node-test.cjs tests/process-kill-recovery.test.ts",
     "test:money-cents": "node tests/run-electron-node-test.cjs tests/money-cents-phase2.test.ts",
-    "test:r9.4": "node tests/run-electron-node-test.cjs tests/r9-day-close-z-polish.test.ts"
+    "test:r9.4": "node tests/run-electron-node-test.cjs tests/r9-day-close-z-polish.test.ts",
+    "test:r9.5": "node tests/run-electron-node-test.cjs tests/r9-ops-finance-reports.test.ts"
   },
   "author": {
     "name": "OPERAVIA",
