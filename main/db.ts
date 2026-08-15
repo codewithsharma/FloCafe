@@ -637,9 +637,13 @@ export function initDatabase(
   autoRepairDefaultPrinter();
 
   // REC-01: marker + empty operational café must not look like first install.
+  // R14: never clear a corrupt_database latch just because users>0.
   try {
     const userCount = (db.prepare('SELECT COUNT(*) AS c FROM users').get() as { c: number }).c;
-    if (isInstallationInitialized() && userCount === 0) {
+    if (dbHealthError) {
+      // Integrity fail-closed already latched — refuse ACTIVE / marker backfill as healthy.
+      console.error('[DB] R14: refusing normal service after integrity failure');
+    } else if (isInstallationInitialized() && userCount === 0) {
       setRecoveryRequired('empty_database');
       console.error('[DB] REC-01: installation marker present but users=0 — recovery required');
     } else if (userCount > 0) {
@@ -790,15 +794,23 @@ export function appendJsonArray(
   );
 }
 
-/** Runs on every startup. Logs loud warnings but never throws — DB stays available even if dirty. */
+/**
+ * Runs on every startup. R14: corrupt-but-openable DBs fail closed via
+ * install-state `corrupt_database` latch (money APIs 503 / recovery UI).
+ * Does not throw — leaves the handle open so restore can replace the file.
+ */
 function runStartupIntegrityCheck(): void {
   try {
-    const integrity = db.prepare('PRAGMA integrity_check').all() as { integrity_check: string }[];
-    const bad = integrity.filter((r) => r.integrity_check !== 'ok');
-    if (bad.length > 0) {
-      const msg = bad.map((r) => r.integrity_check).join('; ');
+    // Lazy require avoids circular init with schema-health → db imports.
+    const { checkSqliteIntegrity } =
+      require('./services/schema-health') as typeof import('./services/schema-health');
+    const integrity = checkSqliteIntegrity(db);
+    if (!integrity.ok) {
+      const msg = integrity.details.join('; ');
       console.error('[DB] ⚠ integrity_check reported issues:', msg);
       dbHealthError = `Database integrity error: ${msg}`;
+      setRecoveryRequired('corrupt_database');
+      console.error('[DB] R14: corrupt-openable DB — recovery_required (refuse dirty service)');
     } else {
       console.log('[DB] integrity_check: ok');
     }
@@ -813,7 +825,10 @@ function runStartupIntegrityCheck(): void {
       console.log('[DB] foreign_key_check: clean');
     }
   } catch (err: unknown) {
-    console.error('[DB] Startup integrity check failed:', err.message);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error('[DB] Startup integrity check failed:', msg);
+    dbHealthError = `Database integrity check failed: ${msg}`;
+    setRecoveryRequired('corrupt_database');
   }
 }
 
