@@ -5037,6 +5037,129 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       `);
     },
   },
+  {
+    version: 80,
+    name: 'r6_purchasing_supplier_os',
+    up: () => {
+      // R6 Purchasing & Supplier OS. Inventory movements CHECK unchanged —
+      // receiving uses movement_type=adjustment + reason=purchase_receipt.
+      // New money fields use INTEGER cents; products.cost remains REAL (P0.3).
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS suppliers (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          contact_name TEXT,
+          phone TEXT,
+          email TEXT,
+          address TEXT,
+          tax_id TEXT,
+          notes TEXT,
+          is_active INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_suppliers_active ON suppliers(is_active);
+
+        CREATE TABLE IF NOT EXISTS supplier_products (
+          id TEXT PRIMARY KEY,
+          supplier_id TEXT NOT NULL,
+          product_id TEXT NOT NULL,
+          supplier_sku TEXT,
+          purchase_unit TEXT NOT NULL,
+          last_purchase_cost_cents INTEGER,
+          is_active INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          UNIQUE(supplier_id, product_id),
+          FOREIGN KEY (supplier_id) REFERENCES suppliers(id),
+          FOREIGN KEY (product_id) REFERENCES products(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_supplier_products_supplier
+          ON supplier_products(supplier_id);
+        CREATE INDEX IF NOT EXISTS idx_supplier_products_product
+          ON supplier_products(product_id);
+
+        CREATE TABLE IF NOT EXISTS purchase_orders (
+          id TEXT PRIMARY KEY,
+          supplier_id TEXT NOT NULL,
+          po_number TEXT NOT NULL UNIQUE,
+          status TEXT NOT NULL
+            CHECK (status IN ('draft','ordered','partially_received','received','cancelled')),
+          order_date TEXT,
+          expected_date TEXT,
+          notes TEXT,
+          subtotal_cents INTEGER NOT NULL DEFAULT 0,
+          tax_cents INTEGER NOT NULL DEFAULT 0,
+          total_cents INTEGER NOT NULL DEFAULT 0,
+          created_by TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_purchase_orders_supplier
+          ON purchase_orders(supplier_id);
+        CREATE INDEX IF NOT EXISTS idx_purchase_orders_status
+          ON purchase_orders(status);
+
+        CREATE TABLE IF NOT EXISTS purchase_order_lines (
+          id TEXT PRIMARY KEY,
+          purchase_order_id TEXT NOT NULL,
+          product_id TEXT NOT NULL,
+          purchase_unit TEXT NOT NULL,
+          ordered_qty REAL NOT NULL,
+          unit_cost_cents INTEGER NOT NULL DEFAULT 0,
+          tax_cents INTEGER NOT NULL DEFAULT 0,
+          line_total_cents INTEGER NOT NULL DEFAULT 0,
+          received_qty REAL NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders(id),
+          FOREIGN KEY (product_id) REFERENCES products(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_purchase_order_lines_po
+          ON purchase_order_lines(purchase_order_id);
+
+        CREATE TABLE IF NOT EXISTS purchase_receipts (
+          id TEXT PRIMARY KEY,
+          purchase_order_id TEXT NOT NULL,
+          received_at TEXT NOT NULL,
+          received_by TEXT,
+          notes TEXT,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_purchase_receipts_po
+          ON purchase_receipts(purchase_order_id);
+
+        CREATE TABLE IF NOT EXISTS purchase_receipt_lines (
+          id TEXT PRIMARY KEY,
+          receipt_id TEXT NOT NULL,
+          po_line_id TEXT NOT NULL,
+          product_id TEXT NOT NULL,
+          quantity REAL NOT NULL,
+          purchase_unit TEXT NOT NULL,
+          unit_cost_cents INTEGER NOT NULL DEFAULT 0,
+          inventory_qty REAL NOT NULL,
+          movement_id INTEGER,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (receipt_id) REFERENCES purchase_receipts(id),
+          FOREIGN KEY (po_line_id) REFERENCES purchase_order_lines(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_purchase_receipt_lines_receipt
+          ON purchase_receipt_lines(receipt_id);
+
+        CREATE TABLE IF NOT EXISTS purchase_receive_idempotency (
+          user_id TEXT NOT NULL,
+          idempotency_key TEXT NOT NULL,
+          purchase_order_id TEXT NOT NULL,
+          request_hash TEXT NOT NULL,
+          response_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          PRIMARY KEY (user_id, idempotency_key)
+        );
+      `);
+    },
+  },
 ];
 
 function syncBackupBeforeMigration(fromVersion: number, toVersion: number): void {
@@ -5672,6 +5795,120 @@ function createSchema(): void {
     );
     CREATE INDEX IF NOT EXISTS idx_recipe_consumption_lines_consumption
       ON recipe_consumption_lines(consumption_id);
+
+    -- R6 Purchasing & Supplier OS (migration v80 also creates these for upgrades)
+    CREATE TABLE IF NOT EXISTS suppliers (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      contact_name TEXT,
+      phone TEXT,
+      email TEXT,
+      address TEXT,
+      tax_id TEXT,
+      notes TEXT,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_suppliers_active ON suppliers(is_active);
+
+    CREATE TABLE IF NOT EXISTS supplier_products (
+      id TEXT PRIMARY KEY,
+      supplier_id TEXT NOT NULL,
+      product_id TEXT NOT NULL,
+      supplier_sku TEXT,
+      purchase_unit TEXT NOT NULL,
+      last_purchase_cost_cents INTEGER,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      UNIQUE(supplier_id, product_id),
+      FOREIGN KEY (supplier_id) REFERENCES suppliers(id),
+      FOREIGN KEY (product_id) REFERENCES products(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_supplier_products_supplier
+      ON supplier_products(supplier_id);
+    CREATE INDEX IF NOT EXISTS idx_supplier_products_product
+      ON supplier_products(product_id);
+
+    CREATE TABLE IF NOT EXISTS purchase_orders (
+      id TEXT PRIMARY KEY,
+      supplier_id TEXT NOT NULL,
+      po_number TEXT NOT NULL UNIQUE,
+      status TEXT NOT NULL
+        CHECK (status IN ('draft','ordered','partially_received','received','cancelled')),
+      order_date TEXT,
+      expected_date TEXT,
+      notes TEXT,
+      subtotal_cents INTEGER NOT NULL DEFAULT 0,
+      tax_cents INTEGER NOT NULL DEFAULT 0,
+      total_cents INTEGER NOT NULL DEFAULT 0,
+      created_by TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_purchase_orders_supplier
+      ON purchase_orders(supplier_id);
+    CREATE INDEX IF NOT EXISTS idx_purchase_orders_status
+      ON purchase_orders(status);
+
+    CREATE TABLE IF NOT EXISTS purchase_order_lines (
+      id TEXT PRIMARY KEY,
+      purchase_order_id TEXT NOT NULL,
+      product_id TEXT NOT NULL,
+      purchase_unit TEXT NOT NULL,
+      ordered_qty REAL NOT NULL,
+      unit_cost_cents INTEGER NOT NULL DEFAULT 0,
+      tax_cents INTEGER NOT NULL DEFAULT 0,
+      line_total_cents INTEGER NOT NULL DEFAULT 0,
+      received_qty REAL NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders(id),
+      FOREIGN KEY (product_id) REFERENCES products(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_purchase_order_lines_po
+      ON purchase_order_lines(purchase_order_id);
+
+    CREATE TABLE IF NOT EXISTS purchase_receipts (
+      id TEXT PRIMARY KEY,
+      purchase_order_id TEXT NOT NULL,
+      received_at TEXT NOT NULL,
+      received_by TEXT,
+      notes TEXT,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_purchase_receipts_po
+      ON purchase_receipts(purchase_order_id);
+
+    CREATE TABLE IF NOT EXISTS purchase_receipt_lines (
+      id TEXT PRIMARY KEY,
+      receipt_id TEXT NOT NULL,
+      po_line_id TEXT NOT NULL,
+      product_id TEXT NOT NULL,
+      quantity REAL NOT NULL,
+      purchase_unit TEXT NOT NULL,
+      unit_cost_cents INTEGER NOT NULL DEFAULT 0,
+      inventory_qty REAL NOT NULL,
+      movement_id INTEGER,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (receipt_id) REFERENCES purchase_receipts(id),
+      FOREIGN KEY (po_line_id) REFERENCES purchase_order_lines(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_purchase_receipt_lines_receipt
+      ON purchase_receipt_lines(receipt_id);
+
+    CREATE TABLE IF NOT EXISTS purchase_receive_idempotency (
+      user_id TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL,
+      purchase_order_id TEXT NOT NULL,
+      request_hash TEXT NOT NULL,
+      response_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY (user_id, idempotency_key)
+    );
   `);
 }
 

@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — R6 Purchasing & Supplier OS (Implemented)
+
+Authorized R6. Schema **v80**: suppliers, supplier_products, purchase_orders/lines, purchase_receipts/lines, purchase_receive_idempotency. Receiving uses Inventory `applyPurchaseReceiptStock` (`adjustment` + `purchase_receipt`). PO money = INTEGER cents; `products.cost` REAL updated on receive (P0.3 dependency). Over-receive 409; cancel never reverses stock; Idempotency-Key + CAS concurrency. RBAC owner/manager mutate, chef read. UI `/products/purchasing`. Suite `npm run test:r6`. Doc: `docs/05-production/r6-purchasing-supplier-os.md`. **Do not start R7.**
+
 ## 2026-08-15 — R4.1 Foundation Stabilization (Implemented)
 
 Authorized correctness slice (not product features). Drive `backup-now` requires Master PIN. Zod on bill generate/discount + order status/discount. Extracted `main/routes/orders-shared.ts` and `main/database/{time,order-row}.ts`. P1.3 scenarios in `test:r4.1`. Full REAL→integer-cents persistence **STOPPED** — dual-write plan required (P0.3). Schema v79 unchanged. No R5 expansion / no R6. Doc: `docs/05-production/r4-1-foundation-stabilization.md`.

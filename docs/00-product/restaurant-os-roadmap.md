@@ -97,16 +97,22 @@ Correctness/architecture/money-audit/validation/release-hygiene. Drive backup-no
 
 **Delivered:** recipes/BOM linked to menu products; ingredients = product SKUs; deduction at order create/add-items; theoretical food cost (integer cents) + basic food-cost %; cancel reverse; BLOCK on insufficient stock.
 
-**Exclude / remaining:** PO, receiving, suppliers (R6); full consumption/food-cost BI; auto-86; expiry; stock transfer; addon BOM; refund restock gap.
+**Exclude / remaining:** returns / invoices polish; full consumption/food-cost BI; auto-86; expiry; stock transfer; addon BOM; refund restock gap.
 
-**Next (if authorized):** R6 Purchasing — do not start without explicit authorization.
+**Shipped:** R6 Purchasing (v80).
 
 ---
 
 ## R6 — Purchasing
 
-Suppliers, PO, receiving (incl. partial), invoices, returns, stock impact.  
-**Requires ADR.** Depends on R4/R5. **Not started** — next only if authorized.
+**Status:** COMPLETE (2026-08-15) — [`docs/05-production/r6-purchasing-supplier-os.md`](../05-production/r6-purchasing-supplier-os.md).  
+**Suite:** `npm run test:r6`. Schema **v80**.
+
+Suppliers, supplier↔SKU mapping, PO lifecycle, partial/full receiving, inventory ledger `purchase_receipt`, cents money on PO fields, RBAC, idempotency, concurrency CAS, UI `/products/purchasing`.
+
+**Exclude / remaining:** supplier returns, auto-reorder, forecasting, multi-location, WAC/FIFO ADR, supplier portal.
+
+**Next (if authorized):** R7 CRM — do not start without explicit authorization.
 
 ---
 

@@ -1,6 +1,7 @@
 # Patterns
 
 - **R4.1 stabilization:** Drive backup-now uses `requireMasterPin` (parity with `/api/db/backup`). Order helpers live in `orders-shared.ts`. Pure DB time/order-row helpers live under `main/database/`. Do not grow `db.ts` / `orders.ts` / Settings without extracting first. REAL money persistence cutover remains dual-write + human gate (not a drive-by migration).
+- **R6 purchasing:** Receiving never invents a second ledger — `applyPurchaseReceiptStock` + reason `purchase_receipt`. New PO money fields are INTEGER cents; catalog `products.cost` stays REAL until P0.3. Over-receive rejected (no tolerance). Cancel never reverses received stock.
 - Feature modules: `main/services/<name>.ts` + `main/routes/<name>.ts` + `requireRole()`.
 - **Prompt pipeline (`prompts/`):** one ACTIVE phase (`ACTIVE.md` + `STATE.md`). Complete only after tests/lint/builds/isolation/docs/commit. `ADR_REQUIRED` / `BLOCKED` / `DEFERRED` stop auto-advance. Do not commit unrelated dirty tree listed in `STATE.md`.
 - **Boundary validation:** Zod schemas in `main/validation/` + `validateBody` middleware for untrusted HTTP input (auth, order create/add-items, payment single/batch, refund body, stock adjust). Domain rules stay in services.
@@ -14,6 +15,7 @@
 - **Wastage (4.15 / R4):** `action=wastage` on `POST /products/:id/stock` is a decrease; ledger `reason=wastage` or `wastage:SPOILAGE|DAMAGED|EXPIRED|SPILLAGE|OTHER` with `movement_type=adjustment`. Do not add `movement_type=wastage` (CHECK unchanged). Mandatory `Idempotency-Key` on stock adjust (R4).
 - **R4 inventory units/counts:** `inventory-units.ts` same-family convert only; stock counts apply via adjust set + `count_variance` — never silent stock overwrite. Diagnostic `GET /api/inventory/products/:id/ledger-check`.
 - **R5 recipes / BOM / food cost:** `main/services/recipe.ts` owns CRUD; consumption via Inventory `applyRecipeStockDelta` (ledger `adjustment` + `recipe_consumption`); idempotency keyed on `order_item_id`; food cost in **integer cents** (`recipe-cost.ts`). Ingredients are `products` SKUs — no second inventory. No addon BOM in R5.
+- **R6 purchasing UI:** `frontend/src/lib/purchasing.ts` + `/products/purchasing` (same owner/manager + inventory gate as counts/recipes). Receive mutations send `Idempotency-Key: crypto.randomUUID()` per submit. Money fields are integer cents; display via `useFormatCurrency(cents/100)`.
 - **Retail POS types (4.12):** When `tables` is off, CartPanel shows takeaway only and POS coerces non-takeaway to takeaway. Do not reject `delivery` on the shared order API (Restaurant + history).
 - **Inventory valuation (4.11):** `GET /api/reports/inventory-valuation` is catalog `cost` × `stock_quantity` for `track_inventory=1`. Do not use movements for valuation math. Do not call it WAC/FIFO.
 - **FIN-01 collectible display (4.10):** UI remaining due = `bill.total − SUM(payment_details.amount)` (gross tender), never net `bill.balance`. Do not write `payment_status` to match. Helper: `frontend/src/lib/bill-collectible.ts`.

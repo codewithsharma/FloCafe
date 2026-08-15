@@ -9,7 +9,7 @@
 **Canonical strategy:** `STRATEGY.md` (pilot KPI unchanged).
 **Branding audit:** `docs/05-production/operavia-branding-normalization-audit.md`.
 
-Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v79**) + statically exported Next.js (`frontend/`).
+Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v80**) + statically exported Next.js (`frontend/`).
 
 **Canonical product plan:** `docs/00-product/capability-matrix.md` (Existing / Hardening / Planned / Later / Frozen, 2026-08-14).  
 **Complete Restaurant OS (R0):** `docs/00-product/restaurant-os-blueprint.md` · `restaurant-os-roadmap.md` (R0–R16). Docs only until R1+ authorized.  
@@ -98,11 +98,13 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 **R5 (2026-08-15): CLOSED.** BOM / Recipes / Food Cost — `docs/05-production/r5-bom-recipes-food-cost.md`. Schema **v79**. Suite `npm run test:r5`.
 
-**R4.1 (2026-08-15): CLOSED.** Foundation stabilization — `docs/05-production/r4-1-foundation-stabilization.md`. Drive backup-now Master PIN; Zod money bodies; orders-shared + database/time|order-row extraction; P1.3 matrix tests; REAL→cents **STOP** (plan only). Suite `npm run test:r4.1`. Do not expand R5 further without authorization. Do not start R6.
+**R4.1 (2026-08-15): CLOSED.** Foundation stabilization — `docs/05-production/r4-1-foundation-stabilization.md`. Drive backup-now Master PIN; Zod money bodies; orders-shared + database/time|order-row extraction; P1.3 matrix tests; REAL→cents **STOP** (plan only). Suite `npm run test:r4.1`.
+
+**R6 (2026-08-15): CLOSED.** Purchasing & Supplier OS — `docs/05-production/r6-purchasing-supplier-os.md`. Schema **v80**. Suppliers, PO lifecycle, partial/full receive → inventory `purchase_receipt`, cents on PO money, UI `/products/purchasing`. Suite `npm run test:r6`. Do not start R7 without authorization.
 
 Do not invent 4.16. Do not push.
 
 - **Human/RELEASE + OPS:** signed RC + `ops-02-site-readiness-checklist.md` + `pilot-signoff.md`.
-- **Next software (if authorized):** **R6 Purchasing** or Hardening — only with explicit authorization. Do not start R6.
-- ADR-014 Proposed. Schema v79. Engineering baseline includes R1–R5 on `restaurant-vertical`.
+- **Next software (if authorized):** **R7 CRM** or Hardening — only with explicit authorization. Do not start R7.
+- ADR-014 Proposed. Schema v80. Engineering baseline includes R1–R6 on `restaurant-vertical`.
 - Test debt: `security-hardening.test.ts` isolation only (not live blocker).

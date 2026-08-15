@@ -192,10 +192,12 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | Recipe / BOM             | 🟢 Existing |
 | Ingredient deduction     | 🟢 Existing |
 | Food costing             | 🟢 Existing |
-| Purchase orders          | 🔵 Planned  |
-| Goods receiving          | 🔵 Planned  |
-| Supplier management      | 🔵 Planned  |
-| Supplier pricing         | 🔵 Planned  |
+| Purchase orders          | 🟢 Existing |
+| Goods receiving          | 🟢 Existing |
+| Supplier management      | 🟢 Existing |
+| Supplier pricing         | 🟢 Existing |
+| Partial receiving        | 🟢 Existing |
+| Purchase inventory link  | 🟢 Existing |
 | Stock transfer           | 🔵 Planned  |
 | Waste management         | 🟢 Existing |
 | Expiry tracking          | 🔵 Planned  |

@@ -75,13 +75,13 @@ function seedRoleUser(
 
 async function main() {
   console.log('\nR5 — BOM / Recipes / Food Cost OS\n' + '='.repeat(60));
-  assertEqual(getSupportedSchemaVersion(), 79, 'schema version is 79');
+  assertEqual(getSupportedSchemaVersion(), 80, 'schema version is 80');
 
   const db = initTestDb();
   assertEqual(
     Number(db.pragma('user_version', { simple: true })),
-    79,
-    'fresh DB at user_version 79',
+    80,
+    'fresh DB at user_version 80',
   );
   assert(!!db.prepare("SELECT name FROM sqlite_master WHERE name='recipes'").get(), 'recipes');
   assert(

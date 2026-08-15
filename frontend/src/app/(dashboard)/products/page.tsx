@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   CircleDollarSign,
   ClipboardList,
+  Truck,
 } from 'lucide-react';
 import type { Product, Category, AddonGroup } from '@/lib/types';
 import {
@@ -669,6 +670,11 @@ export default function ProductsPage() {
                 <Button variant="outline" asChild>
                   <Link href="/products/recipes">
                     <ClipboardList size={16} className="mr-1" /> {t('recipes.title')}
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
+                  <Link href="/products/purchasing">
+                    <Truck size={16} className="mr-1" /> {t('purchasing.title')}
                   </Link>
                 </Button>
                 <Button variant="outline" asChild>

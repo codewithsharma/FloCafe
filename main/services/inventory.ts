@@ -223,6 +223,46 @@ export function applyRecipeStockDelta(
   return { movementId, stockAfter };
 }
 
+/**
+ * R6 purchase receiving stock increase via adjustment movements.
+ * Callers MUST be inside withTxn with the receipt / PO line write.
+ */
+export function applyPurchaseReceiptStock(
+  db: any,
+  product: StockTrackedProduct,
+  quantityDelta: number,
+  updatedAt: string,
+  ref: InventoryMovementRef & { reason: string },
+): { movementId: number | null; stockAfter: number } {
+  if (!Number.isFinite(quantityDelta) || quantityDelta === 0) {
+    return { movementId: null, stockAfter: readStockAfter(db, product.id) };
+  }
+  if (quantityDelta < 0) {
+    throw new InventoryServiceError(400, 'Purchase receipt quantity must be positive');
+  }
+  if (!isTracking(product)) {
+    throw new InventoryServiceError(
+      400,
+      `Product does not track inventory: ${product.name ?? product.id}`,
+    );
+  }
+  db.prepare(
+    'UPDATE products SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?',
+  ).run(quantityDelta, updatedAt, product.id);
+  const stockAfter = readStockAfter(db, product.id);
+  const movementId = recordMovement(db, {
+    productId: product.id,
+    quantityDelta,
+    movementType: 'adjustment',
+    stockAfter,
+    referenceType: ref.referenceType ?? 'purchase_receipt',
+    referenceId: ref.referenceId ?? null,
+    reason: ref.reason,
+    createdAt: updatedAt,
+  });
+  return { movementId, stockAfter };
+}
+
 /** Sale / add-items path: check then decrement when tracking. No floor on UPDATE. */
 export function decrementTrackedStock(
   db: any,
