@@ -1,14 +1,16 @@
-<!-- Last updated: 2026-08-15, schema v80 -->
+<!-- Last updated: 2026-08-15, schema v83 -->
 
 # OPS-02 — Live Pilot RC / Site Readiness & Go-Live Audit
 
 **Slice:** Live café release candidate + site readiness (not a product feature phase)  
 **Branch:** `restaurant-vertical`  
-**Docs HEAD:** `d3322a4041ba0114b3fe821bdbf46fae79e8e47e` (OPS-01)  
-**Engineering tree (H1–H4):** `24966ba7272aa4e0e6650796ec469a3cd60ed423`  
-**App version:** 3.0.5 · **Schema:** v80  
+**Post-R8 engineering HEAD:** `94702f8` (`feat: complete R8 Restaurant staff workforce OS`)  
+**Historical engineering baseline (H1–H4):** `24966ba7272aa4e0e6650796ec469a3cd60ed423`  
+**App version:** 3.0.5 · **Schema tip:** v83 (R9 Slice 1 Expenses COMPLETE on tip-of-tree; live RC identity still tracked from Post-R8 until a new signed build)  
 **Prior:** OPS-01 closed → 🟡 PILOT READY WITH CONDITIONS (engineering + ops docs)  
 **Canonical plan:** [`../00-product/capability-matrix.md`](../00-product/capability-matrix.md)
+
+**Development waiver (2026-08-15):** Engineering may continue product slices (e.g. R9 Slice 1). Waiver does **not** mark site gates PASS, signed/notarized RC complete, or live go-live. Live café validation remains **DEFERRED**. Live Go-Live remains **NO-GO**.
 
 ## Scope
 
@@ -16,26 +18,167 @@ Determine whether Operavia Restaurant can **safely be installed and run at the f
 
 **In scope:** RC identity, site/hardware/network/KDS/printer readiness, staff/PIN/escrow, backup/restore site drills, operator acceptance, live go/no-go gates, documentation.
 
-**Out of scope:** H5, Phase 4.16, Planned/Later/Frozen features, durable KDS outbox, schema/money/KDS redesign, inventing hardware, faking site PASS, creating a release tag without authorization, signing without credentials.
+**Out of scope:** H5, Phase 4.16, Planned/Later/Frozen features, durable KDS ticket outbox redesign, schema/money rewrite, inventing hardware, faking site PASS, creating a release tag without authorization, signing without credentials, **R9 Slice 2+** (tax depth, Z polish, ops reports, food-cost) until separately authorized.
+
+---
+
+## Gate 1 tracker (Post-R8 verification — 2026-08-15)
+
+Separate **engineering-completable** from **human/site-completable**. Code cannot satisfy physical drills. Do not mark site PASS without artifact path, worksheet, or signed acknowledgment.
+
+| Gate                                                                               | Engineering can complete?                                                                               | Human/Site required?   | Evidence (this verification)                                                                                                              | Status                            |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| Signed/notarized PILOT/PRODUCTION RC from `94702f8` (or approved clean descendant) | Partial — **`npm run build` PASS**; **unsigned macOS pack PASS**; signing/notarization need credentials | Yes                    | Host: **0** codesign identities; `CSC_*` / `APPLE_*` unset; unsigned `release/mac-arm64/Operavia.app` produced 2026-08-15 (NOT a live RC) | 🔴 BLOCKER (signing/notarization) |
+| Master PIN escrow (offline)                                                        | No                                                                                                      | Yes                    | Procedure in runbook / OPS-01; no escrow worksheet completed                                                                              | ⚪ PENDING HUMAN/SITE             |
+| Backup policy numbers approved                                                     | No                                                                                                      | Yes                    | Docs exist; no owner/CEO approval recorded                                                                                                | ⚪ PENDING HUMAN/SITE             |
+| Printer drill (discover / print / fail / retry)                                    | Suites only (`test:printer`, H1 reprint paths)                                                          | Yes                    | No café hardware evidence                                                                                                                 | ⚪ PENDING HUMAN/SITE EXECUTION   |
+| KDS/LAN drill (connect / disconnect / reconnect / guest blocked)                   | Suites only (`test:h2`, `test:r3`)                                                                      | Yes                    | No staff-SSID / guest-block proof                                                                                                         | ⚪ PENDING HUMAN/SITE EXECUTION   |
+| Restore drill (backup → restore → restart → integrity)                             | Yes for engineering — `test:backup` / `test:h4` green                                                   | Yes for café/signed RC | Suites PASS; café spare drill not done                                                                                                    | 🟢 ENG / ⚪ PENDING HUMAN/SITE    |
+| Force-close shift drill                                                            | Product path exists (UI + `POST /api/shifts/:id/force-close`)                                           | Yes                    | Operator steps now in runbook; drill not executed                                                                                         | ⚪ PENDING HUMAN/SITE EXECUTION   |
+| Operator walkthrough (open→…→Z without developer)                                  | Docs support (runbook + training)                                                                       | Yes                    | No independent operator PASS recorded                                                                                                     | ⚪ PENDING HUMAN/SITE             |
+| CEO / CTO / pilot sign-offs                                                        | No                                                                                                      | Yes                    | `pilot-signoff.md` signatures empty                                                                                                       | ⚪ PENDING HUMAN                  |
+
+### Engineering prerequisites (verified this session)
+
+| Area                                                | Result                                                                                                 |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Schema tip                                          | **v83** (`migrations.ts` tip + backup suites migrate through v83; R9 Slice 1 Expenses)                 |
+| Vertical                                            | Restaurant default; isolation suite green; do not set `retail` on café                                 |
+| R3–R8                                               | **ALL GREEN** (R3 70, R4.1 green, R5–R8 COMPLETE)                                                      |
+| H1–H4                                               | **ALL GREEN** (37 / 34 / 33 / 20)                                                                      |
+| money-cents / process-kill                          | 20/20 · 12/12                                                                                          |
+| orders-authz / staff-authz / restaurant-isolation   | green                                                                                                  |
+| FIN-01 / financial reporting                        | 34/34; FIN-01 codes unchanged                                                                          |
+| Backup / restore / integrity                        | `test:backup` PASS (production + continuity + REC-01)                                                  |
+| Offline / kill recovery                             | process-kill + H2 + SQLite SoR suites green                                                            |
+| KDS reconnect / retry / no silent loss              | H2 34/34 + R3 CAS; working-tree deepen of pending retries (uncommitted)                                |
+| Workforce / RBAC                                    | R8 57/57 + staff-authz 36/36                                                                           |
+| `npm run build` (`tsc`)                             | **PASS** (2026-08-15 type-harden wave: **209 → 0**; `dist/` emitted) — see investigation + harden note |
+| Unsigned packaging (`electron-builder --mac --dir`) | **PASS** — see **RC packaging verification** below                                                     |
+| Signed RC                                           | **BLOCKED** — credentials/identity unavailable                                                         |
+| Notarization                                        | **BLOCKED** — credentials unavailable                                                                  |
+
+### RC packaging verification (2026-08-15)
+
+| Item                     | Result                                                                                                                                                                                                                                             |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Config                   | `package.json` `"build"` — `appId` `com.flo.desktop`, `productName` **Operavia**, version **3.0.5**, `main` `dist/index.js`, output `release/`, mac dmg+zip (x64/arm64), `identity` Codify Apps…, `notarize: true`, hardenedRuntime + entitlements |
+| Commands                 | `npm run build` (exit 0); `CSC_IDENTITY_AUTO_DISCOVERY=false npx electron-builder --mac --dir --arm64 -c.mac.identity=null -c.mac.notarize=false` (exit 0)                                                                                         |
+| **UNSIGNED RC ARTIFACT** | `release/mac-arm64/Operavia.app` (~412 MB); CFBundleIdentifier `com.flo.desktop`; version 3.0.5; includes `app.asar` + `frontend-out` + `assets`                                                                                                   |
+| Transfer zip (optional)  | `release/mac-arm64/Operavia-3.0.5-arm64-UNSIGNED.zip` (~144 MB)                                                                                                                                                                                    |
+| SHA-256                  | zip `09dd8638a68d0c86d75f696f21c9bfe31ebc5ec79be28e8641f7f51ddc1de129`; `app.asar` `08c13779ae2c65d02dc83934cc5c39894945d8ec204cff2efabb48d762e26f15`                                                                                              |
+| Codesign on artifact     | **adhoc / linker-signed** — **not** Developer ID; **not** PILOT/PRODUCTION                                                                                                                                                                         |
+| Signing                  | **BLOCKED — credentials/identity unavailable** (0 identities; no `CSC_LINK` / `APPLE_*`)                                                                                                                                                           |
+| Notarization             | **BLOCKED — credentials unavailable** (`mac.notarize` configured but cannot run)                                                                                                                                                                   |
+| Vertical integrity       | Unset `ACTIVE_VERTICAL_ID` → **restaurant**; no project `.env` in Resources; do not set `retail` / `retail-test` on café                                                                                                                           |
+| Suites                   | Not re-run (no app source/config change in this packaging slice); prior Gate 1 / type-harden greens remain baseline                                                                                                                                |
+
+**Packaging (unsigned construct):** **PASS WITH CONDITIONS** (unsigned only).  
+**Engineering Gate:** **PASS WITH CONDITIONS** (unsigned pack + compile; signed/notarized RC still missing).  
+**OPS-02 Gate 1:** **PENDING HUMAN/SITE**.  
+**Live Gate 1:** **NO-GO**.
+
+### Release owner handoff — signed/notarized RC (credentials required)
+
+**Do not use** the unsigned `Operavia.app` for live café service. Identity configured in `package.json` → `build.mac.identity`:
+
+`Codify Apps Private Limited (BKDY677XJA)`
+
+**Provide (release owner / CI secrets):**
+
+| Secret / env                              | Purpose                                                  |
+| ----------------------------------------- | -------------------------------------------------------- |
+| `MAC_CERTS` → `CSC_LINK`                  | Developer ID Application certificate (.p12 / link)       |
+| `MAC_CERTS_PASSWORD` → `CSC_KEY_PASSWORD` | Certificate password                                     |
+| `APPLE_API_KEY`                           | Path to App Store Connect API `.p8` (or CI-decoded file) |
+| `APPLE_API_KEY_ID`                        | Key ID                                                   |
+| `APPLE_API_ISSUER`                        | Issuer UUID                                              |
+| `APPLE_TEAM_ID`                           | `BKDY677XJA`                                             |
+
+Unset `CSC_IDENTITY_AUTO_DISCOVERY=false` when signing for real.
+
+**Sequence (once credentials available):**
+
+```bash
+# From a clean tree at authorized commit (94702f8 or approved descendant with type-harden)
+npm run build:frontend
+npm run build
+# Preferred local: npm run build:mac
+# Equivalent: npx electron-builder --mac --arm64   # (and/or --x64); uses identity + notarize:true
+# Or CI: .github/workflows/release.yml on an authorized tag
+```
+
+**Post-sign verification (required before pilot install):**
+
+```bash
+APP="release/mac-arm64/Operavia.app"   # or extracted from DMG/ZIP
+codesign --verify --deep --strict "$APP"
+codesign -dv --verbose=4 "$APP"        # must NOT say adhoc; expect Developer ID Application: Codify Apps…
+spctl --assess --type execute --verbose "$APP"
+xcrun stapler validate "$APP"          # after notarization stapled
+shasum -a 256 <dmg-or-zip>             # record on pilot-signoff.md
+# Launch app → ACTIVE login → schema v82 → ACTIVE_VERTICAL_ID unset/restaurant → one test sale
+```
+
+Record artifact path + checksum + commit on [`../13-operations/pilot-signoff.md`](../13-operations/pilot-signoff.md). Then execute [`../13-operations/ops-02-site-readiness-checklist.md`](../13-operations/ops-02-site-readiness-checklist.md).
+
+### Final handoff matrix (2026-08-15)
+
+| Gate                                        | Status       | Owner         |
+| ------------------------------------------- | ------------ | ------------- |
+| Source build (`npm run build`, 0 TS errors) | **PASS**     | Engineering   |
+| Unsigned RC (`Operavia.app` arm64)          | **VERIFIED** | Engineering   |
+| Signed RC                                   | **BLOCKED**  | Release owner |
+| Notarization                                | **BLOCKED**  | Release owner |
+| Master PIN escrow                           | **PENDING**  | Human         |
+| Backup policy approval                      | **PENDING**  | Human         |
+| Printer drill                               | **PENDING**  | Site          |
+| KDS/LAN drill                               | **PENDING**  | Site          |
+| Restore drill                               | **PENDING**  | Site          |
+| Force-close drill                           | **PENDING**  | Site          |
+| Operator walkthrough                        | **PENDING**  | Operator      |
+| CEO/CTO/pilot sign-off                      | **PENDING**  | Human         |
 
 ---
 
 ## Phase 1 — Baseline verification
 
+**Question:** Is the ~209-error `tsc` failure a genuine production packaging blocker, or a non-authoritative / test-only path?
+
+**Reproduction (clean tree = commit `94702f8`, dirty work stashed):**
+
+| Item                 | Value                                                                                           |
+| -------------------- | ----------------------------------------------------------------------------------------------- |
+| Command              | `npm run build` → `tsc && node scripts/copy-runtime-assets.cjs` (also `npx tsc --pretty false`) |
+| Node                 | v24.18.0                                                                                        |
+| TypeScript           | 5.9.3 (lockfile; package range `^5.4.5`)                                                        |
+| Exit (before harden) | **2** · **209** errors                                                                          |
+| Exit (after harden)  | **0** · **0** errors                                                                            |
+
+**Authoritative production path:** **Yes — `npm run build` is required.** Every ship script runs `build:frontend && build && electron-builder`.
+
+**Post-harden (same day):** Production `main/` TypeScript strict harden completed (Express 5 `routeParam`, Zod 4 `formatIssues`, unknown catches, row/nullability). Suites R3–R8 / H1–H4 / money / kill / authz / backup / FIN-01 green. **`dist/` VERIFIED compile**; signed/notarized PILOT artifact still **NOT VERIFIED** (0 codesign identities).
+
+---
+
+## Phase 1 — Baseline verification
+
+> **Historical snapshot** from the original OPS-02 audit (H4 / OPS-01 era). **Current Gate 1 identity** is the document header + Gate 1 tracker above (`94702f8`, schema **v82**, R1–R8 COMPLETE). Do not treat the table below as tip-of-tree truth.
+
 | Check                     | Result                                                        |
 | ------------------------- | ------------------------------------------------------------- |
 | Branch                    | `restaurant-vertical`                                         |
-| HEAD                      | `d3322a4` = OPS-01 (matches documented OPS-01)                |
+| HEAD (historical)         | `d3322a4` = OPS-01 (matches documented OPS-01)                |
 | Working tree (pre-OPS-02) | clean                                                         |
 | Origin                    | ahead **4** (not pushed)                                      |
 | H4                        | `24966ba` present; author Dev Raj Sharma                      |
 | OPS-01                    | `d3322a4` present; docs-only on top of H4                     |
-| Code drift H4 → HEAD      | **none** (docs/meta only)                                     |
-| Schema                    | v75                                                           |
+| Code drift H4 → HEAD      | **none** (docs/meta only) at that snapshot                    |
+| Schema (historical)       | v75                                                           |
 | App version               | 3.0.5                                                         |
 | OPS-01 docs               | present (closure, configuration, checklist, runbook, signoff) |
 
-**Documented engineering baseline remains `24966ba`.** Docs HEAD may be `d3322a4` or this OPS-02 commit — both are documentation descendants of H4.
+**Historical engineering baseline for H1–H4:** `24966ba`. **Post-R8 tip for Gate 1:** `94702f8` (schema v82).
 
 ---
 
@@ -173,7 +316,7 @@ Runbook: [`../13-operations/pilot-runbook.md`](../13-operations/pilot-runbook.md
 
 ### Must complete before first transaction
 
-1. Produce **signed + notarized** PILOT/PRODUCTION artifact from `24966ba` (or approved clean descendant including OPS docs).
+1. Produce **signed + notarized** PILOT/PRODUCTION artifact from `94702f8` (or approved clean descendant of Post-R8 HEAD; historical H1–H4 baseline `24966ba` remains documented ancestry).
 2. Record artifact path/URL + commit on [`../13-operations/pilot-signoff.md`](../13-operations/pilot-signoff.md).
 3. Fresh install on café POS; set Restaurant vertical; enable `shifts_enabled` + `require_open_shift_for_cash`.
 4. Complete **Master PIN escrow** (offline).
@@ -220,12 +363,16 @@ Hardening candidates (audit trail, DRV-01, order-status CAS, etc.) · Planned ·
 
 ## FINAL VERDICT
 
-| Layer                          | Verdict                  |
-| ------------------------------ | ------------------------ |
-| Engineering (H1–H4 + OPS-01)   | 🟡 Ready with conditions |
-| **Live café go-live (OPS-02)** | 🔴 **NO-GO**             |
+| Layer                                                                               | Verdict                                                                     |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Engineering Gate (R1–R8 + H1–H4 + money/authz/backup + type-harden + unsigned pack) | 🟡 **PASS WITH CONDITIONS** (unsigned pack OK; signed/notarized RC missing) |
+| Packaging (unsigned construct)                                                      | 🟡 **PASS WITH CONDITIONS**                                                 |
+| Signing / notarization                                                              | 🔴 **BLOCKED** (credentials)                                                |
+| **OPS-02 Gate 1**                                                                   | ⚪ **PENDING HUMAN/SITE**                                                   |
+| Controlled pilot                                                                    | 🟡 **READY WITH CONDITIONS**                                                |
+| **Live café go-live**                                                               | 🔴 **NO-GO**                                                                |
 
-Re-run OPS-02 site gates after signed RC + café drills; only then consider 🟡/🟢 for live service.
+Re-run site gates after signed/notarized RC + café drills + sign-offs; only then consider Gate 1 PASS / live GO.
 
 ---
 

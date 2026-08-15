@@ -1,4 +1,4 @@
-<!-- Last updated: 2026-08-15, schema v80 -->
+<!-- Last updated: 2026-08-15, schema v82 -->
 
 # Operavia Restaurant — capability matrix
 
@@ -13,7 +13,8 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 
 **R0 note (2026-08-15):** Blueprint documents the complete Restaurant OS. **No row statuses were promoted** to Existing solely because of R0. H1–H4 remain Hardening depth where listed. Live pilot remains OPS-02 **NO-GO** until signed RC + site gates.
 
-**R5 note (2026-08-15):** BOM / Recipes / Food Cost shipped — schema **v80**. Suite `npm run test:r5`. Doc [`r5-bom-recipes-food-cost.md`](../05-production/r5-bom-recipes-food-cost.md). **R6 purchasing not started.**
+**R5–R8 note (2026-08-15):** R5 BOM (v79), R6 purchasing (v80), R7 CRM (v82), R8 staff workforce — **COMPLETE**.  
+**R9 Slice 1 note (2026-08-15):** Expenses **COMPLETE** — schema tip **v83**. Remaining R9 slices not started. Live go-live still **NO-GO** (OPS-02). ADR-014 service charge remains out.
 ---
 
 ## Legend
@@ -349,6 +350,7 @@ R8 (2026-08-15) deepened Existing staff management (search/filter, detail, shift
 | Signed tax packs         | 🟢 Existing |
 | Offline tax verification | 🟢 Existing |
 | Tax reporting            | 🟢 Existing |
+| Expenses (R9 Slice 1)    | 🟢 Existing |
 | E-invoicing              | ⚪ Later    |
 | Filing exports           | ⚪ Later    |
 
@@ -601,9 +603,9 @@ Some 🔵 Planned rows already have a **shipped slice**. Treat Planned as remain
 | Ingredient deduction                       | R5 consume at order create/add-items via Inventory `applyRecipeStockDelta`; BLOCK insufficient; cancel reverse; `order_item_id` idempotency |
 | Food costing                               | R5 theoretical cost in integer cents (`recipe-cost.ts`); catalog `cost` × qty                                                               |
 | Food-cost percentage                       | R5 basic theoretical % (cost vs sell); full BI food-cost report stays Planned                                                               |
-| Recipe / BOM, PO, suppliers                | R5 BOM/recipes/food-cost **Existing**; PO / receiving / suppliers remain 🔵 Planned (R6, not started)                                       |
+| Recipe / BOM, PO, suppliers                | R5 BOM/recipes/food-cost **Existing**; R6 PO / receiving / suppliers **Existing (COMPLETE)**                                                |
 
-R5 shipped 2026-08-15 (schema v79). R6 purchasing is **not started**. Keep aggregators, terminals, multi-location, and AI frozen.
+R5–R8 shipped 2026-08-15 (schema tip **v82**). Do not start R9 without authorization. Keep aggregators, terminals, multi-location, and AI frozen.
 
 ---
 

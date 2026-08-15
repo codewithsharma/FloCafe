@@ -2587,4 +2587,39 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       );
     },
   },
+  {
+    version: 83,
+    name: 'r9_expenses_os',
+    up: () => {
+      // R9 Slice 1 — café expenses (integer cents only; no REAL amount column).
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS expenses (
+          id TEXT PRIMARY KEY,
+          amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+          category TEXT NOT NULL,
+          description TEXT NOT NULL DEFAULT '',
+          notes TEXT,
+          expense_date TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'posted'
+            CHECK (status IN ('posted', 'voided')),
+          created_by_user_id TEXT,
+          updated_by_user_id TEXT,
+          voided_by_user_id TEXT,
+          voided_at TEXT,
+          void_reason TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_expenses_date
+          ON expenses(expense_date DESC, created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_expenses_status
+          ON expenses(status);
+        CREATE INDEX IF NOT EXISTS idx_expenses_category
+          ON expenses(category);
+        CREATE INDEX IF NOT EXISTS idx_expenses_created_by
+          ON expenses(created_by_user_id);
+      `);
+    },
+  },
 ];

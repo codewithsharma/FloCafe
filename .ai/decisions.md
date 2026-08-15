@@ -1,8 +1,12 @@
 # Decisions
 
+## 2026-08-15 — R9 Slice 1 Expenses OS (Implemented)
+
+Authorized under engineering development waiver (not live go-live). Schema **v83** `expenses` (integer `amount_cents` only; posted/voided lifecycle). Service + `/api/expenses` Owner/Manager RBAC; audits `expense.created|updated|voided`; UI `/expenses`; offline SQLite SoR. Suite `npm run test:r9`. Doc: `docs/05-production/r9-expenses-slice-1.md`. **Do not start R9 Slice 2+ / service charge / REAL cutover.**
+
 ## 2026-08-15 — R8 Staff & Workforce OS (Implemented)
 
-Authorized R8. Deepened existing `users` staff APIs + UI (search/filter, detail with shift history, currently working). Audits: `staff.activated`, `role.changed`. Zod on lifecycle params. No second staff store; no auth rewrite; schema remains **v82**. Suite `npm run test:r8`. Doc: `docs/05-production/r8-staff-workforce-os.md`. **Do not start R9 / payroll / scheduling.**
+Authorized R8. Deepened existing `users` staff APIs + UI (search/filter, detail with shift history, currently working). Audits: `staff.activated`, `role.changed`. Zod on lifecycle params. No second staff store; no auth rewrite; schema tip was **v82** at R8 close. Suite `npm run test:r8`. Doc: `docs/05-production/r8-staff-workforce-os.md`.
 
 ## 2026-08-15 — R7 Customer & CRM OS (Implemented)
 

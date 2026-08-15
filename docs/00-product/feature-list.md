@@ -1,4 +1,4 @@
-<!-- Last verified against codebase: 2026-08-14, schema v80 -->
+<!-- Last verified against codebase: 2026-08-15, schema v83 -->
 
 # Feature Inventory
 
@@ -6,7 +6,7 @@ This file is **code evidence** (what exists in the tree). The canonical **produc
 
 Status legend: **[BUILT]** usable · **[PARTIAL]** incomplete · **[STUB]** surface only · **[EXPERIMENTAL]** unstable · **[NOT BUILT]** absent · **[FROZEN]** deferred per `STRATEGY.md`
 
-Evidence paths reference the Operavia codebase (repo: FloCafe) as of schema **v80** (`main/db.ts` migration `p2_8_inventory_movements_ledger`). Default vertical: **restaurant**.
+Evidence paths reference the Operavia codebase (repo: FloCafe) as of schema **v83**. Default vertical: **restaurant**.
 
 ## POS & Orders
 
@@ -129,15 +129,16 @@ Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webus
 
 ## Reports & Analytics
 
-| Feature                       | Status      | Evidence                                                                      | Production readiness |
-| ----------------------------- | ----------- | ----------------------------------------------------------------------------- | -------------------- |
-| Daily stats & sales summary   | [BUILT]     | `main/routes/reports.ts`; Home/Reports UI Gross/Refunds/Net (Phase 3.6B)      | High                 |
-| Tax component reports         | [BUILT]     | `GET /api/reports/tax-components`                                             | Medium               |
-| Top products & table stats    | [BUILT]     | reports routes                                                                | Medium               |
-| Insights dashboard            | [BUILT]     | `tests/reports-insights.test.ts`                                              | Medium               |
-| Day close / Z-report workflow | [BUILT]     | `main/services/day-close.ts`, Operations UI; cash Z print/download Phase 3.6D | High                 |
-| Advanced analytics / BI       | [NOT BUILT] | —                                                                             | —                    |
-| Accounting export             | [BUILT]     | `GET /api/reports/export/bills.csv`; Reports start/end dates (Phase 4.8)      | High                 |
+| Feature                       | Status      | Evidence                                                                                                                                    | Production readiness |
+| ----------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| Daily stats & sales summary   | [BUILT]     | `main/routes/reports.ts`; Home/Reports UI Gross/Refunds/Net (Phase 3.6B)                                                                    | High                 |
+| Tax component reports         | [BUILT]     | `GET /api/reports/tax-components`                                                                                                           | Medium               |
+| Top products & table stats    | [BUILT]     | reports routes                                                                                                                              | Medium               |
+| Insights dashboard            | [BUILT]     | `tests/reports-insights.test.ts`                                                                                                            | Medium               |
+| Day close / Z-report workflow | [BUILT]     | `main/services/day-close.ts`, Operations UI; cash Z print/download Phase 3.6D                                                               | High                 |
+| Expenses (R9 Slice 1)         | [BUILT]     | Schema v83 `expenses`; `main/services/expenses.ts`; `/api/expenses`; UI `/expenses`; Owner/Manager; cents-only; `tests/r9-expenses.test.ts` | High                 |
+| Advanced analytics / BI       | [NOT BUILT] | —                                                                                                                                           | —                    |
+| Accounting export             | [BUILT]     | `GET /api/reports/export/bills.csv`; Reports start/end dates (Phase 4.8)                                                                    | High                 |
 
 ## Inventory & Supply Chain
 
@@ -150,8 +151,8 @@ Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webus
 | Inventory on-hand valuation      | [BUILT]     | Phase 4.11: `GET /api/reports/inventory-valuation` + `/products/valuation`; catalog cost × qty (not WAC/FIFO)                      | Medium               |
 | Inventory adjustment API         | [BUILT]     | `POST /api/products/:id/stock`                                                                                                     | Medium               |
 | Stock movement ledger            | [BUILT]     | Schema v75 `inventory_movements` + `GET /api/inventory/movements` + owner/manager UI at `/products/movements`; no pre-v75 backfill | Medium               |
-| Recipes / BOM                    | [FROZEN]    | STRATEGY / Phase 3.5 — not in code                                                                                                 | —                    |
-| Suppliers / purchasing           | [FROZEN]    | STRATEGY / Phase 3.5 — not in code                                                                                                 | —                    |
+| Recipes / BOM                    | [BUILT]     | R5 `recipes` / `recipe-cost.ts`; UI `/products/recipes`                                                                            | High                 |
+| Suppliers / purchasing           | [BUILT]     | R6 `purchasing.ts`; UI `/products/purchasing`                                                                                      | High                 |
 | Stock transfers                  | [NOT BUILT] | —                                                                                                                                  | —                    |
 | Wastage tracking                 | [BUILT]     | Phase 4.15: `POST /api/products/:id/stock` `action=wastage`; ledger `reason=wastage`, `movement_type=adjustment`                   | Medium               |
 

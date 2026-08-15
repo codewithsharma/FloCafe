@@ -9,13 +9,25 @@
 **Canonical strategy:** `STRATEGY.md` (pilot KPI unchanged).
 **Branding audit:** `docs/05-production/operavia-branding-normalization-audit.md`.
 
-Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v82**) + statically exported Next.js (`frontend/`).
+Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v83**) + statically exported Next.js (`frontend/`).
+
+**R9 Slice 1 Expenses (2026-08-15):** COMPLETE — schema **v83** `expenses`; Owner/Manager API+UI; cents-only; audits; `npm run test:r9`. Remaining R9 slices NOT STARTED. Live Go-Live **NO-GO**. Engineering waiver = development only (not site PASS). Doc: `docs/05-production/r9-expenses-slice-1.md`.
 
 **Foundation Phase 2 (2026-08-15):** COMPLETE — prefer-cents readers + dual-write writers; process-kill harness; Zod expansion; `any` main&lt;600 / orders&lt;50. Doc: `docs/05-production/foundation-priority-deepen-phase2.md`.
 
 **R7 Customer & CRM OS (2026-08-15):** COMPLETE — schema **v82** `customer_notes` + segment rules; Customer 360; deterministic segments; derived preferences; audited notes; loyalty integrated; metrics. Suite `npm run test:r7`. Doc: `docs/05-production/r7-customer-crm-os.md`.
 
-**R8 Staff & Workforce OS (2026-08-15):** COMPLETE — deepen existing `users` staff + shift visibility; search/filters; detail; working roster; `role.changed` / `staff.activated` audits; schema **v82** unchanged. Suite `npm run test:r8`. Doc: `docs/05-production/r8-staff-workforce-os.md`. **Do not start R9.**
+**R8 Staff & Workforce OS (2026-08-15):** COMPLETE — deepen existing `users` staff + shift visibility; search/filters; detail; working roster; `role.changed` / `staff.activated` audits; schema tip was **v82** at close. Suite `npm run test:r8`. Doc: `docs/05-production/r8-staff-workforce-os.md`.
+
+**OPS-02 Gate 1 verification (2026-08-15):** Engineering **PASS WITH CONDITIONS** (suites green; `tsc` packaging fail on clean HEAD; no signed RC). Gate 1 **PENDING HUMAN/SITE**. Controlled pilot **READY WITH CONDITIONS**. Live go-live **NO-GO**.
+
+**Clean HEAD build investigation (2026-08-15):** `npm run build` is authoritative. Clean `94702f8` had **209** errors.
+
+**Production main TypeScript strict harden (2026-08-15):** **209 → 0**. `npm run build` PASS; `dist/` emitted. Suites green. Signed/notarized RC still missing → live artifact **NOT VERIFIED**. R9 unauthorized.
+
+**RC packaging verification (2026-08-15):** Unsigned macOS `Operavia.app` via electron-builder `--dir` **VERIFIED**. Signing/notarization **BLOCKED** (no identities/credentials). Live **NO-GO**.
+
+**Orders + products type-harden (2026-08-15):** `main/routes/orders/*` and `main/routes/products.ts` now report **0** `tsc` errors (shared helpers in `orders-shared`). Full `main/` harden still required for ship.
 
 **Canonical product plan:** `docs/00-product/capability-matrix.md` (Existing / Hardening / Planned / Later / Frozen, 2026-08-14).  
 **Complete Restaurant OS (R0):** `docs/00-product/restaurant-os-blueprint.md` · `restaurant-os-roadmap.md` (R0–R16). Docs only until R1+ authorized.  
@@ -55,7 +67,7 @@ Phase 2 delivered: registry → … → 2.14 Order → 2.15 Payment → 2.16 POS
 6. Electron sandbox / process security — **Phase A/B1/B2 GREEN WITH HARDENING**; **Final P0.6 audit: GO WITH CONDITIONS** (`p0.6-final-production-security-audit.md`, score **78/100** after FIN-01). Phase C deferred.
 7. **FIN-01** — prevent over-collection after partial pay + refund — **CLOSED** (gross-tender outstanding)
 
-**Frozen until pilots prove reliability:** AI, aggregators (Swiggy/Zomato/ONDC), multi-tenant SaaS, multi-location implementation, payment terminals / gateways / online payment, Bluetooth print, microservices. **R5 BOM/recipes/food-cost is Existing** (schema v79). **R6 purchasing (PO/suppliers/receiving)** remains Planned — do not start without authorization.
+**Frozen until pilots prove reliability:** AI, aggregators (Swiggy/Zomato/ONDC), multi-tenant SaaS, multi-location implementation, payment terminals / gateways / online payment, Bluetooth print, microservices. **R5 BOM/recipes/food-cost** and **R6 purchasing** are Existing (COMPLETE). Do not start R9 without authorization.
 
 **Already shipped (do not rebuild)**
 
@@ -106,13 +118,15 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 **R4.1 (2026-08-15): CLOSED.** Foundation stabilization — `docs/05-production/r4-1-foundation-stabilization.md`. Drive backup-now Master PIN; Zod money bodies; orders-shared + database/time|order-row extraction; P1.3 matrix tests; REAL→cents **STOP** (plan only). Suite `npm run test:r4.1`.
 
-**R6 (2026-08-15): CLOSED.** Purchasing & Supplier OS — `docs/05-production/r6-purchasing-supplier-os.md`. Schema **v80**. Suppliers, PO lifecycle, partial/full receive → inventory `purchase_receipt`, cents on PO money, UI `/products/purchasing`. Suite `npm run test:r6`. Do not start R7 without authorization.
+**R6 (2026-08-15): CLOSED.** Purchasing & Supplier OS — `docs/05-production/r6-purchasing-supplier-os.md`. Schema **v80**. Suppliers, PO lifecycle, partial/full receive → inventory `purchase_receipt`, cents on PO money, UI `/products/purchasing`. Suite `npm run test:r6`.
 
-**Foundation deepen (2026-08-15): CLOSED Phase 1.** `docs/05-production/foundation-priority-deepen.md`. Migrations extracted; orders package split; P0.3 dual-write v81; categories Zod; P1.3 checkbox closed. Do not start R7 until remaining any/Zod debt accepted or further authorized.
+**Foundation deepen (2026-08-15): CLOSED Phase 1+2.** Dual-write v81 + prefer-cents readers; process-kill; Zod expansion. Docs: `foundation-priority-deepen.md`, `foundation-priority-deepen-phase2.md`.
+
+**R7 / R8 (2026-08-15): CLOSED.** CRM v82 + Staff workforce. Suites `test:r7` / `test:r8`. **R9 Slice 1 COMPLETE** (v83 Expenses). Remaining R9 slices require slice auth.
 
 Do not invent 4.16. Do not push.
 
-- **Human/RELEASE + OPS:** signed RC + `ops-02-site-readiness-checklist.md` + `pilot-signoff.md`.
-- **Next software (if authorized):** further money cutover / any reduction / Zod — or **R7 CRM** only with explicit authorization.
-- ADR-014 Proposed. Schema v81. Engineering baseline includes R1–R6 + foundation deepen on `restaurant-vertical`.
+- **Human/RELEASE + OPS:** signed RC + `ops-02-site-readiness-checklist.md` + `pilot-signoff.md` (OPS-02 Gate 1 still open).
+- **Next software (if authorized):** money REAL cutover / residual Hardening (KDS tab-reload queue) — or **R9** only with explicit authorization.
+- ADR-014 Proposed (out of R9). Schema tip **v83**. Engineering baseline includes R1–R8 + R9 Slice 1 Expenses on `restaurant-vertical`. Live Go-Live **NO-GO**.
 - Test debt: `security-hardening.test.ts` isolation only (not live blocker).

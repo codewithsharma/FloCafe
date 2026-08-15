@@ -25,8 +25,15 @@ Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `
 - [x] **Foundation priority deepen Phase 1 (2026-08-15):** migrations extract; orders package split; P0.3 dual-write v81; categories Zod; P1.3 closed. Doc: `foundation-priority-deepen.md`. Remaining: full any wipe, Zod residual routes, REAL cutover.
 - [x] **Foundation priority deepen Phase 2 (2026-08-15):** prefer-cents readers + dual-write writers; process-kill harness; Zod staff/tables/shifts/KDS/settings/payment-methods; `any` main&lt;600 / orders&lt;50. Doc: `foundation-priority-deepen-phase2.md`. **Ready for R7 authorization — do not auto-start R7.**
 - [x] **R7 Customer & CRM OS GREEN (2026-08-15):** schema v82 notes + segment rules; 360; segments; preferences; notes RBAC/audit; loyalty integrate; metrics; `npm run test:r7`. Doc: `r7-customer-crm-os.md`. Do not start R8.
-- [x] **R8 Staff & Workforce OS GREEN (2026-08-15):** deepen users staff + shift visibility; search/filters; detail; working; audits; `npm run test:r8`. Doc: `r8-staff-workforce-os.md`. Do not start R9.
-- [ ] **Hardening (prefer next, authorized slice only):** REAL money cutover (drop REAL); residual Zod bodies; durable KDS outbox — or next authorized R-wave. R0–R8 + foundation Phase 1–2 closed.
+- [x] **R8 Staff & Workforce OS GREEN (2026-08-15):** deepen users staff + shift visibility; search/filters; detail; working; audits; `npm run test:r8`. Doc: `r8-staff-workforce-os.md`.
+- [x] **OPS-02 Gate 1 verification (2026-08-15):** Eng vs human/site matrix; suites R3–R8/H1–H4/money/kill/authz/backup/FIN green; `tsc` CONDITION; Gate 1 **PENDING HUMAN/SITE**; live **NO-GO**. No R9. No commit.
+- [x] **Clean HEAD build investigation (2026-08-15):** Proved `npm run build` is authoritative ship path; **209** deterministic `main/` strict errors on `94702f8`.
+- [x] **Production main TypeScript strict harden (2026-08-15):** **209 → 0**; `npm run build` PASS; full Restaurant regression green. Not R9. No commit.
+- [x] **RC packaging verification (2026-08-15):** unsigned `release/mac-arm64/Operavia.app` VERIFIED; signing/notarization BLOCKED. No production source change. R9 unauthorized.
+- [x] **Final RC handoff audit (2026-08-15):** Artifact inventory + release-owner signing procedure + pilot matrix documented in OPS-02. Live **NO-GO** until signed RC + site gates. R9 unauthorized. No commit.
+- [x] **R9 Slice 1 Expenses GREEN (2026-08-15):** schema **v83**; expenses CRUD+void; Owner/Manager RBAC; audits; `npm run test:r9` 38/38. Remaining R9 slices not started. Live **NO-GO**. Engineering waiver = development only.
+- [ ] **Authorized next:** R9 remaining slices (tax export / audit harden / Z polish / ops reports / food-cost) — only with explicit slice auth. Or OPS-02 signed RC when credentials available.
+- [ ] **Hardening (prefer next, authorized slice only):** REAL money cutover (drop REAL); residual Zod; durable KDS ticket outbox (still deferred) — or next authorized R-wave. R0–R8 closed.
 - [ ] **Planned (not started):** see matrix — expediter, QR, marketing (R11), full BI (R12), gift cards, etc. Reuse shipped slices; do not rebuild.
 - [ ] **Frozen / later / out of scope:** terminals, gateways, online payment, multi-location, payroll, aggregators, AI — do not start.
 

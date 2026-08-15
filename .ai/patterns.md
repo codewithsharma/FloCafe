@@ -1,5 +1,6 @@
 # Patterns
 
+- **R9 expenses:** Integer `amount_cents` only; posted→voided lifecycle (no hard delete); Owner/Manager via `requireRole`; audits `expense.created|updated|voided`; mount under reporting module; local SQLite SoR.
 - **R8 workforce:** Staff SoR = `users`; reads in `staff-workforce.ts`; mutations stay in `staff.ts` with last-owner CAS; `staff.activated` on reactivate; emit `role.changed` only when role actually changes.
 - **R7 CRM:** Customer 360 from orders SoR + cents spend; segments only via `customer-segments.ts` / `crm_segment_rules`; audited notes in `customer_notes` (soft delete); do not rebuild loyalty_ledger earn/redeem.
 - **Foundation Phase 2 money:** Writers dual-write REAL + `*_cents` via `dualFromMajor` / tender cents paths. Readers use `preferCents` / `billTotalCents` / `productPriceCents` (integer cents win; REAL fallback with explicit `toCents`). Do not drop REAL. Process-kill evidence: `npm run test:process-kill`.

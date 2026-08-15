@@ -29,6 +29,7 @@ import { taxRoutes } from './tax';
 import { inventoryRoutes } from './inventory';
 import { recipeRoutes } from './recipes';
 import { purchasingRoutes } from './purchasing';
+import { expenseRoutes } from './expenses';
 import { heldOrderRoutes } from './held-orders';
 import { whatsappRoutes } from './whatsapp';
 import { supportTicketRoutes } from './support-ticket';
@@ -119,6 +120,7 @@ export function registerRoutes(app: Express, options: RegisterRoutesOptions = {}
   mount('/api/staff', staffRoutes, 'staff');
   mount('/api/users', staffRoutes, 'staff');
   mount('/api/reports', reportRoutes, 'reporting');
+  mount('/api/expenses', expenseRoutes, 'reporting');
   mount('/api/pos-info', posInfoRoutes, 'pos');
   mount('/api/printers', printerRoutes, 'printing');
   mount('/api/db', databaseRoutes, 'backup');

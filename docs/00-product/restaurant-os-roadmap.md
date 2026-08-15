@@ -1,4 +1,4 @@
-<!-- Last updated: 2026-08-15, schema v80 -->
+<!-- Last updated: 2026-08-15, schema v82 -->
 
 # Operavia Restaurant OS — Roadmap (R0–R16)
 
@@ -136,7 +136,14 @@ Fine-grained permissions product, attendance clocks, scheduling, leave remain La
 
 ## R9 — Finance / Compliance
 
-Expenses, tax reporting depth, financial audit trail Hardening, day-close/Z polish. Service charge only if ADR-014 Accepted.  
+**Status:** IN PROGRESS — **Slice 1 Expenses COMPLETE** (2026-08-15). Schema **v83**. Suite `npm run test:r9`. Doc: [`../05-production/r9-expenses-slice-1.md`](../05-production/r9-expenses-slice-1.md).
+
+**Slice 1 delivered:** expenses table (integer cents), API, Owner/Manager UI, RBAC, audits, offline SQLite.
+
+**Remaining R9 (not started):** tax reporting depth + accountant export; financial audit-trail hardening; day-close/Z polish; ops finance reports v1; food-cost report v1.
+
+**Out:** Service charge (ADR-014 Proposed); tips; QR; gift cards; REAL→cents cutover; Frozen rows.
+
 Tips = Later unless matrix updated.
 
 ---
