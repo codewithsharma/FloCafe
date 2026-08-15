@@ -481,7 +481,8 @@ function chargeAmount(context: ChargeTaxContext, kind: ChargeTaxKind): Decimal {
     }
     return amount;
   } catch (error: unknown) {
-    throw Object.assign(new Error(error.message || `${kind} charge is invalid`), {
+    const message = error instanceof Error ? error.message : String(error);
+    throw Object.assign(new Error(message || `${kind} charge is invalid`), {
       statusCode: 400,
     });
   }

@@ -50,7 +50,12 @@ import {
   TableServiceError,
 } from '../../services/tables';
 import { DOMAIN_SPAN, withSpan } from '../../lib/tracing';
-import { addOrderItemsBodySchema, createOrderBodySchema, orderDiscountBodySchema, orderStatusBodySchema } from '../../validation/orders';
+import {
+  addOrderItemsBodySchema,
+  createOrderBodySchema,
+  orderDiscountBodySchema,
+  orderStatusBodySchema,
+} from '../../validation/orders';
 import { readTerminalIdHeaderFromRequest, resolveActiveShiftForOrder } from '../../services/shift';
 import { orderHasSuccessfulTender } from '../../services/payment-tender';
 // Phase 2.14 — Order ownership facade (markers; routes remain the HTTP surface).
@@ -65,11 +70,15 @@ import {
   lookupOrderIdempotencyReplay,
   storeOrderIdempotency,
   batchHydrateOrders,
-  getAuthUser, errorMessage, errorStatus, type OrderRow, type OrderItemRow,
+  getAuthUser,
+  errorMessage,
+  errorStatus,
+  type OrderRow,
+  type OrderItemRow,
 } from '../orders-shared';
+import { routeParam } from '../../lib/route-params';
 
 export { checkPinRateLimit } from '../orders-shared';
-
 
 export function registerListRoutes(router: Router): void {
   router.get(
@@ -78,6 +87,7 @@ export function registerListRoutes(router: Router): void {
     (req: Request, res: Response) => {
       try {
         const user = getAuthUser(req);
+        if (!user) return res.status(401).json({ error: 'Authentication required' });
         const db = getDatabase();
         const wheres: string[] = [];
         const params: any[] = [];
@@ -199,9 +209,10 @@ export function registerListRoutes(router: Router): void {
     (req: Request, res: Response) => {
       try {
         const user = getAuthUser(req);
+        if (!user) return res.status(401).json({ error: 'Authentication required' });
         const db = getDatabase();
         const order = parseRowJson(
-          db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id),
+          db.prepare('SELECT * FROM orders WHERE id = ?').get(routeParam(req.params.id)),
         );
         if (!order) {
           return res.status(404).json({ error: 'Order not found' });

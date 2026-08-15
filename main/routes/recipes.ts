@@ -23,6 +23,7 @@ import {
   recipeIngredientsReplaceBodySchema,
   recipeUpdateBodySchema,
 } from '../validation/recipe';
+import { routeParam } from '../lib/route-params';
 
 const router = Router();
 
@@ -77,7 +78,7 @@ router.get('/', requireRole('owner', 'manager', 'chef'), (req: Request, res: Res
 
 router.get('/:id/cost', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
-    const cost = computeRecipeCostForId(req.params.id);
+    const cost = computeRecipeCostForId(routeParam(req.params.id));
     res.json(cost);
   } catch (error: unknown) {
     if (mapError(error, res)) return;
@@ -88,7 +89,7 @@ router.get('/:id/cost', requireRole('owner', 'manager'), (req: Request, res: Res
 
 router.get('/:id', requireRole('owner', 'manager', 'chef'), (req: Request, res: Response) => {
   try {
-    const recipe = getRecipe(req.params.id);
+    const recipe = getRecipe(routeParam(req.params.id));
     const ingredients = listRecipeIngredients(recipe.id);
     res.json({ recipe, ingredients });
   } catch (error: unknown) {
@@ -150,7 +151,7 @@ router.patch(
         yield_qty?: number;
         yield_unit?: string;
       };
-      const recipe = updateRecipe(req.params.id, {
+      const recipe = updateRecipe(routeParam(req.params.id), {
         name: body.name,
         yieldQty: body.yield_qty,
         yieldUnit: body.yield_unit,
@@ -167,7 +168,7 @@ router.patch(
 
 router.post('/:id/activate', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
-    const recipe = setRecipeActive(req.params.id, true, actorId(req));
+    const recipe = setRecipeActive(routeParam(req.params.id), true, actorId(req));
     res.json({ recipe });
   } catch (error: unknown) {
     if (mapError(error, res)) return;
@@ -177,7 +178,7 @@ router.post('/:id/activate', requireRole('owner', 'manager'), (req: Request, res
 
 router.post('/:id/deactivate', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
-    const recipe = setRecipeActive(req.params.id, false, actorId(req));
+    const recipe = setRecipeActive(routeParam(req.params.id), false, actorId(req));
     res.json({ recipe });
   } catch (error: unknown) {
     if (mapError(error, res)) return;
@@ -200,7 +201,11 @@ router.put(
           position?: number;
         }>;
       };
-      const ingredients = replaceRecipeIngredients(req.params.id, body.ingredients, actorId(req));
+      const ingredients = replaceRecipeIngredients(
+        routeParam(req.params.id),
+        body.ingredients,
+        actorId(req),
+      );
       res.json({ ingredients });
     } catch (error: unknown) {
       if (mapError(error, res)) return;

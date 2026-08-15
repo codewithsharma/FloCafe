@@ -1218,7 +1218,7 @@ router.post(
       });
     } catch (error: unknown) {
       console.error('[Auth] Setup error:', error);
-      const message = error.message || 'Setup failed';
+      const message = (error instanceof Error ? error.message : String(error)) || 'Setup failed';
       const status = message.includes('already complete')
         ? 403
         : message.includes('already exists')

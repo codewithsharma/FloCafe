@@ -1,10 +1,10 @@
 # Operavia — Café Pilot Runbook
 
-**Audience:** Café owner / manager for a **controlled pilot**.  
-**Product:** Operavia Restaurant (café). Schema **v80**.  
-**Engineering baseline:** `24966ba7272aa4e0e6650796ec469a3cd60ed423` — matrix hardening **H1–H4** (void/discount/receipt · KDS offline · RBAC · restore/conflict). App **3.0.5**.  
-**OPS-01 package:** [`ops-01-pilot-configuration.md`](./ops-01-pilot-configuration.md) · [`../05-production/ops-01-pilot-release-operations-closure.md`](../05-production/ops-01-pilot-release-operations-closure.md) · [`../16-release/ops-01-pilot-release-checklist.md`](../16-release/ops-01-pilot-release-checklist.md).  
-**OPS-02 go-live:** [`ops-02-site-readiness-checklist.md`](./ops-02-site-readiness-checklist.md) · [`../05-production/ops-02-live-pilot-rc-site-readiness.md`](../05-production/ops-02-live-pilot-rc-site-readiness.md) — live service **NO-GO** until signed RC + site PASS.  
+**Audience:** Café owner / manager for a **controlled pilot**.
+**Product:** Operavia Restaurant (café). Schema **v82**.
+**Engineering HEAD (Post-R8):** `94702f8` — R1–R8 COMPLETE + H1–H4. Historical H1–H4 ancestry: `24966ba`. App **3.0.5**. **R9 unauthorized.**
+**OPS-01 package:** [`ops-01-pilot-configuration.md`](./ops-01-pilot-configuration.md) · [`../05-production/ops-01-pilot-release-operations-closure.md`](../05-production/ops-01-pilot-release-operations-closure.md) · [`../16-release/ops-01-pilot-release-checklist.md`](../16-release/ops-01-pilot-release-checklist.md).
+**OPS-02 go-live:** [`ops-02-site-readiness-checklist.md`](./ops-02-site-readiness-checklist.md) · [`../05-production/ops-02-live-pilot-rc-site-readiness.md`](../05-production/ops-02-live-pilot-rc-site-readiness.md) — Gate 1 **PENDING HUMAN/SITE**; live service **NO-GO** until signed RC + site PASS.
 **Authorization:** Engineering bar for supervised pilot is met with conditions. Live service still requires human/ops gates on [`pilot-signoff.md`](./pilot-signoff.md).
 
 **Related:** [`backup-restore.md`](./backup-restore.md) · [`disaster-recovery.md`](./disaster-recovery.md) · [`dr-drill-worksheet.md`](./dr-drill-worksheet.md) · [`incident-response.md`](./incident-response.md) · [`pilot-staff-training-checklist.md`](./pilot-staff-training-checklist.md) · [`pilot-success-criteria.md`](./pilot-success-criteria.md) · [`pilot-handoff-first-cafe.md`](./pilot-handoff-first-cafe.md)
@@ -52,7 +52,7 @@ Normal path: launch → complete owner setup → accept terms → set Master PIN
 ## 4. Database verification
 
 - [ ] App reaches ACTIVE login (not stuck on recovery)
-- [ ] After first successful day of setup, confirm schema is current (engineering: **v75**)
+- [ ] After first successful day of setup, confirm schema is current (engineering: **v82**)
 - [ ] Create first local backup; file appears under `{userData}/backups/` as `flo-backup-….db`
 - [ ] Spot-check: owner login, products list, settings present
 
@@ -141,6 +141,21 @@ If guest can reach POS: set `localhost`, restart, stop trading until fixed (**S1
 - [ ] Day close / Z path
 - [ ] Expected cash understood as float + cash in − cash refunds (not Gross/Net)
 - [ ] Variance recorded
+
+---
+
+## 11a. Force-close shift drill (manager / owner)
+
+Use when an open shift is orphaned (wrong terminal, abandoned login, crashed client) and normal close is not possible.
+
+1. Sign in as **owner** or **manager**.
+2. Open Shifts / Operations shift UI → find the **open** shift.
+3. Choose **Force close** → enter **required reason** → optional counted cash → confirm.
+4. Confirm shift status is **closed**; audit shows `shift.force_closed`.
+5. If cash drawer still in use: open a **new** shift with correct float before taking cash tenders.
+6. Complete day-close / Z if this was the trading day’s last shift.
+
+**Gate 1:** mark PASS on [`ops-02-site-readiness-checklist.md`](./ops-02-site-readiness-checklist.md) only after this drill is executed on the café/spare machine.
 
 ---
 

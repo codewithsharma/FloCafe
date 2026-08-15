@@ -31,15 +31,17 @@ import {
 const router = Router();
 
 function productExists(productId: string): boolean {
-  const row = getDatabase().prepare(
-    'SELECT id FROM products WHERE id = ? AND deleted_at IS NULL',
-  ).get(productId) as { id: string } | undefined;
+  const row = getDatabase()
+    .prepare('SELECT id FROM products WHERE id = ? AND deleted_at IS NULL')
+    .get(productId) as { id: string } | undefined;
   return Boolean(row);
 }
 
 function mapInventoryError(error: unknown, res: Response): boolean {
   if (error instanceof InventoryServiceError) {
-    res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
+    res
+      .status(error.statusCode ?? 500)
+      .json({ error: error instanceof Error ? error.message : String(error) });
     return true;
   }
   const status = (error as { statusCode?: number })?.statusCode;
@@ -71,10 +73,12 @@ router.get('/movements', requireRole('owner', 'manager'), (req: Request, res: Re
     }
 
     const beforeRaw = req.query.before_id;
-    const beforeId = beforeRaw === undefined || beforeRaw === ''
-      ? undefined
-      : Number(beforeRaw);
-    if (beforeRaw !== undefined && beforeRaw !== '' && (!Number.isFinite(beforeId) || Number(beforeId) < 1)) {
+    const beforeId = beforeRaw === undefined || beforeRaw === '' ? undefined : Number(beforeRaw);
+    if (
+      beforeRaw !== undefined &&
+      beforeRaw !== '' &&
+      (!Number.isFinite(beforeId) || Number(beforeId) < 1)
+    ) {
       return res.status(400).json({ error: 'before_id must be a positive integer' });
     }
 
@@ -193,24 +197,20 @@ router.post(
   },
 );
 
-router.post(
-  '/counts/:id/apply',
-  requireRole('owner', 'manager'),
-  (req: Request, res: Response) => {
-    try {
-      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const count = applyInventoryCount({
-        countId: id,
-        actorUserId: String((req as any).user.userId),
-      });
-      res.json({ count });
-    } catch (error: unknown) {
-      if (mapInventoryError(error, res)) return;
-      console.error('[API] Internal error:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  },
-);
+router.post('/counts/:id/apply', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const count = applyInventoryCount({
+      countId: id,
+      actorUserId: String((req as any).user.userId),
+    });
+    res.json({ count });
+  } catch (error: unknown) {
+    if (mapInventoryError(error, res)) return;
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 router.post(
   '/counts/:id/cancel',

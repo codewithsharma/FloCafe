@@ -156,8 +156,12 @@ async function main() {
   const workspace = readFe('components/kds/KdsWorkspace.tsx');
   const en = fs.readFileSync(path.join(FRONTEND, 'lib/i18n/en.json'), 'utf8');
   assert(hook.includes('dataStale'), 'useKdsConnection exposes dataStale');
-  assert(hook.includes('pendingRetryRef') || hook.includes('pendingStatusRetry'), 'reconnect retries failed status once');
+  assert(
+    hook.includes('pendingRetriesRef') || hook.includes('pendingRetryRef'),
+    'reconnect retries failed status (per-item queue)',
+  );
   assert(hook.includes('flushPendingStatusRetry'), 'reconnect flushes pending status retry');
+  assert(hook.includes('MAX_PENDING_STATUS_RETRY_ATTEMPTS'), 'silent retry attempt cap');
   assert(header.includes('dataStale'), 'KdsHeader receives dataStale');
   assert(header.includes('kds.connectionStale'), 'KdsHeader shows stale label');
   assert(workspace.includes('dataStale'), 'KdsWorkspace passes dataStale');

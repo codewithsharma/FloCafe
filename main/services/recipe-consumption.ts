@@ -65,22 +65,21 @@ function loadConsumptionByOrderItem(db: any, orderItemId: number): RecipeConsump
   );
 }
 
-function loadIngredientProduct(
-  db: any,
-  productId: string,
-): StockTrackedProduct & {
+type IngredientProduct = StockTrackedProduct & {
   cost: number;
+  cost_cents?: number | null;
   inventory_unit: string;
   name: string;
-} {
+};
+
+function loadIngredientProduct(db: any, productId: string): IngredientProduct {
   const row = db
     .prepare(
       `SELECT id, name, track_inventory, stock_quantity, cost,
               COALESCE(inventory_unit, 'pcs') AS inventory_unit
        FROM products WHERE id = ? AND deleted_at IS NULL`,
     )
-    .get(productId) as
-    (StockTrackedProduct & { cost: number; inventory_unit: string; name: string }) | undefined;
+    .get(productId) as IngredientProduct | undefined;
   if (!row) {
     throw new InventoryServiceError(404, `Ingredient product not found: ${productId}`);
   }

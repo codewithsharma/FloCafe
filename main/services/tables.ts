@@ -542,7 +542,7 @@ export function splitOrderToTable(args: {
     }
 
     applyOrderMoneyRollup(db, sourceOrder.id, nowStr);
-    applyOrderMoneyRollup(db, newOrderId, nowStr);
+    applyOrderMoneyRollup(db, Number(newOrderId), nowStr);
 
     // Order already inserted — CAS occupy only (assert happened before insert)
     markTableOccupiedCas(db, targetTableId, nowStr);

@@ -1,7 +1,7 @@
 # Pilot Sign-off (P1.6)
 
-**Product:** Operavia Restaurant v3.0.5  
-**Purpose:** Mandatory gates before first live café service day.  
+**Product:** Operavia Restaurant v3.0.5
+**Purpose:** Mandatory gates before first live café service day.
 **Related:** [`pilot-release-checklist.md`](../16-release/pilot-release-checklist.md) · [`ops-01-pilot-release-checklist.md`](../16-release/ops-01-pilot-release-checklist.md) · [`ops-02-site-readiness-checklist.md`](./ops-02-site-readiness-checklist.md) · [`pilot-runbook.md`](./pilot-runbook.md) · [`dr-drill-worksheet.md`](./dr-drill-worksheet.md) · [`pilot-handoff-first-cafe.md`](./pilot-handoff-first-cafe.md) · [`../05-production/ops-02-live-pilot-rc-site-readiness.md`](../05-production/ops-02-live-pilot-rc-site-readiness.md) · [`p1.6-cto-release-control-decision.md`](../15-project-management/p1.6-cto-release-control-decision.md)
 
 **Status values (use exactly one per gate):** `PASS` · `FAIL` · `PENDING` · `NOT APPLICABLE`
@@ -14,27 +14,27 @@ Do **not** mark `PASS` without evidence (artifact path, worksheet, log, screensh
 
 ## Release identity (fill at sign-off)
 
-| Field                       | Value                                                                                                                                                                              |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| App version                 | 3.0.5 (commit is authoritative; do not assume older `3.0.5` builds match this tree)                                                                                                |
-| Git commit / tag            | Engineering baseline **`24966ba7272aa4e0e6650796ec469a3cd60ed423`** (H1–H4). **Pilot install must use a signed/notarized RC — not an adhoc local build.**                          |
-| Artifact path / release URL |                                                                                                                                                                                    |
-| Platform(s) for this pilot  |                                                                                                                                                                                    |
-| Artifact class              | TRAINING/QA · **PILOT/PRODUCTION** (must be PILOT/PRODUCTION for live café)                                                                                                        |
-| `ACTIVE_VERTICAL_ID`        | unset or `restaurant`                                                                                                                                                              |
-| OPS-01 docs                 | Configuration + checklist + closure report (2026-08-15) — site gates below still **PENDING**                                                                                       |
-| OPS-02 live RC / site       | [`../05-production/ops-02-live-pilot-rc-site-readiness.md`](../05-production/ops-02-live-pilot-rc-site-readiness.md) — **🔴 NO-GO** for live until signed RC + site checklist PASS |
+| Field                       | Value                                                                                                                                                                                                                                                               |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| App version                 | 3.0.5 (commit is authoritative; do not assume older `3.0.5` builds match this tree)                                                                                                                                                                                 |
+| Git commit / tag            | Post-R8 tip **`94702f8`** (R1–R8 COMPLETE, schema **v82**). Historical H1–H4 ancestry **`24966ba`**. **Pilot install must use a signed/notarized RC — not an adhoc local build.**                                                                                   |
+| Artifact path / release URL |                                                                                                                                                                                                                                                                     |
+| Platform(s) for this pilot  |                                                                                                                                                                                                                                                                     |
+| Artifact class              | TRAINING/QA · **PILOT/PRODUCTION** (must be PILOT/PRODUCTION for live café)                                                                                                                                                                                         |
+| `ACTIVE_VERTICAL_ID`        | unset or `restaurant`                                                                                                                                                                                                                                               |
+| OPS-01 docs                 | Configuration + checklist + closure report (2026-08-15) — site gates below still **PENDING**                                                                                                                                                                        |
+| OPS-02 live RC / site       | [`../05-production/ops-02-live-pilot-rc-site-readiness.md`](../05-production/ops-02-live-pilot-rc-site-readiness.md) — Gate 1 **PENDING HUMAN/SITE**; live **NO-GO** until signed RC + [`ops-02-site-readiness-checklist.md`](./ops-02-site-readiness-checklist.md) |
 
 ---
 
 ## Approval layers (do not conflate)
 
-| Layer                    | Meaning                                            | Status                                                                                                                                                                                                 |
-| ------------------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **ENGINEERING APPROVAL** | Code + tests meet supervised-pilot engineering bar | **PASS WITH CONDITIONS** (2026-08-15) — HEAD `24966ba` (H1–H4); focused `test:h1`–`h4`, `test:backup`, payment/refund/shift/KDS/authz suites green. OPS-01 docs closed. Ops/human gates still PENDING. |
-| **OPERATIONAL APPROVAL** | Site network, escrow, training, backup policy      | **PENDING** — human/ops · OPS-02 (2026-08-15): live go-live **NO-GO** until signed RC + [`ops-02-site-readiness-checklist.md`](./ops-02-site-readiness-checklist.md)                                   |
-| **CTO APPROVAL**         | Release control signature below                    | **PENDING**                                                                                                                                                                                            |
-| **CEO APPROVAL**         | Business authorization signature below             | **PENDING**                                                                                                                                                                                            |
+| Layer                    | Meaning                                            | Status                                                                                                                                                                                                                                                         |
+| ------------------------ | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ENGINEERING APPROVAL** | Code + tests meet supervised-pilot engineering bar | **PASS WITH CONDITIONS** (2026-08-15 Gate 1 verify) — HEAD `94702f8`; R3–R8 + H1–H4 + money-cents + process-kill + authz + backup + FIN-01 green. `npm run build` (`tsc`) fails on clean HEAD (~209 errors). Signed RC missing. Ops/human gates still PENDING. |
+| **OPERATIONAL APPROVAL** | Site network, escrow, training, backup policy      | **PENDING** — human/ops · OPS-02 (2026-08-15): live go-live **NO-GO** until signed RC + [`ops-02-site-readiness-checklist.md`](./ops-02-site-readiness-checklist.md)                                                                                           |
+| **CTO APPROVAL**         | Release control signature below                    | **PENDING**                                                                                                                                                                                                                                                    |
+| **CEO APPROVAL**         | Business authorization signature below             | **PENDING**                                                                                                                                                                                                                                                    |
 
 Engineering PASS does **not** authorize live service.
 

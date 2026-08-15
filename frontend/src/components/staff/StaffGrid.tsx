@@ -65,7 +65,7 @@ export function StaffGrid({
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" className="min-h-11" asChild>
                 <Link href={`/staff/detail/?id=${encodeURIComponent(String(s.id))}`}>
-                  <UserRound size={14} className="mr-1" /> Detail
+                  <UserRound size={14} className="mr-1" /> {t('staff.detail')}
                 </Link>
               </Button>
               <Button variant="outline" size="sm" className="min-h-11" onClick={() => onEdit(s)}>

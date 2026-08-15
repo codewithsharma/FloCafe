@@ -30,6 +30,7 @@ import {
   decrementTrackedStock,
   restoreTrackedStock,
 } from '../../services/inventory';
+import type { StockTrackedProduct } from '../../services/inventory';
 import {
   consumeRecipeForOrderItem,
   reverseRecipeConsumptionForOrder,
@@ -50,7 +51,12 @@ import {
   TableServiceError,
 } from '../../services/tables';
 import { DOMAIN_SPAN, withSpan } from '../../lib/tracing';
-import { addOrderItemsBodySchema, createOrderBodySchema, orderDiscountBodySchema, orderStatusBodySchema } from '../../validation/orders';
+import {
+  addOrderItemsBodySchema,
+  createOrderBodySchema,
+  orderDiscountBodySchema,
+  orderStatusBodySchema,
+} from '../../validation/orders';
 import { readTerminalIdHeaderFromRequest, resolveActiveShiftForOrder } from '../../services/shift';
 import { orderHasSuccessfulTender } from '../../services/payment-tender';
 import { dualFromMajor, productPriceCents, fromCents, billPaidCents } from '../../lib/money';
@@ -66,11 +72,17 @@ import {
   lookupOrderIdempotencyReplay,
   storeOrderIdempotency,
   batchHydrateOrders,
-  getAuthUser, errorMessage, errorStatus, type OrderRow, type OrderItemRow,
+  getAuthUser,
+  errorMessage,
+  errorStatus,
+  asTaxProduct,
+  asTaxCustomer,
+  itemsForAddons,
+  type OrderRow,
+  type OrderItemRow,
 } from '../orders-shared';
 
 export { checkPinRateLimit } from '../orders-shared';
-
 
 export function registerItemsRoutes(router: Router): void {
   router.post(
@@ -82,7 +94,9 @@ export function registerItemsRoutes(router: Router): void {
         const db = getDatabase();
         if (
           db
-            .prepare('SELECT 1 FROM bills WHERE order_id = ? AND split_group_id IS NOT NULL LIMIT 1')
+            .prepare(
+              'SELECT 1 FROM bills WHERE order_id = ? AND split_group_id IS NOT NULL LIMIT 1',
+            )
             .get(req.params.id)
         ) {
           return res
@@ -92,19 +106,21 @@ export function registerItemsRoutes(router: Router): void {
         const body = req.body || {};
         const { items, special_instructions } = body;
         const idempotencyKey = orderIdempotencyKey(req);
-        const idempotencyUserId = String(getAuthUser(req).userId);
+        const authUser = getAuthUser(req);
+        if (!authUser) return res.status(401).json({ error: 'Authentication required' });
+        const idempotencyUserId = String(authUser.userId);
         const requestHash = idempotencyKey
           ? createHash('sha256')
               .update(JSON.stringify({ order_id: req.params.id, items, special_instructions }))
               .digest('hex')
           : null;
-        const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as OrderRow | undefined;
+        const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as
+          OrderRow | undefined;
         if (!order) {
           return res.status(404).json({ error: 'Order not found' });
         }
 
-        const authUser = getAuthUser(req);
-        if (authUser?.role === 'waiter' && order.user_id !== authUser.userId) {
+        if (authUser.role === 'waiter' && order.user_id !== authUser.userId) {
           return res.status(403).json({ error: 'Waiters can only modify their own orders' });
         }
 
@@ -173,16 +189,15 @@ export function registerItemsRoutes(router: Router): void {
               }
             }
           }
-          if (['completed', 'cancelled'].includes(currentOrder.status)) {
+          if (['completed', 'cancelled'].includes(currentOrder.status ?? '')) {
             throw Object.assign(new Error('Cannot add items to a completed or cancelled order'), {
               statusCode: 400,
             });
           }
 
           const customer = currentOrder.customer_id
-            ? (db
-                .prepare('SELECT * FROM customers WHERE id = ?')
-                .get(currentOrder.customer_id) as OrderRow | undefined)
+            ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(currentOrder.customer_id) as
+                OrderRow | undefined)
             : null;
 
           const insertItem = db.prepare(`
@@ -201,9 +216,11 @@ export function registerItemsRoutes(router: Router): void {
             if (!product) {
               throw new Error(`Product ${item.product_id} not found`);
             }
-            assertStockAvailable(product, item.quantity);
+            assertStockAvailable(product as StockTrackedProduct, item.quantity);
 
-            const unitPrice = fromCents(productPriceCents(product as { price_cents?: unknown; price?: unknown }));
+            const unitPrice = fromCents(
+              productPriceCents(product as { price_cents?: unknown; price?: unknown }),
+            );
             const quantity = item.quantity;
             // item.discount_amount is intentionally ignored here — discounts are only
             // applied through the dedicated PATCH discount endpoints, which enforce
@@ -239,7 +256,12 @@ export function registerItemsRoutes(router: Router): void {
             }
             itemSubtotal = Math.max(0, itemSubtotal - itemDiscount);
 
-            const taxResult = calculateItemTax(tenantInfo, product, itemSubtotal, customer);
+            const taxResult = calculateItemTax(
+              tenantInfo,
+              asTaxProduct(product),
+              itemSubtotal,
+              asTaxCustomer(customer),
+            );
             const itemTotal =
               itemSubtotal + (taxResult.tax_type === 'inclusive' ? 0 : taxResult.tax_amount);
             const itemTaxSnapshotJson = taxResult.tax_snapshot
@@ -279,7 +301,7 @@ export function registerItemsRoutes(router: Router): void {
             );
             insertOrderItemAddons(db, insertItemResult.lastInsertRowid, item.addons, itemCreatedAt);
 
-            decrementTrackedStock(db, product, quantity, now(), {
+            decrementTrackedStock(db, product as StockTrackedProduct, quantity, now(), {
               referenceType: 'order',
               referenceId: req.params.id as string,
             });
@@ -302,10 +324,10 @@ export function registerItemsRoutes(router: Router): void {
           const allTaxBreakdowns: unknown[] = [];
           const allTaxSnapshots: (string | null)[] = [];
           for (const item of activeItems) {
-            subtotal += item.subtotal;
-            totalTax += item.tax_amount;
+            subtotal += item.subtotal ?? 0;
+            totalTax += item.tax_amount ?? 0;
             if (item.tax_type !== 'inclusive') {
-              exclusiveTax += item.tax_amount;
+              exclusiveTax += item.tax_amount ?? 0;
             }
             if (item.tax_breakdown) {
               try {
@@ -319,7 +341,7 @@ export function registerItemsRoutes(router: Router): void {
           // BUG #12 FIX: Preserve order-level discount (scale percentage proportionally)
           const existingDiscountAmount = currentOrder.discount_amount || 0;
           let newDiscountAmount = existingDiscountAmount;
-          if (existingDiscountAmount > 0 && currentOrder.subtotal > 0) {
+          if (existingDiscountAmount > 0 && (currentOrder.subtotal ?? 0) > 0) {
             if (currentOrder.discount_type === 'percentage') {
               const pct = currentOrder.discount_value || 0;
               newDiscountAmount = Math.round(((subtotal * pct) / 100) * 100) / 100;
@@ -344,7 +366,7 @@ export function registerItemsRoutes(router: Router): void {
               ...currentOrder,
               service_charge: 0,
             },
-            customer,
+            asTaxCustomer(customer),
           );
           const taxRollup = combineItemAndChargeTaxes({
             itemTaxAmount: newTaxAmount,
@@ -370,26 +392,26 @@ export function registerItemsRoutes(router: Router): void {
               const discD = dualFromMajor(newDiscountAmount);
               const totD = dualFromMajor(total);
               db.prepare(
-              `
+                `
             UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?, special_instructions = ?,
               subtotal_cents = ?, tax_amount_cents = ?, discount_amount_cents = ?, total_cents = ?, updated_at = ? WHERE id = ?
           `,
-            ).run(
-              subD.major,
-              taxD.major,
-              JSON.stringify(taxRollup.breakdowns),
-              taxRollup.snapshotJson,
-              discD.major,
-              totD.major,
-              roundOff,
-              special_instructions || null,
-              subD.cents,
-              taxD.cents,
-              discD.cents,
-              totD.cents,
-              now(),
-              req.params.id,
-            );
+              ).run(
+                subD.major,
+                taxD.major,
+                JSON.stringify(taxRollup.breakdowns),
+                taxRollup.snapshotJson,
+                discD.major,
+                totD.major,
+                roundOff,
+                special_instructions || null,
+                subD.cents,
+                taxD.cents,
+                discD.cents,
+                totD.cents,
+                now(),
+                req.params.id,
+              );
             }
           } else {
             {
@@ -398,25 +420,25 @@ export function registerItemsRoutes(router: Router): void {
               const discD = dualFromMajor(newDiscountAmount);
               const totD = dualFromMajor(total);
               db.prepare(
-              `
+                `
             UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?,
               subtotal_cents = ?, tax_amount_cents = ?, discount_amount_cents = ?, total_cents = ?, updated_at = ? WHERE id = ?
           `,
-            ).run(
-              subD.major,
-              taxD.major,
-              JSON.stringify(taxRollup.breakdowns),
-              taxRollup.snapshotJson,
-              discD.major,
-              totD.major,
-              roundOff,
-              subD.cents,
-              taxD.cents,
-              discD.cents,
-              totD.cents,
-              now(),
-              req.params.id,
-            );
+              ).run(
+                subD.major,
+                taxD.major,
+                JSON.stringify(taxRollup.breakdowns),
+                taxRollup.snapshotJson,
+                discD.major,
+                totD.major,
+                roundOff,
+                subD.cents,
+                taxD.cents,
+                discD.cents,
+                totD.cents,
+                now(),
+                req.params.id,
+              );
             }
           }
 
@@ -428,31 +450,42 @@ export function registerItemsRoutes(router: Router): void {
             .get(req.params.id) as OrderRow | undefined;
           if (existingBill) {
             const pack = getActiveCountryPack(tenantInfo.country);
-            const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(total, pack);
-            const newBillBalance = Math.max(0, billTotal - fromCents(billPaidCents(existingBill as { paid_amount_cents?: unknown; paid_amount?: unknown })));
+            const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(
+              total,
+              pack,
+            );
+            const newBillBalance = Math.max(
+              0,
+              billTotal -
+                fromCents(
+                  billPaidCents(
+                    existingBill as { paid_amount_cents?: unknown; paid_amount?: unknown },
+                  ),
+                ),
+            );
             {
               const totD = dualFromMajor(billTotal);
               const balD = dualFromMajor(newBillBalance);
               const taxD = dualFromMajor(taxRollup.taxAmount);
               const discD = dualFromMajor(newDiscountAmount);
               db.prepare(
-              `UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?,
+                `UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?,
                 total_cents = ?, balance_cents = ?, tax_amount_cents = ?, discount_amount_cents = ?, updated_at = ? WHERE id = ?`,
-            ).run(
-              totD.major,
-              balD.major,
-              taxD.major,
-              JSON.stringify(taxRollup.breakdowns),
-              taxRollup.snapshotJson,
-              discD.major,
-              billRoundOff,
-              totD.cents,
-              balD.cents,
-              taxD.cents,
-              discD.cents,
-              now(),
-              existingBill.id,
-            );
+              ).run(
+                totD.major,
+                balD.major,
+                taxD.major,
+                JSON.stringify(taxRollup.breakdowns),
+                taxRollup.snapshotJson,
+                discD.major,
+                billRoundOff,
+                totD.cents,
+                balD.cents,
+                taxD.cents,
+                discD.cents,
+                now(),
+                existingBill.id,
+              );
             }
           }
 
@@ -461,10 +494,12 @@ export function registerItemsRoutes(router: Router): void {
           ) as any;
           const updatedItems = attachEffectiveAddons(
             db,
-            db
-              .prepare('SELECT * FROM order_items WHERE order_id = ?')
-              .all(req.params.id)
-              .map(parseItemJson) as OrderItemRow[],
+            itemsForAddons(
+              db
+                .prepare('SELECT * FROM order_items WHERE order_id = ?')
+                .all(req.params.id)
+                .map(parseItemJson) as OrderItemRow[],
+            ),
           );
           const response = { order: Object.assign({}, updatedOrder, { items: updatedItems }) };
           if (idempotencyKey && requestHash) {
@@ -481,7 +516,11 @@ export function registerItemsRoutes(router: Router): void {
 
         res.json({ order: Object.assign({}, result.updatedOrder, { items: result.updatedItems }) });
       } catch (error: unknown) {
-        if (!(errorStatus(error) !== undefined && errorStatus(error)! >= 400 && errorStatus(error)! < 500)) {
+        if (!(
+          errorStatus(error) !== undefined &&
+          errorStatus(error)! >= 400 &&
+          errorStatus(error)! < 500
+        )) {
           console.error('[API] Internal error:', error);
         }
         res

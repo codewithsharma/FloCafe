@@ -30,6 +30,7 @@ import {
   decrementTrackedStock,
   restoreTrackedStock,
 } from '../../services/inventory';
+import type { StockTrackedProduct } from '../../services/inventory';
 import {
   consumeRecipeForOrderItem,
   reverseRecipeConsumptionForOrder,
@@ -50,7 +51,12 @@ import {
   TableServiceError,
 } from '../../services/tables';
 import { DOMAIN_SPAN, withSpan } from '../../lib/tracing';
-import { addOrderItemsBodySchema, createOrderBodySchema, orderDiscountBodySchema, orderStatusBodySchema } from '../../validation/orders';
+import {
+  addOrderItemsBodySchema,
+  createOrderBodySchema,
+  orderDiscountBodySchema,
+  orderStatusBodySchema,
+} from '../../validation/orders';
 import { readTerminalIdHeaderFromRequest, resolveActiveShiftForOrder } from '../../services/shift';
 import { orderHasSuccessfulTender } from '../../services/payment-tender';
 import { dualFromMajor, productPriceCents, fromCents } from '../../lib/money';
@@ -66,11 +72,17 @@ import {
   lookupOrderIdempotencyReplay,
   storeOrderIdempotency,
   batchHydrateOrders,
-  getAuthUser, errorMessage, errorStatus, type OrderRow, type OrderItemRow,
+  getAuthUser,
+  errorMessage,
+  errorStatus,
+  asTaxProduct,
+  asTaxCustomer,
+  itemsForAddons,
+  type OrderRow,
+  type OrderItemRow,
 } from '../orders-shared';
 
 export { checkPinRateLimit } from '../orders-shared';
-
 
 export function registerCreateRoutes(router: Router): void {
   router.post(
@@ -92,7 +104,9 @@ export function registerCreateRoutes(router: Router): void {
             items,
           } = body;
           const idempotencyKey = orderIdempotencyKey(req);
-          const idempotencyUserId = String(getAuthUser(req).userId);
+          const authUser = getAuthUser(req);
+          if (!authUser) return res.status(401).json({ error: 'Authentication required' });
+          const idempotencyUserId = String(authUser.userId);
           const requestHash = idempotencyKey
             ? createHash('sha256').update(JSON.stringify(body)).digest('hex')
             : null;
@@ -102,7 +116,7 @@ export function registerCreateRoutes(router: Router): void {
           // That silently broke waiters' own order visibility (GET /orders scopes
           // waiters to `user_id = <their id>`, which NULL can never match) and any
           // per-staff sales attribution.
-          const authenticatedUserId = getAuthUser(req).userId;
+          const authenticatedUserId = authUser.userId;
           const terminalIdHeader = readTerminalIdHeaderFromRequest(req);
 
           const db = getDatabase();
@@ -210,7 +224,8 @@ export function registerCreateRoutes(router: Router): void {
             const allTaxBreakdowns: unknown[] = [];
             const allTaxSnapshots: (string | null)[] = [];
             const customer = customer_id
-              ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(customer_id) as OrderRow | undefined)
+              ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(customer_id) as
+                  OrderRow | undefined)
               : null;
 
             const insertItem = db.prepare(`
@@ -229,9 +244,11 @@ export function registerCreateRoutes(router: Router): void {
               if (!product) {
                 throw new Error(`Product ${item.product_id} not found`);
               }
-              assertStockAvailable(product, item.quantity);
+              assertStockAvailable(product as StockTrackedProduct, item.quantity);
 
-              const unitPrice = fromCents(productPriceCents(product as { price_cents?: unknown; price?: unknown }));
+              const unitPrice = fromCents(
+                productPriceCents(product as { price_cents?: unknown; price?: unknown }),
+              );
               const quantity = item.quantity;
               // item.discount_amount is intentionally ignored here — discounts are only
               // applied through the dedicated PATCH discount endpoints, which enforce
@@ -267,7 +284,12 @@ export function registerCreateRoutes(router: Router): void {
               }
               itemSubtotal = Math.max(0, itemSubtotal - itemDiscount);
 
-              const taxResult = calculateItemTax(tenantInfo, product, itemSubtotal, customer);
+              const taxResult = calculateItemTax(
+                tenantInfo,
+                asTaxProduct(product),
+                itemSubtotal,
+                asTaxCustomer(customer),
+              );
 
               totalTax += taxResult.tax_amount;
               if (taxResult.tax_type !== 'inclusive') {
@@ -316,16 +338,21 @@ export function registerCreateRoutes(router: Router): void {
                 itemCreatedAt,
                 itemCreatedAt,
               );
-              insertOrderItemAddons(db, insertItemResult.lastInsertRowid, item.addons, itemCreatedAt);
+              insertOrderItemAddons(
+                db,
+                insertItemResult.lastInsertRowid,
+                item.addons,
+                itemCreatedAt,
+              );
 
               // Inventory boundary: reserve stock at order create (inside withTxn).
-              decrementTrackedStock(db, product, quantity, now(), {
+              decrementTrackedStock(db, product as StockTrackedProduct, quantity, now(), {
                 referenceType: 'order',
                 referenceId: orderId,
               });
               // R5: BOM ingredient consumption (idempotent per order_item_id).
               consumeRecipeForOrderItem(db, {
-                orderId,
+                orderId: String(orderId),
                 orderItemId: Number(insertItemResult.lastInsertRowid),
                 menuProductId: String(product.id),
                 portions: quantity,
@@ -333,7 +360,11 @@ export function registerCreateRoutes(router: Router): void {
               });
             }
 
-            const chargeTaxes = calculateConfiguredChargeTaxes(tenantInfo, chargeContext, customer);
+            const chargeTaxes = calculateConfiguredChargeTaxes(
+              tenantInfo,
+              chargeContext,
+              asTaxCustomer(customer),
+            );
             const taxRollup = combineItemAndChargeTaxes({
               itemTaxAmount: totalTax,
               itemExclusiveTaxAmount: exclusiveTax,
@@ -383,10 +414,12 @@ export function registerCreateRoutes(router: Router): void {
             ) as any;
             const orderItems = attachEffectiveAddons(
               db,
-              db
-                .prepare('SELECT * FROM order_items WHERE order_id = ?')
-                .all(orderId)
-                .map(parseItemJson) as OrderItemRow[],
+              itemsForAddons(
+                db
+                  .prepare('SELECT * FROM order_items WHERE order_id = ?')
+                  .all(orderId)
+                  .map(parseItemJson) as OrderItemRow[],
+              ),
             );
             const response = { order: Object.assign({}, order, { items: orderItems }) };
             if (idempotencyKey && requestHash) {
@@ -430,14 +463,18 @@ export function registerCreateRoutes(router: Router): void {
         });
       } catch (error: unknown) {
         console.error('[Orders] Create error:', error);
-        if (!(errorStatus(error) !== undefined && errorStatus(error)! >= 400 && errorStatus(error)! < 500)) {
+        if (!(
+          errorStatus(error) !== undefined &&
+          errorStatus(error)! >= 400 &&
+          errorStatus(error)! < 500
+        )) {
           console.error('[API] Internal error:', error);
         }
         const payload: Record<string, unknown> = {
           error: errorStatus(error) ? errorMessage(error) : 'Internal server error',
         };
-        if (error instanceof TableServiceError || error.code) {
-          payload.code = error.code;
+        if (error instanceof TableServiceError || (error as { code?: string }).code) {
+          payload.code = (error as { code?: string }).code;
         }
         res.status(errorStatus(error) || 500).json(payload);
       }

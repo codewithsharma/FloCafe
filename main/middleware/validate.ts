@@ -3,12 +3,14 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import type { ZodType } from 'zod';
+import type { ZodType, ZodError } from 'zod';
 
-function formatIssues(error: { issues: Array<{ path: (string | number)[]; message: string }> }): string {
+/** Zod 4 issue paths are `PropertyKey[]` (may include symbol); stringify for API errors. */
+function formatIssues(error: ZodError): string {
   return error.issues
     .map((issue) => {
-      const path = issue.path.length > 0 ? `${issue.path.join('.')}: ` : '';
+      const segments = issue.path.map((segment) => String(segment));
+      const path = segments.length > 0 ? `${segments.join('.')}: ` : '';
       return `${path}${issue.message}`;
     })
     .join('; ');

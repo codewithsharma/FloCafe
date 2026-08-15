@@ -30,6 +30,7 @@ import {
   decrementTrackedStock,
   restoreTrackedStock,
 } from '../../services/inventory';
+import type { StockTrackedProduct } from '../../services/inventory';
 import {
   consumeRecipeForOrderItem,
   reverseRecipeConsumptionForOrder,
@@ -50,7 +51,12 @@ import {
   TableServiceError,
 } from '../../services/tables';
 import { DOMAIN_SPAN, withSpan } from '../../lib/tracing';
-import { addOrderItemsBodySchema, createOrderBodySchema, orderDiscountBodySchema, orderStatusBodySchema } from '../../validation/orders';
+import {
+  addOrderItemsBodySchema,
+  createOrderBodySchema,
+  orderDiscountBodySchema,
+  orderStatusBodySchema,
+} from '../../validation/orders';
 import { readTerminalIdHeaderFromRequest, resolveActiveShiftForOrder } from '../../services/shift';
 import { orderHasSuccessfulTender } from '../../services/payment-tender';
 // Phase 2.14 — Order ownership facade (markers; routes remain the HTTP surface).
@@ -65,11 +71,16 @@ import {
   lookupOrderIdempotencyReplay,
   storeOrderIdempotency,
   batchHydrateOrders,
-  getAuthUser, errorMessage, errorStatus, type OrderRow, type OrderItemRow,
+  getAuthUser,
+  errorMessage,
+  errorStatus,
+  itemsForAddons,
+  type OrderRow,
+  type OrderItemRow,
 } from '../orders-shared';
+import { routeParam } from '../../lib/route-params';
 
 export { checkPinRateLimit } from '../orders-shared';
-
 
 export function registerStatusRoutes(router: Router): void {
   router.patch(
@@ -83,15 +94,14 @@ export function registerStatusRoutes(router: Router): void {
         // reason is optional for cancellation
 
         const db = getDatabase();
-        const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
+        const orderId = routeParam(req.params.id);
+        const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as
+          OrderRow | undefined;
         if (!order) {
           return res.status(404).json({ error: 'Order not found' });
         }
         const authUser = getAuthUser(req);
-        if (
-          authUser?.role === 'waiter' &&
-          String(order.user_id) !== String(authUser.userId)
-        ) {
+        if (authUser?.role === 'waiter' && String(order.user_id) !== String(authUser.userId)) {
           return res.status(403).json({ error: 'Waiters can only modify their own orders' });
         }
 
@@ -115,12 +125,13 @@ export function registerStatusRoutes(router: Router): void {
             return res.status(errorStatus(err) || 400).json({ error: errorMessage(err) });
           }
           if (cancelIdempotencyKey) {
+            if (!authUser) return res.status(401).json({ error: 'Authentication required' });
             cancelIdempotencyUserId = String(authUser.userId);
             cancelRequestHash = createHash('sha256')
               .update(
                 JSON.stringify({
                   op: 'cancel',
-                  orderId: req.params.id,
+                  orderId,
                   body: req.body,
                 }),
               )
@@ -137,7 +148,7 @@ export function registerStatusRoutes(router: Router): void {
               }
             } catch (err: unknown) {
               return res
-                .status(err.statusCode || 500)
+                .status(errorStatus(err) || 500)
                 .json({ error: errorStatus(err) ? errorMessage(err) : 'Internal server error' });
             }
           }
@@ -146,7 +157,7 @@ export function registerStatusRoutes(router: Router): void {
         if (
           status === 'cancelled' &&
           order.status !== 'cancelled' &&
-          orderHasSuccessfulTender(db, req.params.id as string)
+          orderHasSuccessfulTender(db, orderId)
         ) {
           return res.status(409).json({
             error: 'Cannot cancel an order with successful tender; refund the bill instead',
@@ -156,7 +167,7 @@ export function registerStatusRoutes(router: Router): void {
 
         // Override validation: cancelling an order in preparing+ status (or with items in preparing+) requires manager PIN
         const statusOrder = ['pending', 'preparing', 'ready', 'served', 'completed'];
-        const currentStatusIndex = statusOrder.indexOf(order.status);
+        const currentStatusIndex = statusOrder.indexOf(order.status ?? '');
         const hasItemsInProgress =
           db
             .prepare(
@@ -166,7 +177,7 @@ export function registerStatusRoutes(router: Router): void {
         LIMIT 1
       `,
             )
-            .get(req.params.id) !== undefined;
+            .get(orderId) !== undefined;
         const requiresOverride =
           (currentStatusIndex > 0 || hasItemsInProgress || authUser?.role === 'chef') &&
           status === 'cancelled';
@@ -182,7 +193,9 @@ export function registerStatusRoutes(router: Router): void {
           const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
           const rateLimitKey = `pin:${clientIp}:${req.params.id}`;
           if (!checkPinRateLimit(rateLimitKey)) {
-            return res.status(429).json({ error: 'Too many PIN attempts. Try again in 15 minutes.' });
+            return res
+              .status(429)
+              .json({ error: 'Too many PIN attempts. Try again in 15 minutes.' });
           }
 
           // Validate PIN against active owner/manager accounts only
@@ -231,31 +244,36 @@ export function registerStatusRoutes(router: Router): void {
             `,
               ).run(nowStr, req.params.id);
               if (isModuleEnabled('tables') && order.table_id) {
-                freeTableIfModule(db, order.table_id, nowStr);
+                freeTableIfModule(db, String(order.table_id), nowStr);
               }
               break;
 
             case 'cancelled': {
               // H4: re-read under the txn lock so concurrent cancels cannot double-restock.
-              const locked = db
-                .prepare('SELECT status FROM orders WHERE id = ?')
-                .get(req.params.id) as { status: string } | undefined;
+              const locked = db.prepare('SELECT status FROM orders WHERE id = ?').get(orderId) as
+                { status: string } | undefined;
               if (!locked || locked.status === 'cancelled') {
                 break;
               }
               const items = db
                 .prepare('SELECT * FROM order_items WHERE order_id = ?')
-                .all(req.params.id) as OrderItemRow[];
+                .all(orderId) as OrderItemRow[];
               for (const item of items) {
                 if (item.status === 'voided' || item.status === 'void_adjustment') continue;
                 const product = db
                   .prepare('SELECT * FROM products WHERE id = ?')
                   .get(item.product_id) as OrderRow | undefined;
-                restoreTrackedStock(db, product, item.quantity, nowStr, {
-                  referenceType: 'order',
-                  referenceId: req.params.id as string,
-                  reason: 'order_cancelled',
-                });
+                restoreTrackedStock(
+                  db,
+                  product as StockTrackedProduct | undefined,
+                  item.quantity ?? 0,
+                  nowStr,
+                  {
+                    referenceType: 'order',
+                    referenceId: orderId,
+                    reason: 'order_cancelled',
+                  },
+                );
                 reverseRecipeConsumptionForOrderItem(db, {
                   orderItemId: Number(item.id),
                   actorUserId: authUser?.userId ?? null,
@@ -263,22 +281,22 @@ export function registerStatusRoutes(router: Router): void {
                 });
               }
               reverseRecipeConsumptionForOrder(db, {
-                orderId: String(req.params.id),
+                orderId,
                 actorUserId: authUser?.userId ?? null,
                 reason: 'order_cancelled',
               });
               db.prepare(
                 'UPDATE orders SET status = ?, cancelled_at = ?, cancellation_reason = ?, updated_at = ? WHERE id = ?',
-              ).run(status, nowStr, reason, nowStr, req.params.id);
+              ).run(status, nowStr, reason, nowStr, orderId);
               // Only free table if explicitly requested (default: true for backward compatibility)
               if (isModuleEnabled('tables') && order.table_id && free_table !== false) {
-                freeTableIfModule(db, order.table_id, nowStr);
+                freeTableIfModule(db, String(order.table_id), nowStr);
               }
               logAuditEvent({
                 actorUserId: authUser?.userId ?? null,
                 action: 'order.cancelled',
                 entityType: 'order',
-                entityId: String(req.params.id),
+                entityId: orderId,
                 result: 'success',
                 reason: reason || null,
                 metadata: {
@@ -295,23 +313,26 @@ export function registerStatusRoutes(router: Router): void {
           }
 
           const updatedOrder = parseRowJson(
-            db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id),
+            db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId),
           ) as any;
           const orderItems = attachEffectiveAddons(
             db,
-            db
-              .prepare('SELECT * FROM order_items WHERE order_id = ?')
-              .all(req.params.id)
-              .map(parseItemJson) as OrderItemRow[],
+            itemsForAddons(
+              db
+                .prepare('SELECT * FROM order_items WHERE order_id = ?')
+                .all(orderId)
+                .map(parseItemJson) as OrderItemRow[],
+            ),
           );
           const tableRow2 = updatedOrder.table_id
-            ? (db.prepare('SELECT * FROM tables WHERE id = ?').get(updatedOrder.table_id) as OrderRow | undefined)
+            ? (db.prepare('SELECT * FROM tables WHERE id = ?').get(updatedOrder.table_id) as
+                OrderRow | undefined)
             : null;
           const table = tableRow2 ? { ...tableRow2, name: tableRow2.number } : null;
           return { updatedOrder, orderItems, table };
         });
 
-        cloudSync.recordOrderChanged(req.params.id as string, `order.${status}`);
+        cloudSync.recordOrderChanged(orderId, `order.${status}`);
         if (isModuleEnabled('kds')) notifyKdsUpdate();
 
         const response = {

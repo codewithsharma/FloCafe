@@ -22,6 +22,7 @@ import {
   isTokenStale,
   requireRole,
 } from '../middleware/security';
+import { routeParam } from '../lib/route-params';
 
 const router = Router();
 
@@ -46,7 +47,7 @@ router.patch(
           .json({ error: 'Only chef, manager, or owner can update item status' });
       }
 
-      const itemId = req.params.id;
+      const itemId = routeParam(req.params.id);
       if (!itemId) {
         return res.status(400).json({ error: 'Order item ID is required' });
       }
@@ -280,7 +281,10 @@ router.patch(
       if (error.message === 'ORPHANED_ORDER_ITEM') {
         return res.status(404).json({ error: 'Order item is not attached to an order' });
       }
-      if (error.message === 'STATUS_CONFLICT' || (error instanceof KitchenStatusError && error.code === 'STATUS_CONFLICT')) {
+      if (
+        error.message === 'STATUS_CONFLICT' ||
+        (error instanceof KitchenStatusError && error.code === 'STATUS_CONFLICT')
+      ) {
         return res.status(409).json({ error: 'Item status changed; refresh and try again' });
       }
       if (error instanceof KitchenStatusError) {

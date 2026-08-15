@@ -50,7 +50,12 @@ import {
   TableServiceError,
 } from '../../services/tables';
 import { DOMAIN_SPAN, withSpan } from '../../lib/tracing';
-import { addOrderItemsBodySchema, createOrderBodySchema, orderDiscountBodySchema, orderStatusBodySchema } from '../../validation/orders';
+import {
+  addOrderItemsBodySchema,
+  createOrderBodySchema,
+  orderDiscountBodySchema,
+  orderStatusBodySchema,
+} from '../../validation/orders';
 import { readTerminalIdHeaderFromRequest, resolveActiveShiftForOrder } from '../../services/shift';
 import { orderHasSuccessfulTender } from '../../services/payment-tender';
 // Phase 2.14 — Order ownership facade (markers; routes remain the HTTP surface).
@@ -65,17 +70,22 @@ import {
   lookupOrderIdempotencyReplay,
   storeOrderIdempotency,
   batchHydrateOrders,
-  getAuthUser, errorMessage, errorStatus, type OrderRow, type OrderItemRow,
+  getAuthUser,
+  errorMessage,
+  errorStatus,
+  itemsForAddons,
+  type OrderRow,
+  type OrderItemRow,
 } from '../orders-shared';
 
 export { checkPinRateLimit } from '../orders-shared';
-
 
 export function registerMutateRoutes(router: Router): void {
   router.patch('/:id/customer', requireRole('owner', 'manager'), (req: Request, res: Response) => {
     try {
       const db = getDatabase();
-      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as OrderRow | undefined;
+      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as
+        OrderRow | undefined;
       if (!order) {
         return res.status(404).json({ error: 'Order not found' });
       }
@@ -131,7 +141,8 @@ export function registerMutateRoutes(router: Router): void {
         const nowStr = now();
 
         withTxn(() => {
-          const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as OrderRow | undefined;
+          const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as
+            OrderRow | undefined;
           if (!order) {
             throw Object.assign(new Error('Order not found'), { statusCode: 404 });
           }
@@ -140,7 +151,7 @@ export function registerMutateRoutes(router: Router): void {
               statusCode: 400,
             });
           }
-          if (['completed', 'cancelled'].includes(order.status)) {
+          if (['completed', 'cancelled'].includes(order.status ?? '')) {
             throw Object.assign(new Error('Cannot convert a completed or cancelled order'), {
               statusCode: 400,
             });
@@ -152,9 +163,12 @@ export function registerMutateRoutes(router: Router): void {
               )
               .get(req.params.id)
           ) {
-            throw Object.assign(new Error('A split dine-in check cannot be converted to takeaway'), {
-              statusCode: 409,
-            });
+            throw Object.assign(
+              new Error('A split dine-in check cannot be converted to takeaway'),
+              {
+                statusCode: 409,
+              },
+            );
           }
 
           db.prepare(
@@ -162,7 +176,7 @@ export function registerMutateRoutes(router: Router): void {
           ).run(nowStr, req.params.id);
 
           if (isModuleEnabled('tables') && order.table_id) {
-            freeTableIfModule(db, order.table_id, nowStr);
+            freeTableIfModule(db, String(order.table_id), nowStr);
           }
           return order.table_id;
         });
@@ -172,10 +186,12 @@ export function registerMutateRoutes(router: Router): void {
         ) as any;
         const orderItems = attachEffectiveAddons(
           db,
-          db
-            .prepare('SELECT * FROM order_items WHERE order_id = ?')
-            .all(req.params.id)
-            .map(parseItemJson) as OrderItemRow[],
+          itemsForAddons(
+            db
+              .prepare('SELECT * FROM order_items WHERE order_id = ?')
+              .all(req.params.id)
+              .map(parseItemJson) as OrderItemRow[],
+          ),
         );
 
         cloudSync.recordOrderChanged(req.params.id as string, 'order.type_changed');

@@ -510,6 +510,8 @@ function calculateCashback(
   const order = db
     .prepare('SELECT subtotal, discount_amount FROM orders WHERE id = ?')
     .get(bill.order_id) as { subtotal?: number; discount_amount?: number } | undefined;
+  const orderSubtotal = order?.subtotal ?? 0;
+  const discountAmount = order?.discount_amount ?? 0;
   const items = db
     .prepare(
       `SELECT oi.subtotal, p.cb_percent FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = ? AND oi.status != 'cancelled'`,
@@ -517,8 +519,8 @@ function calculateCashback(
     .all(bill.order_id) as { subtotal: number; cb_percent: number | null }[];
   const fullOrderCashback = items.reduce((sum, item) => {
     const discountShare =
-      order?.discount_amount > 0 && order?.subtotal > 0
-        ? (order.discount_amount * item.subtotal) / order.subtotal
+      discountAmount > 0 && orderSubtotal > 0
+        ? (discountAmount * item.subtotal) / orderSubtotal
         : 0;
     const rate = item.cb_percent !== null ? item.cb_percent : globalRate;
     return (
@@ -530,8 +532,8 @@ function calculateCashback(
     );
   }, 0);
   const splitRatio =
-    Number(order?.subtotal || 0) > 0 && bill.split_group_id
-      ? Math.min(1, Number(bill.subtotal || 0) / Number(order.subtotal))
+    Number(orderSubtotal || 0) > 0 && bill.split_group_id
+      ? Math.min(1, Number(bill.subtotal || 0) / Number(orderSubtotal))
       : 1;
   return Math.floor(fullOrderCashback * splitRatio);
 }
@@ -738,7 +740,7 @@ export function applyPaymentBatch(
           // Soft-gate: Restaurant enables tables → identical to pre-2.15.
           // retail-test composition excludes tables → skip free-table side effect.
           if (isModuleEnabled('tables') && order?.table_id) {
-            freeTableIfModule(db, order.table_id, changedAt);
+            freeTableIfModule(db, String(order.table_id), changedAt);
           }
         }
         const cashback = calculateCashback(db, bill, effectiveCustomerId);

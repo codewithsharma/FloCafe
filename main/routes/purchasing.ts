@@ -31,6 +31,7 @@ import {
   supplierProductBodySchema,
   supplierUpdateBodySchema,
 } from '../validation/purchasing';
+import { routeParam } from '../lib/route-params';
 
 const router = Router();
 
@@ -61,7 +62,11 @@ function mapError(error: unknown, res: Response): boolean {
 function requireIdempotencyKey(req: Request): string {
   const supplied = req.get('Idempotency-Key')?.trim();
   if (!supplied) {
-    throw new PurchasingServiceError(400, 'Idempotency-Key is required', 'PO_RECEIVE_IDEMPOTENCY_REQUIRED');
+    throw new PurchasingServiceError(
+      400,
+      'Idempotency-Key is required',
+      'PO_RECEIVE_IDEMPOTENCY_REQUIRED',
+    );
   }
   if (supplied.length > 128) {
     throw new PurchasingServiceError(400, 'Idempotency-Key is invalid or too long');
@@ -97,7 +102,7 @@ router.post(
 
 router.get('/suppliers/:id', requireRole('owner', 'manager', 'chef'), (req, res) => {
   try {
-    res.json({ supplier: getSupplier(req.params.id) });
+    res.json({ supplier: getSupplier(routeParam(req.params.id)) });
   } catch (error: unknown) {
     if (mapError(error, res)) return;
     console.error('[API] get supplier error:', error);
@@ -111,7 +116,7 @@ router.patch(
   validateBody(supplierUpdateBodySchema),
   (req, res) => {
     try {
-      const supplier = updateSupplier(req.params.id, req.body, actorId(req));
+      const supplier = updateSupplier(routeParam(req.params.id), req.body, actorId(req));
       res.json({ supplier });
     } catch (error: unknown) {
       if (mapError(error, res)) return;
@@ -123,7 +128,7 @@ router.patch(
 
 router.post('/suppliers/:id/deactivate', requireRole('owner', 'manager'), (req, res) => {
   try {
-    const supplier = deactivateSupplier(req.params.id, actorId(req));
+    const supplier = deactivateSupplier(routeParam(req.params.id), actorId(req));
     res.json({ supplier });
   } catch (error: unknown) {
     if (mapError(error, res)) return;
@@ -134,7 +139,7 @@ router.post('/suppliers/:id/deactivate', requireRole('owner', 'manager'), (req, 
 
 router.get('/suppliers/:id/products', requireRole('owner', 'manager', 'chef'), (req, res) => {
   try {
-    res.json({ mappings: listSupplierProducts(req.params.id) });
+    res.json({ mappings: listSupplierProducts(routeParam(req.params.id)) });
   } catch (error: unknown) {
     if (mapError(error, res)) return;
     console.error('[API] list supplier products error:', error);
@@ -148,7 +153,7 @@ router.post(
   validateBody(supplierProductBodySchema),
   (req, res) => {
     try {
-      const mapping = upsertSupplierProduct(req.params.id, req.body, actorId(req));
+      const mapping = upsertSupplierProduct(routeParam(req.params.id), req.body, actorId(req));
       res.status(201).json({ mapping });
     } catch (error: unknown) {
       if (mapError(error, res)) return;
@@ -189,7 +194,7 @@ router.post(
 
 router.get('/purchase-orders/:id', requireRole('owner', 'manager', 'chef'), (req, res) => {
   try {
-    res.json(getPurchaseOrder(req.params.id));
+    res.json(getPurchaseOrder(routeParam(req.params.id)));
   } catch (error: unknown) {
     if (mapError(error, res)) return;
     console.error('[API] get PO error:', error);
@@ -199,7 +204,7 @@ router.get('/purchase-orders/:id', requireRole('owner', 'manager', 'chef'), (req
 
 router.get('/purchase-orders/:id/receipts', requireRole('owner', 'manager', 'chef'), (req, res) => {
   try {
-    res.json({ receipts: listReceipts(req.params.id) });
+    res.json({ receipts: listReceipts(routeParam(req.params.id)) });
   } catch (error: unknown) {
     if (mapError(error, res)) return;
     console.error('[API] list receipts error:', error);
@@ -214,7 +219,7 @@ router.post(
   (req, res) => {
     try {
       const result = transitionPurchaseOrderStatus(
-        req.params.id,
+        routeParam(req.params.id),
         req.body.status as PurchaseOrderStatus,
         actorId(req),
       );
@@ -240,7 +245,7 @@ router.post(
       }
       const idempotencyKey = requireIdempotencyKey(req);
       const result = receivePurchaseOrder({
-        purchaseOrderId: req.params.id,
+        purchaseOrderId: routeParam(req.params.id),
         lines: req.body.lines,
         notes: req.body.notes,
         actorUserId: actor,

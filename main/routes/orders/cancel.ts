@@ -30,6 +30,7 @@ import {
   decrementTrackedStock,
   restoreTrackedStock,
 } from '../../services/inventory';
+import type { StockTrackedProduct } from '../../services/inventory';
 import {
   consumeRecipeForOrderItem,
   reverseRecipeConsumptionForOrder,
@@ -50,7 +51,12 @@ import {
   TableServiceError,
 } from '../../services/tables';
 import { DOMAIN_SPAN, withSpan } from '../../lib/tracing';
-import { addOrderItemsBodySchema, createOrderBodySchema, orderDiscountBodySchema, orderStatusBodySchema } from '../../validation/orders';
+import {
+  addOrderItemsBodySchema,
+  createOrderBodySchema,
+  orderDiscountBodySchema,
+  orderStatusBodySchema,
+} from '../../validation/orders';
 import { readTerminalIdHeaderFromRequest, resolveActiveShiftForOrder } from '../../services/shift';
 import { orderHasSuccessfulTender } from '../../services/payment-tender';
 import { dualFromMajor, billPaidCents, fromCents } from '../../lib/money';
@@ -66,11 +72,17 @@ import {
   lookupOrderIdempotencyReplay,
   storeOrderIdempotency,
   batchHydrateOrders,
-  getAuthUser, errorMessage, errorStatus, type OrderRow, type OrderItemRow,
+  getAuthUser,
+  errorMessage,
+  errorStatus,
+  asTaxCustomer,
+  itemsForAddons,
+  type OrderRow,
+  type OrderItemRow,
 } from '../orders-shared';
+import { routeParam } from '../../lib/route-params';
 
 export { checkPinRateLimit } from '../orders-shared';
-
 
 export function registerCancelRoutes(router: Router): void {
   router.patch(
@@ -79,20 +91,24 @@ export function registerCancelRoutes(router: Router): void {
     async (req, res) => {
       try {
         await withSpan('order', DOMAIN_SPAN.order.cancelItem, async () => {
-          const { orderId, itemId } = req.params;
+          const orderId = routeParam(req.params.orderId);
+          const itemId = routeParam(req.params.itemId);
           const { override_pin } = req.body;
 
           // requireAuth (main/server.ts) already verified the token and attached
           // the user's current DB role to req.user — use that, not the JWT claim.
-          const userRole = getAuthUser(req)?.role;
-          if (!userRole) return res.status(403).json({ error: 'Authentication required' });
+          const authUser = getAuthUser(req);
+          const userRole = authUser?.role;
+          if (!userRole || !authUser)
+            return res.status(403).json({ error: 'Authentication required' });
 
           const db = getDatabase();
-          const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as OrderRow | undefined;
+          const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as
+            OrderRow | undefined;
           if (!order) {
             return res.status(404).json({ error: 'Order not found' });
           }
-          if (userRole === 'waiter' && String(order.user_id) !== String(getAuthUser(req).userId)) {
+          if (userRole === 'waiter' && String(order.user_id) !== String(authUser.userId)) {
             return res.status(403).json({ error: 'Waiters can only modify their own orders' });
           }
 
@@ -106,7 +122,7 @@ export function registerCancelRoutes(router: Router): void {
 
           const item = db
             .prepare('SELECT * FROM order_items WHERE id = ? AND order_id = ?')
-            .get(itemId, orderId) as OrderRow | undefined;
+            .get(itemId, orderId) as OrderItemRow | undefined;
           if (!item) {
             return res.status(404).json({ error: 'Item not found in this order' });
           }
@@ -126,7 +142,7 @@ export function registerCancelRoutes(router: Router): void {
           // the whole-order-cancel override pattern below (routes/orders.ts
           // ~L580-609), and leaves a negative bill line so the removal stays
           // visible on the bill rather than the item just vanishing.
-          const isInProgressVoid = ['preparing', 'ready'].includes(item.status);
+          const isInProgressVoid = ['preparing', 'ready'].includes(item.status ?? '');
           const isPrivilegedRole = ['owner', 'manager'].includes(userRole);
           const canUseOverride = ['cashier', 'waiter'].includes(userRole) && isInProgressVoid;
           let pinApproverId: string | null = null;
@@ -149,7 +165,7 @@ export function registerCancelRoutes(router: Router): void {
             }
 
             const managerId = req.body.manager_id || req.body.user_id;
-            let pinUser: any = null;
+            let pinUser: OrderRow | null = null;
             if (managerId) {
               const candidate = db
                 .prepare(
@@ -165,7 +181,7 @@ export function registerCancelRoutes(router: Router): void {
                 .prepare(
                   "SELECT * FROM users WHERE pin_hash IS NOT NULL AND role IN ('owner', 'manager') AND is_active = 1",
                 )
-                .all() as OrderItemRow[];
+                .all() as OrderRow[];
               for (const u of managers) {
                 if (verifyPin(u.pin_hash, override_pin)) {
                   pinUser = u;
@@ -176,7 +192,7 @@ export function registerCancelRoutes(router: Router): void {
             if (!pinUser) {
               return res.status(403).json({ error: 'Invalid manager PIN' });
             }
-            pinApproverId = pinUser.id;
+            pinApproverId = String(pinUser.id);
           }
 
           const auditContext = {
@@ -206,15 +222,15 @@ export function registerCancelRoutes(router: Router): void {
                 item.product_id,
                 `Void: ${item.product_name}`,
                 item.product_sku,
-                -item.unit_price,
+                -(item.unit_price ?? 0),
                 item.quantity,
-                -item.subtotal,
+                -(item.subtotal ?? 0),
                 -(item.tax_amount || 0),
                 invertTaxBreakdown(item.tax_breakdown),
                 invertTaxSnapshot(item.tax_snapshot),
                 item.tax_type,
                 -(item.discount_amount || 0),
-                -item.total,
+                -(item.total ?? 0),
                 item.variant_selection,
                 item.modifier_selection,
                 now(),
@@ -262,7 +278,7 @@ export function registerCancelRoutes(router: Router): void {
             // BUG #13 FIX: Preserve order-level discount (scale percentage proportionally)
             const existingDiscountAmount = order.discount_amount || 0;
             let newDiscountAmount = existingDiscountAmount;
-            if (existingDiscountAmount > 0 && order.subtotal > 0) {
+            if (existingDiscountAmount > 0 && (order.subtotal ?? 0) > 0) {
               if (order.discount_type === 'percentage') {
                 const pct = order.discount_value || 0;
                 newDiscountAmount = Math.round(((subtotal * pct) / 100) * 100) / 100;
@@ -287,7 +303,8 @@ export function registerCancelRoutes(router: Router): void {
               taxes_enabled: getSettingValue('taxes_enabled') === 'true',
             };
             const customer = order.customer_id
-              ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(order.customer_id) as OrderRow | undefined)
+              ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(order.customer_id) as
+                  OrderRow | undefined)
               : null;
             const chargeTaxes = calculateConfiguredChargeTaxes(
               tenantInfo,
@@ -295,7 +312,7 @@ export function registerCancelRoutes(router: Router): void {
                 ...order,
                 service_charge: 0,
               },
-              customer,
+              asTaxCustomer(customer),
             );
             const taxRollup = combineItemAndChargeTaxes({
               itemTaxAmount: newTaxAmount,
@@ -342,11 +359,17 @@ export function registerCancelRoutes(router: Router): void {
                 const product = db
                   .prepare('SELECT * FROM products WHERE id = ?')
                   .get(i.product_id) as OrderRow | undefined;
-                restoreTrackedStock(db, product, i.quantity, now(), {
-                  referenceType: 'order',
-                  referenceId: orderId,
-                  reason: 'all_items_cancelled',
-                });
+                restoreTrackedStock(
+                  db,
+                  product as StockTrackedProduct | undefined,
+                  i.quantity ?? 0,
+                  now(),
+                  {
+                    referenceType: 'order',
+                    referenceId: orderId,
+                    reason: 'all_items_cancelled',
+                  },
+                );
                 reverseRecipeConsumptionForOrderItem(db, {
                   orderItemId: Number(i.id),
                   actorUserId: getAuthUser(req)?.userId ?? null,
@@ -364,31 +387,31 @@ export function registerCancelRoutes(router: Router): void {
                 const discD = dualFromMajor(newDiscountAmount);
                 const totD = dualFromMajor(total);
                 db.prepare(
-                `
+                  `
             UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?,
               status = 'cancelled', cancelled_at = ?, cancellation_reason = ?,
               subtotal_cents = ?, tax_amount_cents = ?, discount_amount_cents = ?, total_cents = ?, updated_at = ? WHERE id = ?
           `,
-              ).run(
-                subD.major,
-                taxD.major,
-                JSON.stringify(taxRollup.breakdowns),
-                taxRollup.snapshotJson,
-                discD.major,
-                totD.major,
-                roundOff,
-                now(),
-                'All items cancelled',
-                subD.cents,
-                taxD.cents,
-                discD.cents,
-                totD.cents,
-                now(),
-                orderId,
-              );
+                ).run(
+                  subD.major,
+                  taxD.major,
+                  JSON.stringify(taxRollup.breakdowns),
+                  taxRollup.snapshotJson,
+                  discD.major,
+                  totD.major,
+                  roundOff,
+                  now(),
+                  'All items cancelled',
+                  subD.cents,
+                  taxD.cents,
+                  discD.cents,
+                  totD.cents,
+                  now(),
+                  orderId,
+                );
               }
               if (isModuleEnabled('tables') && order.table_id) {
-                freeTableIfModule(db, order.table_id, now());
+                freeTableIfModule(db, String(order.table_id), now());
               }
             } else {
               {
@@ -397,25 +420,25 @@ export function registerCancelRoutes(router: Router): void {
                 const discD = dualFromMajor(newDiscountAmount);
                 const totD = dualFromMajor(total);
                 db.prepare(
-                `
+                  `
             UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?,
               subtotal_cents = ?, tax_amount_cents = ?, discount_amount_cents = ?, total_cents = ?, updated_at = ? WHERE id = ?
           `,
-              ).run(
-                subD.major,
-                taxD.major,
-                JSON.stringify(taxRollup.breakdowns),
-                taxRollup.snapshotJson,
-                discD.major,
-                totD.major,
-                roundOff,
-                subD.cents,
-                taxD.cents,
-                discD.cents,
-                totD.cents,
-                now(),
-                orderId,
-              );
+                ).run(
+                  subD.major,
+                  taxD.major,
+                  JSON.stringify(taxRollup.breakdowns),
+                  taxRollup.snapshotJson,
+                  discD.major,
+                  totD.major,
+                  roundOff,
+                  subD.cents,
+                  taxD.cents,
+                  discD.cents,
+                  totD.cents,
+                  now(),
+                  orderId,
+                );
               }
             }
 
@@ -431,40 +454,51 @@ export function registerCancelRoutes(router: Router): void {
                 total,
                 pack,
               );
-              const newBillBalance = Math.max(0, billTotal - fromCents(billPaidCents(existingBill as { paid_amount_cents?: unknown; paid_amount?: unknown })));
+              const newBillBalance = Math.max(
+                0,
+                billTotal -
+                  fromCents(
+                    billPaidCents(
+                      existingBill as { paid_amount_cents?: unknown; paid_amount?: unknown },
+                    ),
+                  ),
+              );
               {
                 const totD = dualFromMajor(billTotal);
                 const balD = dualFromMajor(newBillBalance);
                 const taxD = dualFromMajor(taxRollup.taxAmount);
                 const discD = dualFromMajor(newDiscountAmount);
                 db.prepare(
-                `UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?,
+                  `UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?,
                   total_cents = ?, balance_cents = ?, tax_amount_cents = ?, discount_amount_cents = ?, updated_at = ? WHERE id = ?`,
-              ).run(
-                totD.major,
-                balD.major,
-                taxD.major,
-                JSON.stringify(taxRollup.breakdowns),
-                taxRollup.snapshotJson,
-                discD.major,
-                billRoundOff,
-                totD.cents,
-                balD.cents,
-                taxD.cents,
-                discD.cents,
-                now(),
-                existingBill.id,
-              );
+                ).run(
+                  totD.major,
+                  balD.major,
+                  taxD.major,
+                  JSON.stringify(taxRollup.breakdowns),
+                  taxRollup.snapshotJson,
+                  discD.major,
+                  billRoundOff,
+                  totD.cents,
+                  balD.cents,
+                  taxD.cents,
+                  discD.cents,
+                  now(),
+                  existingBill.id,
+                );
               }
             }
 
-            const updatedOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as OrderRow | undefined;
+            const updatedOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as
+              OrderRow | undefined;
             const items = attachEffectiveAddons(
               db,
-              db
-                .prepare('SELECT * FROM order_items WHERE order_id = ?')
-                .all(orderId)
-                .map(parseItemJson) as OrderItemRow[],
+              itemsForAddons(
+                db
+                  .prepare('SELECT * FROM order_items WHERE order_id = ?')
+                  .all(orderId)
+                  .map(parseItemJson) as OrderItemRow[],
+              ),
             );
 
             logAuditEvent({
@@ -515,7 +549,8 @@ export function registerCancelRoutes(router: Router): void {
   // Restore cancelled order item (relocated from index.ts — Phase 2.14; paths identical under /api/orders)
   router.patch('/:orderId/items/:itemId/restore', requireRole('owner', 'manager'), (req, res) => {
     try {
-      const { orderId, itemId } = req.params;
+      const orderId = routeParam(req.params.orderId);
+      const itemId = routeParam(req.params.itemId);
 
       // requireAuth (main/server.ts) already verified the token and attached
       // the user's current DB role to req.user — use that, not the JWT claim.
@@ -525,14 +560,15 @@ export function registerCancelRoutes(router: Router): void {
       }
 
       const db = getDatabase();
-      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as OrderRow | undefined;
+      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as
+        OrderRow | undefined;
       if (!order) {
         return res.status(404).json({ error: 'Order not found' });
       }
 
       const item = db
         .prepare('SELECT * FROM order_items WHERE id = ? AND order_id = ?')
-        .get(itemId, orderId) as OrderRow | undefined;
+        .get(itemId, orderId) as OrderItemRow | undefined;
       if (!item) {
         return res.status(404).json({ error: 'Item not found in this order' });
       }
@@ -544,7 +580,7 @@ export function registerCancelRoutes(router: Router): void {
         });
       }
 
-      if (['completed', 'cancelled'].includes(order.status)) {
+      if (['completed', 'cancelled'].includes(order.status ?? '')) {
         return res
           .status(400)
           .json({ error: 'Cannot restore items on completed or cancelled orders' });
@@ -600,7 +636,7 @@ export function registerCancelRoutes(router: Router): void {
         // BUG #13 FIX: Preserve order-level discount (scale percentage proportionally)
         const existingDiscountAmount = order.discount_amount || 0;
         let newDiscountAmount = existingDiscountAmount;
-        if (existingDiscountAmount > 0 && order.subtotal > 0) {
+        if (existingDiscountAmount > 0 && (order.subtotal ?? 0) > 0) {
           if (order.discount_type === 'percentage') {
             const pct = order.discount_value || 0;
             newDiscountAmount = Math.round(((subtotal * pct) / 100) * 100) / 100;
@@ -625,7 +661,8 @@ export function registerCancelRoutes(router: Router): void {
           taxes_enabled: getSettingValue('taxes_enabled') === 'true',
         };
         const customer = order.customer_id
-          ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(order.customer_id) as OrderRow | undefined)
+          ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(order.customer_id) as
+              OrderRow | undefined)
           : null;
         const chargeTaxes = calculateConfiguredChargeTaxes(
           tenantInfo,
@@ -633,7 +670,7 @@ export function registerCancelRoutes(router: Router): void {
             ...order,
             service_charge: 0,
           },
-          customer,
+          asTaxCustomer(customer),
         );
         const taxRollup = combineItemAndChargeTaxes({
           itemTaxAmount: newTaxAmount,
@@ -659,25 +696,25 @@ export function registerCancelRoutes(router: Router): void {
           const discD = dualFromMajor(newDiscountAmount);
           const totD = dualFromMajor(total);
           db.prepare(
-          `
+            `
           UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?,
             subtotal_cents = ?, tax_amount_cents = ?, discount_amount_cents = ?, total_cents = ?, updated_at = ? WHERE id = ?
         `,
-        ).run(
-          subD.major,
-          taxD.major,
-          JSON.stringify(taxRollup.breakdowns),
-          taxRollup.snapshotJson,
-          discD.major,
-          totD.major,
-          roundOff,
-          subD.cents,
-          taxD.cents,
-          discD.cents,
-          totD.cents,
-          now(),
-          orderId,
-        );
+          ).run(
+            subD.major,
+            taxD.major,
+            JSON.stringify(taxRollup.breakdowns),
+            taxRollup.snapshotJson,
+            discD.major,
+            totD.major,
+            roundOff,
+            subD.cents,
+            taxD.cents,
+            discD.cents,
+            totD.cents,
+            now(),
+            orderId,
+          );
         }
 
         // Sync bill if it exists (open unpaid/partial only — never rewrite refunded bills)
@@ -689,40 +726,51 @@ export function registerCancelRoutes(router: Router): void {
         if (existingBill) {
           const pack = getActiveCountryPack(tenantInfo.country);
           const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(total, pack);
-          const newBillBalance = Math.max(0, billTotal - fromCents(billPaidCents(existingBill as { paid_amount_cents?: unknown; paid_amount?: unknown })));
+          const newBillBalance = Math.max(
+            0,
+            billTotal -
+              fromCents(
+                billPaidCents(
+                  existingBill as { paid_amount_cents?: unknown; paid_amount?: unknown },
+                ),
+              ),
+          );
           {
             const totD = dualFromMajor(billTotal);
             const balD = dualFromMajor(newBillBalance);
             const taxD = dualFromMajor(taxRollup.taxAmount);
             const discD = dualFromMajor(newDiscountAmount);
             db.prepare(
-            `UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?,
+              `UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?,
               total_cents = ?, balance_cents = ?, tax_amount_cents = ?, discount_amount_cents = ?, updated_at = ? WHERE id = ?`,
-          ).run(
-            totD.major,
-            balD.major,
-            taxD.major,
-            JSON.stringify(taxRollup.breakdowns),
-            taxRollup.snapshotJson,
-            discD.major,
-            billRoundOff,
-            totD.cents,
-            balD.cents,
-            taxD.cents,
-            discD.cents,
-            now(),
-            existingBill.id,
-          );
+            ).run(
+              totD.major,
+              balD.major,
+              taxD.major,
+              JSON.stringify(taxRollup.breakdowns),
+              taxRollup.snapshotJson,
+              discD.major,
+              billRoundOff,
+              totD.cents,
+              balD.cents,
+              taxD.cents,
+              discD.cents,
+              now(),
+              existingBill.id,
+            );
           }
         }
 
-        const updatedOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as OrderRow | undefined;
+        const updatedOrder = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId) as
+          OrderRow | undefined;
         const items = attachEffectiveAddons(
           db,
-          db
-            .prepare('SELECT * FROM order_items WHERE order_id = ?')
-            .all(orderId)
-            .map(parseItemJson) as OrderItemRow[],
+          itemsForAddons(
+            db
+              .prepare('SELECT * FROM order_items WHERE order_id = ?')
+              .all(orderId)
+              .map(parseItemJson) as OrderItemRow[],
+          ),
         );
         return { updatedOrder, items };
       });
@@ -735,7 +783,7 @@ export function registerCancelRoutes(router: Router): void {
       console.error('[API] Internal error:', error);
       res.status(errorStatus(error) || 500).json({
         error: errorStatus(error) ? errorMessage(error) : 'Internal server error',
-        ...(error.code ? { code: error.code } : {}),
+        ...((error as { code?: string }).code ? { code: (error as { code?: string }).code } : {}),
       });
     }
   });

@@ -80,6 +80,7 @@ export default function StaffDetailPage() {
 
   const active = Boolean(staff.is_active);
   const shifts = staff.recent_shifts || [];
+  const salesAmount = formatCurrency(Number(staff.performance?.total_sales || 0));
 
   return (
     <div className="space-y-4">
@@ -88,7 +89,7 @@ export default function StaffDetailPage() {
         actions={
           <Button variant="outline" className="min-h-11" asChild>
             <Link href="/staff">
-              <ArrowLeft size={16} className="mr-1" /> Back
+              <ArrowLeft size={16} className="mr-1" /> {t('common.back')}
             </Link>
           </Button>
         }
@@ -102,32 +103,38 @@ export default function StaffDetailPage() {
                 {ROLE_LABEL_KEY[staff.role] ? t(ROLE_LABEL_KEY[staff.role]) : staff.role}
               </StatusBadge>
               <StatusBadge variant={active ? 'success' : 'danger'}>
-                {active ? t('staff.reactivate') : t('staff.deactivate')}
+                {active ? t('common.active') : t('common.inactive')}
               </StatusBadge>
             </div>
             <p className="text-flo-text-secondary">
-              Open shifts: {Number(staff.open_shift_count || 0)}
+              {t('staff.openShifts', { count: Number(staff.open_shift_count || 0) })}
             </p>
             {staff.created_at ? (
-              <p className="text-flo-text-secondary">Created: {String(staff.created_at)}</p>
+              <p className="text-flo-text-secondary">
+                {t('common.created')} {String(staff.created_at)}
+              </p>
             ) : null}
             {staff.updated_at ? (
-              <p className="text-flo-text-secondary">Updated: {String(staff.updated_at)}</p>
+              <p className="text-flo-text-secondary">
+                {t('staff.updated', { date: String(staff.updated_at) })}
+              </p>
             ) : null}
           </div>
         </Panel>
 
-        <Panel title="Today">
+        <Panel title={t('staff.today')}>
           <div className="space-y-1 text-sm">
-            <p>Orders: {Number(staff.performance?.orders_served || 0)}</p>
-            <p>Sales: {formatCurrency(Number(staff.performance?.total_sales || 0))}</p>
+            <p>
+              {t('staff.ordersToday', { count: Number(staff.performance?.orders_served || 0) })}
+            </p>
+            <p>{t('staff.salesToday', { amount: salesAmount })}</p>
           </div>
         </Panel>
       </div>
 
-      <Panel title="Shift history">
+      <Panel title={t('staff.shiftHistory')}>
         {shifts.length === 0 ? (
-          <p className="text-sm text-flo-text-secondary">No shifts linked yet.</p>
+          <p className="text-sm text-flo-text-secondary">{t('staff.noShifts')}</p>
         ) : (
           <ul className="divide-y divide-flo-border text-sm">
             {shifts.map((s) => (

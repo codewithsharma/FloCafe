@@ -110,6 +110,22 @@ export function applyKitchenItemStatus(
   }
 
   const nowStr = args.nowStr ?? dbNow();
+
+  // Idempotent when already at target — but only if CAS expected is absent or
+  // already matches current. Stale expected + already-at-target = STATUS_CONFLICT
+  // (concurrent loser / lost-response with old expected), matching CAS miss.
+  if (item.status === args.status) {
+    if (args.expectedStatus !== undefined && args.expectedStatus !== item.status) {
+      throw new KitchenStatusError('STATUS_CONFLICT', 409, 'STATUS_CONFLICT');
+    }
+    return {
+      itemId: item.id,
+      status: args.status,
+      previousStatus: item.status,
+      orderId: item.order_id,
+    };
+  }
+
   const timestamps = computeKitchenTimestamps(item, args.status, nowStr);
 
   const updateResult =

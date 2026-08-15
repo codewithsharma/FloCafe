@@ -90,7 +90,7 @@ async function resolvePublicHostname(hostname: string): Promise<string> {
   try {
     addresses = await dns.promises.lookup(hostname, { all: true, verbatim: true });
   } catch (error: unknown) {
-    if (error?.code === 'ENOTFOUND') {
+    if ((error as NodeJS.ErrnoException)?.code === 'ENOTFOUND') {
       throw error;
     }
     throw new Error('Could not resolve hostname');
@@ -552,7 +552,7 @@ router.post('/fetch-url', requireRole('owner', 'manager'), async (req: Request, 
       try {
         resolvedAddress = await resolvePublicHostname(parsedUrl.hostname);
       } catch (error: unknown) {
-        if (error?.code === 'ENOTFOUND') {
+        if ((error as NodeJS.ErrnoException)?.code === 'ENOTFOUND') {
           return res.status(502).json({ error: 'Could not resolve hostname' });
         }
         return res.status(400).json({ error: 'URL is not allowed' });
@@ -666,7 +666,7 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
       if (unit) resolvedUnit = unit;
     } catch (error: unknown) {
       if (error instanceof InventoryServiceError) {
-        return res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
+        return res.status(error.statusCode).json({ error: error.message });
       }
       throw error;
     }
@@ -776,7 +776,7 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
       });
     } catch (error: unknown) {
       if (error instanceof InventoryServiceError) {
-        return res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
+        return res.status(error.statusCode).json({ error: error.message });
       }
       throw error;
     }
@@ -833,7 +833,7 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
         }
       } catch (error: unknown) {
         if (error instanceof InventoryServiceError) {
-          return res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
+          return res.status(error.statusCode).json({ error: error.message });
         }
         throw error;
       }
@@ -969,7 +969,7 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
       });
     } catch (error: unknown) {
       if (error instanceof InventoryServiceError) {
-        return res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
+        return res.status(error.statusCode).json({ error: error.message });
       }
       throw error;
     }
@@ -1067,8 +1067,7 @@ router.post(
         `,
           )
           .get(userId, idempotencyKey) as
-          | { request_hash: string; response_json: string }
-          | undefined;
+          { request_hash: string; response_json: string } | undefined;
 
         if (existing) {
           if (existing.request_hash !== requestHash) {
@@ -1083,9 +1082,7 @@ router.post(
         let qty = quantity;
         if (inventory_unit) {
           const product = db
-            .prepare(
-              'SELECT inventory_unit FROM products WHERE id = ? AND deleted_at IS NULL',
-            )
+            .prepare('SELECT inventory_unit FROM products WHERE id = ? AND deleted_at IS NULL')
             .get(productId) as { inventory_unit?: string } | undefined;
           if (!product) {
             throw new InventoryServiceError(404, 'Product not found');
@@ -1130,12 +1127,18 @@ router.post(
       res.json(result);
     } catch (error: unknown) {
       if (error instanceof InventoryServiceError) {
-        return res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
+        return res.status(error.statusCode).json({ error: error.message });
       }
-      if (error?.statusCode) {
-        const payload: { error: string; code?: string } = { error: (error instanceof Error ? error.message : String(error)) };
+      const statusCode =
+        typeof (error as { statusCode?: unknown })?.statusCode === 'number'
+          ? (error as { statusCode: number }).statusCode
+          : undefined;
+      if (statusCode) {
+        const payload: { error: string; code?: string } = {
+          error: error instanceof Error ? error.message : String(error),
+        };
         if ((error as { code?: string }).code) payload.code = (error as { code?: string }).code;
-        return res.status((error as { statusCode?: number }).statusCode).json(payload);
+        return res.status(statusCode).json(payload);
       }
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });

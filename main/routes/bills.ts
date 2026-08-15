@@ -31,9 +31,29 @@ import {
 import { sendEvent } from '../services/telemetry';
 import { readTerminalIdHeaderFromRequest } from '../services/shift';
 import { applyPaymentBatch } from '../services/payment-tender';
-import { batchPaymentBodySchema, billDiscountBodySchema, billGenerateBodySchema, singlePaymentBodySchema } from '../validation/payments';
+import {
+  batchPaymentBodySchema,
+  billDiscountBodySchema,
+  billGenerateBodySchema,
+  singlePaymentBodySchema,
+} from '../validation/payments';
+import type { OrderItemRow } from './orders-shared';
 
 const router = Router();
+
+/** Allocation row from bill_items (quantity assigned to a guest check). */
+interface BillItemAllocationRow {
+  order_item_id: number | string;
+  quantity: number | string;
+}
+
+/** Manager/owner row used only for PIN approval checks. */
+interface PinUserRow {
+  pin_hash: string;
+  [key: string]: unknown;
+}
+
+type RequestAuthUser = { userId?: string; id?: string; role?: string };
 
 function getOrderWithItems(
   db: ReturnType<typeof getDatabase>,
@@ -42,17 +62,17 @@ function getOrderWithItems(
 ): any {
   const order = parseRowJson(db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId));
   if (!order) return order;
-  const allocations =
+  const allocations: BillItemAllocationRow[] =
     billId === undefined
       ? []
       : (db
           .prepare('SELECT order_item_id, quantity FROM bill_items WHERE bill_id = ?')
-          .all(billId) as unknown[]);
+          .all(billId) as BillItemAllocationRow[]);
   const allocated = new Map(
     allocations.map((row) => [Number(row.order_item_id), Number(row.quantity)]),
   );
   const itemRows = (
-    db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(orderId) as unknown[]
+    db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(orderId) as OrderItemRow[]
   )
     .filter((item) => allocations.length === 0 || allocated.has(Number(item.id)))
     .map((item) => {
@@ -202,15 +222,15 @@ router.post(
       const { order_id } = req.body;
 
       const db = getDatabase();
-      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(order_id) as BillSettlementRow | undefined;
+      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(order_id) as
+        BillSettlementRow | undefined;
       if (!order) {
         return res.status(404).json({ error: 'Order not found' });
       }
 
       const result = withTxn(() => {
-        const existingBill = db
-          .prepare('SELECT * FROM bills WHERE order_id = ?')
-          .get(order_id) as BillSettlementRow | undefined;
+        const existingBill = db.prepare('SELECT * FROM bills WHERE order_id = ?').get(order_id) as
+          BillSettlementRow | undefined;
         if (existingBill) {
           if (existingBill.split_group_id)
             return { bill: parseRowJson(existingBill), isNew: false };
@@ -218,10 +238,18 @@ router.post(
           // after the bill was first generated (e.g. discount applied → then checkout clicked).
           // Only sync if the bill is still unpaid (partial or full payments must not be changed).
           const orderSubtotal = fromCents(preferCents(order.subtotal_cents, order.subtotal || 0));
-          const orderTaxAmount = fromCents(preferCents(order.tax_amount_cents, order.tax_amount || 0));
-          const orderDiscountAmt = fromCents(preferCents(order.discount_amount_cents, order.discount_amount || 0));
-          const orderDelivery = fromCents(preferCents(order.delivery_charge_cents, order.delivery_charge || 0));
-          const orderPackaging = fromCents(preferCents(order.packaging_charge_cents, order.packaging_charge || 0));
+          const orderTaxAmount = fromCents(
+            preferCents(order.tax_amount_cents, order.tax_amount || 0),
+          );
+          const orderDiscountAmt = fromCents(
+            preferCents(order.discount_amount_cents, order.discount_amount || 0),
+          );
+          const orderDelivery = fromCents(
+            preferCents(order.delivery_charge_cents, order.delivery_charge || 0),
+          );
+          const orderPackaging = fromCents(
+            preferCents(order.packaging_charge_cents, order.packaging_charge || 0),
+          );
           const orderTotal = fromCents(preferCents(order.total_cents, order.total || 0));
 
           const pack = getActiveCountryPack(getSettingValue('country') || 'IN');
@@ -238,7 +266,10 @@ router.post(
               existingBill.total !== roundedOrderTotal);
 
           if (totalsChanged) {
-            const newBalance = Math.max(0, roundedOrderTotal - fromCents(billPaidCents(existingBill)));
+            const newBalance = Math.max(
+              0,
+              roundedOrderTotal - fromCents(billPaidCents(existingBill)),
+            );
             {
               const subD = dualFromMajor(orderSubtotal);
               const taxD = dualFromMajor(orderTaxAmount);
@@ -248,7 +279,7 @@ router.post(
               const totD = dualFromMajor(roundedOrderTotal);
               const balD = dualFromMajor(newBalance);
               db.prepare(
-              `
+                `
             UPDATE bills
             SET subtotal       = ?,
                 tax_amount     = ?,
@@ -272,29 +303,29 @@ router.post(
                 updated_at     = ?
             WHERE id = ?
           `,
-            ).run(
-              subD.major,
-              taxD.major,
-              order.tax_breakdown,
-              order.tax_snapshot,
-              discD.major,
-              order.discount_type,
-              order.discount_value,
-              order.discount_reason,
-              delD.major,
-              packD.major,
-              orderRoundOff,
-              totD.major,
-              balD.major,
-              subD.cents,
-              taxD.cents,
-              discD.cents,
-              totD.cents,
-              balD.cents,
-              billPaidCents(existingBill),
-              now(),
-              existingBill.id,
-            );
+              ).run(
+                subD.major,
+                taxD.major,
+                order.tax_breakdown,
+                order.tax_snapshot,
+                discD.major,
+                order.discount_type,
+                order.discount_value,
+                order.discount_reason,
+                delD.major,
+                packD.major,
+                orderRoundOff,
+                totD.major,
+                balD.major,
+                subD.cents,
+                taxD.cents,
+                discD.cents,
+                totD.cents,
+                balD.cents,
+                billPaidCents(existingBill),
+                now(),
+                existingBill.id,
+              );
             }
 
             const updated = parseRowJson(
@@ -310,9 +341,15 @@ router.post(
         const billNumber = generateBillNumber();
         const subtotal = fromCents(preferCents(order.subtotal_cents, order.subtotal || 0));
         const taxAmount = fromCents(preferCents(order.tax_amount_cents, order.tax_amount || 0));
-        const discountAmount = fromCents(preferCents(order.discount_amount_cents, order.discount_amount || 0));
-        const deliveryCharge = fromCents(preferCents(order.delivery_charge_cents, order.delivery_charge || 0));
-        const packagingCharge = fromCents(preferCents(order.packaging_charge_cents, order.packaging_charge || 0));
+        const discountAmount = fromCents(
+          preferCents(order.discount_amount_cents, order.discount_amount || 0),
+        );
+        const deliveryCharge = fromCents(
+          preferCents(order.delivery_charge_cents, order.delivery_charge || 0),
+        );
+        const packagingCharge = fromCents(
+          preferCents(order.packaging_charge_cents, order.packaging_charge || 0),
+        );
         const pack = getActiveCountryPack(getSettingValue('country') || 'IN');
         const { total, adjustment: roundOff } = applyPayableRounding(
           fromCents(preferCents(order.total_cents, order.total || 0)),
@@ -410,8 +447,8 @@ router.post(
           (
             db
               .prepare('SELECT COUNT(*) AS n FROM bills WHERE order_id = ?')
-              .get(source.order_id) as BillSettlementRow | undefined
-          ).n,
+              .get(source.order_id) as { n: number } | undefined
+          )?.n,
         ) > 1
       ) {
         return res.status(409).json({ error: 'This check has already been split' });
@@ -423,7 +460,7 @@ router.post(
         .prepare(
           "SELECT * FROM order_items WHERE order_id = ? AND status NOT IN ('cancelled', 'voided') ORDER BY id",
         )
-        .all(source.order_id) as unknown[];
+        .all(source.order_id) as OrderItemRow[];
       const itemById = new Map(activeItems.map((item) => [Number(item.id), item]));
       const assigned = new Map<number, number>();
       const normalized = checks.map((check: any, index: number) => {
@@ -526,28 +563,28 @@ router.post(
               const discD = dualFromMajor(allocations.discount_amount[index]);
               const totD = dualFromMajor(allocations.total[index]);
               db.prepare(
-              `UPDATE bills SET split_group_id = ?, split_label = ?, subtotal = ?, tax_amount = ?, tax_breakdown = ?, discount_amount = ?, delivery_charge = ?, packaging_charge = ?, round_off = ?, total = ?, balance = ?,
+                `UPDATE bills SET split_group_id = ?, split_label = ?, subtotal = ?, tax_amount = ?, tax_breakdown = ?, discount_amount = ?, delivery_charge = ?, packaging_charge = ?, round_off = ?, total = ?, balance = ?,
                 subtotal_cents = ?, tax_amount_cents = ?, discount_amount_cents = ?, total_cents = ?, balance_cents = ?, updated_at = ? WHERE id = ?`,
-            ).run(
-              groupId,
-              check.label,
-              subD.major,
-              taxD.major,
-              splitBreakdown(index),
-              discD.major,
-              allocations.delivery_charge[index],
-              allocations.packaging_charge[index],
-              allocations.round_off[index],
-              totD.major,
-              totD.major,
-              subD.cents,
-              taxD.cents,
-              discD.cents,
-              totD.cents,
-              totD.cents,
-              now(),
-              source.id,
-            );
+              ).run(
+                groupId,
+                check.label,
+                subD.major,
+                taxD.major,
+                splitBreakdown(index),
+                discD.major,
+                allocations.delivery_charge[index],
+                allocations.packaging_charge[index],
+                allocations.round_off[index],
+                totD.major,
+                totD.major,
+                subD.cents,
+                taxD.cents,
+                discD.cents,
+                totD.cents,
+                totD.cents,
+                now(),
+                source.id,
+              );
             }
             billId = Number(source.id);
           } else {
@@ -609,7 +646,9 @@ router.post(
       notifyOrderUpdated();
       res.status(201).json({ bills: result });
     } catch (error: unknown) {
-      res.status((error as { statusCode?: number }).statusCode || 500).json({ error: (error instanceof Error ? error.message : String(error)) || 'Unable to split check' });
+      res.status((error as { statusCode?: number }).statusCode || 500).json({
+        error: (error instanceof Error ? error.message : String(error)) || 'Unable to split check',
+      });
     }
   },
 );
@@ -678,7 +717,7 @@ router.post(
           true,
           paymentIdempotencyKey(req),
           requestHash,
-          String((req as { user?: { userId?: string; role?: string } }).user.userId),
+          String((req as { user?: RequestAuthUser }).user?.userId),
           readTerminalIdHeaderFromRequest(req),
         ),
       );
@@ -693,7 +732,12 @@ router.post(
       const statusCode = (error as { statusCode?: number }).statusCode || 500;
       console.error('[API] Bill payment failed:', error);
       const payload: { error: string; code?: string } = {
-        error: statusCode >= 500 ? 'Bill payment failed' : (error instanceof Error ? error.message : String(error)),
+        error:
+          statusCode >= 500
+            ? 'Bill payment failed'
+            : error instanceof Error
+              ? error.message
+              : String(error),
       };
       if ((error as { code?: string }).code) payload.code = (error as { code?: string }).code;
       res.status(statusCode).json(payload);
@@ -725,7 +769,7 @@ router.post(
           false,
           paymentIdempotencyKey(req),
           requestHash,
-          String((req as { user?: { userId?: string; role?: string } }).user.userId),
+          String((req as { user?: RequestAuthUser }).user?.userId),
           readTerminalIdHeaderFromRequest(req),
         ),
       );
@@ -740,7 +784,12 @@ router.post(
       const statusCode = (error as { statusCode?: number }).statusCode || 500;
       console.error('[API] Batch bill payment failed:', error);
       const payload: { error: string; code?: string } = {
-        error: statusCode >= 500 ? 'Bill payment failed' : (error instanceof Error ? error.message : String(error)),
+        error:
+          statusCode >= 500
+            ? 'Bill payment failed'
+            : error instanceof Error
+              ? error.message
+              : String(error),
       };
       if ((error as { code?: string }).code) payload.code = (error as { code?: string }).code;
       res.status(statusCode).json(payload);
@@ -785,13 +834,13 @@ router.post(
           return res.status(429).json({ error: 'Too many PIN attempts. Try again in 15 minutes.' });
         }
         const managerId = req.body.manager_id || req.body.user_id;
-        let user: any = null;
+        let user: PinUserRow | null = null;
         if (managerId) {
           const candidate = db
             .prepare(
               "SELECT * FROM users WHERE id = ? AND pin_hash IS NOT NULL AND role IN ('owner', 'manager') AND is_active = 1",
             )
-            .get(managerId) as any;
+            .get(managerId) as PinUserRow | undefined;
           if (candidate && verifyPin(candidate.pin_hash, override_pin)) {
             user = candidate;
           }
@@ -801,7 +850,7 @@ router.post(
             .prepare(
               "SELECT * FROM users WHERE pin_hash IS NOT NULL AND role IN ('owner', 'manager') AND is_active = 1",
             )
-            .all() as unknown[];
+            .all() as PinUserRow[];
           for (const u of managers) {
             if (verifyPin(u.pin_hash, override_pin)) {
               user = u;
@@ -853,7 +902,7 @@ router.post(
       // edits 10% to 20%. Keep inclusive tax out of the payable total.
       const activeItems = db
         .prepare("SELECT * FROM order_items WHERE order_id = ? AND status != 'cancelled'")
-        .all(bill.order_id) as unknown[];
+        .all(bill.order_id) as OrderItemRow[];
       let itemTaxAmount = 0;
       let itemExclusiveTax = 0;
       const itemBreakdowns: any[][] = [];
@@ -868,7 +917,7 @@ router.post(
             if (Array.isArray(breakdown)) itemBreakdowns.push(breakdown);
           } catch {}
         }
-        itemSnapshots.push(item.tax_snapshot || null);
+        itemSnapshots.push((item.tax_snapshot as string | null | undefined) || null);
       }
 
       const discountedSubtotal = Math.max(0, bill.subtotal - discountAmount);
@@ -987,9 +1036,14 @@ router.post(
     } catch (error: unknown) {
       const statusCode = (error as { statusCode?: number }).statusCode || 500;
       console.error('[API] Bill discount failed:', error);
-      res
-        .status(statusCode)
-        .json({ error: statusCode >= 500 ? 'Internal server error' : (error instanceof Error ? error.message : String(error)) });
+      res.status(statusCode).json({
+        error:
+          statusCode >= 500
+            ? 'Internal server error'
+            : error instanceof Error
+              ? error.message
+              : String(error),
+      });
     }
   },
 );
@@ -1031,13 +1085,18 @@ router.post(
       }
 
       // User ID is set by the requireAuth middleware after JWT verification
-      const userId = (req as { user?: { userId?: string; role?: string } }).user?.userId || (req as { user?: { userId?: string; role?: string } }).user?.id || 'unknown';
+      const authUser = (req as { user?: RequestAuthUser }).user;
+      const userId = authUser?.userId || authUser?.id || 'unknown';
 
       const result = await printReceipt(parseInt(req.params.id as string), userId, print_type);
       res.json(result);
     } catch (error: unknown) {
       // Return 404 for "Bill not found", 500 for other errors
-      const statusCode = (error instanceof Error ? error.message : String(error))?.includes('Bill not found') ? 404 : 500;
+      const statusCode = (error instanceof Error ? error.message : String(error))?.includes(
+        'Bill not found',
+      )
+        ? 404
+        : 500;
       console.error('[API] Receipt printing failed:', error);
       res
         .status(statusCode)

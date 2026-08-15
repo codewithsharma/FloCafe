@@ -205,11 +205,12 @@ export default function StaffPage() {
       />
 
       {working.length > 0 ? (
-        <Panel title="Currently working" className="mb-4">
+        <Panel title={t('staff.currentlyWorking')} className="mb-4">
           <ul className="text-sm space-y-1">
             {working.map((w) => (
               <li key={`${w.user_id}-${w.shift_id}`}>
-                {String(w.name)} · {String(w.role)} · terminal {String(w.terminal_id)}
+                {String(w.name)} · {String(w.role)} ·{' '}
+                {t('staff.terminalLabel', { id: String(w.terminal_id) })}
               </li>
             ))}
           </ul>
@@ -219,41 +220,43 @@ export default function StaffPage() {
       <div className="mb-3 flex flex-wrap gap-3 items-end">
         <div>
           <label className="block text-sm text-flo-text-secondary mb-1" htmlFor="staff-search">
-            Search
+            {t('common.search')}
           </label>
           <input
             id="staff-search"
             className="min-h-11 rounded-flo-md border border-flo-border bg-flo-surface px-3 text-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Name or email"
+            placeholder={t('staff.searchPlaceholder')}
           />
         </div>
         <div>
-          <label className="block text-sm text-flo-text-secondary mb-1">Role</label>
+          <label className="block text-sm text-flo-text-secondary mb-1">
+            {t('staff.filterRole')}
+          </label>
           <select
             className="min-h-11 rounded-flo-md border border-flo-border bg-flo-surface px-3 text-sm"
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
           >
-            <option value="">All</option>
-            <option value="owner">Owner</option>
-            <option value="manager">Manager</option>
-            <option value="cashier">Cashier</option>
-            <option value="waiter">Waiter</option>
-            <option value="chef">Chef</option>
+            <option value="">{t('staff.filterAll')}</option>
+            <option value="owner">{t('staff.roleOwner')}</option>
+            <option value="manager">{t('staff.roleManager')}</option>
+            <option value="cashier">{t('staff.roleCashier')}</option>
+            <option value="waiter">{t('staff.roleWaiter')}</option>
+            <option value="chef">{t('staff.roleChef')}</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm text-flo-text-secondary mb-1">Active</label>
+          <label className="block text-sm text-flo-text-secondary mb-1">{t('common.active')}</label>
           <select
             className="min-h-11 rounded-flo-md border border-flo-border bg-flo-surface px-3 text-sm"
             value={activeFilter}
             onChange={(e) => setActiveFilter(e.target.value)}
           >
-            <option value="">All</option>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
+            <option value="">{t('staff.filterAll')}</option>
+            <option value="true">{t('common.active')}</option>
+            <option value="false">{t('common.inactive')}</option>
           </select>
         </div>
       </div>

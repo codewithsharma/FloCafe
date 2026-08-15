@@ -180,7 +180,10 @@ type PendingStatusRetry = {
   itemId: number;
   status: KitchenStatus;
   expectedStatus?: KitchenStatus;
+  attempts: number;
 };
+
+const MAX_PENDING_STATUS_RETRY_ATTEMPTS = 3;
 
 const LOGIN_ENDPOINT = '/auth/login';
 const ME_ENDPOINT = '/auth/me';
@@ -255,8 +258,9 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
   const tryWebSocketRef = useRef<(token: string, retryDuringMaintenance?: boolean) => void>(
     () => {},
   );
-  // H2: one silent retry of a chef status PATCH that failed while offline, after reconnect.
-  const pendingRetryRef = useRef<PendingStatusRetry | null>(null);
+  // H2 deepen: queue failed chef status PATCHes per item; flush after reconnect.
+  // Clear only on success/409/auth — silent failures re-queue until attempt cap.
+  const pendingRetriesRef = useRef<Map<number, PendingStatusRetry>>(new Map());
   const updateItemStatusRef = useRef<
     (
       itemId: number,
@@ -266,13 +270,13 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
   >(async () => false);
 
   const flushPendingStatusRetry = useCallback(() => {
-    const pending = pendingRetryRef.current;
-    if (!pending) return;
-    pendingRetryRef.current = null;
-    void updateItemStatusRef.current(pending.itemId, pending.status, {
-      silent: true,
-      expectedStatus: pending.expectedStatus,
-    });
+    const pending = Array.from(pendingRetriesRef.current.values());
+    for (const entry of pending) {
+      void updateItemStatusRef.current(entry.itemId, entry.status, {
+        silent: true,
+        expectedStatus: entry.expectedStatus,
+      });
+    }
   }, []);
 
   const stopRestPolling = useCallback(() => {
@@ -381,10 +385,7 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
           status,
           ...(opts.expectedStatus ? { expected_status: opts.expectedStatus } : {}),
         });
-        // Successful apply clears any queued offline retry for this item (or any prior).
-        if (pendingRetryRef.current?.itemId === itemId) {
-          pendingRetryRef.current = null;
-        }
+        pendingRetriesRef.current.delete(itemId);
         if (
           generation === sessionGenerationRef.current &&
           connectionMode === 'rest' &&
@@ -403,7 +404,7 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
         const errorMessage = axiosError.response?.data?.error || t('kds.failedToUpdateItem');
         const kdsDisabled = /kds is disabled/i.test(errorMessage);
         if (statusCode === 409) {
-          pendingRetryRef.current = null;
+          pendingRetriesRef.current.delete(itemId);
           await fetchOrdersRest();
           if (!opts.silent) toast.error(errorMessage);
           return false;
@@ -413,7 +414,7 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
             errorMessage,
           );
         if (statusCode === 401 || (statusCode === 403 && !kdsDisabled && authorizationFailure)) {
-          pendingRetryRef.current = null;
+          pendingRetriesRef.current.clear();
           sessionGenerationRef.current += 1;
           if (statusCode === 401) window.localStorage.removeItem('token');
           else markKdsAuthBlocked();
@@ -438,7 +439,7 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
           return false;
         }
         if (kdsDisabled) {
-          pendingRetryRef.current = null;
+          pendingRetriesRef.current.clear();
           sessionGenerationRef.current += 1;
           restRequestSequenceRef.current += 1;
           updatingIdsRef.current.clear();
@@ -462,20 +463,30 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
           setLoginError(errorMessage);
           return false;
         }
-        // Network / server blip: queue one silent retry after reconnect (H2). Skip when
-        // this failure itself was already a reconnect retry (opts.silent).
+        // Network / server blip: queue silent retry after reconnect (H2 deepen).
+        // Re-queue silent failures until attempt cap (do not drop on first silent fail).
         const retryableOffline =
-          !opts.silent &&
-          (statusCode === undefined ||
-            statusCode >= 500 ||
-            statusCode === 408 ||
-            statusCode === 429);
+          statusCode === undefined || statusCode >= 500 || statusCode === 408 || statusCode === 429;
         if (retryableOffline) {
-          pendingRetryRef.current = {
-            itemId,
-            status,
-            expectedStatus: opts.expectedStatus,
-          };
+          const prior = pendingRetriesRef.current.get(itemId);
+          const attempts = (opts.silent ? (prior?.attempts ?? 0) : 0) + (opts.silent ? 1 : 0);
+          if (!opts.silent) {
+            pendingRetriesRef.current.set(itemId, {
+              itemId,
+              status,
+              expectedStatus: opts.expectedStatus,
+              attempts: 0,
+            });
+          } else if (attempts < MAX_PENDING_STATUS_RETRY_ATTEMPTS) {
+            pendingRetriesRef.current.set(itemId, {
+              itemId,
+              status,
+              expectedStatus: opts.expectedStatus,
+              attempts,
+            });
+          } else {
+            pendingRetriesRef.current.delete(itemId);
+          }
         }
         if (!opts.silent) {
           toast.error(t('kds.failedToUpdateItem'));

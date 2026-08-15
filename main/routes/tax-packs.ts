@@ -934,7 +934,11 @@ router.get('/catalog', requireRole('owner', 'manager'), async (_req: Request, re
     });
   } catch (error: unknown) {
     console.error('[Tax Packs] Catalog fetch failed:', error);
-    res.status(502).json({ error: error.message || 'Could not check the tax pack catalog' });
+    res.status(502).json({
+      error:
+        (error instanceof Error ? error.message : String(error)) ||
+        'Could not check the tax pack catalog',
+    });
   }
 });
 
@@ -1010,10 +1014,15 @@ router.post(
       upsertSettings({ taxes_enabled: 'true' });
       return res.json({ enabled: true, country, pack_id: pack.id, version: version.version });
     } catch (error: unknown) {
-      const statusCode = error.statusCode || 502;
-      return res
-        .status(statusCode)
-        .json({ error: error.message || 'Could not install the country tax plugin' });
+      const status =
+        typeof (error as { statusCode?: unknown }).statusCode === 'number'
+          ? (error as { statusCode: number }).statusCode
+          : 502;
+      return res.status(status).json({
+        error:
+          (error instanceof Error ? error.message : String(error)) ||
+          'Could not install the country tax plugin',
+      });
     }
   },
 );
@@ -1372,10 +1381,15 @@ router.post('/manual-config', requireRole('owner'), (req: Request, res: Response
       validation,
     });
   } catch (error: unknown) {
-    const statusCode = error.statusCode || 500;
-    return res
-      .status(statusCode)
-      .json({ error: error.message || 'Could not save manual tax configuration' });
+    const status =
+      typeof (error as { statusCode?: unknown }).statusCode === 'number'
+        ? (error as { statusCode: number }).statusCode
+        : 500;
+    return res.status(status).json({
+      error:
+        (error instanceof Error ? error.message : String(error)) ||
+        'Could not save manual tax configuration',
+    });
   }
 });
 
@@ -1395,10 +1409,16 @@ router.post('/catalog/install', requireRole('owner'), async (req: Request, res: 
     const installed = await installCatalogEntry(entry, { actorUserId: actorUserId(req) });
     res.status(201).json({ installed });
   } catch (error: unknown) {
-    const statusCode = error.statusCode || 502;
-    res.status(statusCode).json({
-      error: error.message || 'Could not install tax pack version',
-      ...(error.validation ? { validation: error.validation } : {}),
+    const status =
+      typeof (error as { statusCode?: unknown }).statusCode === 'number'
+        ? (error as { statusCode: number }).statusCode
+        : 502;
+    const validation = (error as { validation?: unknown }).validation;
+    res.status(status).json({
+      error:
+        (error instanceof Error ? error.message : String(error)) ||
+        'Could not install tax pack version',
+      ...(validation ? { validation } : {}),
     });
   }
 });
@@ -1450,8 +1470,14 @@ router.post('/test-calculation', requireRole('owner', 'manager'), (req: Request,
       },
     });
   } catch (error: unknown) {
-    const statusCode = error.statusCode || 400;
-    res.status(statusCode).json({ error: error.message || 'Tax test calculation failed' });
+    const status =
+      typeof (error as { statusCode?: unknown }).statusCode === 'number'
+        ? (error as { statusCode: number }).statusCode
+        : 400;
+    res.status(status).json({
+      error:
+        (error instanceof Error ? error.message : String(error)) || 'Tax test calculation failed',
+    });
   }
 });
 
@@ -1498,14 +1524,19 @@ router.post('/overrides', requireRole('owner'), (req: Request, res: Response) =>
       override: getDatabase().prepare('SELECT * FROM tax_overrides WHERE id = ?').get(id),
     });
   } catch (error: unknown) {
-    const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({
+    const status =
+      typeof (error as { statusCode?: unknown }).statusCode === 'number'
+        ? (error as { statusCode: number }).statusCode
+        : 500;
+    res.status(status).json({
       error:
-        statusCode === 409
+        status === 409
           ? 'An override already exists for this target'
-          : statusCode >= 500
+          : status >= 500
             ? 'Could not create override'
-            : error.message,
+            : error instanceof Error
+              ? error.message
+              : String(error),
     });
   }
 });
@@ -1569,14 +1600,19 @@ router.put('/overrides/:overrideId', requireRole('owner'), (req: Request, res: R
     });
     res.json({ override: db.prepare('SELECT * FROM tax_overrides WHERE id = ?').get(existing.id) });
   } catch (error: unknown) {
-    const statusCode = error.statusCode || 500;
-    res.status(statusCode).json({
+    const status =
+      typeof (error as { statusCode?: unknown }).statusCode === 'number'
+        ? (error as { statusCode: number }).statusCode
+        : 500;
+    res.status(status).json({
       error:
-        statusCode === 409
+        status === 409
           ? 'An override already exists for this target'
-          : statusCode >= 500
+          : status >= 500
             ? 'Could not update override'
-            : error.message,
+            : error instanceof Error
+              ? error.message
+              : String(error),
     });
   }
 });

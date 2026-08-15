@@ -22,6 +22,27 @@ export interface OrderRow {
   tax_amount_cents?: number | null;
   total?: number | null;
   total_cents?: number | null;
+  delivery_charge?: number | null;
+  packaging_charge?: number | null;
+  service_charge?: number | null;
+  tax_breakdown?: string | null;
+  tax_snapshot?: string | null;
+  /** Present when row is a users / products / tables join shape reused at call sites. */
+  pin_hash?: string | null;
+  number?: string | number | null;
+  name?: string | null;
+  sku?: string | null;
+  tax_type?: string | null;
+  tax_rate?: number | null;
+  tax_category?: string | null;
+  tax_category_id?: string | null;
+  tax_behavior?: string | null;
+  track_inventory?: number | boolean | null;
+  stock_quantity?: number | null;
+  price?: number | null;
+  price_cents?: number | null;
+  customer_state_code?: string | null;
+  taxRegistrationNumber?: string | null;
   [key: string]: unknown;
 }
 
@@ -29,6 +50,8 @@ export interface OrderItemRow {
   id: number | string;
   order_id?: string | number;
   product_id?: string | number;
+  product_name?: string | null;
+  product_sku?: string | null;
   unit_price?: number | null;
   unit_price_cents?: number | null;
   quantity?: number | null;
@@ -41,7 +64,40 @@ export interface OrderItemRow {
   total_cents?: number | null;
   status?: string | null;
   tax_breakdown?: string | null;
+  tax_snapshot?: string | null;
+  tax_type?: string | null;
+  variant_selection?: string | null;
+  modifier_selection?: string | null;
   [key: string]: unknown;
+}
+
+/** Structural match for tax.calculateItemTax product arg (private Product interface). */
+export type TaxCalcProduct = {
+  id?: string | number;
+  tax_type: string;
+  tax_rate: number;
+  tax_category?: string;
+  tax_category_id?: string;
+  tax_behavior?: 'country_default' | 'inclusive' | 'exclusive' | 'exempt';
+};
+
+/** Structural match for tax.calculateConfiguredChargeTaxes / calculateItemTax customer arg. */
+export type TaxCalcCustomer = {
+  taxRegistrationNumber?: string;
+  customer_state_code?: string;
+} | null;
+
+export function asTaxProduct(row: OrderRow | Record<string, unknown>): TaxCalcProduct {
+  return row as unknown as TaxCalcProduct;
+}
+
+export function asTaxCustomer(row: OrderRow | null | undefined): TaxCalcCustomer {
+  return (row ?? null) as TaxCalcCustomer;
+}
+
+/** attachEffectiveAddons requires numeric id; map at the call boundary. */
+export function itemsForAddons(items: OrderItemRow[]): Array<OrderItemRow & { id: number }> {
+  return items.map((item) => ({ ...item, id: Number(item.id) }));
 }
 
 export function getAuthUser(req: Request): AuthUser | undefined {
@@ -58,13 +114,7 @@ export function errorStatus(error: unknown): number | undefined {
   return typeof status === 'number' ? status : undefined;
 }
 
-import {
-  getDatabase,
-  now,
-  parseItemJson,
-  parseRowJson,
-  attachEffectiveAddons,
-} from '../db';
+import { getDatabase, now, parseItemJson, parseRowJson, attachEffectiveAddons } from '../db';
 
 const MAX_ORDER_IDEMPOTENCY_KEY_LENGTH = 128;
 
@@ -95,11 +145,12 @@ export function checkPinRateLimit(key: string): boolean {
 }
 
 export function syncCustomerTagCounts(
-  db: { prepare: (sql: string) => { get: (...a: unknown[]) => unknown; run: (...a: unknown[]) => unknown } },
+  db: { prepare: (sql: string) => { get: (...a: any[]) => any; run: (...a: any[]) => any } },
   customerId: string,
   items: { product_id: string; quantity: number }[],
 ) {
-  const row = db.prepare('SELECT tag_counts FROM customers WHERE id = ?').get(customerId) as { tag_counts?: string | null } | undefined;
+  const row = db.prepare('SELECT tag_counts FROM customers WHERE id = ?').get(customerId) as
+    { tag_counts?: string | null } | undefined;
   if (!row) return;
   let counts: Record<string, number> = {};
   try {
@@ -268,7 +319,6 @@ export function storeOrderIdempotency(
   ).run(userId, idempotencyKey, requestHash, JSON.stringify(response), now());
 }
 
-
 export function batchHydrateOrders(db: ReturnType<typeof getDatabase>, orders: any[]) {
   if (orders.length === 0) return [];
   // Normalize JSON text columns (tax_breakdown/tax_snapshot on orders and
@@ -346,4 +396,3 @@ export function batchHydrateOrders(db: ReturnType<typeof getDatabase>, orders: a
     return { ...order, items: itemList, table, customer, bill, bills };
   });
 }
-

@@ -26,6 +26,7 @@ import {
   tableStatusBodySchema,
   tableUpsertBodySchema,
 } from '../validation/tables';
+import { routeParam } from '../lib/route-params';
 
 const router = Router();
 
@@ -35,13 +36,22 @@ function actorId(req: Request): string | null {
 
 function sendTableError(res: Response, error: any): void {
   if (error instanceof TableServiceError) {
-    res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)), code: (error as { code?: string }).code });
+    res.status(error.statusCode ?? 500).json({
+      error: error instanceof Error ? error.message : String(error),
+      code: (error as { code?: string }).code,
+    });
     return;
   }
-  const statusCode = (error as { status?: number }).status || (error as { statusCode?: number }).statusCode || 500;
+  const statusCode =
+    (error as { status?: number }).status || (error as { statusCode?: number }).statusCode || 500;
   console.error('[API] Table operation failed:', error);
   res.status(statusCode).json({
-    error: statusCode >= 500 ? 'Internal server error' : (error instanceof Error ? error.message : String(error)),
+    error:
+      statusCode >= 500
+        ? 'Internal server error'
+        : error instanceof Error
+          ? error.message
+          : String(error),
     code: (error as { code?: string }).code,
   });
 }
@@ -103,88 +113,98 @@ router.get('/:id', (req: Request, res: Response) => {
   }
 });
 
-router.post('/', requireRole('owner', 'manager'), validateBody(tableUpsertBodySchema), (req: Request, res: Response) => {
-  try {
-    const { number, name, capacity, floor, section, position_x, position_y, kitchen_station_id } =
-      req.body;
-    const tableNumber = number || name;
+router.post(
+  '/',
+  requireRole('owner', 'manager'),
+  validateBody(tableUpsertBodySchema),
+  (req: Request, res: Response) => {
+    try {
+      const { number, name, capacity, floor, section, position_x, position_y, kitchen_station_id } =
+        req.body;
+      const tableNumber = number || name;
 
-    if (!tableNumber) {
-      return res.status(400).json({ error: 'Table number is required' });
-    }
-
-    const db = getDatabase();
-    const existing = db.prepare('SELECT * FROM tables WHERE number = ?').get(tableNumber) as any;
-    if (existing) {
-      if (existing.is_active === 0) {
-        return res.status(400).json({
-          error: `Table ${tableNumber} already exists but is deactivated. Please reactivate it from the list.`,
-        });
+      if (!tableNumber) {
+        return res.status(400).json({ error: 'Table number is required' });
       }
-      return res.status(400).json({ error: 'Table number already exists' });
-    }
 
-    const tableId = `tbl-${randomUUID().slice(0, 8)}`;
-    const nowStr = now();
-    withTxn(() => {
-      db.prepare(
-        `
+      const db = getDatabase();
+      const existing = db.prepare('SELECT * FROM tables WHERE number = ?').get(tableNumber) as any;
+      if (existing) {
+        if (existing.is_active === 0) {
+          return res.status(400).json({
+            error: `Table ${tableNumber} already exists but is deactivated. Please reactivate it from the list.`,
+          });
+        }
+        return res.status(400).json({ error: 'Table number already exists' });
+      }
+
+      const tableId = `tbl-${randomUUID().slice(0, 8)}`;
+      const nowStr = now();
+      withTxn(() => {
+        db.prepare(
+          `
       INSERT INTO tables (id, number, capacity, floor, section, position_x, position_y, kitchen_station_id, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
-      ).run(
-        tableId,
-        tableNumber,
-        capacity || 4,
-        floor || null,
-        section || null,
-        position_x || null,
-        position_y || null,
-        kitchen_station_id || null,
-        nowStr,
-        nowStr,
-      );
-      logAuditEvent({
-        actorUserId: actorId(req),
-        action: 'table.created',
-        entityType: 'table',
-        entityId: tableId,
-        metadata: { number: tableNumber, capacity: capacity || 4, floor, section },
+        ).run(
+          tableId,
+          tableNumber,
+          capacity || 4,
+          floor || null,
+          section || null,
+          position_x || null,
+          position_y || null,
+          kitchen_station_id || null,
+          nowStr,
+          nowStr,
+        );
+        logAuditEvent({
+          actorUserId: actorId(req),
+          action: 'table.created',
+          entityType: 'table',
+          entityId: tableId,
+          metadata: { number: tableNumber, capacity: capacity || 4, floor, section },
+        });
       });
-    });
 
-    const table = db.prepare('SELECT * FROM tables WHERE id = ?').get(tableId);
-    res.status(201).json({ table: tableShape(table as any) });
-  } catch (error: unknown) {
-    console.error('[API] Internal error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-router.put('/:id', requireRole('owner', 'manager'), validateParams(tableIdParamsSchema), validateBody(tableUpsertBodySchema), (req: Request, res: Response) => {
-  try {
-    const { number, name, capacity, floor, section, position_x, position_y, kitchen_station_id } =
-      req.body;
-    const tableNumber = number || name;
-    const db = getDatabase();
-
-    const table = db.prepare('SELECT * FROM tables WHERE id = ?').get(req.params.id);
-    if (!table) {
-      return res.status(404).json({ error: 'Table not found' });
+      const table = db.prepare('SELECT * FROM tables WHERE id = ?').get(tableId);
+      res.status(201).json({ table: tableShape(table as any) });
+    } catch (error: unknown) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
+  },
+);
 
-    if (tableNumber) {
-      const existing = db
-        .prepare('SELECT * FROM tables WHERE number = ? AND id != ?')
-        .get(tableNumber, req.params.id);
-      if (existing) {
-        return res.status(400).json({ error: 'Table number already exists' });
+router.put(
+  '/:id',
+  requireRole('owner', 'manager'),
+  validateParams(tableIdParamsSchema),
+  validateBody(tableUpsertBodySchema),
+  (req: Request, res: Response) => {
+    try {
+      const { number, name, capacity, floor, section, position_x, position_y, kitchen_station_id } =
+        req.body;
+      const tableNumber = number || name;
+      const db = getDatabase();
+
+      const table = db.prepare('SELECT * FROM tables WHERE id = ?').get(req.params.id);
+      if (!table) {
+        return res.status(404).json({ error: 'Table not found' });
       }
-    }
 
-    withTxn(() => {
-      db.prepare(
-        `
+      if (tableNumber) {
+        const existing = db
+          .prepare('SELECT * FROM tables WHERE number = ? AND id != ?')
+          .get(tableNumber, req.params.id);
+        if (existing) {
+          return res.status(400).json({ error: 'Table number already exists' });
+        }
+      }
+
+      withTxn(() => {
+        db.prepare(
+          `
       UPDATE tables SET
         number = COALESCE(?, number),
         capacity = COALESCE(?, capacity),
@@ -196,35 +216,36 @@ router.put('/:id', requireRole('owner', 'manager'), validateParams(tableIdParams
         updated_at = ?
       WHERE id = ?
     `,
-      ).run(
-        tableNumber,
-        capacity,
-        floor,
-        section,
-        position_x,
-        position_y,
-        kitchen_station_id,
-        now(),
-        req.params.id,
-      );
-      logAuditEvent({
-        actorUserId: actorId(req),
-        action: 'table.updated',
-        entityType: 'table',
-        entityId: req.params.id,
-        metadata: { number: tableNumber, capacity, floor, section },
+        ).run(
+          tableNumber,
+          capacity,
+          floor,
+          section,
+          position_x,
+          position_y,
+          kitchen_station_id,
+          now(),
+          req.params.id,
+        );
+        logAuditEvent({
+          actorUserId: actorId(req),
+          action: 'table.updated',
+          entityType: 'table',
+          entityId: routeParam(req.params.id),
+          metadata: { number: tableNumber, capacity, floor, section },
+        });
       });
-    });
 
-    const updated = db.prepare('SELECT * FROM tables WHERE id = ?').get(req.params.id);
-    res.json({
-      table: tableShape(updated as any, activeOrderForTable(db, req.params.id as string)),
-    });
-  } catch (error: unknown) {
-    console.error('[API] Internal error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+      const updated = db.prepare('SELECT * FROM tables WHERE id = ?').get(req.params.id);
+      res.json({
+        table: tableShape(updated as any, activeOrderForTable(db, req.params.id as string)),
+      });
+    } catch (error: unknown) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 router.post('/:id/deactivate', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
@@ -251,7 +272,7 @@ router.post('/:id/deactivate', requireRole('owner', 'manager'), (req: Request, r
         actorUserId: actorId(req),
         action: 'table.deactivated',
         entityType: 'table',
-        entityId: req.params.id,
+        entityId: routeParam(req.params.id),
       });
     });
     const updated = db.prepare('SELECT * FROM tables WHERE id = ?').get(req.params.id);
@@ -282,7 +303,7 @@ router.post('/:id/reactivate', requireRole('owner', 'manager'), (req: Request, r
         actorUserId: actorId(req),
         action: 'table.reactivated',
         entityType: 'table',
-        entityId: req.params.id,
+        entityId: routeParam(req.params.id),
       });
     });
     const updated = db.prepare('SELECT * FROM tables WHERE id = ?').get(req.params.id);
@@ -416,22 +437,28 @@ router.post(
   },
 );
 
-router.patch('/:id/status', requireRole('owner', 'manager'), validateParams(tableIdParamsSchema), validateBody(tableStatusBodySchema), (req: Request, res: Response) => {
-  try {
-    const { status } = req.body;
-    if (!status) {
-      return res.status(400).json({ error: 'Status is required' });
-    }
+router.patch(
+  '/:id/status',
+  requireRole('owner', 'manager'),
+  validateParams(tableIdParamsSchema),
+  validateBody(tableStatusBodySchema),
+  (req: Request, res: Response) => {
+    try {
+      const { status } = req.body;
+      if (!status) {
+        return res.status(400).json({ error: 'Status is required' });
+      }
 
-    const table = applyTableStatus({
-      tableId: req.params.id as string,
-      status,
-      actorUserId: actorId(req),
-    });
-    res.json({ table });
-  } catch (error: unknown) {
-    sendTableError(res, error);
-  }
-});
+      const table = applyTableStatus({
+        tableId: req.params.id as string,
+        status,
+        actorUserId: actorId(req),
+      });
+      res.json({ table });
+    } catch (error: unknown) {
+      sendTableError(res, error);
+    }
+  },
+);
 
 export const tableRoutes = router;

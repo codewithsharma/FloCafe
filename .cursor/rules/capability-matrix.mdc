@@ -14,4 +14,4 @@ Canonical product plan: [`docs/00-product/capability-matrix.md`](docs/00-product
 
 Do not invent Phase 4.16 from this matrix. Code evidence remains `docs/00-product/feature-list.md`. If a Planned row already has a shipped slice (86, cash drawer, SKU wastage, valuation, addon groups), deepen it — do not start over.
 
-Recipe/BOM and procurement are Planned in this matrix but still need an explicit phase + ADR for schema/money changes.
+Recipe/BOM (R5) and procurement (R6) are Existing — deepen only with authorization. Do not treat them as Planned rebuilds.

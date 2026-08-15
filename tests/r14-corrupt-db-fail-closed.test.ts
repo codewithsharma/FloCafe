@@ -199,8 +199,9 @@ async function main(): Promise<void> {
   assert.equal(getRecoveryReason(), null);
   assert.equal(checkSqliteIntegrity(getDatabase()).ok, true);
   assert.equal(getDbHealth().ok, true);
-  const owner = getDatabase().prepare(`SELECT email FROM users WHERE id = ?`).get('owner-r14') as
-    { email: string } | undefined;
+  const owner = getDatabase()
+    .prepare(`SELECT email FROM users WHERE id = ?`)
+    .get('owner-r14') as { email: string } | undefined;
   assert.ok(owner, 'restored owner present');
   clearRecoveryRequired();
   console.log('   ✓ R14-05 good backup restore → ACTIVE (H4 path preserved)');

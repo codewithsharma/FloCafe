@@ -1,9 +1,9 @@
-<!-- Last updated: 2026-08-15, schema v80 -->
+<!-- Last updated: 2026-08-15, schema v82 -->
 
 # OPS-01 — Pilot configuration (Restaurant)
 
-**Audience:** Owner / installer / pilot engineer.  
-**Baseline:** commit `24966ba7272aa4e0e6650796ec469a3cd60ed423` · app **3.0.5** · schema **v80**.  
+**Audience:** Owner / installer / pilot engineer.
+**Baseline (tip):** commit `94702f8` · app **3.0.5** · schema **v82** (R1–R8 COMPLETE; R9 unauthorized). Historical H1–H4 ancestry: `24966ba`.
 **Canonical product plan:** [`../00-product/capability-matrix.md`](../00-product/capability-matrix.md).
 
 This document lists **operator settings** for a controlled single-café pilot. Defaults in a fresh install are **not** the pilot-required profile. Do not silently flip production values in code; change them in Settings on the café machine (or spare) with owner/manager authority.
@@ -120,8 +120,8 @@ Card terminals · payment gateways · online payment · multi-location · payrol
 | Local backup create | Y+Master PIN                        | —       | —       | —      | —     |
 | Restore             | Master PIN (desktop IPC / Recovery) | —       | —       | —      | —     |
 
-\* PIN / own-order rules apply for in-progress voids.  
-\*\* Chef cancel requires manager PIN.  
+\* PIN / own-order rules apply for in-progress voids.
+\*\* Chef cancel requires manager PIN.
 † Cashier close: matching terminal.
 
 ---
