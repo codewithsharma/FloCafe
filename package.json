@@ -225,6 +225,7 @@
     "test:r8": "node tests/run-electron-node-test.cjs tests/r8-staff-workforce.test.ts",
     "test:r9": "node tests/run-electron-node-test.cjs tests/r9-expenses.test.ts",
     "test:r9.2": "node tests/run-electron-node-test.cjs tests/r9-audit-trail.test.ts",
+    "test:r9.3": "node tests/run-electron-node-test.cjs tests/r9-tax-export.test.ts",
     "test:r4.1": "node tests/run-electron-node-test.cjs tests/r4-1-foundation-stabilization.test.ts",
     "test:process-kill": "node tests/run-electron-node-test.cjs tests/process-kill-recovery.test.ts",
     "test:money-cents": "node tests/run-electron-node-test.cjs tests/money-cents-phase2.test.ts"

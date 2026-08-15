@@ -132,14 +132,14 @@ Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webus
 | Feature                         | Status      | Evidence                                                                                                                                    | Production readiness |
 | ------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | Daily stats & sales summary     | [BUILT]     | `main/routes/reports.ts`; Home/Reports UI Gross/Refunds/Net (Phase 3.6B)                                                                    | High                 |
-| Tax component reports           | [BUILT]     | `GET /api/reports/tax-components`                                                                                                           | Medium               |
+| Tax component reports           | [BUILT]     | `GET /api/reports/tax-components` + R9 Slice 3 `export/tax-components.csv`; Reports UI; `tax.exported`; `tests/r9-tax-export.test.ts`       | High                 |
 | Top products & table stats      | [BUILT]     | reports routes                                                                                                                              | Medium               |
 | Insights dashboard              | [BUILT]     | `tests/reports-insights.test.ts`                                                                                                            | Medium               |
 | Day close / Z-report workflow   | [BUILT]     | `main/services/day-close.ts`, Operations UI; cash Z print/download Phase 3.6D                                                               | High                 |
 | Expenses (R9 Slice 1)           | [BUILT]     | Schema v83 `expenses`; `main/services/expenses.ts`; `/api/expenses`; UI `/expenses`; Owner/Manager; cents-only; `tests/r9-expenses.test.ts` | High                 |
 | Audit trail viewer (R9 Slice 2) | [BUILT]     | `GET /api/audit-logs` + `export.csv`; UI `/audit`; `audit.exported`; schema tip v83 unchanged; `tests/r9-audit-trail.test.ts`               | High                 |
 | Advanced analytics / BI         | [NOT BUILT] | —                                                                                                                                           | —                    |
-| Accounting export               | [BUILT]     | `GET /api/reports/export/bills.csv`; Reports start/end dates (Phase 4.8)                                                                    | High                 |
+| Accounting export               | [BUILT]     | `GET /api/reports/export/bills.csv`; tax-components CSV (R9 Slice 3); Reports start/end dates (Phase 4.8)                                   | High                 |
 
 ## Inventory & Supply Chain
 

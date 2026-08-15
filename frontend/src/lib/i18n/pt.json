@@ -2055,5 +2055,15 @@
   "audit.colAction": "Ação",
   "audit.colEntity": "Entidade",
   "audit.colResult": "Resultado",
-  "audit.colMetadata": "Metadados"
+  "audit.colMetadata": "Metadados",
+  "reports.taxComponentsTitle": "Componentes de imposto",
+  "reports.taxComponentsEmpty": "Nenhum componente de imposto neste intervalo.",
+  "reports.taxComponentsSummary": "{bills} contas · imposto total {amount}",
+  "reports.taxColComponent": "Componente",
+  "reports.taxColRate": "Taxa",
+  "reports.taxColAmount": "Valor",
+  "reports.taxExportCsv": "Exportar CSV de impostos",
+  "reports.taxExporting": "Exportando impostos…",
+  "reports.taxExportSuccess": "CSV de impostos baixado",
+  "reports.taxExportFailed": "Não foi possível exportar os componentes de imposto"
 }

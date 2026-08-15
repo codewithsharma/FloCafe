@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — R9 Slice 3 Tax Reporting Depth + Accountant Export (Implemented)
+
+Authorized read-only deepen: shared `queryTaxComponentsReport` for JSON + `GET /api/reports/export/tax-components.csv`; Reports UI panel; `tax.exported` audit; Owner/Manager only. Schema tip remains **v83**. No tax-engine/filing/UTC change. Suite `npm run test:r9.3`. Doc: `docs/05-production/r9-tax-export-slice-3.md`. **Do not start R9 Slice 4+ / Z polish / food-cost without slice auth.**
+
 ## 2026-08-15 — R9 Slice 2 Financial Audit-Trail Hardening (Implemented)
 
 Authorized deepen of existing `audit_logs` (no schema bump; tip remains **v83**). `until` filter; `GET /api/audit-logs/export.csv`; `audit.exported` on success; Owner/Manager UI `/audit`; Cashier/Waiter/Chef 403. No money-path / tax-engine / day-close formula changes. Suite `npm run test:r9.2`. Doc: `docs/05-production/r9-audit-trail-slice-2.md`. **Do not start R9 Slice 3+ / tax export / Z polish without slice auth.**

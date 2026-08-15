@@ -2227,5 +2227,15 @@
   "audit.colAction": "Action",
   "audit.colEntity": "Entity",
   "audit.colResult": "Result",
-  "audit.colMetadata": "Metadata"
+  "audit.colMetadata": "Metadata",
+  "reports.taxComponentsTitle": "Tax components",
+  "reports.taxComponentsEmpty": "No tax components in this date range.",
+  "reports.taxComponentsSummary": "{bills} bills · total tax {amount}",
+  "reports.taxColComponent": "Component",
+  "reports.taxColRate": "Rate",
+  "reports.taxColAmount": "Amount",
+  "reports.taxExportCsv": "Export tax CSV",
+  "reports.taxExporting": "Exporting tax…",
+  "reports.taxExportSuccess": "Tax components CSV downloaded",
+  "reports.taxExportFailed": "Could not export tax components"
 }

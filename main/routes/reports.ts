@@ -1,15 +1,10 @@
 import { Router, Request, Response } from 'express';
-import Decimal from 'decimal.js';
-import {
-  getDatabase,
-  getSettingValue,
-  parseDbTimestamp,
-  parseItemJson,
-  utcDayBounds,
-  utcTodayDate,
-} from '../db';
+import { getDatabase, getSettingValue, parseDbTimestamp, utcDayBounds, utcTodayDate } from '../db';
 import { requireRole } from '../middleware/security';
-import { aggregateTaxComponents } from '../services/tax-components';
+import {
+  queryTaxComponentsReport,
+  taxComponentsReportToCsv,
+} from '../services/tax-components-report';
 import { DayCloseServiceError, closeBusinessDay, getDayClose } from '../services/day-close';
 import { correlationId } from '../errors';
 import { toCsvRow } from '../lib/csv';
@@ -19,6 +14,7 @@ import {
   listBillsForCsvExport,
   validateBillsCsvDateRange,
 } from '../services/bills-csv-export';
+import { logAuditEvent } from '../services/audit-log';
 
 function money2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -63,7 +59,9 @@ function dayCloseAuditContext(req: Request) {
 
 function sendDayCloseError(res: Response, error: unknown): void {
   if (error instanceof DayCloseServiceError) {
-    res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
+    res
+      .status(error.statusCode ?? 500)
+      .json({ error: error instanceof Error ? error.message : String(error) });
     return;
   }
   console.error('[DayClose] Internal error:', error);
@@ -425,58 +423,15 @@ router.get('/tax-components', requireRole('owner', 'manager'), (req: Request, re
     if (startDate > endDate) {
       return res.status(400).json({ error: 'start_date must be on or before end_date' });
     }
-    const windowStart = utcDayBounds(startDate)[0];
-    const windowEnd = utcDayBounds(endDate)[1];
 
-    const bills = db
-      .prepare(
-        `
-      SELECT b.*
-      FROM bills b
-      JOIN orders o ON o.id = b.order_id
-      WHERE b.created_at >= ? AND b.created_at < ?
-        AND o.status != 'cancelled'
-      ORDER BY b.created_at, b.id
-    `,
-      )
-      .all(windowStart, windowEnd) as any[];
-
-    const itemsByOrder = new Map<number, any[]>();
-    if (bills.length > 0) {
-      const orderIds = Array.from(new Set(bills.map((bill) => Number(bill.order_id))));
-      const placeholders = orderIds.map(() => '?').join(',');
-      const items = db
-        .prepare(
-          `
-        SELECT * FROM order_items
-        WHERE order_id IN (${placeholders})
-        ORDER BY order_id, id
-      `,
-        )
-        .all(...orderIds)
-        .map(parseItemJson) as any[];
-      for (const item of items) {
-        const list = itemsByOrder.get(item.order_id) || [];
-        list.push(item);
-        itemsByOrder.set(item.order_id, list);
-      }
-    }
-
-    const documents = bills.map((bill) => ({
-      tax_amount: bill.tax_amount,
-      tax_snapshot: bill.tax_snapshot,
-      tax_breakdown: bill.tax_breakdown,
-      items: itemsByOrder.get(bill.order_id) || [],
-    }));
-    const taxAmount = bills.reduce((sum, bill) => sum.plus(bill.tax_amount || 0), new Decimal(0));
-
+    const report = queryTaxComponentsReport(db, startDate, endDate);
     res.json({
       taxComponents: {
-        startDate,
-        endDate,
-        billCount: bills.length,
-        taxAmount: taxAmount.toDecimalPlaces(6).toNumber(),
-        components: aggregateTaxComponents(documents),
+        startDate: report.startDate,
+        endDate: report.endDate,
+        billCount: report.billCount,
+        taxAmount: report.taxAmount,
+        components: report.components,
       },
     });
   } catch (error: unknown) {
@@ -485,6 +440,50 @@ router.get('/tax-components', requireRole('owner', 'manager'), (req: Request, re
   }
 });
 
+router.get(
+  '/export/tax-components.csv',
+  requireRole('owner', 'manager'),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const today = utcTodayDate();
+      const startDate = reportDate(req.query.start_date, today);
+      const endDate = reportDate(req.query.end_date, today);
+      if (startDate > endDate) {
+        return res.status(400).json({ error: 'start_date must be on or before end_date' });
+      }
+
+      const report = queryTaxComponentsReport(db, startDate, endDate);
+      const csv = taxComponentsReportToCsv(report);
+
+      logAuditEvent({
+        actorUserId: (req as { user?: { userId?: string } }).user?.userId ?? null,
+        action: 'tax.exported',
+        entityType: 'tax_report',
+        entityId: `${startDate}_${endDate}`,
+        result: 'success',
+        metadata: {
+          format: 'csv',
+          start_date: startDate,
+          end_date: endDate,
+          row_count: report.components.length,
+          bill_count: report.billCount,
+          report_tax_amount: report.taxAmount,
+        },
+      });
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="operavia-tax-components-${startDate}-to-${endDate}.csv"`,
+      );
+      res.status(200).send(csv);
+    } catch (error: unknown) {
+      console.error('[API] Tax components CSV export failed:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 router.get('/sales', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
     const db = getDatabase();
@@ -888,7 +887,9 @@ router.get('/export/bills.csv', requireRole('owner', 'manager'), (req: Request, 
     res.send(csv);
   } catch (error: unknown) {
     if (error instanceof BillsCsvExportError) {
-      return res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
+      return res
+        .status(error.statusCode ?? 500)
+        .json({ error: error instanceof Error ? error.message : String(error) });
     }
     console.error('[API] Bills CSV export failed:', error);
     res.status(500).json({ error: 'Internal server error' });

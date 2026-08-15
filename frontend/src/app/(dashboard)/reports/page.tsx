@@ -40,6 +40,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { downloadBillsCsvExport } from '@/lib/accounting-csv-export';
 import { reportsCsvRangeError } from '@/lib/reports-date-range';
+import {
+  downloadTaxComponentsCsv,
+  fetchTaxComponents,
+  type TaxComponentsPayload,
+} from '@/lib/tax-components-report';
 
 interface PaymentMethodBreakdown {
   method: string | null;
@@ -180,8 +185,10 @@ export default function ReportsPage() {
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [insights, setInsights] = useState<Insights | null>(null);
+  const [taxComponents, setTaxComponents] = useState<TaxComponentsPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [exportingCsv, setExportingCsv] = useState(false);
+  const [exportingTaxCsv, setExportingTaxCsv] = useState(false);
 
   const role = currentTenant?.role;
   const canView = role === 'owner' || role === 'manager';
@@ -227,13 +234,15 @@ export default function ReportsPage() {
         signal: controller.signal,
       }),
       api.get('/reports/insights', { params: { days: 30 }, signal: controller.signal }),
+      fetchTaxComponents(selectedDate, endDate),
     ])
-      .then(([statsRes, topRes, recentRes, insightsRes]) => {
+      .then(([statsRes, topRes, recentRes, insightsRes, taxRes]) => {
         setStats(isToday ? statsRes.data : null);
         setDaySummary(isToday ? null : statsRes.data.summary);
         setTopProducts(topRes.data.topProducts || []);
         setRecentOrders(recentRes.data.recentOrders || []);
         setInsights(insightsRes.data);
+        setTaxComponents(taxRes);
       })
       .catch((err: unknown) => {
         if (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))
@@ -263,6 +272,18 @@ export default function ReportsPage() {
       toast.error(err instanceof Error ? err.message : t('reports.exportCsvFailed'));
     } finally {
       setExportingCsv(false);
+    }
+  };
+
+  const handleExportTaxCsv = async () => {
+    setExportingTaxCsv(true);
+    try {
+      await downloadTaxComponentsCsv(selectedDate, endDate);
+      toast.success(t('reports.taxExportSuccess'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('reports.taxExportFailed'));
+    } finally {
+      setExportingTaxCsv(false);
     }
   };
 
@@ -436,6 +457,75 @@ export default function ReportsPage() {
                 />
               ))}
             </div>
+          </section>
+
+          <section className="mb-6" aria-label={t('reports.taxComponentsTitle')}>
+            <Panel
+              title={t('reports.taxComponentsTitle')}
+              actions={
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void handleExportTaxCsv()}
+                  disabled={exportingTaxCsv || loading}
+                  className="min-h-11"
+                >
+                  {exportingTaxCsv ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin mr-2" aria-hidden />
+                      {t('reports.taxExporting')}
+                    </>
+                  ) : (
+                    <>
+                      <Download className="size-4 mr-2" aria-hidden />
+                      {t('reports.taxExportCsv')}
+                    </>
+                  )}
+                </Button>
+              }
+            >
+              {!taxComponents || taxComponents.components.length === 0 ? (
+                <EmptyState
+                  title={t('reports.taxComponentsEmpty')}
+                  className="min-h-[120px] py-6"
+                />
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-caption text-flo-text-muted">
+                    {t('reports.taxComponentsSummary', {
+                      bills: String(taxComponents.billCount),
+                      amount: fmt(taxComponents.taxAmount),
+                    })}
+                  </p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b text-muted-foreground">
+                          <th className="py-2 pr-3">{t('reports.taxColComponent')}</th>
+                          <th className="py-2 pr-3">{t('reports.taxColRate')}</th>
+                          <th className="py-2">{t('reports.taxColAmount')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {taxComponents.components.map((row) => (
+                          <tr
+                            key={`${row.title}-${row.rate ?? 'n'}`}
+                            className="border-b border-border/60"
+                          >
+                            <td className="py-2 pr-3">{row.title}</td>
+                            <td className="py-2 pr-3">
+                              {row.rate === null || row.rate === undefined ? '—' : `${row.rate}%`}
+                            </td>
+                            <td className="py-2">{fmt(row.amount)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </Panel>
           </section>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

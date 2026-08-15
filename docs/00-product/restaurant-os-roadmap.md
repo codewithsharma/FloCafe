@@ -136,13 +136,15 @@ Fine-grained permissions product, attendance clocks, scheduling, leave remain La
 
 ## R9 — Finance / Compliance
 
-**Status:** IN PROGRESS — **Slice 1 Expenses COMPLETE**; **Slice 2 Financial Audit-Trail Hardening COMPLETE** (2026-08-15). Schema **v83** (unchanged for Slice 2). Suites `npm run test:r9` / `npm run test:r9.2`. Docs: [`../05-production/r9-expenses-slice-1.md`](../05-production/r9-expenses-slice-1.md), [`../05-production/r9-audit-trail-slice-2.md`](../05-production/r9-audit-trail-slice-2.md).
+**Status:** IN PROGRESS — Slice 1 Expenses COMPLETE; Slice 2 Audit-Trail COMPLETE; **Slice 3 Tax Reporting Depth + Accountant Export COMPLETE** (2026-08-15). Schema **v83**. Suites `test:r9` / `test:r9.2` / `test:r9.3`. Docs: expenses / audit-trail / [`r9-tax-export-slice-3.md`](../05-production/r9-tax-export-slice-3.md).
 
 **Slice 1 delivered:** expenses table (integer cents), API, Owner/Manager UI, RBAC, audits, offline SQLite.
 
 **Slice 2 delivered:** audit viewer + CSV export + `until` filter + `audit.exported`; Owner/Manager; schema tip remains v83.
 
-**Remaining R9 (not started):** tax reporting depth + accountant export; day-close/Z polish; ops finance reports v1; food-cost report v1.
+**Slice 3 delivered:** Reports tax-components UI + tax-components CSV + `tax.exported`; shared aggregator; schema tip remains v83.
+
+**Remaining R9 (not started):** day-close/Z polish; ops finance reports v1; food-cost report v1.
 
 **Out:** Service charge (ADR-014 Proposed); tips; QR; gift cards; REAL→cents cutover; Frozen rows.
 
