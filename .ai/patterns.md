@@ -1,5 +1,6 @@
 # Patterns
 
+- **R13 print queue:** Durable `print_jobs` outbox (same spirit as `cloud_sync_outbox`); failed `print-bill` never silent-drops — enqueue failed job; Owner/Manager list + bounded retry; success path still writes `print_logs` via `receipt.ts`. No terminals/aggregators; no multi-printer routing invent.
 - **R14 corrupt-DB fail-closed:** On startup `PRAGMA integrity_check` via `checkSqliteIntegrity` (schema-health); on failure latch install-state `setRecoveryRequired('corrupt_database')` — never clear that latch just because `users>0`. Reuse REC-01 middleware + `/api/health` recovery_required. Do not rebuild recovery. Good `restoreBackup` still clears latch. No schema bump for this thin slice.
 - **R12 void/cancel report:** Aggregate success `audit_logs` for `order.cancelled` / `order.item_cancelled` / `order.item_voided` via shared `queryVoidCancelReport`; CSV must match JSON for the same UTC window; `report.voids_exported` on success only; no schema bump; no BI warehouse.
 - **R9 food-cost report:** Aggregate theoretical `line_cost_cents` from consumed recipe snapshots; % vs Net Sales via `queryDaySalesSemantics`; never invent actual-vs-theoretical BI (R12 warehouse).

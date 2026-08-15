@@ -13,25 +13,25 @@ North-star KPI unchanged: **3 cafés × 30 days × zero critical failures** ([`S
 
 ## Wave overview
 
-| Wave    | Name                              | Primary matrix posture                                      | Depends on                   |
-| ------- | --------------------------------- | ----------------------------------------------------------- | ---------------------------- |
-| **R0**  | Product Blueprint                 | Docs only                                                   | —                            |
-| **R1**  | POS Core Completion               | Hardening + deepen Planned POS                              | R0                           |
-| **R2**  | Tables / Floor Operations         | Planned floor depth                                         | R1 money/order stable        |
-| **R3**  | Kitchen OS                        | Hardening residual + Planned stations                       | R1; KDS SoR rule             |
-| **R4**  | Inventory depth                   | Planned inventory                                           | R1 stock guards              |
-| **R5**  | Recipes / BOM / Food Cost         | **COMPLETE** (Existing depth)                               | R4 ingredients               |
-| **R6**  | Purchasing                        | **COMPLETE** (2026-08-15)                                   | R4/R5                        |
-| **R7**  | Customer / CRM / Loyalty          | **COMPLETE** (2026-08-15)                                   | R1 payments                  |
-| **R8**  | Staff / Shift / Attendance        | **COMPLETE** (2026-08-15)                                   | R1 RBAC                      |
-| **R9**  | Finance / Compliance              | Hardening audit + Planned expenses/tax depth                | R1 finance                   |
-| **R10** | Online / QR Ordering              | **COMPLETE** (2026-08-15); online pay Frozen                | R1–R3; no gateway            |
-| **R11** | Marketing                         | **COMPLETE** thin slice (2026-08-15); campaigns Later       | R7                           |
-| **R12** | Reporting / BI                    | Planned deepen (void report thin slice COMPLETE 2026-08-15) | R1–R9 data                   |
-| **R13** | Integrations / Hardware           | Planned print queue; Frozen terminals                       | R1–R3                        |
-| **R14** | Reliability / Backup / DR         | Hardening + Planned DR                                      | Continuous; parallel         |
-| **R15** | Restaurant Simulation Environment | Testing                                                     | Parallel from R1             |
-| **R16** | Production Release                | Ops + signed RC                                             | Pilot gates + chosen R-waves |
+| Wave    | Name                              | Primary matrix posture                                             | Depends on                   |
+| ------- | --------------------------------- | ------------------------------------------------------------------ | ---------------------------- |
+| **R0**  | Product Blueprint                 | Docs only                                                          | —                            |
+| **R1**  | POS Core Completion               | Hardening + deepen Planned POS                                     | R0                           |
+| **R2**  | Tables / Floor Operations         | Planned floor depth                                                | R1 money/order stable        |
+| **R3**  | Kitchen OS                        | Hardening residual + Planned stations                              | R1; KDS SoR rule             |
+| **R4**  | Inventory depth                   | Planned inventory                                                  | R1 stock guards              |
+| **R5**  | Recipes / BOM / Food Cost         | **COMPLETE** (Existing depth)                                      | R4 ingredients               |
+| **R6**  | Purchasing                        | **COMPLETE** (2026-08-15)                                          | R4/R5                        |
+| **R7**  | Customer / CRM / Loyalty          | **COMPLETE** (2026-08-15)                                          | R1 payments                  |
+| **R8**  | Staff / Shift / Attendance        | **COMPLETE** (2026-08-15)                                          | R1 RBAC                      |
+| **R9**  | Finance / Compliance              | Hardening audit + Planned expenses/tax depth                       | R1 finance                   |
+| **R10** | Online / QR Ordering              | **COMPLETE** (2026-08-15); online pay Frozen                       | R1–R3; no gateway            |
+| **R11** | Marketing                         | **COMPLETE** thin slice (2026-08-15); campaigns Later              | R7                           |
+| **R12** | Reporting / BI                    | Planned deepen (void report thin slice COMPLETE 2026-08-15)        | R1–R9 data                   |
+| **R13** | Integrations / Hardware           | **COMPLETE** print queue thin slice (2026-08-15); Frozen terminals | R1–R3                        |
+| **R14** | Reliability / Backup / DR         | Hardening + Planned DR                                             | Continuous; parallel         |
+| **R15** | Restaurant Simulation Environment | Testing                                                            | Parallel from R1             |
+| **R16** | Production Release                | Ops + signed RC                                                    | Pilot gates + chosen R-waves |
 
 Human pilot gates (signed RC, escrow, site drills) sit **across** R0/R14/R16 — they are not optional “later features.”
 
@@ -175,6 +175,8 @@ Food cost / profit / hourly trends / staff performance reports consuming R4–R9
 ## R13 — Integrations / Hardware
 
 Print queue/retry, multi-printer routing depth, cash drawer depth. Payment terminals / aggregators stay Frozen.
+
+**R13 thin deepen (2026-08-15):** Print outbox + one retry COMPLETE — schema **v86** `print_jobs`; failed print-bill enqueues job; `GET /api/printers/jobs` + `POST /api/printers/jobs/:id/retry`; success writes `print_logs`; `npm run test:r13`. Doc: `docs/05-production/r13-print-queue.md`. Multi-printer routing / terminals / aggregators remain Planned or Frozen.
 
 ---
 

@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-08-15 — R13 Print queue / retry (COMPLETE)
+
+Authorized Integrations/Hardware thin deepen. Schema **v86** `print_jobs` outbox (cloud_sync_outbox spirit). Failed `POST /api/printers/print-bill` enqueues failed job; `GET /api/printers/jobs` + `POST …/jobs/:id/retry` Owner/Manager; success writes `print_logs` + done; max_attempts default 2. Suite `npm run test:r13`. Doc: `docs/05-production/r13-print-queue.md`. **No payment terminals, aggregators, or multi-printer routing invent.**
+
+
 ## 2026-08-15 — R14 Corrupt-DB fail-closed (COMPLETE thin deepen)
 
 Authorized Reliability thin deepen. No schema bump. Startup `PRAGMA integrity_check` via `checkSqliteIntegrity` (schema-health); on failure latch install-state `setRecoveryRequired('corrupt_database')` and refuse dirty service (existing recovery middleware + `/api/health` 503). Do not clear latch solely because `users>0`. Good `restoreBackup` still clears latch (H4/REC-01 path). Suite `npm run test:r14`. Doc: `docs/05-production/r14-corrupt-db-fail-closed.md`. **Live DR drill NOT CLAIMED. Unopenable DB (P1-06) and full DR product remain open.**

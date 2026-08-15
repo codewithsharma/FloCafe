@@ -22,6 +22,7 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 **R9 Slice 6 note (2026-08-15):** Food-cost Report v1 **COMPLETE** — schema tip remains **v83**.
 **R9 COMPLETE (2026-08-15).** Live go-live still **NO-GO** (OPS-02). ADR-014 service charge remains out. **R10 Online / QR COMPLETE (2026-08-15)** — schema v84; pay-at-counter only.
 **R11 note (2026-08-15):** Coupon codes thin deepen **COMPLETE** — schema **v85**; `npm run test:r11`. Marketing campaigns remain Later.
+**R13 note (2026-08-15):** Print queue / retry thin deepen **COMPLETE** — schema **v86** `print_jobs`; `npm run test:r13`. Terminals / aggregators remain Frozen.
 **R12 note (2026-08-15):** Void/Cancel report thin deepen **COMPLETE** — no schema bump; `npm run test:r12`. Advanced BI warehouse remains Later.
 ---
 
@@ -178,8 +179,8 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | KOT printing             | 🟢 Existing |
 | Multiple printer routing | 🔵 Planned  |
 | Bar printer              | 🔵 Planned  |
-| Print queue              | 🔵 Planned  |
-| Print retry              | 🔵 Planned  |
+| Print queue              | 🟢 Existing |
+| Print retry              | 🟢 Existing |
 | Printer health           | 🔵 Planned  |
 | Printer recovery         | 🔵 Planned  |
 | Bluetooth printing       | ⚪ Later    |

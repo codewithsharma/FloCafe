@@ -9,7 +9,7 @@
 **Canonical strategy:** `STRATEGY.md` (pilot KPI unchanged).
 **Branding audit:** `docs/05-production/operavia-branding-normalization-audit.md`.
 
-Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v85**) + statically exported Next.js (`frontend/`).
+Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v86**) + statically exported Next.js (`frontend/`).
 
 **R9 Slice 1 Expenses (2026-08-15):** COMPLETE — schema **v83** `expenses`; Owner/Manager API+UI; cents-only; audits; `npm run test:r9`.
 **R9 Slice 2 Financial Audit-Trail Hardening (2026-08-15):** COMPLETE — `/audit` UI + CSV export + `until` + `audit.exported`; schema tip remains **v83**; `npm run test:r9.2`.
@@ -19,6 +19,7 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 **R9 Slice 6 Food-cost Report v1 (2026-08-15):** COMPLETE — theoretical COGS report; schema tip remains **v83**; `npm run test:r9.6`.
 **R9 COMPLETE (2026-08-15).** Doc: `docs/05-production/r9-completion.md`. Live Go-Live **NO-GO**. **R10 Online / QR Ordering COMPLETE (2026-08-15)** — schema **v84**; `npm run test:r10`; doc `docs/05-production/r10-online-qr-ordering.md`. Workforce OS ≠ R10 (`prompts/later/workforce-os-planning.md`). **R11 Coupons COMPLETE (2026-08-15)** — schema **v85**; `npm run test:r11`; doc `docs/05-production/r11-coupons.md`.
 **R12 Void/Cancel Report thin deepen (2026-08-15):** COMPLETE — no schema bump; `GET /api/reports/voids` + `export/voids.csv`; `report.voids_exported`; `npm run test:r12`. Doc: `docs/05-production/r12-void-cancel-report.md`. Advanced BI warehouse still Later. R11 coupons may run in parallel (do not share migrations with R12).
+**R13 Print queue / retry (2026-08-15):** COMPLETE — schema **v86** `print_jobs`; failed print-bill outbox + Owner/Manager list/retry; `npm run test:r13`. Doc: `docs/05-production/r13-print-queue.md`. Terminals/aggregators Frozen.
 **R14 Corrupt-DB fail-closed thin deepen (2026-08-15):** COMPLETE — no schema bump; `checkSqliteIntegrity` + install-state `corrupt_database` latch; `/api/health` + money APIs 503; good restore clears latch; `npm run test:r14`. Doc: `docs/05-production/r14-corrupt-db-fail-closed.md`. Live DR drill **NOT CLAIMED**. Live Go-Live **NO-GO**.
 **R15 Simulation S1 foundation (2026-08-15):** COMPLETE — test/fixture/docs only; `npm run test:r15` (27/27): open shift → order → pay → close → day-close/Z → local backup. Banner: simulation ≠ OPS-02 signed café pilot. Doc: `docs/05-production/r15-simulation-s1.md`. KDS/receipt thermal/S2–S10 remain later.
 
