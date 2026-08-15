@@ -4,6 +4,7 @@
 **Product:** Operavia Restaurant (café). Schema **v75**.  
 **Engineering baseline:** `24966ba7272aa4e0e6650796ec469a3cd60ed423` — matrix hardening **H1–H4** (void/discount/receipt · KDS offline · RBAC · restore/conflict). App **3.0.5**.  
 **OPS-01 package:** [`ops-01-pilot-configuration.md`](./ops-01-pilot-configuration.md) · [`../05-production/ops-01-pilot-release-operations-closure.md`](../05-production/ops-01-pilot-release-operations-closure.md) · [`../16-release/ops-01-pilot-release-checklist.md`](../16-release/ops-01-pilot-release-checklist.md).  
+**OPS-02 go-live:** [`ops-02-site-readiness-checklist.md`](./ops-02-site-readiness-checklist.md) · [`../05-production/ops-02-live-pilot-rc-site-readiness.md`](../05-production/ops-02-live-pilot-rc-site-readiness.md) — live service **NO-GO** until signed RC + site PASS.  
 **Authorization:** Engineering bar for supervised pilot is met with conditions. Live service still requires human/ops gates on [`pilot-signoff.md`](./pilot-signoff.md).
 
 **Related:** [`backup-restore.md`](./backup-restore.md) · [`disaster-recovery.md`](./disaster-recovery.md) · [`dr-drill-worksheet.md`](./dr-drill-worksheet.md) · [`incident-response.md`](./incident-response.md) · [`pilot-staff-training-checklist.md`](./pilot-staff-training-checklist.md) · [`pilot-success-criteria.md`](./pilot-success-criteria.md) · [`pilot-handoff-first-cafe.md`](./pilot-handoff-first-cafe.md)
@@ -277,16 +278,18 @@ Café docs above assume **Restaurant**. For a controlled **Retail** pilot only:
 
 ## Quick links
 
-| Need                  | Doc                                                                                              |
-| --------------------- | ------------------------------------------------------------------------------------------------ |
-| OPS-01 configuration  | `ops-01-pilot-configuration.md`                                                                  |
-| OPS-01 closure report | `../05-production/ops-01-pilot-release-operations-closure.md`                                    |
-| OPS-01 checklist      | `../16-release/ops-01-pilot-release-checklist.md`                                                |
-| Staff training        | `pilot-staff-training-checklist.md`                                                              |
-| Success criteria      | `pilot-success-criteria.md`                                                                      |
-| Sign-off              | `pilot-signoff.md`                                                                               |
-| Backup mechanics      | `backup-restore.md`                                                                              |
-| DR drill              | `dr-drill-worksheet.md`                                                                          |
-| First-café handoff    | `pilot-handoff-first-cafe.md`                                                                    |
-| Ops readiness report  | `../05-production/pilot-operations-readiness-report.md` (stale baseline — prefer OPS-01 closure) |
-| Short troubleshooting | `runbook.md`                                                                                     |
+| Need                  | Doc                                                                                             |
+| --------------------- | ----------------------------------------------------------------------------------------------- |
+| OPS-01 configuration  | `ops-01-pilot-configuration.md`                                                                 |
+| OPS-01 closure report | `../05-production/ops-01-pilot-release-operations-closure.md`                                   |
+| OPS-01 checklist      | `../16-release/ops-01-pilot-release-checklist.md`                                               |
+| OPS-02 site readiness | `ops-02-site-readiness-checklist.md`                                                            |
+| OPS-02 go-live audit  | `../05-production/ops-02-live-pilot-rc-site-readiness.md`                                       |
+| Staff training        | `pilot-staff-training-checklist.md`                                                             |
+| Success criteria      | `pilot-success-criteria.md`                                                                     |
+| Sign-off              | `pilot-signoff.md`                                                                              |
+| Backup mechanics      | `backup-restore.md`                                                                             |
+| DR drill              | `dr-drill-worksheet.md`                                                                         |
+| First-café handoff    | `pilot-handoff-first-cafe.md`                                                                   |
+| Ops readiness report  | `../05-production/pilot-operations-readiness-report.md` (stale baseline — prefer OPS-01/OPS-02) |
+| Short troubleshooting | `runbook.md`                                                                                    |

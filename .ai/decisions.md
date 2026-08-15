@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — OPS-02 Live Pilot RC / Site Readiness (Audit)
+
+Authorized go-live audit after OPS-01. Source RC = H4 `24966ba`; docs HEAD OPS-01+. Installable signed/notarized artifact absent (0 codesign identities; adhoc `Nexora.app` TRAINING only). Café POS/printer/KDS/LAN/escrow/operator acceptance PENDING — not fabricated PASS. Verdict **🔴 NO-GO** for first live transaction. Engineering remains ready with conditions. No production code, schema, H5, Phase 4.16. Docs: `ops-02-live-pilot-rc-site-readiness.md`, `ops-02-site-readiness-checklist.md`. STOP after OPS-02.
+
 ## 2026-08-15 — OPS-01 Pilot release & operations closure (Docs)
 
 Authorized ops/release closure after H1–H4. Baseline `24966ba`. Delivered: pilot configuration (REQUIRED/OPTIONAL/NOT SUPPORTED/FROZEN), runbook refresh, release checklist, acceptance gates, drill evidence from existing suites, `security-hardening` debt classified as test isolation (not production blocker). No production code, schema, money, Phase 4.16, H5, or Frozen/Planned features. Verdict remains **PILOT READY WITH CONDITIONS** (signed RC + human gates still required). Docs: `ops-01-pilot-release-operations-closure.md`, `ops-01-pilot-configuration.md`, `ops-01-pilot-release-checklist.md`. STOP after OPS-01.

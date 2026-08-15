@@ -16,6 +16,7 @@ All notable changes to Opervia (repo/package legacy: Flo Cafe / flo-desktop) are
 - H3 Permissions/RBAC: cancel/restore/status `requireRole`, POS discount UI owner/manager, Settings deep-link gate, test DB-role parity (`docs/05-production/h3-permissions-rbac-hardening.md`).
 - H4 restore/conflict: create-time backup integrity, backup/restore audit, cancel TOCTOU + item cancel/restore conflict guards (`docs/05-production/h4-restore-conflict-hardening.md`).
 - OPS-01 pilot release/ops closure: baseline `24966ba`, configuration, runbook/checklist/gates, drill evidence (`docs/05-production/ops-01-pilot-release-operations-closure.md`).
+- OPS-02 live RC / site readiness audit: signed artifact missing; café gates PENDING; live verdict NO-GO (`docs/05-production/ops-02-live-pilot-rc-site-readiness.md`).
 
 ### Changed
 

@@ -531,6 +531,10 @@ Remaining after H4 (not falsely marked Existing): order-status CAS, stock adjust
 
 Pilot **release/ops documentation** closed for baseline `24966ba` (config, runbook, checklist, gates, drill evidence). Does **not** promote H1–H4 rows to Existing. Does **not** create Phase 4.16. Live café still requires signed RC + human sign-off gates. Docs: `docs/05-production/ops-01-pilot-release-operations-closure.md`, `docs/13-operations/ops-01-pilot-configuration.md`, `docs/16-release/ops-01-pilot-release-checklist.md`.
 
+### OPS-02 live RC / site readiness (2026-08-15)
+
+Go-live audit: source RC = `24966ba`; installable signed/notarized artifact **missing** on audit host; café hardware/LAN/escrow/operator drills **PENDING**. Verdict **🔴 NO-GO** for first live transaction. Docs: `docs/05-production/ops-02-live-pilot-rc-site-readiness.md`, `docs/13-operations/ops-02-site-readiness-checklist.md`. No H5 / Phase 4.16.
+
 ### Frozen (do not start)
 
 Card terminal, payment gateway, online payment, multi-location (central menu/inventory/transfers/reporting/franchise), payroll.

@@ -79,14 +79,16 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 **Product plan (2026-08-14):** Canonical matrix `docs/00-product/capability-matrix.md`. Prefer 🟡 Hardening over 🔵 Planned. Do not invent 4.16. Do not auto-start.
 
-**OPS-01 (2026-08-15): CLOSED (docs/ops).** Baseline `24966ba` (H1–H4). Verdict remains **PILOT READY WITH CONDITIONS**. Closure: `docs/05-production/ops-01-pilot-release-operations-closure.md`.
+**OPS-01 (2026-08-15): CLOSED (docs/ops).** Baseline `24966ba` (H1–H4). Engineering verdict **PILOT READY WITH CONDITIONS**. Closure: `docs/05-production/ops-01-pilot-release-operations-closure.md`.
 
-**First café dry run (2026-08-14): NO-GO for live.** Signing still required. Sheet: `docs/05-production/first-cafe-dry-run-result.md` (historical; prefer OPS-01 baseline).
+**OPS-02 (2026-08-15): CLOSED (audit).** Live café go-live **NO-GO** — no signed/notarized RC on this host; site/hardware/escrow/operator drills PENDING. Doc: `docs/05-production/ops-02-live-pilot-rc-site-readiness.md`. Checklist: `docs/13-operations/ops-02-site-readiness-checklist.md`.
+
+**First café dry run (2026-08-14): NO-GO for live.** Signing still required. Sheet: `docs/05-production/first-cafe-dry-run-result.md` (historical; prefer OPS-01/OPS-02).
 
 Do not invent 4.16. Do not auto-start features. Do not push. Do not fake signing. Do not start H5 unless authorized.
 
 - **Human/RELEASE:** signed/notarized RC from `24966ba` (or approved clean descendant); do not retag unrelated older `3.0.5` builds.
-- **Human/OPS on site:** PIN escrow, OPS-01 network, backup policy, hardware drills — `pilot-signoff.md`.
-- **If software slice authorized next:** Prefer remaining Hardening (audit trail; reliability error handling depth; data integrity validation). **H1–H4 CLOSED**; **OPS-01 CLOSED**.
-- ADR-014 remains **Proposed**. Schema v75. Baseline **`24966ba`**.
+- **Human/OPS on site:** complete `ops-02-site-readiness-checklist.md` + `pilot-signoff.md`.
+- **If software slice authorized next:** Prefer remaining Hardening (audit trail; reliability error handling depth; data integrity validation). **H1–H4 CLOSED**; **OPS-01 CLOSED**; **OPS-02 audit CLOSED (NO-GO live)**.
+- ADR-014 remains **Proposed**. Schema v75. Engineering baseline **`24966ba`**. Docs HEAD may include OPS-01/OPS-02.
 - **Test debt (not blocker):** `security-hardening.test.ts` rate-limit/orders 401 after password-change JWT invalidation — isolation only.
