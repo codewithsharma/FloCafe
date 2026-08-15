@@ -17,8 +17,9 @@ Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `
 - [x] **R0 Restaurant OS Product Blueprint (2026-08-15):** complete OS capability map, R0–R16 roadmap, architecture, offline/financial contracts, simulation design. Docs under `docs/00-product/restaurant-os-*.md`. Matrix remains SoT for statuses. **Do not start R1.** No production code.
 - [x] **R1 POS Core Completion GREEN (2026-08-15):** illegal status transitions; cancel/discount Idempotency-Key; required addon groups; reprint coerce; preview `bill_id`; `order.created` + item discount audits; WebUSB/local print log. Suite: `tests/r1-pos-core-completion.test.ts` (34/34). Do not start R2 / service charge / FIN-01 reopen.
 - [x] **R2 Floor Operations GREEN (2026-08-15):** occupy CAS; transfer harden + UI; unpaid merge/split; waiter assign; section UI; audits; schema v76. Suite: `npm run test:r2` (62/62). Doc: `docs/05-production/r2-floor-operations.md`. Do not start R3 / Kitchen OS / inventory.
-- [ ] **Hardening (prefer next, authorized slice only):** audit trail; reliability error handling depth; data integrity validation — or fold into remaining R-waves if authorized. POS H1 + KDS H2 + RBAC H3 + Restore/Conflict H4 closed (depth remains Hardening where noted). OPS-01/02 closed. R0–R2 closed.
-- [ ] **Planned (not started):** see matrix — 86 depth, notes, combos, courses, QR ordering, recipes/BOM, PO/suppliers, floor plan/merge/seats, KDS routing/timers, print queue/retry, reports, workflow tests. Reuse shipped slices; do not rebuild.
+- [x] **R3 Kitchen OS GREEN (2026-08-15):** `kitchen-status` CAS + timestamps + audit + priority; schema v77; companion wired; UI aging/rush/station/bump/addons; `npm run test:r3` 70/70. Doc: `docs/05-production/r3-kitchen-os.md`. Do not start R4 / inventory / BOM.
+- [ ] **Hardening (prefer next, authorized slice only):** durable KDS outbox residual; audit trail depth; reliability — or next authorized R-wave. R0–R3 closed.
+- [ ] **Planned (not started):** see matrix — expediter, KDS analytics, sound/visual alerts, recipes/BOM, PO, QR, print queue (R13), etc. Reuse shipped slices; do not rebuild.
 - [ ] **Frozen / later / out of scope:** terminals, gateways, online payment, multi-location, payroll, aggregators, AI — do not start.
 
 ## Completed (M4–M5 + UI)

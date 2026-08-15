@@ -215,7 +215,8 @@
     "test:h3": "node tests/run-electron-node-test.cjs tests/h3-permissions-rbac-hardening.test.ts",
     "test:h4": "node tests/run-electron-node-test.cjs tests/h4-restore-conflict-hardening.test.ts",
     "test:r1": "node tests/run-electron-node-test.cjs tests/r1-pos-core-completion.test.ts",
-    "test:r2": "node tests/run-electron-node-test.cjs tests/r2-floor-operations.test.ts"
+    "test:r2": "node tests/run-electron-node-test.cjs tests/r2-floor-operations.test.ts",
+    "test:r3": "node tests/run-electron-node-test.cjs tests/r3-kitchen-os.test.ts"
   },
   "author": {
     "name": "OPERAVIA",

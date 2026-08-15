@@ -7,7 +7,6 @@ import {
   hasUserKdsStationAssignments,
   isDatabaseMaintenanceActive,
   isKdsStationItemAllowed,
-  now,
   parseItemJson,
   attachEffectiveAddons,
   isKdsEnabled,
@@ -22,6 +21,7 @@ import * as jwt from 'jsonwebtoken';
 import { getJWTSecret, parseCategoryIds } from '../routes/auth';
 import { getUserAuthStatus, isTokenRevoked, isTokenStale } from '../middleware/security';
 import { isModuleEnabled } from '../modules';
+import { applyKitchenItemStatus, KitchenStatusError } from './kitchen-status';
 
 interface KdsClient {
   ws: WebSocket;
@@ -519,20 +519,21 @@ function handleStatusUpdate(client: KdsClient, message: any): void {
         return { error: 'Not authorized to update this item' };
       }
 
-      const updateResult =
-        expectedStatus === undefined
-          ? db
-              .prepare(
-                "UPDATE order_items SET status = ?, updated_at = ? WHERE id = ? AND status NOT IN ('voided', 'void_adjustment', 'completed', 'cancelled')",
-              )
-              .run(status, now(), order_item_id)
-          : db
-              .prepare(
-                'UPDATE order_items SET status = ?, updated_at = ? WHERE id = ? AND status = ?',
-              )
-              .run(status, now(), order_item_id, expectedStatus);
-      if (updateResult.changes !== 1) {
-        return { error: 'Item status changed; refresh and try again' };
+      try {
+        applyKitchenItemStatus(db, {
+          itemId: order_item_id,
+          status,
+          expectedStatus,
+          actorUserId: client.userId,
+        });
+      } catch (err: any) {
+        if (err instanceof KitchenStatusError && err.code === 'STATUS_CONFLICT') {
+          return { error: 'Item status changed; refresh and try again' };
+        }
+        if (err instanceof KitchenStatusError) {
+          return { error: err.message };
+        }
+        throw err;
       }
 
       return { success: true };
@@ -596,9 +597,10 @@ function sendActiveOrders(
     throw new Error('Could not load station permissions');
 
   let query = `
-    SELECT o.*, t.number as table_name, t.kitchen_station_id
+    SELECT o.*, t.number as table_name, t.kitchen_station_id, ks.name as station_name
     FROM orders o
     LEFT JOIN tables t ON o.table_id = t.id
+    LEFT JOIN kitchen_stations ks ON ks.id = t.kitchen_station_id
     WHERE ${activeOrdersCondition()}
   `;
 

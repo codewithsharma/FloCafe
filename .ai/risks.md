@@ -25,7 +25,8 @@
 - ⚠️ RISK: Electron renderer `flo_terminal_id` and host `settings.terminal_id` may differ. POS requests send the client id; header-less `openShift` still uses the host id.
 - ⚠️ RISK: Lost `terminal_id` (cleared localStorage) orphans an open shift; managers must force-close.
 - ⚠️ RISK: Doc drift — some older architecture pages / PM audit may lag shipped 3.5A–3.6G; Phase 2–4 truth is **closeout gate + `.ai/` + `docs/04-product/phase-4-product-completion-discovery.md`** (Phase 3.1–3.4 COMPLETE; 3.5A+3.6A–G COMPLETE; 3.5B DEFERRED; 3.5C NO SAFE EXTRACTION; Phase 4 discovery COMPLETE).
-- 🔴 DEBT: Legacy `products.tax_type` / `tax_rate` remain on schema v75 (forced none/0; not authoritative). **Phase 3.5B DEFERRED** until pilot evidence; Mode B vs DROP not chosen. See `phase-3.5b-legacy-tax-cleanup-discovery.md`.
+- 🔴 DEBT: Legacy `products.tax_type` / `tax_rate` remain on schema (forced none/0; not authoritative). **Phase 3.5B DEFERRED** until pilot evidence; Mode B vs DROP not chosen. See `phase-3.5b-legacy-tax-cleanup-discovery.md`.
+- ⚠️ RISK: **R3 kitchen deepen** — companion `kds-server.ts` status PATCH still uses raw UPDATE (not yet routed through `kitchen-status.ts`); timestamps/audit may diverge on companion-only bumps until wired.
 - ⚠️ RISK (ops): Café pilots must keep `ACTIVE_VERTICAL_ID` unset or `restaurant`. Accidental `=retail` selects production Retail (wrong for café); `=retail-test` selects synthetic composition.
 - ⚠️ RISK: Brand consolidation to **Operavia** (ADR-010) — living docs/STRATEGY/`productName`/UI i18n updated; historical `15-*` audits still say Operavia/FloCafe; `appId`/`executableName` remain flo\* for upgrade continuity; Drive folder is `Operavia Backups` (old `Operavia Backups` not auto-migrated).
 - ⚠️ RISK: Phase 2.6 capabilities are metadata only — any future consumer must not treat `CapabilityId` as authorization (roles/`requireRole` remain authoritative).

@@ -22,6 +22,8 @@
 - **Module vs feature vs permission:** module enablement ≠ feature flag ≠ user authorization (`requireRole`). Never collapse these layers.
 - Mutations that need audit: `withTxn(() => { write; logAuditEvent(); })`.
 - **R2 tables/floor:** domain logic in `main/services/tables.ts` (occupy assert+CAS, transfer, unpaid merge/split, waiter assign, status guards). Routes stay thin. Billed merge remains ADR_REQUIRED. No visual floor designer in R2.
+- **R3 kitchen status:** `main/services/kitchen-status.ts` owns item bump CAS + timestamps (`preparing_started_at`/`ready_at`/`served_at`) + `kitchen.item_status_changed` audit; `setOrderKitchenPriority` (0–9) + `kitchen.priority_changed`. Routes/WS keep authz; replace raw UPDATEs only. KDS list: `ORDER BY COALESCE(o.kitchen_priority,0) DESC, o.created_at ASC`. No durable outbox; KDS is not a second SoR.
+- **R3 kitchen UI:** Ticket age tint uses shared `frontend/src/lib/kds-ticket-age.ts` (prefer oldest `preparing_started_at`, else `order.created_at`). Station label needs `ks.name as station_name` join on KDS SELECTs + `projectKdsOrder` allowlist. Bump primary = `kds.bump` + `kds.markAs`; unbump stays `kds.backTo`. Do not touch H2 stale/reconnect/CAS in `useKdsConnection` except display fields.
 - Typed `*ServiceError` with `statusCode`; routes map to `{ error }` without SQL/stack leakage.
 - Feature flags live in `settings` (`'true'` / `'false'` strings).
 - POS client identity: origin-scoped `localStorage` UUID (`flo_terminal_id`) sent as `X-Flo-Terminal-Id` on selected POS routes only. Not an auth credential.

@@ -9,12 +9,7 @@ import {
   type KitchenStatus,
   type KdsOrderItem,
 } from '@/hooks/useKdsConnection';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export interface KdsItemModalProps {
   item: KdsOrderItem;
@@ -24,19 +19,32 @@ export interface KdsItemModalProps {
   onUpdateStatus: (itemId: number, status: KitchenStatus) => void;
 }
 
-export function KdsItemModal({ item, orderNumber, updating, onClose, onUpdateStatus }: KdsItemModalProps) {
+export function KdsItemModal({
+  item,
+  orderNumber,
+  updating,
+  onClose,
+  onUpdateStatus,
+}: KdsItemModalProps) {
   const { t } = useI18n();
   const statusLabel = (s: KitchenStatus) => t(STATUS_CONFIG[normalizeKitchenStatus(s)].labelKey);
   const currentStatus = normalizeKitchenStatus(item.status);
   // 'voided' is locked — it's outside STATUS_ORDER on purpose (issue #150),
   // so there's no next/prev to compute for it.
   const isVoided = currentStatus === 'voided';
-  const currentIdx = isVoided ? -1 : STATUS_ORDER.indexOf(currentStatus as Exclude<KitchenStatus, 'voided'>);
-  const next = !isVoided ? STATUS_ORDER[currentIdx + 1] ?? null : null;
-  const prev = !isVoided ? STATUS_ORDER[currentIdx - 1] ?? null : null;
+  const currentIdx = isVoided
+    ? -1
+    : STATUS_ORDER.indexOf(currentStatus as Exclude<KitchenStatus, 'voided'>);
+  const next = !isVoided ? (STATUS_ORDER[currentIdx + 1] ?? null) : null;
+  const prev = !isVoided ? (STATUS_ORDER[currentIdx - 1] ?? null) : null;
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent
         className="flex max-w-sm flex-col gap-5 border-flo-border bg-flo-surface-raised sm:max-w-sm"
         aria-labelledby="kds-item-modal-title"
@@ -75,7 +83,8 @@ export function KdsItemModal({ item, orderNumber, updating, onClose, onUpdateSta
                   key={`${addon.id ?? addon.name}-${i}`}
                   className="rounded-flo-md border border-flo-info/30 bg-flo-surface px-2.5 py-1 text-sm font-medium text-flo-info"
                 >
-                  + {addon.name}{(addon.quantity || 1) > 1 ? ` ×${addon.quantity}` : ''}
+                  + {addon.name}
+                  {(addon.quantity || 1) > 1 ? ` ×${addon.quantity}` : ''}
                 </span>
               ))}
             </div>
@@ -133,7 +142,9 @@ export function KdsItemModal({ item, orderNumber, updating, onClose, onUpdateSta
                   disabled={updating}
                   className={`min-h-11 w-full rounded-flo-xl py-5 text-xl font-bold text-white transition-all active:scale-95 disabled:opacity-50 ${STATUS_CONFIG[next].color} hover:brightness-90`}
                 >
-                  {updating ? t('kds.updating') : t('kds.markAs', { status: statusLabel(next) })}
+                  {updating
+                    ? t('kds.updating')
+                    : `${t('kds.bump')} · ${t('kds.markAs', { status: statusLabel(next) })}`}
                 </button>
               )}
               {prev && (

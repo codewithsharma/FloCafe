@@ -43,7 +43,10 @@ export function KdsLoginForm({ conn }: { conn: UseKdsConnectionResult }) {
         </div>
 
         <div>
-          <label htmlFor="kds-login-password" className="mb-1 block text-sm font-medium text-flo-text">
+          <label
+            htmlFor="kds-login-password"
+            className="mb-1 block text-sm font-medium text-flo-text"
+          >
             {t('auth.password')}
           </label>
           <input

@@ -5,6 +5,11 @@ import { randomUUID } from 'crypto';
 import { requireRole, requireKdsEnabled, requireKdsEnabledOr404, isTokenRevoked, isTokenStale } from '../middleware/security';
 import { parseCategoryIds } from './auth';
 import { notifyKdsUpdate } from '../services/kds';
+import {
+  applyKitchenItemStatus,
+  setOrderKitchenPriority,
+  KitchenStatusError,
+} from '../services/kitchen-status';
 
 const router = Router();
 
@@ -98,9 +103,11 @@ router.get('/orders', requireKdsEnabled, (req: Request, res: Response) => {
         JOIN order_items oi ON oi.order_id = o.id AND oi.status NOT IN ('served','cancelled')
         WHERE o.status NOT IN ('pending','preparing','ready','served','cancelled')
       )
-      SELECT o.*, t.number as table_name, t.floor, t.section, t.kitchen_station_id
+      SELECT o.*, t.number as table_name, t.floor, t.section, t.kitchen_station_id,
+             ks.name as station_name
       FROM orders o
       LEFT JOIN tables t ON o.table_id = t.id
+      LEFT JOIN kitchen_stations ks ON ks.id = t.kitchen_station_id
       WHERE o.id IN active_ids
     `;
     const params: any[] = [];
@@ -121,7 +128,7 @@ router.get('/orders', requireKdsEnabled, (req: Request, res: Response) => {
       params.push(stationId, ...requestedRoutingCategoryIds);
     }
 
-    query += ' ORDER BY o.created_at ASC';
+    query += ' ORDER BY COALESCE(o.kitchen_priority,0) DESC, o.created_at ASC';
 
     const orders = db.prepare(query).all(...params);
     const ordersById = new Map((orders as any[]).map((order) => [order.id, order]));
@@ -445,10 +452,12 @@ router.patch('/items/:id/status', requireKdsEnabled, (req: Request, res: Respons
         }
       }
 
-      const updateResult = expectedStatus === undefined
-        ? db.prepare("UPDATE order_items SET status = ?, updated_at = ? WHERE id = ? AND status NOT IN ('voided', 'void_adjustment', 'completed', 'cancelled')").run(status, now(), req.params.id)
-        : db.prepare('UPDATE order_items SET status = ?, updated_at = ? WHERE id = ? AND status = ?').run(status, now(), req.params.id, expectedStatus);
-      if (updateResult.changes !== 1) throw new Error('STATUS_CONFLICT');
+      applyKitchenItemStatus(db, {
+        itemId: req.params.id,
+        status,
+        expectedStatus,
+        actorUserId: (req as any).user?.userId,
+      });
 
       return db.prepare('SELECT * FROM order_items WHERE id = ?').get(req.params.id);
     });
@@ -477,12 +486,49 @@ router.patch('/items/:id/status', requireKdsEnabled, (req: Request, res: Respons
     if (error.message === 'ORPHANED_ORDER_ITEM') {
       return res.status(404).json({ error: 'Order item is not attached to an order' });
     }
-    if (error.message === 'STATUS_CONFLICT') {
+    if (error.message === 'STATUS_CONFLICT' || (error instanceof KitchenStatusError && error.code === 'STATUS_CONFLICT')) {
       return res.status(409).json({ error: 'Item status changed; refresh and try again' });
+    }
+    if (error instanceof KitchenStatusError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code });
     }
     console.error("[API] KDS item status update error:", error);
     res.status(500).json({ error: "Could not update item status" });
   }
 });
+
+router.patch(
+  '/orders/:id/priority',
+  requireKdsEnabled,
+  requireRole('owner', 'manager'),
+  (req: Request, res: Response) => {
+    try {
+      const priority = req.body?.priority;
+      const db = getDatabase();
+      const actorUserId = (req as any).user?.userId;
+      withTxn(() => {
+        setOrderKitchenPriority(db, {
+          orderId: req.params.id,
+          priority,
+          actorUserId,
+        });
+      });
+      notifyKdsUpdate();
+      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as any;
+      const restrictedPayload = isRestrictedKdsPayload(
+        req,
+        getKdsUserCategoryIds(db, req) || [],
+        getKdsUserStationIds(db, req) || [],
+      );
+      res.json({ order: projectKdsOrder(order, restrictedPayload) });
+    } catch (error: any) {
+      if (error instanceof KitchenStatusError) {
+        return res.status(error.statusCode).json({ error: error.message, code: error.code });
+      }
+      console.error('[API] KDS order priority update error:', error);
+      res.status(500).json({ error: 'Could not update order kitchen priority' });
+    }
+  },
+);
 
 export const kdsRoutes = router;

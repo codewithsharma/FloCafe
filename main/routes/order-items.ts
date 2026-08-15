@@ -6,7 +6,6 @@ import {
   getUserKdsStationIds,
   hasUserKdsStationAssignments,
   isKdsStationItemAllowed,
-  now,
   parseItemJson,
   attachEffectiveAddons,
   isVoidedItemKdsVisible,
@@ -15,6 +14,7 @@ import {
   withTxn,
 } from '../db';
 import { notifyKdsUpdate } from '../services/kds';
+import { applyKitchenItemStatus, KitchenStatusError } from '../services/kitchen-status';
 import { parseCategoryIds } from './auth';
 import {
   requireKdsEnabled,
@@ -192,19 +192,12 @@ router.patch(
           }
         }
 
-        const updateResult =
-          expectedStatus === undefined
-            ? db
-                .prepare(
-                  "UPDATE order_items SET status = ?, updated_at = ? WHERE id = ? AND status NOT IN ('voided', 'void_adjustment', 'completed', 'cancelled')",
-                )
-                .run(status, now(), itemId)
-            : db
-                .prepare(
-                  'UPDATE order_items SET status = ?, updated_at = ? WHERE id = ? AND status = ?',
-                )
-                .run(status, now(), itemId, expectedStatus);
-        if (updateResult.changes !== 1) throw new Error('STATUS_CONFLICT');
+        applyKitchenItemStatus(db, {
+          itemId,
+          status,
+          expectedStatus,
+          actorUserId: userId,
+        });
 
         const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(item.order_id) as any;
 
@@ -287,8 +280,11 @@ router.patch(
       if (error.message === 'ORPHANED_ORDER_ITEM') {
         return res.status(404).json({ error: 'Order item is not attached to an order' });
       }
-      if (error.message === 'STATUS_CONFLICT') {
+      if (error.message === 'STATUS_CONFLICT' || (error instanceof KitchenStatusError && error.code === 'STATUS_CONFLICT')) {
         return res.status(409).json({ error: 'Item status changed; refresh and try again' });
+      }
+      if (error instanceof KitchenStatusError) {
+        return res.status(error.statusCode).json({ error: error.message, code: error.code });
       }
       console.error('[OrderItems] Status update error:', error);
       res.status(500).json({ error: 'Could not update order item status' });

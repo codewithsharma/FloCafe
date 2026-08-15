@@ -4887,6 +4887,28 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       `);
     },
   },
+  {
+    version: 77,
+    name: 'r3_kitchen_item_timestamps_and_priority',
+    up: () => {
+      // R3 Kitchen OS deepen: item-level kitchen timestamps + order priority.
+      // Fresh installs may already have columns from createSchema — skip ALTER.
+      const orderItemColumns = getColumns(db, 'order_items');
+      if (!orderItemColumns.includes('preparing_started_at')) {
+        db.exec(`ALTER TABLE order_items ADD COLUMN preparing_started_at TEXT`);
+      }
+      if (!orderItemColumns.includes('ready_at')) {
+        db.exec(`ALTER TABLE order_items ADD COLUMN ready_at TEXT`);
+      }
+      if (!orderItemColumns.includes('served_at')) {
+        db.exec(`ALTER TABLE order_items ADD COLUMN served_at TEXT`);
+      }
+      const orderColumns = getColumns(db, 'orders');
+      if (!orderColumns.includes('kitchen_priority')) {
+        db.exec(`ALTER TABLE orders ADD COLUMN kitchen_priority INTEGER DEFAULT 0`);
+      }
+    },
+  },
 ];
 
 function syncBackupBeforeMigration(fromVersion: number, toVersion: number): void {
@@ -5228,6 +5250,7 @@ function createSchema(): void {
       completed_at TEXT,
       cancelled_at TEXT,
       cancellation_reason TEXT,
+      kitchen_priority INTEGER DEFAULT 0,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id)
@@ -5253,6 +5276,9 @@ function createSchema(): void {
       addons TEXT,
       special_instructions TEXT,
       status TEXT DEFAULT 'pending',
+      preparing_started_at TEXT,
+      ready_at TEXT,
+      served_at TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (order_id) REFERENCES orders(id)
@@ -5919,6 +5945,9 @@ export function projectKdsOrder(order: any, restricted: boolean): any {
     'guest_count',
     'special_instructions',
     'status',
+    'kitchen_priority',
+    'kitchen_station_id',
+    'station_name',
     'created_at',
     'updated_at',
     'table_name',
@@ -5943,6 +5972,9 @@ export function projectKdsItem(item: any, restricted: boolean): any {
     'quantity',
     'status',
     'special_instructions',
+    'preparing_started_at',
+    'ready_at',
+    'served_at',
     'created_at',
     'updated_at',
     'order_number',

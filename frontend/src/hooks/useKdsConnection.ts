@@ -86,6 +86,9 @@ export interface KdsOrderItem {
   status?: string;
   addons?: KdsOrderItemAddon[] | null;
   special_instructions?: string | null;
+  preparing_started_at?: string | null;
+  ready_at?: string | null;
+  served_at?: string | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -102,6 +105,9 @@ export interface KdsOrder {
   total?: number;
   guest_count?: number | null;
   special_instructions?: string | null;
+  kitchen_priority?: number | null;
+  kitchen_station_id?: string | number | null;
+  station_name?: string | null;
   created_at: string;
   updated_at?: string;
   items?: KdsOrderItem[];

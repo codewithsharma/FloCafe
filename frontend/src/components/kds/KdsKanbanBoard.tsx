@@ -17,6 +17,12 @@ import {
   type KdsOrder,
   type KdsOrderItem,
 } from '@/hooks/useKdsConnection';
+import {
+  resolveTicketAgeAnchor,
+  ticketAgeCardClass,
+  ticketAgeClockClass,
+  ticketAgeTier,
+} from '@/lib/kds-ticket-age';
 import { ORDER_TYPE_LABEL_KEYS } from '@/lib/order-types';
 import { useI18n } from '@/hooks/useI18n';
 import { parseDbTimestamp } from '@/lib/utils';
@@ -24,7 +30,11 @@ import { parseDbTimestamp } from '@/lib/utils';
 export interface KdsKanbanBoardProps {
   orders: KdsOrder[];
   updating: number | null;
-  updateItemStatus: (itemId: number, status: KitchenStatus, opts?: { silent?: boolean; expectedStatus?: KitchenStatus }) => Promise<boolean>;
+  updateItemStatus: (
+    itemId: number,
+    status: KitchenStatus,
+    opts?: { silent?: boolean; expectedStatus?: KitchenStatus },
+  ) => Promise<boolean>;
 }
 
 interface DropData {
@@ -47,9 +57,17 @@ function statusOf(item: KdsOrderItem): KitchenStatus {
 type BoardStatus = Exclude<KitchenStatus, 'voided'>;
 
 export function KdsKanbanBoard({ orders, updating, updateItemStatus }: KdsKanbanBoardProps) {
-  const [modalItem, setModalItem] = useState<{ item: KdsOrderItem; orderNumber: string } | null>(null);
+  const [modalItem, setModalItem] = useState<{ item: KdsOrderItem; orderNumber: string } | null>(
+    null,
+  );
   const resolvedModalItem = modalItem
-    ? { ...modalItem, item: orders.flatMap((order) => order.items || []).find((item) => item.id === modalItem.item.id) || modalItem.item }
+    ? {
+        ...modalItem,
+        item:
+          orders
+            .flatMap((order) => order.items || [])
+            .find((item) => item.id === modalItem.item.id) || modalItem.item,
+      }
     : null;
 
   // Group by status, then by order. Default rendering matches the tabs view:
@@ -97,12 +115,19 @@ export function KdsKanbanBoard({ orders, updating, updateItemStatus }: KdsKanban
     if (!event.operation.target || !sourceData || !targetData) return;
     if (sourceData.fromStatus === targetData.status) return;
 
-    const results = await Promise.all(sourceData.itemIds.map((id) =>
-      updateItemStatus(id, targetData.status, { silent: true, expectedStatus: sourceData.fromStatus }),
-    ));
+    const results = await Promise.all(
+      sourceData.itemIds.map((id) =>
+        updateItemStatus(id, targetData.status, {
+          silent: true,
+          expectedStatus: sourceData.fromStatus,
+        }),
+      ),
+    );
     const failed = results.filter((result) => !result).length;
     if (failed > 0) {
-      toast.error(`${failed} item${failed === 1 ? '' : 's'} could not be updated. The board was refreshed.`);
+      toast.error(
+        `${failed} item${failed === 1 ? '' : 's'} could not be updated. The board was refreshed.`,
+      );
     }
   }
 
@@ -173,7 +198,9 @@ export function KdsKanbanBoard({ orders, updating, updateItemStatus }: KdsKanban
           updating={updating === resolvedModalItem.item.id}
           onClose={() => setModalItem(null)}
           onUpdateStatus={async (itemId, status) => {
-            const updated = await updateItemStatus(itemId, status, { expectedStatus: statusOf(resolvedModalItem.item) });
+            const updated = await updateItemStatus(itemId, status, {
+              expectedStatus: statusOf(resolvedModalItem.item),
+            });
             if (updated) setModalItem(null);
           }}
         />
@@ -201,6 +228,10 @@ function KanbanOrderCard({
   const config = STATUS_CONFIG[status];
   const itemIds = items.map((i) => i.id);
   const busy = items.some((i) => updating === i.id);
+  const ageAnchor = resolveTicketAgeAnchor(order, items);
+  const ageTier = ticketAgeTier(ageAnchor);
+  const cardBorder = ticketAgeCardClass(ageTier, config.border);
+  const isRush = (order.kitchen_priority ?? 0) > 0;
   const { ref, isDragging } = useDraggable({
     id: `order-${order.id}-${status}`,
     data: { itemIds, fromStatus: status },
@@ -213,23 +244,45 @@ function KanbanOrderCard({
         isDragging ? 'opacity-40' : ''
       } ${busy ? 'pointer-events-none opacity-60' : ''}`}
     >
-      <div className={`flex flex-col rounded-flo-lg border-2 bg-flo-surface p-3 shadow-sm ${config.border}`}>
+      <div
+        className={`flex flex-col rounded-flo-lg border-2 bg-flo-surface p-3 shadow-sm ${cardBorder}`}
+      >
         <div className="mb-2 flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-wrap items-center gap-1.5">
             <span className="shrink-0 text-sm font-bold text-flo-text">#{order.order_number}</span>
+            {isRush && (
+              <Badge className="border-flo-danger/40 bg-flo-danger-subtle text-flo-danger">
+                {t('kds.rush')}
+              </Badge>
+            )}
             <Badge
               variant="outline"
-              className={ORDER_TYPE_BADGE_STYLES[order.type] || 'bg-flo-bg text-flo-text-secondary border-flo-border'}
+              className={
+                ORDER_TYPE_BADGE_STYLES[order.type] ||
+                'bg-flo-bg text-flo-text-secondary border-flo-border'
+              }
             >
               {t(ORDER_TYPE_LABEL_KEYS[order.type] ?? order.type)}
             </Badge>
             {order.table?.name && (
               <Badge variant="secondary">{t('kds.tableLabel', { name: order.table.name })}</Badge>
             )}
+            {order.station_name && (
+              <Badge variant="outline" className="border-flo-border text-flo-text-secondary">
+                {t('kds.stationLabel', { name: order.station_name })}
+              </Badge>
+            )}
+            {ageTier === 'danger' && (
+              <Badge variant="outline" className="border-flo-danger/40 text-flo-danger">
+                {t('kds.overdue')}
+              </Badge>
+            )}
           </div>
-          <div className="flex shrink-0 items-center gap-1 font-mono text-sm text-flo-text-muted">
+          <div
+            className={`flex shrink-0 items-center gap-1 font-mono text-sm ${ticketAgeClockClass(ageTier)}`}
+          >
             <Clock size={12} />
-            {timeSince(order.created_at)}
+            {timeSince(ageAnchor)}
           </div>
         </div>
 
@@ -252,12 +305,26 @@ function KanbanOrderCard({
               className={`w-full rounded-flo-md border px-2 py-1.5 text-left transition hover:brightness-95 active:scale-[0.98] ${config.border} ${config.bg}`}
             >
               <div className="flex items-center gap-2">
-                <span className={`w-6 shrink-0 text-base font-bold ${config.text}`}>{item.quantity}×</span>
-                <span className="flex-1 truncate text-lg font-medium text-flo-text">{item.product_name}</span>
-                {item.addons && item.addons.length > 0 && (
-                  <span className="text-[10px] text-flo-info">+{item.addons.length}</span>
-                )}
+                <span className={`w-6 shrink-0 text-base font-bold ${config.text}`}>
+                  {item.quantity}×
+                </span>
+                <span className="flex-1 truncate text-lg font-medium text-flo-text">
+                  {item.product_name}
+                </span>
               </div>
+              {item.addons && item.addons.length > 0 && (
+                <div className="ml-[26px] mt-1 flex flex-wrap gap-1">
+                  {item.addons.map((addon, i) => (
+                    <span
+                      key={`${addon.id ?? addon.name}-${i}`}
+                      className="rounded border border-flo-info/30 bg-flo-surface/70 px-1.5 py-0.5 text-[10px] text-flo-info"
+                    >
+                      + {addon.name}
+                      {(addon.quantity || 1) > 1 ? ` ×${addon.quantity}` : ''}
+                    </span>
+                  ))}
+                </div>
+              )}
               {item.special_instructions && (
                 <p className="ml-[26px] mt-0.5 break-words text-sm font-medium italic text-flo-danger">
                   {`"${item.special_instructions}"`}
@@ -288,7 +355,9 @@ function VoidedColumn({
 
   return (
     <div className="flex-1 min-w-[260px] flex flex-col">
-      <div className={`flex items-center gap-2 rounded-t-lg border-2 border-b-0 px-3 py-2 ${config.bg} ${config.border}`}>
+      <div
+        className={`flex items-center gap-2 rounded-t-lg border-2 border-b-0 px-3 py-2 ${config.bg} ${config.border}`}
+      >
         <div className={`h-2 w-2 rounded-full ${config.color}`} />
         <span className={`text-base font-semibold ${config.text}`}>{t(config.labelKey)}</span>
         <span className="ml-auto rounded-full bg-flo-surface/70 px-1.5 py-0.5 text-xs font-medium tabular-nums text-flo-text">
@@ -300,11 +369,26 @@ function VoidedColumn({
         style={{ minHeight: '60vh', maxHeight: 'calc(100vh - 220px)' }}
       >
         {groups.map(({ order, items }) => (
-          <div key={order.id} className={`flex flex-col rounded-flo-lg border-2 bg-flo-surface p-3 opacity-80 shadow-sm ${config.border}`}>
+          <div
+            key={order.id}
+            className={`flex flex-col rounded-flo-lg border-2 bg-flo-surface p-3 opacity-80 shadow-sm ${config.border}`}
+          >
             <div className="mb-2 flex min-w-0 flex-wrap items-center gap-1.5">
-              <span className="shrink-0 text-sm font-bold text-flo-text">#{order.order_number}</span>
+              <span className="shrink-0 text-sm font-bold text-flo-text">
+                #{order.order_number}
+              </span>
+              {(order.kitchen_priority ?? 0) > 0 && (
+                <Badge className="border-flo-danger/40 bg-flo-danger-subtle text-flo-danger">
+                  {t('kds.rush')}
+                </Badge>
+              )}
               {order.table?.name && (
                 <Badge variant="secondary">{t('kds.tableLabel', { name: order.table.name })}</Badge>
+              )}
+              {order.station_name && (
+                <Badge variant="outline" className="border-flo-border text-flo-text-secondary">
+                  {t('kds.stationLabel', { name: order.station_name })}
+                </Badge>
               )}
             </div>
             <div className="space-y-1">
@@ -316,8 +400,12 @@ function VoidedColumn({
                   className={`w-full rounded-flo-md border px-2 py-1.5 text-left transition hover:brightness-95 active:scale-[0.98] ${config.border} ${config.bg}`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className={`w-6 shrink-0 text-base font-bold ${config.text}`}>{item.quantity}×</span>
-                    <span className="flex-1 truncate text-lg font-medium text-flo-text-muted line-through">{item.product_name}</span>
+                    <span className={`w-6 shrink-0 text-base font-bold ${config.text}`}>
+                      {item.quantity}×
+                    </span>
+                    <span className="flex-1 truncate text-lg font-medium text-flo-text-muted line-through">
+                      {item.product_name}
+                    </span>
                   </div>
                 </button>
               ))}

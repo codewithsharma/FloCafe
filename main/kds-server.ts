@@ -24,6 +24,7 @@ import {
   projectKdsOrder,
 } from './db';
 import { setupKdsWebSocket, notifyKdsUpdate } from './services/kds';
+import { applyKitchenItemStatus, KitchenStatusError } from './services/kitchen-status';
 import { getJWTSecret, parseCategoryIds } from './routes/auth';
 import { isModuleEnabled } from './modules';
 import {
@@ -335,9 +336,11 @@ export function startKdsServer(): Promise<void> {
           .replace(/\..*$/, '');
 
         let query = `
-          SELECT DISTINCT o.*, t.number as table_number, t.kitchen_station_id
+          SELECT DISTINCT o.*, t.number as table_number, t.kitchen_station_id,
+                 ks.name as station_name
           FROM orders o
           LEFT JOIN tables t ON o.table_id = t.id
+          LEFT JOIN kitchen_stations ks ON ks.id = t.kitchen_station_id
           INNER JOIN order_items oi ON oi.order_id = o.id
           WHERE o.id IN (
             SELECT id FROM orders WHERE status IN ('pending', 'preparing', 'ready', 'served')
@@ -577,29 +580,23 @@ export function startKdsServer(): Promise<void> {
               return { statusCode: 403, error: 'Not authorized to update this item' };
             }
 
-            const updated =
-              expectedStatus === undefined
-                ? db
-                    .prepare(
-                      `
-                UPDATE order_items
-                SET status = ?, updated_at = datetime('now')
-                WHERE id = ? AND status NOT IN ('voided', 'void_adjustment', 'completed', 'cancelled')
-              `,
-                    )
-                    .run(status, req.params.id)
-                : db
-                    .prepare(
-                      `
-                UPDATE order_items
-                SET status = ?, updated_at = datetime('now')
-                WHERE id = ? AND status = ?
-              `,
-                    )
-                    .run(status, req.params.id, expectedStatus);
-            return updated.changes === 1
-              ? { statusCode: 200, error: null }
-              : { statusCode: 409, error: 'The order item changed before it could be updated' };
+            try {
+              applyKitchenItemStatus(db, {
+                itemId: req.params.id as string,
+                status,
+                expectedStatus,
+                actorUserId: kdsUser.userId,
+              });
+              return { statusCode: 200, error: null };
+            } catch (err: any) {
+              if (err instanceof KitchenStatusError || err?.code === 'STATUS_CONFLICT') {
+                return {
+                  statusCode: err.statusCode || 409,
+                  error: err.message || 'The order item changed before it could be updated',
+                };
+              }
+              throw err;
+            }
           })
           .immediate();
 

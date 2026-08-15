@@ -142,13 +142,13 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | Preparing status           | 🟢 Existing  |
 | Ready status               | 🟢 Existing  |
 | Completed status           | 🟢 Existing  |
-| Kitchen routing            | 🔵 Planned   |
-| Multiple stations          | 🔵 Planned   |
-| Prep station               | 🔵 Planned   |
+| Kitchen routing            | 🟢 Existing  |
+| Multiple stations          | 🟢 Existing  |
+| Prep station               | 🟢 Existing  |
 | Expediter                  | 🔵 Planned   |
-| Priority queue             | 🔵 Planned   |
-| Ticket timers              | 🔵 Planned   |
-| Prep-time tracking         | 🔵 Planned   |
+| Priority queue             | 🟢 Existing  |
+| Ticket timers              | 🟢 Existing  |
+| Prep-time tracking         | 🟢 Existing  |
 | KDS analytics              | 🔵 Planned   |
 | Offline KDS                | 🟡 Hardening |
 | KDS recovery               | 🟡 Hardening |
@@ -432,7 +432,7 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | Integration test foundation | 🟢 Existing |
 | POS workflow tests          | 🔵 Planned  |
 | Payment workflow tests      | 🔵 Planned  |
-| KDS workflow tests          | 🔵 Planned  |
+| KDS workflow tests          | 🟢 Existing |
 | Printing tests              | 🔵 Planned  |
 | Offline/reconnect tests     | 🔵 Planned  |
 | Recovery tests              | 🔵 Planned  |
@@ -565,28 +565,29 @@ Card terminal, payment gateway, online payment, multi-location (central menu/inv
 
 Some 🔵 Planned rows already have a **shipped slice**. Treat Planned as remaining product depth, not a greenfield rebuild:
 
-| Matrix row                               | Shipped slice (evidence)                                                                                                                           |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Item availability / 86, sold-out control | Phase 4.7 `POST /api/products/:id/availability` + Restaurant POS 86                                                                                |
-| Void item                                | Item cancel/restore on order routes; H1 blocks cancel after successful tender                                                                      |
-| Void order                               | Status cancel + PIN override; H1 adds `order.cancelled` audit                                                                                      |
-| Discounts                                | Order/item discount APIs; H1 adds audit + post-tender 409                                                                                          |
-| Receipt generation                       | Thermal print + H1 server-side `print_logs` on successful print-bill                                                                               |
-| Partial payment                          | `payment_status=partial` + FIN-01 collectible outstanding                                                                                          |
-| Modifier groups                          | `addon_groups` / addons                                                                                                                            |
-| Item images                              | Product images + `test:product-images`                                                                                                             |
-| Kitchen routing / multiple stations      | `kitchen_stations`                                                                                                                                 |
-| Multiple printer routing                 | `kitchen_stations.printer_id`                                                                                                                      |
-| Cash drawer                              | Phase 3.6F `POST /api/printers/kick-drawer`                                                                                                        |
-| Waste management                         | Phase 4.15 SKU `action=wastage` (not ingredient waste)                                                                                             |
-| Inventory report                         | Phase 4.11 on-hand valuation (not food-cost %)                                                                                                     |
-| Service charge                           | ADR-014 **Proposed** — no wiring until human Accept                                                                                                |
-| Merge tables                             | R2 unpaid-only merge (`POST /api/tables/:id/merge`); billed merge still **ADR_REQUIRED** (4.13)                                                    |
-| Sections                                 | R2 free-text `section` on CRUD + list filter + create UI; no first-class section entity / floor designer                                           |
-| Table assignment                         | Kitchen station assignment + R2 `assigned_waiter_id` (`POST /api/tables/:id/assign-waiter`, owner/manager)                                         |
-| Transfer table                           | R2 hardened: held-cart/cleaning guards, audit `table.order_transferred`, transfer UI on `/tables`                                                  |
-| Table split                              | Split bill remains Existing; R2 adds unpaid physical split (`POST /api/tables/:id/split`) — UI still API-primary                                   |
-| Recipe / BOM, PO, suppliers              | STRATEGY historically frozen as ERP depth; this matrix now lists them 🔵 Planned — still require an authorized slice + ADR if schema/money changes |
+| Matrix row                                 | Shipped slice (evidence)                                                                                                                           |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Item availability / 86, sold-out control   | Phase 4.7 `POST /api/products/:id/availability` + Restaurant POS 86                                                                                |
+| Void item                                  | Item cancel/restore on order routes; H1 blocks cancel after successful tender                                                                      |
+| Void order                                 | Status cancel + PIN override; H1 adds `order.cancelled` audit                                                                                      |
+| Discounts                                  | Order/item discount APIs; H1 adds audit + post-tender 409                                                                                          |
+| Receipt generation                         | Thermal print + H1 server-side `print_logs` on successful print-bill                                                                               |
+| Partial payment                            | `payment_status=partial` + FIN-01 collectible outstanding                                                                                          |
+| Modifier groups                            | `addon_groups` / addons                                                                                                                            |
+| Item images                                | Product images + `test:product-images`                                                                                                             |
+| Kitchen routing / multiple stations        | R3 Existing: `kitchen_stations` + category/table routing + KDS `station_name`; per-product station FK still gap                                    |
+| Priority queue / ticket timers / prep-time | R3: `orders.kitchen_priority` + item timestamps + aging UI; expediter/analytics/sound still Planned                                                |
+| Multiple printer routing                   | `kitchen_stations.printer_id`                                                                                                                      |
+| Cash drawer                                | Phase 3.6F `POST /api/printers/kick-drawer`                                                                                                        |
+| Waste management                           | Phase 4.15 SKU `action=wastage` (not ingredient waste)                                                                                             |
+| Inventory report                           | Phase 4.11 on-hand valuation (not food-cost %)                                                                                                     |
+| Service charge                             | ADR-014 **Proposed** — no wiring until human Accept                                                                                                |
+| Merge tables                               | R2 unpaid-only merge (`POST /api/tables/:id/merge`); billed merge still **ADR_REQUIRED** (4.13)                                                    |
+| Sections                                   | R2 free-text `section` on CRUD + list filter + create UI; no first-class section entity / floor designer                                           |
+| Table assignment                           | Kitchen station assignment + R2 `assigned_waiter_id` (`POST /api/tables/:id/assign-waiter`, owner/manager)                                         |
+| Transfer table                             | R2 hardened: held-cart/cleaning guards, audit `table.order_transferred`, transfer UI on `/tables`                                                  |
+| Table split                                | Split bill remains Existing; R2 adds unpaid physical split (`POST /api/tables/:id/split`) — UI still API-primary                                   |
+| Recipe / BOM, PO, suppliers                | STRATEGY historically frozen as ERP depth; this matrix now lists them 🔵 Planned — still require an authorized slice + ADR if schema/money changes |
 
 Recipe/BOM and procurement moving from STRATEGY freeze to Planned is a **product-plan change**. Do not implement until a human authorizes a phase; keep aggregators, terminals, multi-location, and AI frozen.
 

@@ -1,8 +1,20 @@
 # Decisions
 
+## 2026-08-15 — R3 Kitchen OS (Implemented)
+
+Authorized Kitchen OS deepen (not rebuild). Schema v77 item kitchen timestamps + `orders.kitchen_priority`. Service `kitchen-status.ts` CAS + audit; wired into order-items, kds REST/WS, and companion `kds-server`. Priority PATCH owner/manager; list sorts rush first. UI: aging bands, station_name, bump labels, kanban addon names, RUSH badge. H2 advertise/stale/CAS preserved. Durable outbox documented as gap. Suite `npm run test:r3` 70/70. Doc: `docs/05-production/r3-kitchen-os.md`. Do not start R4.
+
+## 2026-08-15 — R3 Kitchen OS UI polish (Implemented)
+
+Authorized UI polish on existing KDS (not rebuild). Aging tint from `created_at` / `preparing_started_at` (5–10 warn, >10 danger); `station_name` via LEFT JOIN kitchen_stations on KDS list/WS/companion; tabs bump button + modal bump label; kanban addon name chips; RUSH when `kitchen_priority > 0`; types extended. Preserves H2 dataStale/pendingRetryRef/CAS/void lock. Suite: `npm run test:r3` (70/70).
+
+## 2026-08-15 — R3 Kitchen OS deepen (Implemented)
+
+Authorized deepen (not rebuild) of kitchen status. Schema v77: `order_items.preparing_started_at` / `ready_at` / `served_at`; `orders.kitchen_priority` INTEGER DEFAULT 0. Service `main/services/kitchen-status.ts`: CAS bump/unbump + timestamp rules + audits `kitchen.item_status_changed` / `kitchen.priority_changed`. Wired into order-items PATCH, kds items PATCH, kds WS `handleStatusUpdate`. `PATCH /api/kds/orders/:id/priority` owner/manager; list `ORDER BY COALESCE(kitchen_priority,0) DESC, created_at ASC`. Preserves H2 advertise/CAS. No outbox, no money, no `product.kitchen_station_id`. Suite: `npm run test:r3` (68/68).
+
 ## 2026-08-15 — R2 Restaurant Floor Operations (Implemented)
 
-Authorized floor ops around existing POS. Schema v76 `tables.assigned_waiter_id`. Service `main/services/tables.ts`: occupy CAS, transfer harden + audit, unpaid merge/split (4.13 SAFE NOW; billed merge ADR_REQUIRED), waiter assign, status guards. UI: section field, transfer/merge/assign dialogs on `/tables` (no floor designer). Suite `npm run test:r2` S-FLOOR-01…10. Preserves R1/H1–H4/FIN-01. Doc: `docs/05-production/r2-floor-operations.md`. Do not start R3.
+Authorized floor ops around existing POS. Schema v76 `tables.assigned_waiter_id`. Service `main/services/tables.ts`: occupy CAS, transfer harden + audit, unpaid merge/split (4.13 SAFE NOW; billed merge ADR_REQUIRED), waiter assign, status guards. UI: section field, transfer/merge/assign dialogs on `/tables` (no floor designer). Suite `npm run test:r2` S-FLOOR-01…10. Preserves R1/H1–H4/FIN-01. Doc: `docs/05-production/r2-floor-operations.md`.
 
 ## 2026-08-15 — R1 POS Core Completion (Implemented)
 
