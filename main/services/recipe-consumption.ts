@@ -202,7 +202,10 @@ function writeConsumeLine(
     reason: 'recipe_consumption',
   });
 
-  const unitCostCents = toCostCents(product.cost);
+  const unitCostCents =
+    product.cost_cents != null && Number.isFinite(Number(product.cost_cents))
+      ? Math.trunc(Number(product.cost_cents))
+      : toCostCents(product.cost);
   const lineCostCents = unitCostCents === null ? null : Math.round(Math.abs(qty) * unitCostCents);
 
   ctx.lineStmt.run(

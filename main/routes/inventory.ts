@@ -39,7 +39,7 @@ function productExists(productId: string): boolean {
 
 function mapInventoryError(error: unknown, res: Response): boolean {
   if (error instanceof InventoryServiceError) {
-    res.status(error.statusCode).json({ error: error.message });
+    res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
     return true;
   }
   const status = (error as { statusCode?: number })?.statusCode;
@@ -88,7 +88,7 @@ router.get('/movements', requireRole('owner', 'manager'), (req: Request, res: Re
       movements,
       ...(nextCursor !== null && { nextCursor }),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (mapInventoryError(error, res)) return;
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -107,7 +107,7 @@ router.get(
       }
       const result = reconstructQuantityFromLedger(getDatabase(), productId);
       res.json(result);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (mapInventoryError(error, res)) return;
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -118,7 +118,7 @@ router.get(
 router.get('/counts', requireRole('owner', 'manager'), (_req: Request, res: Response) => {
   try {
     res.json({ counts: listInventoryCounts() });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (mapInventoryError(error, res)) return;
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -130,7 +130,7 @@ router.get('/counts/:id', requireRole('owner', 'manager'), (req: Request, res: R
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const { count, lines } = getInventoryCount(id);
     res.json({ count, lines });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (mapInventoryError(error, res)) return;
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -148,7 +148,7 @@ router.post(
         createdBy: String((req as any).user.userId),
       });
       res.status(201).json({ count });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (mapInventoryError(error, res)) return;
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -169,7 +169,7 @@ router.post(
         countedQty: req.body.counted_qty,
       });
       res.json({ line });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (mapInventoryError(error, res)) return;
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -185,7 +185,7 @@ router.post(
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const count = submitInventoryCount(id);
       res.json({ count });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (mapInventoryError(error, res)) return;
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -204,7 +204,7 @@ router.post(
         actorUserId: String((req as any).user.userId),
       });
       res.json({ count });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (mapInventoryError(error, res)) return;
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -220,7 +220,7 @@ router.post(
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const count = cancelInventoryCount(id);
       res.json({ count });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (mapInventoryError(error, res)) return;
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });

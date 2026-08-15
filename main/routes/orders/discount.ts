@@ -53,6 +53,7 @@ import { DOMAIN_SPAN, withSpan } from '../../lib/tracing';
 import { addOrderItemsBodySchema, createOrderBodySchema, orderDiscountBodySchema, orderStatusBodySchema } from '../../validation/orders';
 import { readTerminalIdHeaderFromRequest, resolveActiveShiftForOrder } from '../../services/shift';
 import { orderHasSuccessfulTender } from '../../services/payment-tender';
+import { dualFromMajor, billPaidCents, fromCents } from '../../lib/money';
 // Phase 2.14 — Order ownership facade (markers; routes remain the HTTP surface).
 import { ORDER_OWNED_CONCERNS } from '../../services/order';
 void ORDER_OWNED_CONCERNS;
@@ -65,6 +66,7 @@ import {
   lookupOrderIdempotencyReplay,
   storeOrderIdempotency,
   batchHydrateOrders,
+  getAuthUser, errorMessage, errorStatus, type OrderRow, type OrderItemRow,
 } from '../orders-shared';
 
 export { checkPinRateLimit } from '../orders-shared';
@@ -78,7 +80,7 @@ export function registerDiscountRoutes(router: Router): void {
     (req: Request, res: Response) => {
     try {
       const db = getDatabase();
-      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as any;
+      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as OrderRow | undefined;
       if (!order) {
         return res.status(404).json({ error: 'Order not found' });
       }
@@ -88,11 +90,11 @@ export function registerDiscountRoutes(router: Router): void {
       let discountIdempotencyUserId: string | null = null;
       try {
         discountIdempotencyKey = orderIdempotencyKey(req);
-      } catch (err: any) {
-        return res.status(err.statusCode || 400).json({ error: err.message });
+      } catch (err: unknown) {
+        return res.status(errorStatus(err) || 400).json({ error: errorMessage(err) });
       }
       if (discountIdempotencyKey) {
-        discountIdempotencyUserId = String((req as any).user.userId);
+        discountIdempotencyUserId = String(getAuthUser(req).userId);
         discountRequestHash = createHash('sha256')
           .update(
             JSON.stringify({
@@ -112,10 +114,10 @@ export function registerDiscountRoutes(router: Router): void {
           if (prior.replay) {
             return res.status(200).json({ ...prior.response, idempotent_replay: true });
           }
-        } catch (err: any) {
+        } catch (err: unknown) {
           return res
             .status(err.statusCode || 500)
-            .json({ error: err.statusCode ? err.message : 'Internal server error' });
+            .json({ error: errorStatus(err) ? errorMessage(err) : 'Internal server error' });
         }
       }
 
@@ -233,7 +235,7 @@ export function registerDiscountRoutes(router: Router): void {
         // checks above and change status/subtotal before this lock is acquired (#175).
         const currentOrder = db
           .prepare('SELECT * FROM orders WHERE id = ?')
-          .get(req.params.id) as any;
+          .get(req.params.id) as OrderRow | undefined;
         if (!currentOrder) {
           throw Object.assign(new Error('Order not found'), { statusCode: 404 });
         }
@@ -244,7 +246,7 @@ export function registerDiscountRoutes(router: Router): void {
         }
 
         const customer = currentOrder.customer_id
-          ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(currentOrder.customer_id) as any)
+          ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(currentOrder.customer_id) as OrderRow | undefined)
           : null;
 
         // Calculate discount amount
@@ -263,10 +265,10 @@ export function registerDiscountRoutes(router: Router): void {
         // reduction each time this endpoint is called.
         const activeItems = db
           .prepare("SELECT * FROM order_items WHERE order_id = ? AND status != 'cancelled'")
-          .all(req.params.id) as any[];
+          .all(req.params.id) as OrderItemRow[];
         let freshTax = 0;
         let exclusiveTax = 0;
-        const allTaxBreakdowns: any[] = [];
+        const allTaxBreakdowns: unknown[] = [];
         const allTaxSnapshots: (string | null)[] = [];
         for (const item of activeItems) {
           freshTax += item.tax_amount || 0;
@@ -321,53 +323,73 @@ export function registerDiscountRoutes(router: Router): void {
         const newTotal = Number(preRoundTotal.toFixed(2));
         const roundOff = 0;
 
-        db.prepare(
+        {
+          const discD = dualFromMajor(discountAmount);
+          const taxD = dualFromMajor(taxRollup.taxAmount);
+          const totD = dualFromMajor(newTotal);
+          db.prepare(
           `
           UPDATE orders SET discount_amount = ?, discount_type = ?, discount_value = ?,
-            discount_reason = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, total = ?, round_off = ?, updated_at = ? WHERE id = ?
+            discount_reason = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, total = ?, round_off = ?,
+            discount_amount_cents = ?, tax_amount_cents = ?, total_cents = ?, updated_at = ? WHERE id = ?
         `,
         ).run(
-          discountAmount,
+          discD.major,
           discount_value > 0 ? discount_type : null,
           discount_value > 0 ? discount_value : null,
           discount_value > 0 ? discount_reason || null : null,
-          taxRollup.taxAmount,
+          taxD.major,
           JSON.stringify(taxRollup.breakdowns),
           taxRollup.snapshotJson,
-          newTotal,
+          totD.major,
           roundOff,
+          discD.cents,
+          taxD.cents,
+          totD.cents,
           now(),
           req.params.id,
         );
+        }
 
         // Sync discount to bill if it exists and is unpaid
         const existingBill = db
           .prepare('SELECT * FROM bills WHERE order_id = ? AND payment_status != ?')
-          .get(req.params.id, 'paid') as any;
+          .get(req.params.id, 'paid') as OrderRow | undefined;
         if (existingBill) {
           const pack = getActiveCountryPack(tenantInfo.country);
           const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(newTotal, pack);
-          const newBillBalance = Math.max(0, billTotal - (existingBill.paid_amount || 0));
-          db.prepare(
+          const newBillBalance = Math.max(0, billTotal - fromCents(billPaidCents(existingBill as { paid_amount_cents?: unknown; paid_amount?: unknown })));
+          {
+            const discD = dualFromMajor(discountAmount);
+            const taxD = dualFromMajor(taxRollup.taxAmount);
+            const totD = dualFromMajor(billTotal);
+            const balD = dualFromMajor(newBillBalance);
+            db.prepare(
             `
             UPDATE bills SET discount_amount = ?, discount_type = ?, discount_value = ?,
-              discount_reason = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, total = ?, balance = ?, round_off = ?, updated_at = ?
+              discount_reason = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, total = ?, balance = ?, round_off = ?,
+              discount_amount_cents = ?, tax_amount_cents = ?, total_cents = ?, balance_cents = ?, updated_at = ?
             WHERE id = ?
           `,
           ).run(
-            discountAmount,
+            discD.major,
             discount_value > 0 ? discount_type : null,
             discount_value > 0 ? discount_value : null,
             discount_value > 0 ? discount_reason || null : null,
-            taxRollup.taxAmount,
+            taxD.major,
             JSON.stringify(taxRollup.breakdowns),
             taxRollup.snapshotJson,
-            billTotal,
-            newBillBalance,
+            totD.major,
+            balD.major,
             billRoundOff,
+            discD.cents,
+            taxD.cents,
+            totD.cents,
+            balD.cents,
             now(),
             existingBill.id,
           );
+          }
         }
 
         const updatedOrder = parseRowJson(
@@ -375,7 +397,7 @@ export function registerDiscountRoutes(router: Router): void {
         ) as any;
 
         logAuditEvent({
-          actorUserId: (req as any).user?.userId ?? null,
+          actorUserId: getAuthUser(req)?.userId ?? null,
           action: 'order.discount_applied',
           entityType: 'order',
           entityId: String(req.params.id),
@@ -408,11 +430,11 @@ export function registerDiscountRoutes(router: Router): void {
         );
       }
       res.json(response);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[API] Internal error:', error);
       res
-        .status(error.statusCode || 500)
-        .json({ error: error.statusCode ? error.message : 'Internal server error' });
+        .status(errorStatus(error) || 500)
+          .json({ error: errorStatus(error) ? errorMessage(error) : 'Internal server error' });
     }
   });
 
@@ -422,7 +444,7 @@ export function registerDiscountRoutes(router: Router): void {
     (req: Request, res: Response) => {
       try {
         const db = getDatabase();
-        const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as any;
+        const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as OrderRow | undefined;
         if (!order) {
           return res.status(404).json({ error: 'Order not found' });
         }
@@ -452,7 +474,7 @@ export function registerDiscountRoutes(router: Router): void {
 
         const item = db
           .prepare('SELECT * FROM order_items WHERE id = ? AND order_id = ?')
-          .get(req.params.itemId, req.params.id) as any;
+          .get(req.params.itemId, req.params.id) as OrderRow | undefined;
         if (!item) {
           return res.status(404).json({ error: 'Item not found' });
         }
@@ -547,15 +569,15 @@ export function registerDiscountRoutes(router: Router): void {
         const newSubtotal = Math.max(0, itemBaseTotal - discountAmount);
 
         // Recalculate tax on discounted subtotal
-        const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.product_id) as any;
+        const product = db.prepare('SELECT * FROM products WHERE id = ?').get(item.product_id) as OrderRow | undefined;
         const customer = order.customer_id
-          ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(order.customer_id) as any)
+          ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(order.customer_id) as OrderRow | undefined)
           : null;
         const settings = db
           .prepare(
             "SELECT * FROM settings WHERE key IN ('country', 'business_type', 'state_code', 'taxes_enabled')",
           )
-          .all() as any[];
+          .all() as { key: string; value: string }[];
         const settingsMap = Object.fromEntries(settings.map((s: any) => [s.key, s.value]));
         const tenantInfo = {
           country: settingsMap.country || 'IN',
@@ -574,23 +596,33 @@ export function registerDiscountRoutes(router: Router): void {
 
         const updatedItem = withTxn(() => {
           // Update item with recalculated tax
-          db.prepare(
+          {
+            const discD = dualFromMajor(discountAmount);
+            const subD = dualFromMajor(newSubtotal);
+            const taxD = dualFromMajor(newTaxAmount);
+            const totD = dualFromMajor(newTotal);
+            db.prepare(
             `
           UPDATE order_items SET discount_amount = ?,
             subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, tax_type = ?,
-            total = ?, updated_at = ? WHERE id = ?
+            total = ?, discount_amount_cents = ?, subtotal_cents = ?, tax_amount_cents = ?, total_cents = ?, updated_at = ? WHERE id = ?
         `,
           ).run(
-            discountAmount,
-            newSubtotal,
-            newTaxAmount,
+            discD.major,
+            subD.major,
+            taxD.major,
             JSON.stringify(newTaxBreakdown),
             newTaxSnapshotJson,
             taxResult.tax_type,
-            newTotal,
+            totD.major,
+            discD.cents,
+            subD.cents,
+            taxD.cents,
+            totD.cents,
             now(),
             req.params.itemId,
           );
+          }
 
           // Update order totals (preserve existing order-level discount)
           // Note: status != 'cancelled' — a cancelled item's tax must not re-enter
@@ -598,11 +630,11 @@ export function registerDiscountRoutes(router: Router): void {
           // file already uses (BUG #3 FIX above, index.ts cancel/restore below).
           const allItems = db
             .prepare("SELECT * FROM order_items WHERE order_id = ? AND status != 'cancelled'")
-            .all(req.params.id) as any[];
+            .all(req.params.id) as OrderItemRow[];
           let orderSubtotal = 0;
           let orderTax = 0;
           let exclusiveOrderTax = 0;
-          const allTaxBreakdowns: any[] = [];
+          const allTaxBreakdowns: unknown[] = [];
           const allTaxSnapshots: (string | null)[] = [];
           for (const i of allItems) {
             orderSubtotal += i.subtotal;
@@ -664,55 +696,77 @@ export function registerDiscountRoutes(router: Router): void {
           const orderTotal = Number(preRoundTotal.toFixed(2));
           const roundOff = 0;
 
-          db.prepare(
+          {
+            const subD = dualFromMajor(orderSubtotal);
+            const taxD = dualFromMajor(taxRollup.taxAmount);
+            const discD = dualFromMajor(newOrderDiscount);
+            const totD = dualFromMajor(orderTotal);
+            db.prepare(
             `
-          UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?, updated_at = ? WHERE id = ?
+          UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, total = ?, round_off = ?,
+            subtotal_cents = ?, tax_amount_cents = ?, discount_amount_cents = ?, total_cents = ?, updated_at = ? WHERE id = ?
         `,
           ).run(
-            orderSubtotal,
-            taxRollup.taxAmount,
+            subD.major,
+            taxD.major,
             JSON.stringify(taxRollup.breakdowns),
             taxRollup.snapshotJson,
-            newOrderDiscount,
-            orderTotal,
+            discD.major,
+            totD.major,
             roundOff,
+            subD.cents,
+            taxD.cents,
+            discD.cents,
+            totD.cents,
             now(),
             req.params.id,
           );
+          }
 
           // BUG #15 FIX: Sync item-level discount to bill
           const existingBill = db
             .prepare(
               "SELECT * FROM bills WHERE order_id = ? AND payment_status IN ('unpaid', 'partial')",
             )
-            .get(req.params.id) as any;
+            .get(req.params.id) as OrderRow | undefined;
           if (existingBill) {
             const pack = getActiveCountryPack(tenantInfo.country);
             const { total: billTotal, adjustment: billRoundOff } = applyPayableRounding(
               orderTotal,
               pack,
             );
-            const newBillBalance = Math.max(0, billTotal - (existingBill.paid_amount || 0));
-            db.prepare(
-              `UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?, updated_at = ? WHERE id = ?`,
+            const newBillBalance = Math.max(0, billTotal - fromCents(billPaidCents(existingBill as { paid_amount_cents?: unknown; paid_amount?: unknown })));
+            {
+              const totD = dualFromMajor(billTotal);
+              const balD = dualFromMajor(newBillBalance);
+              const taxD = dualFromMajor(taxRollup.taxAmount);
+              const discD = dualFromMajor(newOrderDiscount);
+              db.prepare(
+              `UPDATE bills SET total = ?, balance = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, discount_amount = ?, round_off = ?,
+                total_cents = ?, balance_cents = ?, tax_amount_cents = ?, discount_amount_cents = ?, updated_at = ? WHERE id = ?`,
             ).run(
-              billTotal,
-              newBillBalance,
-              taxRollup.taxAmount,
+              totD.major,
+              balD.major,
+              taxD.major,
               JSON.stringify(taxRollup.breakdowns),
               taxRollup.snapshotJson,
-              newOrderDiscount,
+              discD.major,
               billRoundOff,
+              totD.cents,
+              balD.cents,
+              taxD.cents,
+              discD.cents,
               now(),
               existingBill.id,
             );
+            }
           }
 
-          return db.prepare('SELECT * FROM order_items WHERE id = ?').get(req.params.itemId) as any;
+          return db.prepare('SELECT * FROM order_items WHERE id = ?').get(req.params.itemId) as OrderRow | undefined;
         });
 
         logAuditEvent({
-          actorUserId: (req as any).user?.userId ?? null,
+          actorUserId: getAuthUser(req)?.userId ?? null,
           action: 'order.item_discount_applied',
           entityType: 'order',
           entityId: String(req.params.id),
@@ -730,11 +784,11 @@ export function registerDiscountRoutes(router: Router): void {
         });
 
         res.json({ item: updatedItem });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[API] Internal error:', error);
         res
-          .status(error.statusCode || 500)
-          .json({ error: error.statusCode ? error.message : 'Internal server error' });
+          .status(errorStatus(error) || 500)
+          .json({ error: errorStatus(error) ? errorMessage(error) : 'Internal server error' });
       }
     },
   );

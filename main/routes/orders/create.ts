@@ -53,6 +53,7 @@ import { DOMAIN_SPAN, withSpan } from '../../lib/tracing';
 import { addOrderItemsBodySchema, createOrderBodySchema, orderDiscountBodySchema, orderStatusBodySchema } from '../../validation/orders';
 import { readTerminalIdHeaderFromRequest, resolveActiveShiftForOrder } from '../../services/shift';
 import { orderHasSuccessfulTender } from '../../services/payment-tender';
+import { dualFromMajor, productPriceCents, fromCents } from '../../lib/money';
 // Phase 2.14 — Order ownership facade (markers; routes remain the HTTP surface).
 import { ORDER_OWNED_CONCERNS } from '../../services/order';
 void ORDER_OWNED_CONCERNS;
@@ -65,6 +66,7 @@ import {
   lookupOrderIdempotencyReplay,
   storeOrderIdempotency,
   batchHydrateOrders,
+  getAuthUser, errorMessage, errorStatus, type OrderRow, type OrderItemRow,
 } from '../orders-shared';
 
 export { checkPinRateLimit } from '../orders-shared';
@@ -90,7 +92,7 @@ export function registerCreateRoutes(router: Router): void {
             items,
           } = body;
           const idempotencyKey = orderIdempotencyKey(req);
-          const idempotencyUserId = String((req as any).user.userId);
+          const idempotencyUserId = String(getAuthUser(req).userId);
           const requestHash = idempotencyKey
             ? createHash('sha256').update(JSON.stringify(body)).digest('hex')
             : null;
@@ -100,7 +102,7 @@ export function registerCreateRoutes(router: Router): void {
           // That silently broke waiters' own order visibility (GET /orders scopes
           // waiters to `user_id = <their id>`, which NULL can never match) and any
           // per-staff sales attribution.
-          const authenticatedUserId = (req as any).user.userId;
+          const authenticatedUserId = getAuthUser(req).userId;
           const terminalIdHeader = readTerminalIdHeaderFromRequest(req);
 
           const db = getDatabase();
@@ -111,8 +113,8 @@ export function registerCreateRoutes(router: Router): void {
               validateItemNotes(db, item.special_instructions);
               validateItemAddonGroupLimits(db, item.product_id, item.addons);
             }
-          } catch (err: any) {
-            return res.status(400).json({ error: err.message });
+          } catch (err: unknown) {
+            return res.status(400).json({ error: errorMessage(err) });
           }
           const result = withTxn(() => {
             if (idempotencyKey && requestHash) {
@@ -168,13 +170,16 @@ export function registerCreateRoutes(router: Router): void {
               service_charge_tax_category_id: chargeCategories.service_charge?.categoryId || null,
             };
 
+            const packagingDual = dualFromMajor(packaging_charge || 0);
+            const deliveryDual = dualFromMajor(delivery_charge || 0);
             const orderResult = db
               .prepare(
                 `
           INSERT INTO orders (order_number, table_id, customer_id, user_id, type, guest_count, special_instructions,
-            packaging_charge, delivery_charge, packaging_tax_category_id, delivery_tax_category_id,
+            packaging_charge, delivery_charge, packaging_charge_cents, delivery_charge_cents,
+            packaging_tax_category_id, delivery_tax_category_id,
             service_charge_tax_category_id, status, shift_id, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
         `,
               )
               .run(
@@ -185,8 +190,10 @@ export function registerCreateRoutes(router: Router): void {
                 type,
                 guest_count || null,
                 special_instructions || null,
-                packaging_charge || 0,
-                delivery_charge || 0,
+                packagingDual.major,
+                deliveryDual.major,
+                packagingDual.cents,
+                deliveryDual.cents,
                 chargeContext.packaging_tax_category_id,
                 chargeContext.delivery_tax_category_id,
                 chargeContext.service_charge_tax_category_id,
@@ -200,29 +207,31 @@ export function registerCreateRoutes(router: Router): void {
             let subtotal = 0;
             let totalTax = 0;
             let exclusiveTax = 0;
-            const allTaxBreakdowns: any[] = [];
+            const allTaxBreakdowns: unknown[] = [];
             const allTaxSnapshots: (string | null)[] = [];
             const customer = customer_id
-              ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(customer_id) as any)
+              ? (db.prepare('SELECT * FROM customers WHERE id = ?').get(customer_id) as OrderRow | undefined)
               : null;
 
             const insertItem = db.prepare(`
           INSERT INTO order_items (order_id, product_id, product_name, product_sku, unit_price, quantity,
-            subtotal, tax_amount, tax_breakdown, tax_snapshot, tax_type, discount_amount, total, variant_selection,
+            subtotal, tax_amount, tax_breakdown, tax_snapshot, tax_type, discount_amount, total,
+            unit_price_cents, subtotal_cents, tax_amount_cents, discount_amount_cents, total_cents,
+            variant_selection,
             modifier_selection, special_instructions, status, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
         `);
 
             for (const item of items) {
               const product = db
                 .prepare('SELECT * FROM products WHERE id = ?')
-                .get(item.product_id) as any;
+                .get(item.product_id) as OrderRow | undefined;
               if (!product) {
                 throw new Error(`Product ${item.product_id} not found`);
               }
               assertStockAvailable(product, item.quantity);
 
-              const unitPrice = parseFloat(product.price);
+              const unitPrice = fromCents(productPriceCents(product as { price_cents?: unknown; price?: unknown }));
               const quantity = item.quantity;
               // item.discount_amount is intentionally ignored here — discounts are only
               // applied through the dedicated PATCH discount endpoints, which enforce
@@ -277,20 +286,30 @@ export function registerCreateRoutes(router: Router): void {
               subtotal += itemSubtotal;
 
               const itemCreatedAt = now();
+              const unitDual = dualFromMajor(unitPrice);
+              const subDual = dualFromMajor(itemSubtotal);
+              const taxDual = dualFromMajor(taxResult.tax_amount);
+              const discountDual = dualFromMajor(itemDiscount);
+              const totalDual = dualFromMajor(itemTotal);
               const insertItemResult = insertItem.run(
                 orderId,
                 product.id,
                 product.name,
                 product.sku,
-                unitPrice,
+                unitDual.major,
                 quantity,
-                itemSubtotal,
-                taxResult.tax_amount,
+                subDual.major,
+                taxDual.major,
                 JSON.stringify(taxResult.tax_breakdown),
                 itemTaxSnapshotJson,
                 taxResult.tax_type,
-                itemDiscount,
-                itemTotal,
+                discountDual.major,
+                totalDual.major,
+                unitDual.cents,
+                subDual.cents,
+                taxDual.cents,
+                discountDual.cents,
+                totalDual.cents,
                 JSON.stringify(item.variant_selection || null),
                 JSON.stringify(item.modifier_selection || null),
                 item.special_instructions || null,
@@ -330,19 +349,26 @@ export function registerCreateRoutes(router: Router): void {
               (packaging_charge || 0);
             const total = Number(preRoundTotal.toFixed(2));
             const roundOff = 0;
+            const subDual = dualFromMajor(subtotal);
+            const taxAmtDual = dualFromMajor(taxRollup.taxAmount);
+            const totalDual = dualFromMajor(total);
 
             db.prepare(
               `
           UPDATE orders SET subtotal = ?, tax_amount = ?, tax_breakdown = ?, tax_snapshot = ?, total = ?,
-            round_off = ?, updated_at = ? WHERE id = ?
+            round_off = ?, subtotal_cents = ?, tax_amount_cents = ?, total_cents = ?,
+            discount_amount_cents = COALESCE(discount_amount_cents, 0), updated_at = ? WHERE id = ?
         `,
             ).run(
-              subtotal,
-              taxRollup.taxAmount,
+              subDual.major,
+              taxAmtDual.major,
               JSON.stringify(taxRollup.breakdowns),
               taxRollup.snapshotJson,
-              total,
+              totalDual.major,
               roundOff,
+              subDual.cents,
+              taxAmtDual.cents,
+              totalDual.cents,
               now(),
               orderId,
             );
@@ -360,7 +386,7 @@ export function registerCreateRoutes(router: Router): void {
               db
                 .prepare('SELECT * FROM order_items WHERE order_id = ?')
                 .all(orderId)
-                .map(parseItemJson) as any[],
+                .map(parseItemJson) as OrderItemRow[],
             );
             const response = { order: Object.assign({}, order, { items: orderItems }) };
             if (idempotencyKey && requestHash) {
@@ -402,18 +428,18 @@ export function registerCreateRoutes(router: Router): void {
             .status(result.idempotentReplay ? 200 : 201)
             .json({ order: Object.assign({}, result.order, { items: result.orderItems }) });
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[Orders] Create error:', error);
-        if (!(error?.statusCode >= 400 && error.statusCode < 500)) {
+        if (!(errorStatus(error) !== undefined && errorStatus(error)! >= 400 && errorStatus(error)! < 500)) {
           console.error('[API] Internal error:', error);
         }
         const payload: Record<string, unknown> = {
-          error: error.statusCode ? error.message : 'Internal server error',
+          error: errorStatus(error) ? errorMessage(error) : 'Internal server error',
         };
         if (error instanceof TableServiceError || error.code) {
           payload.code = error.code;
         }
-        res.status(error.statusCode || 500).json(payload);
+        res.status(errorStatus(error) || 500).json(payload);
       }
     },
   );

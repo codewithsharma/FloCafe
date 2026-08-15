@@ -651,7 +651,7 @@ export function initDatabase(
         clearRecoveryRequired();
       }
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     // Schema too new / missing users table is handled elsewhere; do not swallow mismatch.
     if (err instanceof DatabaseRecoveryRequiredError) throw err;
   }
@@ -774,7 +774,7 @@ export function appendJsonArray(
   const row = db
     .prepare(`SELECT ${column} AS v FROM ${table} WHERE ${idColumn} = ?`)
     .get(idValue) as any;
-  let arr: any[] = [];
+  let arr: unknown[] = [];
   if (row && row.v) {
     try {
       const parsed = JSON.parse(row.v);
@@ -812,7 +812,7 @@ function runStartupIntegrityCheck(): void {
     } else {
       console.log('[DB] foreign_key_check: clean');
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[DB] Startup integrity check failed:', err.message);
   }
 }
@@ -916,7 +916,7 @@ function autoRepairPaymentDetails(): void {
       }
       if (!Array.isArray(parsed)) continue;
 
-      const deduped: any[] = [];
+      const deduped: unknown[] = [];
       for (const p of parsed) {
         const prev = deduped[deduped.length - 1];
         if (
@@ -952,7 +952,7 @@ function autoRepairPaymentDetails(): void {
     });
     tx(toFix);
     console.log(`[DB] auto-repaired payment_details on ${toFix.length} bill(s)`);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[DB] autoRepairPaymentDetails failed:', err.message);
   }
 }
@@ -987,7 +987,7 @@ function autoRepairDefaultPrinter(): void {
     ).run(keepId, keepId, now());
 
     console.log(`[DB] auto-repaired default printers; kept ${keepId}`);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[DB] autoRepairDefaultPrinter failed:', err.message);
   }
 }
@@ -1145,7 +1145,7 @@ function removeDatabaseFiles(dbPath: string): string[] {
   for (const filePath of [dbPath, `${dbPath}-wal`, `${dbPath}-shm`]) {
     try {
       if (pathEntryExists(filePath)) fs.unlinkSync(filePath);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.warn(`[DB] Could not remove ${filePath}:`, error);
       failures.push(filePath);
     }
@@ -1215,7 +1215,7 @@ export async function resetDatabaseWithBackup(options?: {
       clearInstallationMarker();
       replacementCompleted = true;
       return { backupPath };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Reopen the pre-wipe snapshot so a partial filesystem failure cannot
       // leave the process serving an empty or closed database.
       try {
@@ -1453,7 +1453,7 @@ function validateDirectBackup(
       }
     }
     return null;
-  } catch (error: any) {
+  } catch (error: unknown) {
     return `Backup validation failed: ${error?.message || 'unknown error'}`;
   } finally {
     backupDb?.close();
@@ -2076,7 +2076,7 @@ function restoreBackupWithNoLiveDatabase(
         error: 'Backup failed integrity validation',
       };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
       mode: 'direct',
@@ -2124,7 +2124,7 @@ function restoreBackupWithNoLiveDatabase(
       currentSchemaVersion: getCurrentSchemaVersion(),
       tablesRestored: getTables(freshDb).length,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     try {
       closeDatabase();
     } catch {
@@ -2152,7 +2152,7 @@ export function restoreBackup(backupPath: string, forceDirect: boolean = false):
   const supportedVersion = getSupportedSchemaVersion();
   try {
     backupPath = materializeRestoreSource(backupPath, getDbPath());
-  } catch (error: any) {
+  } catch (error: unknown) {
     const currentVersion = isDatabaseOpen() ? getCurrentSchemaVersion() : supportedVersion;
     return {
       success: false,
@@ -2176,7 +2176,7 @@ export function restoreBackup(backupPath: string, forceDirect: boolean = false):
     metadataStampPresent = Boolean(metaRow);
     metadataVersion = metaRow ? (parseCanonicalSchemaVersion(metaRow.value) ?? 0) : 0;
     pragmaVersion = Number(backupDb.pragma('user_version', { simple: true }));
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Corrupt / non-SQLite files must fail closed without touching the live DB.
     const currentVersion = isDatabaseOpen() ? getCurrentSchemaVersion() : supportedVersion;
     return {
@@ -2344,7 +2344,7 @@ export function restoreBackup(backupPath: string, forceDirect: boolean = false):
         currentSchemaVersion: currentVersion,
         tablesRestored: getTables(freshDb).length,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // A corrupt/incompatible same-version file must not strand the live
       // database. Restore the checkpointed safety copy before rethrowing.
       if (!recoveryCopyReady) throw error;
@@ -2541,7 +2541,7 @@ function dataOnlyRestore(
   }
   try {
     backupPath = materializeRestoreSource(backupPath, livePath);
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
       mode: 'data_only',
@@ -2581,7 +2581,7 @@ function dataOnlyRestore(
     if (attachedDatabases.some((entry) => entry.name === '_restore_src')) {
       currentDb.exec('DETACH DATABASE _restore_src');
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
       success: false,
       mode: 'data_only',
@@ -2691,7 +2691,7 @@ function dataOnlyRestore(
       currentSchemaVersion: currentVersion,
       tablesRestored,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     let cleanupFailure: unknown = null;
     if (inTransaction) {
       try {
@@ -2875,7 +2875,7 @@ function syncBackupBeforeMigration(fromVersion: number, toVersion: number): void
     console.log(
       `[DB] Auto-backup before migrating v${fromVersion} → v${toVersion} created at ${targetPath}`,
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(`[DB] Auto-backup before migration failed:`, err.message);
     throw new Error(
       `Pre-migration backup failed; refusing to migrate the database: ${err.message}`,
@@ -4009,7 +4009,7 @@ export function projectKdsItem(item: any, restricted: boolean): any {
   );
   if (Array.isArray(item.addons)) {
     projected.addons = item.addons.map((addon: any) => {
-      const safeAddon: Record<string, any> = {};
+      const safeAddon: Record<string, unknown> = {};
       for (const field of ['id', 'name', 'quantity']) {
         if (field in addon) safeAddon[field] = addon[field];
       }

@@ -2,6 +2,62 @@
  * R4.1 — shared helpers for order routes (behavior unchanged).
  */
 import { Request } from 'express';
+
+export type AuthUser = { userId: string; role: string; email?: string };
+export type AuthenticatedRequest = Request & { user?: AuthUser };
+
+export interface OrderRow {
+  id: string | number;
+  user_id?: string | number | null;
+  status?: string | null;
+  type?: string | null;
+  table_id?: string | number | null;
+  customer_id?: string | number | null;
+  discount_type?: string | null;
+  discount_amount?: number | null;
+  discount_value?: number | null;
+  subtotal?: number | null;
+  subtotal_cents?: number | null;
+  tax_amount?: number | null;
+  tax_amount_cents?: number | null;
+  total?: number | null;
+  total_cents?: number | null;
+  [key: string]: unknown;
+}
+
+export interface OrderItemRow {
+  id: number | string;
+  order_id?: string | number;
+  product_id?: string | number;
+  unit_price?: number | null;
+  unit_price_cents?: number | null;
+  quantity?: number | null;
+  subtotal?: number | null;
+  subtotal_cents?: number | null;
+  tax_amount?: number | null;
+  tax_amount_cents?: number | null;
+  discount_amount?: number | null;
+  total?: number | null;
+  total_cents?: number | null;
+  status?: string | null;
+  tax_breakdown?: string | null;
+  [key: string]: unknown;
+}
+
+export function getAuthUser(req: Request): AuthUser | undefined {
+  return (req as AuthenticatedRequest).user;
+}
+
+export function errorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  return String(error);
+}
+
+export function errorStatus(error: unknown): number | undefined {
+  const status = (error as { statusCode?: unknown })?.statusCode;
+  return typeof status === 'number' ? status : undefined;
+}
+
 import {
   getDatabase,
   now,
@@ -39,11 +95,11 @@ export function checkPinRateLimit(key: string): boolean {
 }
 
 export function syncCustomerTagCounts(
-  db: any,
+  db: { prepare: (sql: string) => { get: (...a: unknown[]) => unknown; run: (...a: unknown[]) => unknown } },
   customerId: string,
   items: { product_id: string; quantity: number }[],
 ) {
-  const row = db.prepare('SELECT tag_counts FROM customers WHERE id = ?').get(customerId) as any;
+  const row = db.prepare('SELECT tag_counts FROM customers WHERE id = ?').get(customerId) as { tag_counts?: string | null } | undefined;
   if (!row) return;
   let counts: Record<string, number> = {};
   try {

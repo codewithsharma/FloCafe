@@ -73,7 +73,7 @@ router.get('/', (req: Request, res: Response) => {
     });
 
     res.json({ addon_groups: groupsWithAddons });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -89,7 +89,7 @@ router.get('/:id', (req: Request, res: Response) => {
 
     const addons = db.prepare('SELECT * FROM addons WHERE addon_group_id = ? ORDER BY sort_order, name').all(req.params.id);
     res.json({ addon_group: { ...group, addons } });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -151,7 +151,7 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
     });
 
     res.status(201).json({ addon_group: Object.assign({}, group, { addons: groupAddons }) });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -226,7 +226,7 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
     });
 
     res.json({ addon_group: Object.assign({}, updated, { addons: updatedAddons }) });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -245,7 +245,7 @@ router.delete('/:id', requireRole('owner', 'manager'), (req: Request, res: Respo
     // addon_group_id without a dangling reference.
     db.prepare('UPDATE addon_groups SET is_active = 0, updated_at = ? WHERE id = ?').run(now(), req.params.id);
     res.json({ message: 'Addon group deleted' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -285,7 +285,7 @@ router.post('/:groupId/addons', requireRole('owner', 'manager'), (req: Request, 
 
     const addon = db.prepare('SELECT * FROM addons WHERE id = ?').get(addonId);
     res.status(201).json({ addon });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -340,7 +340,7 @@ router.put('/:groupId/addons/:addonId', requireRole('owner', 'manager'), (req: R
 
     const updated = db.prepare('SELECT * FROM addons WHERE id = ?').get(req.params.addonId);
     res.json({ addon: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -370,7 +370,7 @@ router.delete('/:groupId/addons/:addonId', requireRole('owner', 'manager'), (req
       return res.status(400).json({ errors: deletedAtomically });
     }
     res.json({ message: 'Addon deleted' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }

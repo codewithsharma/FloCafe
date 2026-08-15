@@ -1,10 +1,11 @@
 # Patterns
 
+- **Foundation Phase 2 money:** Writers dual-write REAL + `*_cents` via `dualFromMajor` / tender cents paths. Readers use `preferCents` / `billTotalCents` / `productPriceCents` (integer cents win; REAL fallback with explicit `toCents`). Do not drop REAL. Process-kill evidence: `npm run test:process-kill`.
+- **Boundary validation:** Zod schemas in `main/validation/` + `validateBody` / `validateParams` / `validateQuery` (`defineProperty` for query/params — Express getter-only). Domain rules stay in services.
 - **R4.1 stabilization:** Drive backup-now uses `requireMasterPin` (parity with `/api/db/backup`). Order helpers live in `orders-shared.ts`. Pure DB time/order-row helpers live under `main/database/`. Do not grow `db.ts` / `orders.ts` / Settings without extracting first. REAL money persistence cutover remains dual-write + human gate (not a drive-by migration).
-- **R6 purchasing:** Receiving never invents a second ledger — `applyPurchaseReceiptStock` + reason `purchase_receipt`. New PO money fields are INTEGER cents; catalog `products.cost` stays REAL until P0.3. Over-receive rejected (no tolerance). Cancel never reverses received stock.
+- **R6 purchasing:** Receiving never invents a second ledger — `applyPurchaseReceiptStock` + reason `purchase_receipt`. New PO money fields are INTEGER cents; catalog `products.cost` stays REAL until P0.3 cutover. Over-receive rejected (no tolerance). Cancel never reverses received stock.
 - Feature modules: `main/services/<name>.ts` + `main/routes/<name>.ts` + `requireRole()`.
-- **Prompt pipeline (`prompts/`):** one ACTIVE phase (`ACTIVE.md` + `STATE.md`). Complete only after tests/lint/builds/isolation/docs/commit. `ADR_REQUIRED` / `BLOCKED` / `DEFERRED` stop auto-advance. Do not commit unrelated dirty tree listed in `STATE.md`.
-- **Boundary validation:** Zod schemas in `main/validation/` + `validateBody` middleware for untrusted HTTP input (auth, order create/add-items, payment single/batch, refund body, stock adjust). Domain rules stay in services.
+
 - **Observability:** `main/lib/logger.ts` (pino + pretty in dev) + `pino-http` / helmet / compression via `main/middleware/http-observability.ts`; OTel API spans via `withSpan` / `withSpanSync` in `main/lib/tracing.ts` (noop without collector) on auth/order/payment/inventory/tax entry points.
 - **Frontend state:** TanStack Query = server/API; Zustand = client/UI; SQLite = persistent domain (`frontend/src/lib/state-ownership.ts`).
 - **i18n:** i18next namespaces under `frontend/src/locales/{lang}/` for migrated keys; legacy flat catalogs remain for unmigrated UI (documented dual-catalog period). Pattern: keep `useI18n()` and add `useTranslation('ns')`; swap only keys that exist in both catalogs (`tSettings('saveFailed')` not `t('settings.saveFailed')`). Do not wholesale-rewrite screens.

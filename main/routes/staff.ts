@@ -11,6 +11,13 @@ import { getDatabase, now } from '../db';
 import { requireRole, validatePassword, authRateLimit, invalidateUserAuthCache } from '../middleware/security';
 import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
+import { validateBody, validateParams, validateQuery } from '../middleware/validate';
+import {
+  staffCreateBodySchema,
+  staffIdParamsSchema,
+  staffListQuerySchema,
+  staffUpdateBodySchema,
+} from '../validation/staff';
 
 const router = Router();
 
@@ -45,7 +52,7 @@ function isValidPin(pin: unknown): boolean {
 
 // ── List ──────────────────────────────────────────────────────────────────────
 
-router.get('/', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+router.get('/', requireRole('owner', 'manager'), validateQuery(staffListQuerySchema), (req: Request, res: Response) => {
   try {
     const db = getDatabase();
     let query = `SELECT ${STAFF_SELECT_FIELDS} FROM users WHERE 1=1`;
@@ -69,7 +76,7 @@ router.get('/', requireRole('owner', 'manager'), (req: Request, res: Response) =
 
     const staff = db.prepare(query).all(...params);
     res.json({ staff });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -77,7 +84,7 @@ router.get('/', requireRole('owner', 'manager'), (req: Request, res: Response) =
 
 // ── Get one ───────────────────────────────────────────────────────────────────
 
-router.get('/:id', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+router.get('/:id', requireRole('owner', 'manager'), validateParams(staffIdParamsSchema), (req: Request, res: Response) => {
   try {
     const db = getDatabase();
     const member = db.prepare(
@@ -95,7 +102,7 @@ router.get('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
     `).get(req.params.id);
 
     res.json({ staff: { ...member, performance } });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -103,7 +110,7 @@ router.get('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
 
 // ── Create ────────────────────────────────────────────────────────────────────
 
-router.post('/', requireRole('owner', 'manager'), authRateLimit(), (req: Request, res: Response) => {
+router.post('/', requireRole('owner', 'manager'), validateBody(staffCreateBodySchema), authRateLimit(), (req: Request, res: Response) => {
   try {
     const { name, email, password, role, pin } = req.body;
 
@@ -164,7 +171,7 @@ router.post('/', requireRole('owner', 'manager'), authRateLimit(), (req: Request
     });
 
     res.status(201).json({ staff: member });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -172,7 +179,7 @@ router.post('/', requireRole('owner', 'manager'), authRateLimit(), (req: Request
 
 // ── Update ────────────────────────────────────────────────────────────────────
 
-router.put('/:id', requireRole('owner', 'manager'), authRateLimit(), (req: Request, res: Response) => {
+router.put('/:id', requireRole('owner', 'manager'), validateParams(staffIdParamsSchema), validateBody(staffUpdateBodySchema), authRateLimit(), (req: Request, res: Response) => {
   try {
     const { name, email, password, role, pin, is_active } = req.body;
     const db = getDatabase();
@@ -282,7 +289,7 @@ router.put('/:id', requireRole('owner', 'manager'), authRateLimit(), (req: Reque
     });
 
     res.json({ staff: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -327,7 +334,7 @@ router.post('/:id/deactivate', requireRole('owner', 'manager'), (req: Request, r
       context: auditStaffContext(req),
     });
     res.json({ staff: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -359,7 +366,7 @@ router.post('/:id/reactivate', requireRole('owner', 'manager'), (req: Request, r
       context: auditStaffContext(req),
     });
     res.json({ staff: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }

@@ -10,6 +10,12 @@ import {
   setOrderKitchenPriority,
   KitchenStatusError,
 } from '../services/kitchen-status';
+import { validateBody } from '../middleware/validate';
+import {
+  kdsItemStatusBodySchema,
+  kdsPairingBodySchema,
+  kdsPriorityBodySchema,
+} from '../validation/kds';
 
 const router = Router();
 
@@ -184,7 +190,7 @@ router.get('/orders', requireKdsEnabled, (req: Request, res: Response) => {
       for (const item of order.items) counts[item.status] = (counts[item.status] || 0) + 1;
     }
     res.json({ orders: ordersWithItems, counts });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -208,13 +214,13 @@ router.get('/pairing', (req: Request, res: Response) => {
       })
       .map((station) => projectKdsStation(station, restrictedPayload, userCategoryIds));
     res.json({ stations });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-router.post('/pairing', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+router.post('/pairing', requireRole('owner', 'manager'), validateBody(kdsPairingBodySchema), (req: Request, res: Response) => {
   try {
     const { station_id } = req.body;
 
@@ -252,7 +258,7 @@ router.post('/pairing', requireRole('owner', 'manager'), (req: Request, res: Res
         web_url: webUrl,
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -364,13 +370,13 @@ router.get('/display', requireKdsEnabled, (req: Request, res: Response) => {
       station: projectKdsStation(station, isRestrictedKdsPayload(req, userCategoryIds, userStationIds), userCategoryIds),
       orders: Object.values(groupedByOrder),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[API] Internal error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-router.patch('/items/:id/status', requireKdsEnabled, (req: Request, res: Response) => {
+router.patch('/items/:id/status', requireKdsEnabled, validateBody(kdsItemStatusBodySchema), (req: Request, res: Response) => {
   try {
     const { status, expected_status: expectedStatus } = req.body;
 
@@ -467,30 +473,30 @@ router.patch('/items/:id/status', requireKdsEnabled, (req: Request, res: Respons
     }
 
     notifyKdsUpdate();
-    res.json({ item: projectKdsItem(updatedItem, restrictedPayload) });  } catch (error: any) {
-    if (error.message === 'VOIDED_ITEM') {
+    res.json({ item: projectKdsItem(updatedItem, restrictedPayload) });  } catch (error: unknown) {
+    if ((error instanceof Error ? error.message : String(error)) === 'VOIDED_ITEM') {
       return res.status(400).json({ error: 'This item has been voided and can no longer be updated' });
     }
-    if (error.message === 'USER_FORBIDDEN' || error.message === 'PERMISSIONS_UNAVAILABLE') {
+    if ((error instanceof Error ? error.message : String(error)) === 'USER_FORBIDDEN' || (error instanceof Error ? error.message : String(error)) === 'PERMISSIONS_UNAVAILABLE') {
       return res.status(403).json({ error: 'Could not load current station permissions' });
     }
-    if (error.message === 'CATEGORY_FORBIDDEN' || error.message === 'STATION_FORBIDDEN') {
+    if ((error instanceof Error ? error.message : String(error)) === 'CATEGORY_FORBIDDEN' || (error instanceof Error ? error.message : String(error)) === 'STATION_FORBIDDEN') {
       return res.status(403).json({ error: 'Not authorized to update this item' });
     }
-    if (error.message === 'IMMUTABLE_KDS_ITEM') {
+    if ((error instanceof Error ? error.message : String(error)) === 'IMMUTABLE_KDS_ITEM') {
       return res.status(400).json({ error: 'This bill adjustment cannot be updated from KDS' });
     }
-    if (error.message === 'TERMINAL_KDS_ITEM') {
+    if ((error instanceof Error ? error.message : String(error)) === 'TERMINAL_KDS_ITEM') {
       return res.status(400).json({ error: 'This terminal item cannot be updated from KDS' });
     }
-    if (error.message === 'ORPHANED_ORDER_ITEM') {
+    if ((error instanceof Error ? error.message : String(error)) === 'ORPHANED_ORDER_ITEM') {
       return res.status(404).json({ error: 'Order item is not attached to an order' });
     }
-    if (error.message === 'STATUS_CONFLICT' || (error instanceof KitchenStatusError && error.code === 'STATUS_CONFLICT')) {
+    if ((error instanceof Error ? error.message : String(error)) === 'STATUS_CONFLICT' || (error instanceof KitchenStatusError && (error as { code?: string }).code === 'STATUS_CONFLICT')) {
       return res.status(409).json({ error: 'Item status changed; refresh and try again' });
     }
     if (error instanceof KitchenStatusError) {
-      return res.status(error.statusCode).json({ error: error.message, code: error.code });
+      return res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)), code: (error as { code?: string }).code });
     }
     console.error("[API] KDS item status update error:", error);
     res.status(500).json({ error: "Could not update item status" });
@@ -501,6 +507,7 @@ router.patch(
   '/orders/:id/priority',
   requireKdsEnabled,
   requireRole('owner', 'manager'),
+  validateBody(kdsPriorityBodySchema),
   (req: Request, res: Response) => {
     try {
       const priority = req.body?.priority;
@@ -521,9 +528,9 @@ router.patch(
         getKdsUserStationIds(db, req) || [],
       );
       res.json({ order: projectKdsOrder(order, restrictedPayload) });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof KitchenStatusError) {
-        return res.status(error.statusCode).json({ error: error.message, code: error.code });
+        return res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)), code: (error as { code?: string }).code });
       }
       console.error('[API] KDS order priority update error:', error);
       res.status(500).json({ error: 'Could not update order kitchen priority' });

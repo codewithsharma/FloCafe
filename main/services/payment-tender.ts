@@ -21,7 +21,7 @@ import { assertOpenShiftForCashPayment, resolveActiveShiftForTerminal } from './
 import { DOMAIN_SPAN, withSpanSync } from '../lib/tracing';
 import { freeTableIfModule } from './tables';
 import type { BillSettlementRow, StoredPaymentLine } from './bill-settlement-types';
-import { toCents } from '../lib/money';
+import { billPaidCents, billTotalCents, toCents } from '../lib/money';
 
 export type { BillSettlementRow, StoredPaymentLine } from './bill-settlement-types';
 
@@ -376,7 +376,7 @@ export function preparePaymentBatch(
   }
   if (bill.payment_status === 'paid')
     throw Object.assign(new Error('Bill is already paid'), { statusCode: 400 });
-  const totalCents = Math.round(Number(bill.total || 0) * 100);
+  const totalCents = billTotalCents(bill);
   // FIN-01: collectible outstanding is based on GROSS successful tender
   // (payment_details), never net paid_amount. Refunds reduce net / recon
   // but must not recreate payment capacity.
@@ -603,8 +603,8 @@ export function applyPaymentBatch(
         assertOpenShiftForCashPayment(terminalIdHeader);
       }
       const totalAppliedCents = prepared.reduce((sum, line) => sum + line.amountCents, 0);
-      const oldPaidCents = Math.round(Number(bill.paid_amount || 0) * 100);
-      const totalCents = Math.round(Number(bill.total || 0) * 100);
+      const oldPaidCents = billPaidCents(bill);
+      const totalCents = billTotalCents(bill);
       const newPaidCents = oldPaidCents + totalAppliedCents;
       const newBalanceCents = Math.max(0, totalCents - newPaidCents);
       const paymentStatus = newBalanceCents === 0 ? 'paid' : 'partial';

@@ -4,6 +4,14 @@
 import { Router, Request, Response } from 'express';
 import { requireRole } from '../middleware/security';
 import { correlationId } from '../errors';
+import { validateBody, validateParams, validateQuery } from '../middleware/validate';
+import {
+  shiftCloseBodySchema,
+  shiftForceCloseBodySchema,
+  shiftIdParamsSchema,
+  shiftListQuerySchema,
+  shiftOpenBodySchema,
+} from '../validation/shifts';
 import {
   ShiftServiceError,
   assertShiftsEnabled,
@@ -77,7 +85,7 @@ router.get('/active', requireRole(...SHIFT_OPERATORS), (req: Request, res: Respo
   }
 });
 
-router.get('/', requireRole(...SHIFT_MANAGERS), (req: Request, res: Response) => {
+router.get('/', requireRole(...SHIFT_MANAGERS), validateQuery(shiftListQuerySchema), (req: Request, res: Response) => {
   try {
     const result = listShifts({
       actor: actorFrom(req),
@@ -95,7 +103,7 @@ router.get('/', requireRole(...SHIFT_MANAGERS), (req: Request, res: Response) =>
   }
 });
 
-router.post('/open', requireRole(...SHIFT_OPERATORS), (req: Request, res: Response) => {
+router.post('/open', requireRole(...SHIFT_OPERATORS), validateBody(shiftOpenBodySchema), (req: Request, res: Response) => {
   try {
     const terminalId = requestTerminalId(req);
     const shift = openShift({
@@ -137,7 +145,7 @@ router.get('/:id', requireRole(...SHIFT_MANAGERS), (req: Request, res: Response)
   }
 });
 
-router.post('/:id/close', requireRole(...SHIFT_OPERATORS), (req: Request, res: Response) => {
+router.post('/:id/close', requireRole(...SHIFT_OPERATORS), validateParams(shiftIdParamsSchema), validateBody(shiftCloseBodySchema), (req: Request, res: Response) => {
   try {
     const terminalId = requestTerminalId(req);
     const shift = closeShift({
@@ -154,7 +162,7 @@ router.post('/:id/close', requireRole(...SHIFT_OPERATORS), (req: Request, res: R
   }
 });
 
-router.post('/:id/force-close', requireRole(...SHIFT_MANAGERS), (req: Request, res: Response) => {
+router.post('/:id/force-close', requireRole(...SHIFT_MANAGERS), validateParams(shiftIdParamsSchema), validateBody(shiftForceCloseBodySchema), (req: Request, res: Response) => {
   try {
     const shift = forceCloseShift({
       actor: actorFrom(req),

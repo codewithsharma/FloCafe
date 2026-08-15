@@ -383,7 +383,7 @@ async function main() {
     assertEqual(blocked.status, 400, 'S-REC-12 insufficient → 400');
     console.log('   ✓ S-REC-12 insufficient stock BLOCK');
 
-    const sql = fs.readFileSync(path.join(__dirname, '../main/db.ts'), 'utf8');
+    const sql = fs.readFileSync(path.join(__dirname, '../main/database/migrations.ts'), 'utf8');
     assert(
       sql.includes("movement_type IN ('sale', 'cancel_restore', 'adjustment')"),
       'movement_type CHECK preserved',

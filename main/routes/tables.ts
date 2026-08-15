@@ -15,6 +15,17 @@ import {
   tableShape,
   transferOrderBetweenTables,
 } from '../services/tables';
+import { validateBody, validateParams, validateQuery } from '../middleware/validate';
+import {
+  tableAssignWaiterBodySchema,
+  tableIdParamsSchema,
+  tableListQuerySchema,
+  tableMergeBodySchema,
+  tableMoveOrderBodySchema,
+  tableSplitBodySchema,
+  tableStatusBodySchema,
+  tableUpsertBodySchema,
+} from '../validation/tables';
 
 const router = Router();
 
@@ -24,18 +35,18 @@ function actorId(req: Request): string | null {
 
 function sendTableError(res: Response, error: any): void {
   if (error instanceof TableServiceError) {
-    res.status(error.statusCode).json({ error: error.message, code: error.code });
+    res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)), code: (error as { code?: string }).code });
     return;
   }
-  const statusCode = error.status || error.statusCode || 500;
+  const statusCode = (error as { status?: number }).status || (error as { statusCode?: number }).statusCode || 500;
   console.error('[API] Table operation failed:', error);
   res.status(statusCode).json({
-    error: statusCode >= 500 ? 'Internal server error' : error.message,
-    code: error.code,
+    error: statusCode >= 500 ? 'Internal server error' : (error instanceof Error ? error.message : String(error)),
+    code: (error as { code?: string }).code,
   });
 }
 
-router.get('/', (req: Request, res: Response) => {
+router.get('/', validateQuery(tableListQuerySchema), (req: Request, res: Response) => {
   try {
     const db = getDatabase();
     let query = 'SELECT * FROM tables WHERE 1=1';
@@ -70,7 +81,7 @@ router.get('/', (req: Request, res: Response) => {
     const rows = db.prepare(query).all(...params);
     const tables = rows.map((t: any) => tableShape(t, activeOrderForTable(db, t.id)));
     res.json({ tables });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -86,13 +97,13 @@ router.get('/:id', (req: Request, res: Response) => {
 
     const activeOrder = activeOrderForTable(db, req.params.id as string);
     res.json({ table: tableShape(table as any, activeOrder) });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+router.post('/', requireRole('owner', 'manager'), validateBody(tableUpsertBodySchema), (req: Request, res: Response) => {
   try {
     const { number, name, capacity, floor, section, position_x, position_y, kitchen_station_id } =
       req.body;
@@ -144,13 +155,13 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
 
     const table = db.prepare('SELECT * FROM tables WHERE id = ?').get(tableId);
     res.status(201).json({ table: tableShape(table as any) });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+router.put('/:id', requireRole('owner', 'manager'), validateParams(tableIdParamsSchema), validateBody(tableUpsertBodySchema), (req: Request, res: Response) => {
   try {
     const { number, name, capacity, floor, section, position_x, position_y, kitchen_station_id } =
       req.body;
@@ -209,7 +220,7 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
     res.json({
       table: tableShape(updated as any, activeOrderForTable(db, req.params.id as string)),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -245,7 +256,7 @@ router.post('/:id/deactivate', requireRole('owner', 'manager'), (req: Request, r
     });
     const updated = db.prepare('SELECT * FROM tables WHERE id = ?').get(req.params.id);
     res.json({ table: tableShape(updated as any) });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -276,7 +287,7 @@ router.post('/:id/reactivate', requireRole('owner', 'manager'), (req: Request, r
     });
     const updated = db.prepare('SELECT * FROM tables WHERE id = ?').get(req.params.id);
     res.json({ table: tableShape(updated as any) });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -309,7 +320,7 @@ router.post(
         sourceTable: moved.sourceTable,
         targetTable: moved.targetTable,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       sendTableError(res, error);
     }
   },
@@ -341,7 +352,7 @@ router.post(
         survivingTable: result.survivingTable,
         sourceTable: result.sourceTable,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       sendTableError(res, error);
     }
   },
@@ -377,7 +388,7 @@ router.post(
         sourceTable: result.sourceTable,
         targetTable: result.targetTable,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       sendTableError(res, error);
     }
   },
@@ -399,13 +410,13 @@ router.post(
         actorUserId: actorId(req),
       });
       res.json({ table });
-    } catch (error: any) {
+    } catch (error: unknown) {
       sendTableError(res, error);
     }
   },
 );
 
-router.patch('/:id/status', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+router.patch('/:id/status', requireRole('owner', 'manager'), validateParams(tableIdParamsSchema), validateBody(tableStatusBodySchema), (req: Request, res: Response) => {
   try {
     const { status } = req.body;
     if (!status) {
@@ -418,7 +429,7 @@ router.patch('/:id/status', requireRole('owner', 'manager'), (req: Request, res:
       actorUserId: actorId(req),
     });
     res.json({ table });
-  } catch (error: any) {
+  } catch (error: unknown) {
     sendTableError(res, error);
   }
 });

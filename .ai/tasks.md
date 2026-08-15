@@ -23,7 +23,8 @@ Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `
 - [x] **R4.1 Foundation Stabilization GREEN (2026-08-15):** backup-now Master PIN; Zod money bodies; orders-shared + database/time|order-row extraction; P1.3 matrix; REAL→cents STOP (plan). `npm run test:r4.1`. Doc: `r4-1-foundation-stabilization.md`.
 - [x] **R6 Purchasing & Supplier OS GREEN (2026-08-15):** schema v80; suppliers; mappings; PO lifecycle; partial/full receive → inventory `purchase_receipt`; cents on PO money; RBAC; idempotency; concurrency; UI `/products/purchasing`. `npm run test:r6`. Doc: `r6-purchasing-supplier-os.md`. Do not start R7.
 - [x] **Foundation priority deepen Phase 1 (2026-08-15):** migrations extract; orders package split; P0.3 dual-write v81; categories Zod; P1.3 closed. Doc: `foundation-priority-deepen.md`. Remaining: full any wipe, Zod residual routes, REAL cutover.
-- [ ] **Hardening (prefer next, authorized slice only):** money cents cutover; remaining any/Zod; durable KDS outbox — or next authorized R-wave. R0–R6 + foundation Phase 1 closed.
+- [x] **Foundation priority deepen Phase 2 (2026-08-15):** prefer-cents readers + dual-write writers; process-kill harness; Zod staff/tables/shifts/KDS/settings/payment-methods; `any` main&lt;600 / orders&lt;50. Doc: `foundation-priority-deepen-phase2.md`. **Ready for R7 authorization — do not auto-start R7.**
+- [ ] **Hardening (prefer next, authorized slice only):** REAL money cutover (drop REAL); residual Zod bodies; durable KDS outbox — or next authorized R-wave. R0–R6 + foundation Phase 1–2 closed.
 - [ ] **Planned (not started):** see matrix — expediter, QR, consumption/food-cost full BI, auto-86, expiry, stock transfer, etc. Reuse shipped slices; do not rebuild.
 - [ ] **Frozen / later / out of scope:** terminals, gateways, online payment, multi-location, payroll, aggregators, AI — do not start.
 

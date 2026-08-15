@@ -89,7 +89,7 @@ async function resolvePublicHostname(hostname: string): Promise<string> {
   let addresses: dns.LookupAddress[];
   try {
     addresses = await dns.promises.lookup(hostname, { all: true, verbatim: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error?.code === 'ENOTFOUND') {
       throw error;
     }
@@ -410,7 +410,7 @@ router.get('/', (req: Request, res: Response) => {
     });
 
     res.json({ products: productsWithRelations });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -472,7 +472,7 @@ router.get('/:id/image', async (req: Request, res: Response) => {
       'Cache-Control': 'no-cache', // Always revalidate — instant cross-terminal updates
     });
     res.send(buffer);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -500,7 +500,7 @@ router.get('/:id', (req: Request, res: Response) => {
         addonGroups: rel.addon_groups,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -551,7 +551,7 @@ router.post('/fetch-url', requireRole('owner', 'manager'), async (req: Request, 
       let resolvedAddress: string;
       try {
         resolvedAddress = await resolvePublicHostname(parsedUrl.hostname);
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (error?.code === 'ENOTFOUND') {
           return res.status(502).json({ error: 'Could not resolve hostname' });
         }
@@ -624,7 +624,7 @@ router.post('/fetch-url', requireRole('owner', 'manager'), async (req: Request, 
     } catch {
       return res.status(502).json({ error: 'Could not fetch the image' });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -664,9 +664,9 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
     try {
       const unit = resolveInventoryUnit(inventory_unit);
       if (unit) resolvedUnit = unit;
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof InventoryServiceError) {
-        return res.status(error.statusCode).json({ error: error.message });
+        return res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
       }
       throw error;
     }
@@ -726,9 +726,10 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
         db.prepare(
           `
           INSERT INTO products (id, category_id, name, sku, barcode, description, price, cost,
+            price_cents, cost_cents,
             tax_type, tax_rate, tax_category_id, tax_behavior, track_inventory, stock_quantity, inventory_unit, low_stock_threshold,
             is_active, image_url, sort_order, cb_percent, tags, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         ).run(
           id,
@@ -739,6 +740,8 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
           description || null,
           price,
           cost_price || 0,
+          Math.round(Number(price) * 100),
+          Math.round(Number(cost_price || 0) * 100),
           'none',
           0,
           tax_category_id || null,
@@ -771,16 +774,16 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
           reason: 'opening',
         });
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof InventoryServiceError) {
-        return res.status(error.statusCode).json({ error: error.message });
+        return res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
       }
       throw error;
     }
 
     const product = db.prepare('SELECT * FROM products WHERE id = ?').get(id);
     res.status(201).json({ product });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -828,9 +831,9 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
         if (!resolvedPutUnit) {
           return res.status(400).json({ error: 'inventory_unit is required when provided' });
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (error instanceof InventoryServiceError) {
-          return res.status(error.statusCode).json({ error: error.message });
+          return res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
         }
         throw error;
       }
@@ -902,6 +905,8 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
             description = COALESCE(@description, description),
             price = COALESCE(@price, price),
             cost = COALESCE(@cost, cost),
+            price_cents = CASE WHEN @price IS NOT NULL THEN CAST(ROUND(@price * 100) AS INTEGER) ELSE price_cents END,
+            cost_cents = CASE WHEN @cost IS NOT NULL THEN CAST(ROUND(@cost * 100) AS INTEGER) ELSE cost_cents END,
             tax_type = 'none',
             tax_rate = 0,
             tax_category_id = CASE WHEN @has_tax_category_id = 1 THEN @tax_category_id ELSE tax_category_id END,
@@ -962,16 +967,16 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
           }
         }
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof InventoryServiceError) {
-        return res.status(error.statusCode).json({ error: error.message });
+        return res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
       }
       throw error;
     }
 
     const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(productId);
     res.json({ product: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -989,7 +994,7 @@ router.delete('/:id', requireRole('owner', 'manager'), (req: Request, res: Respo
 
     db.prepare('UPDATE products SET deleted_at = ? WHERE id = ?').run(now(), req.params.id);
     res.json({ message: 'Product deleted' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -1028,7 +1033,7 @@ router.post(
 
       const product = db.prepare('SELECT * FROM products WHERE id = ?').get(productId);
       res.json({ product });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -1123,14 +1128,14 @@ router.post(
       });
 
       res.json(result);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof InventoryServiceError) {
-        return res.status(error.statusCode).json({ error: error.message });
+        return res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
       }
       if (error?.statusCode) {
-        const payload: { error: string; code?: string } = { error: error.message };
-        if (error.code) payload.code = error.code;
-        return res.status(error.statusCode).json(payload);
+        const payload: { error: string; code?: string } = { error: (error instanceof Error ? error.message : String(error)) };
+        if ((error as { code?: string }).code) payload.code = (error as { code?: string }).code;
+        return res.status((error as { statusCode?: number }).statusCode).json(payload);
       }
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -1157,7 +1162,7 @@ router.get(
         )
         .get() as { count: number };
       res.json({ count: row.count });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -1175,7 +1180,7 @@ router.post(
         )
         .run(now());
       res.json({ updated: result.changes });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }

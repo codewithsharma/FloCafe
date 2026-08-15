@@ -1,5 +1,5 @@
 /**
- * Shared bill / payment-line shapes for money-sensitive paths (R4.1).
+ * Shared bill / payment-line shapes for money-sensitive paths (R4.1 / P0.3 Phase 2).
  * Deliberately structural — mirrors SQLite bill columns used by tender/refund.
  */
 
@@ -11,9 +11,17 @@ export interface BillSettlementRow {
   shift_id?: number | string | null;
   split_group_id?: string | number | null;
   subtotal?: number | null;
+  subtotal_cents?: number | null;
+  tax_amount?: number | null;
+  tax_amount_cents?: number | null;
+  discount_amount?: number | null;
+  discount_amount_cents?: number | null;
   total: number;
+  total_cents?: number | null;
   paid_amount?: number | null;
+  paid_amount_cents?: number | null;
   balance?: number | null;
+  balance_cents?: number | null;
   payment_status?: string | null;
   payment_details?: string | null;
   [key: string]: unknown;

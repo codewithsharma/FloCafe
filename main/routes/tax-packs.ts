@@ -886,7 +886,7 @@ router.get('/', requireRole('owner', 'manager'), (_req: Request, res: Response) 
       };
     });
     res.json({ store_country: storeCountry, packs });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Tax Packs] List failed:', error);
     res.status(500).json({ error: 'Could not load tax packs' });
   }
@@ -911,7 +911,7 @@ router.get('/audit', requireRole('owner', 'manager'), (req: Request, res: Respon
         details: parseJson(row.details_json, null),
       })),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Tax Packs] Audit load failed:', error);
     res.status(500).json({ error: 'Could not load tax audit history' });
   }
@@ -932,7 +932,7 @@ router.get('/catalog', requireRole('owner', 'manager'), async (_req: Request, re
         (entry) => !installed.has(`${entry.id}@${entry.version}`),
       ),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Tax Packs] Catalog fetch failed:', error);
     res.status(502).json({ error: error.message || 'Could not check the tax pack catalog' });
   }
@@ -1009,7 +1009,7 @@ router.post(
       });
       upsertSettings({ taxes_enabled: 'true' });
       return res.json({ enabled: true, country, pack_id: pack.id, version: version.version });
-    } catch (error: any) {
+    } catch (error: unknown) {
       const statusCode = error.statusCode || 502;
       return res
         .status(statusCode)
@@ -1371,7 +1371,7 @@ router.post('/manual-config', requireRole('owner'), (req: Request, res: Response
       remapped,
       validation,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     const statusCode = error.statusCode || 500;
     return res
       .status(statusCode)
@@ -1394,7 +1394,7 @@ router.post('/catalog/install', requireRole('owner'), async (req: Request, res: 
       return res.status(404).json({ error: 'Tax pack version is not in the current catalog' });
     const installed = await installCatalogEntry(entry, { actorUserId: actorUserId(req) });
     res.status(201).json({ installed });
-  } catch (error: any) {
+  } catch (error: unknown) {
     const statusCode = error.statusCode || 502;
     res.status(statusCode).json({
       error: error.message || 'Could not install tax pack version',
@@ -1449,7 +1449,7 @@ router.post('/test-calculation', requireRole('owner', 'manager'), (req: Request,
           .toFixed(active.definition.taxRounding.decimalPlaces),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     const statusCode = error.statusCode || 400;
     res.status(statusCode).json({ error: error.message || 'Tax test calculation failed' });
   }
@@ -1497,7 +1497,7 @@ router.post('/overrides', requireRole('owner'), (req: Request, res: Response) =>
     res.status(201).json({
       override: getDatabase().prepare('SELECT * FROM tax_overrides WHERE id = ?').get(id),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     const statusCode = error.statusCode || 500;
     res.status(statusCode).json({
       error:
@@ -1568,7 +1568,7 @@ router.put('/overrides/:overrideId', requireRole('owner'), (req: Request, res: R
       });
     });
     res.json({ override: db.prepare('SELECT * FROM tax_overrides WHERE id = ?').get(existing.id) });
-  } catch (error: any) {
+  } catch (error: unknown) {
     const statusCode = error.statusCode || 500;
     res.status(statusCode).json({
       error:
@@ -1612,7 +1612,7 @@ router.delete('/overrides/:overrideId', requireRole('owner'), (req: Request, res
       );
     });
     res.json({ message: 'Override reset to the official pack value' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Tax Packs] Override reset failed:', error);
     res.status(500).json({ error: 'Could not reset override' });
   }
@@ -1667,7 +1667,7 @@ router.post(
         audit('activate_pack', actorUserId(req), pack.id, version.id, null, { previousVersionId });
       });
       res.json({ changed: true, active_version_id: version.id, validation });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Tax Packs] Activation failed:', error);
       res.status(500).json({ error: 'Could not activate pack version' });
     }
@@ -1722,7 +1722,7 @@ router.post('/:packId/rollback', requireRole('owner'), (req: Request, res: Respo
       });
     });
     res.json({ active_version_id: target.id, validation });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Tax Packs] Rollback failed:', error);
     res.status(500).json({ error: 'Could not roll back tax pack' });
   }
@@ -1816,7 +1816,7 @@ router.get('/:packId', requireRole('owner', 'manager'), (req: Request, res: Resp
       overrides,
       targets,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Tax Packs] Detail load failed:', error);
     res.status(500).json({ error: 'Could not load tax pack details' });
   }

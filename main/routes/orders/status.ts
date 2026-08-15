@@ -65,6 +65,7 @@ import {
   lookupOrderIdempotencyReplay,
   storeOrderIdempotency,
   batchHydrateOrders,
+  getAuthUser, errorMessage, errorStatus, type OrderRow, type OrderItemRow,
 } from '../orders-shared';
 
 export { checkPinRateLimit } from '../orders-shared';
@@ -86,15 +87,15 @@ export function registerStatusRoutes(router: Router): void {
         if (!order) {
           return res.status(404).json({ error: 'Order not found' });
         }
-        const authUser = (req as any).user;
+        const authUser = getAuthUser(req);
         if (
           authUser?.role === 'waiter' &&
-          String((order as any).user_id) !== String(authUser.userId)
+          String(order.user_id) !== String(authUser.userId)
         ) {
           return res.status(403).json({ error: 'Waiters can only modify their own orders' });
         }
 
-        const currentStatus = (order as any).status as string;
+        const currentStatus = order.status as string;
         if (currentStatus !== status) {
           if (currentStatus === 'cancelled' || currentStatus === 'completed') {
             return res.status(409).json({
@@ -110,8 +111,8 @@ export function registerStatusRoutes(router: Router): void {
         if (status === 'cancelled') {
           try {
             cancelIdempotencyKey = orderIdempotencyKey(req);
-          } catch (err: any) {
-            return res.status(err.statusCode || 400).json({ error: err.message });
+          } catch (err: unknown) {
+            return res.status(errorStatus(err) || 400).json({ error: errorMessage(err) });
           }
           if (cancelIdempotencyKey) {
             cancelIdempotencyUserId = String(authUser.userId);
@@ -134,17 +135,17 @@ export function registerStatusRoutes(router: Router): void {
               if (prior.replay) {
                 return res.status(200).json({ ...prior.response, idempotent_replay: true });
               }
-            } catch (err: any) {
+            } catch (err: unknown) {
               return res
                 .status(err.statusCode || 500)
-                .json({ error: err.statusCode ? err.message : 'Internal server error' });
+                .json({ error: errorStatus(err) ? errorMessage(err) : 'Internal server error' });
             }
           }
         }
 
         if (
           status === 'cancelled' &&
-          (order as any).status !== 'cancelled' &&
+          order.status !== 'cancelled' &&
           orderHasSuccessfulTender(db, req.params.id as string)
         ) {
           return res.status(409).json({
@@ -155,7 +156,7 @@ export function registerStatusRoutes(router: Router): void {
 
         // Override validation: cancelling an order in preparing+ status (or with items in preparing+) requires manager PIN
         const statusOrder = ['pending', 'preparing', 'ready', 'served', 'completed'];
-        const currentStatusIndex = statusOrder.indexOf((order as any).status);
+        const currentStatusIndex = statusOrder.indexOf(order.status);
         const hasItemsInProgress =
           db
             .prepare(
@@ -229,8 +230,8 @@ export function registerStatusRoutes(router: Router): void {
               WHERE order_id = ? AND status IN ('pending', 'preparing', 'ready')
             `,
               ).run(nowStr, req.params.id);
-              if (isModuleEnabled('tables') && (order as any).table_id) {
-                freeTableIfModule(db, (order as any).table_id, nowStr);
+              if (isModuleEnabled('tables') && order.table_id) {
+                freeTableIfModule(db, order.table_id, nowStr);
               }
               break;
 
@@ -244,12 +245,12 @@ export function registerStatusRoutes(router: Router): void {
               }
               const items = db
                 .prepare('SELECT * FROM order_items WHERE order_id = ?')
-                .all(req.params.id) as any[];
+                .all(req.params.id) as OrderItemRow[];
               for (const item of items) {
                 if (item.status === 'voided' || item.status === 'void_adjustment') continue;
                 const product = db
                   .prepare('SELECT * FROM products WHERE id = ?')
-                  .get(item.product_id) as any;
+                  .get(item.product_id) as OrderRow | undefined;
                 restoreTrackedStock(db, product, item.quantity, nowStr, {
                   referenceType: 'order',
                   referenceId: req.params.id as string,
@@ -270,8 +271,8 @@ export function registerStatusRoutes(router: Router): void {
                 'UPDATE orders SET status = ?, cancelled_at = ?, cancellation_reason = ?, updated_at = ? WHERE id = ?',
               ).run(status, nowStr, reason, nowStr, req.params.id);
               // Only free table if explicitly requested (default: true for backward compatibility)
-              if (isModuleEnabled('tables') && (order as any).table_id && free_table !== false) {
-                freeTableIfModule(db, (order as any).table_id, nowStr);
+              if (isModuleEnabled('tables') && order.table_id && free_table !== false) {
+                freeTableIfModule(db, order.table_id, nowStr);
               }
               logAuditEvent({
                 actorUserId: authUser?.userId ?? null,
@@ -281,7 +282,7 @@ export function registerStatusRoutes(router: Router): void {
                 result: 'success',
                 reason: reason || null,
                 metadata: {
-                  previous_status: (order as any).status,
+                  previous_status: order.status,
                   reason: reason || null,
                 },
                 context: {
@@ -301,10 +302,10 @@ export function registerStatusRoutes(router: Router): void {
             db
               .prepare('SELECT * FROM order_items WHERE order_id = ?')
               .all(req.params.id)
-              .map(parseItemJson) as any[],
+              .map(parseItemJson) as OrderItemRow[],
           );
           const tableRow2 = updatedOrder.table_id
-            ? (db.prepare('SELECT * FROM tables WHERE id = ?').get(updatedOrder.table_id) as any)
+            ? (db.prepare('SELECT * FROM tables WHERE id = ?').get(updatedOrder.table_id) as OrderRow | undefined)
             : null;
           const table = tableRow2 ? { ...tableRow2, name: tableRow2.number } : null;
           return { updatedOrder, orderItems, table };
@@ -331,7 +332,7 @@ export function registerStatusRoutes(router: Router): void {
           );
         }
         res.json(response);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[API] Internal error:', error);
         res.status(500).json({ error: 'Internal server error' });
       }

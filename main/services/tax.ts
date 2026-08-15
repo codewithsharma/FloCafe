@@ -480,7 +480,7 @@ function chargeAmount(context: ChargeTaxContext, kind: ChargeTaxKind): Decimal {
       throw new Error(`${kind} charge must be a non-negative finite amount`);
     }
     return amount;
-  } catch (error: any) {
+  } catch (error: unknown) {
     throw Object.assign(new Error(error.message || `${kind} charge is invalid`), {
       statusCode: 400,
     });
@@ -883,8 +883,8 @@ export async function calculateTaxPreview(req: any, res: any): Promise<void> {
           Customer | undefined)
       : null;
 
-    const itemResults: any[] = [];
-    const allBreakdowns: any[] = [];
+    const itemResults: unknown[] = [];
+    const allBreakdowns: unknown[] = [];
     const allTaxSnapshots: (string | null)[] = [];
     let totalSubtotal = 0;
     let totalTax = 0;
@@ -1041,7 +1041,7 @@ export async function calculateTaxPreview(req: any, res: any): Promise<void> {
         total,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[Tax] Preview error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }

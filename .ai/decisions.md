@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — Foundation priority deepen Phase 2 (Implemented)
+
+Completed remaining foundation debt without R7. P0.3 **Phase 2**: prefer `*_cents` readers + dual-write writers on orders/bills/products (REAL retained; no cutover). Process-kill SIGKILL harness (`test:process-kill`). Zod expanded (staff/tables/shifts/KDS/settings/payment-methods) + `validateParams`/`validateQuery`. `any`: main ~577 / orders ~14. Doc: `docs/05-production/foundation-priority-deepen-phase2.md`. **Foundation ready for R7 authorization — do not start R7 in this change set.**
+
 ## 2026-08-15 — Foundation priority deepen Phase 1 (Implemented)
 
 Closed audit-v3 open/partial foundation items without R7. Extracted `main/database/migrations.ts` (db.ts −~37%). Split orders into `main/routes/orders/*` concern modules. P0.3 **Phase 1** dual-write: schema **v81** additive `*_cents` on products/orders/order_items/bills + `main/lib/money.ts`; REAL retained. Categories Zod. P1.3 checklist closed via `test:r4.1`. Doc: `docs/05-production/foundation-priority-deepen.md`. **Do not start R7.**

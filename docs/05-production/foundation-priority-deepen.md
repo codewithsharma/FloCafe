@@ -1,7 +1,7 @@
 # Foundation Priority Deepen (post–audit-v3)
 
 **Date:** 2026-08-15  
-**Status:** COMPLETE (Phase 1)  
+**Status:** COMPLETE (Phase 1) — see Phase 2: `foundation-priority-deepen-phase2.md`  
 **Schema:** v81  
 **Baseline:** R6 `8e6a8fe`
 

@@ -63,7 +63,7 @@ function dayCloseAuditContext(req: Request) {
 
 function sendDayCloseError(res: Response, error: unknown): void {
   if (error instanceof DayCloseServiceError) {
-    res.status(error.statusCode).json({ error: error.message });
+    res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
     return;
   }
   console.error('[DayClose] Internal error:', error);
@@ -219,8 +219,8 @@ function daySalesSemantics(
     .prepare(
       `
     SELECT
-      COALESCE(SUM(total), 0) AS grossSales,
-      COALESCE(SUM(paid_amount), 0) AS netSales
+      COALESCE(SUM(COALESCE(total_cents, CAST(ROUND(COALESCE(total, 0) * 100) AS INTEGER))) / 100.0, 0) AS grossSales,
+      COALESCE(SUM(COALESCE(paid_amount_cents, CAST(ROUND(COALESCE(paid_amount, 0) * 100) AS INTEGER))) / 100.0, 0) AS netSales
     FROM bills
     WHERE created_at >= ? AND created_at < ?
       AND (
@@ -337,7 +337,7 @@ router.get('/daily-stats', requireRole('owner', 'manager'), (req: Request, res: 
       // Payments Received (gross tender by method) — not Net Sales.
       paymentMethods: paymentMethodsToday,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -407,7 +407,7 @@ router.get('/summary', requireRole('owner', 'manager'), (req: Request, res: Resp
         paymentMethods: paymentMethodsToday,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -479,7 +479,7 @@ router.get('/tax-components', requireRole('owner', 'manager'), (req: Request, re
         components: aggregateTaxComponents(documents),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Tax component report failed:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -539,7 +539,7 @@ router.get('/sales', requireRole('owner', 'manager'), (req: Request, res: Respon
         byOrderType,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -579,7 +579,7 @@ router.get('/topProducts', requireRole('owner', 'manager'), (req: Request, res: 
       .all(windowStart, windowEnd, limit);
 
     res.json({ topProducts });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -645,7 +645,7 @@ router.get('/recentOrders', requireRole('owner', 'manager'), (req: Request, res:
     }));
 
     res.json({ recentOrders: ordersWithItems });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -689,7 +689,7 @@ router.get('/tables', requireRole('owner', 'manager'), (req: Request, res: Respo
       tableStats,
       tableUtilization,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -814,7 +814,7 @@ router.get('/insights', requireRole('owner', 'manager'), (req: Request, res: Res
         ? { dayIndex: idlestDay.index, orderCount: idlestDay.count }
         : null,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -888,7 +888,7 @@ router.get('/export/bills.csv', requireRole('owner', 'manager'), (req: Request, 
     res.send(csv);
   } catch (error: unknown) {
     if (error instanceof BillsCsvExportError) {
-      return res.status(error.statusCode).json({ error: error.message });
+      return res.status((error as { statusCode?: number }).statusCode).json({ error: (error instanceof Error ? error.message : String(error)) });
     }
     console.error('[API] Bills CSV export failed:', error);
     res.status(500).json({ error: 'Internal server error' });

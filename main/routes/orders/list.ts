@@ -65,6 +65,7 @@ import {
   lookupOrderIdempotencyReplay,
   storeOrderIdempotency,
   batchHydrateOrders,
+  getAuthUser, errorMessage, errorStatus, type OrderRow, type OrderItemRow,
 } from '../orders-shared';
 
 export { checkPinRateLimit } from '../orders-shared';
@@ -76,7 +77,7 @@ export function registerListRoutes(router: Router): void {
     requireRole('owner', 'manager', 'cashier', 'waiter'),
     (req: Request, res: Response) => {
       try {
-        const user = (req as any).user;
+        const user = getAuthUser(req);
         const db = getDatabase();
         const wheres: string[] = [];
         const params: any[] = [];
@@ -165,7 +166,7 @@ export function registerListRoutes(router: Router): void {
         LIMIT ?
       `,
           )
-          .all(...params, perPagePlusOne) as any[];
+          .all(...params, perPagePlusOne) as OrderItemRow[];
 
         const hasMore = orders.length > perPage;
         const pageOrders = hasMore ? orders.slice(0, perPage) : orders;
@@ -179,7 +180,7 @@ export function registerListRoutes(router: Router): void {
           orders: ordersWithRelations,
           ...(nextCursor !== null && { nextCursor }),
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[API] Internal error:', error);
         res.status(500).json({ error: 'Internal server error' });
       }
@@ -197,7 +198,7 @@ export function registerListRoutes(router: Router): void {
     requireRole('owner', 'manager', 'cashier', 'waiter'),
     (req: Request, res: Response) => {
       try {
-        const user = (req as any).user;
+        const user = getAuthUser(req);
         const db = getDatabase();
         const order = parseRowJson(
           db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id),
@@ -205,7 +206,7 @@ export function registerListRoutes(router: Router): void {
         if (!order) {
           return res.status(404).json({ error: 'Order not found' });
         }
-        if (user.role === 'waiter' && (order as any).user_id !== user.userId) {
+        if (user.role === 'waiter' && order.user_id !== user.userId) {
           return res.status(403).json({ error: 'Waiters can only view their own orders' });
         }
 
@@ -214,7 +215,7 @@ export function registerListRoutes(router: Router): void {
         // 6 prepared calls per single detail click.
         const [hydrated] = batchHydrateOrders(db, [order]);
         res.json({ order: hydrated });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[API] Internal error:', error);
         res.status(500).json({ error: 'Internal server error' });
       }

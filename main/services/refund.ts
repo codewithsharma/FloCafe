@@ -13,6 +13,7 @@ import { getDatabase, now, parseRowJson, verifyPin, withTxn } from '../db';
 import { logAuditEvent, type AuditContext } from './audit-log';
 import { parseStoredPaymentAmountCents } from './payment-cash';
 import type { BillSettlementRow } from './bill-settlement-types';
+import { billTotalCents } from '../lib/money';
 import {
   assertOpenShiftForCashPayment,
   getActiveShift,
@@ -449,7 +450,7 @@ export function createBillRefund(input: CreateBillRefundInput): {
 
       const changedAt = now();
       const newPaidCents = originalCollectedCents - (priorRefundCents + amountCents);
-      const totalCents = Math.round(Number(bill.total || 0) * 100);
+      const totalCents = billTotalCents(bill);
       const newBalanceCents = Math.max(0, totalCents - newPaidCents);
       const previousStatus = String(bill.payment_status || 'unpaid');
       const paymentStatus = derivePaymentStatus({
@@ -486,10 +487,19 @@ export function createBillRefund(input: CreateBillRefundInput): {
       db.prepare(
         `
         UPDATE bills
-        SET paid_amount = ?, balance = ?, payment_status = ?, updated_at = ?
+        SET paid_amount = ?, balance = ?, payment_status = ?,
+            paid_amount_cents = ?, balance_cents = ?, updated_at = ?
         WHERE id = ?
       `,
-      ).run(newPaidCents / 100, newBalanceCents / 100, paymentStatus, changedAt, bill.id);
+      ).run(
+        newPaidCents / 100,
+        newBalanceCents / 100,
+        paymentStatus,
+        newPaidCents,
+        newBalanceCents,
+        changedAt,
+        bill.id,
+      );
 
       if (method === 'wallet') {
         db.prepare(

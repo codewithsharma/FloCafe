@@ -52,7 +52,7 @@ router.delete('/admin/cleanup', requireRole('owner'), (req: Request, res: Respon
     const db = getDatabase();
     const result = db.prepare('DELETE FROM customers WHERE id IS NULL').run();
     res.json({ message: `Deleted ${result.changes} customers with null IDs` });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -77,7 +77,7 @@ router.get(
         .get() as { count: number };
 
       res.json({ invalidPhonesCount: result.count });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -128,7 +128,7 @@ router.get(
       LEFT JOIN ledger_debits ld ON ld.customer_id = c.id
       WHERE 1=1
     `;
-      const params: any[] = [];
+      const params: unknown[] = [];
 
       // Phase 3.6E: owner/manager may include inactive rows for deliberate locate/reactivate.
       // Cashiers/waiters (and omitted flag) keep the historical active-only list.
@@ -189,7 +189,7 @@ router.get(
 
       const customers = db.prepare(query).all(...params);
       res.json({ data: customers });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -226,7 +226,7 @@ router.get(
         .all(req.params.id);
 
       res.json({ customer: { ...customer, walletBalance, loyaltyHistory, recentOrders } });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -255,7 +255,7 @@ router.get(
         .all(customerId);
 
       res.json({ balance, transactions });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -345,7 +345,7 @@ router.post(
 
       const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(id);
       res.status(201).json({ customer });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Customer POST error]', error);
       res.status(500).json({ message: 'Failed to create customer' });
     }
@@ -401,7 +401,7 @@ router.put('/:id', requireRole('owner', 'manager', 'cashier'), (req: Request, re
 
     const updated = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
     res.json({ customer: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -430,7 +430,7 @@ router.post(
       );
       const updated = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
       res.json({ customer: parseCustomer(updated) });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -455,7 +455,7 @@ router.post('/:id/deactivate', requireRole('owner', 'manager'), (req: Request, r
     );
     const updated = db.prepare('SELECT * FROM customers WHERE id = ?').get(req.params.id);
     res.json({ customer: parseCustomer(updated) });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }

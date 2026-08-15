@@ -2,6 +2,14 @@ import { Router, Request, Response } from 'express';
 import { getDatabase, now, withTxn } from '../db';
 import { requireRole } from '../middleware/security';
 import { sendEvent } from '../services/telemetry';
+import { validateBody, validateParams, validateQuery } from '../middleware/validate';
+import {
+  paymentMethodCreateBodySchema,
+  paymentMethodIdParamsSchema,
+  paymentMethodListQuerySchema,
+  paymentMethodMergeBodySchema,
+  paymentMethodUpdateBodySchema,
+} from '../validation/payment-methods';
 
 const router = Router();
 
@@ -35,12 +43,12 @@ router.get('/merge-history', requireRole('owner', 'manager'), (_req, res) => {
   res.json({ merges: getDatabase().prepare('SELECT * FROM payment_method_merges ORDER BY merged_at DESC, id DESC LIMIT 30').all() });
 });
 
-router.get('/', requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'), (req: Request, res: Response) => {
+router.get('/', validateQuery(paymentMethodListQuerySchema), requireRole('owner', 'manager', 'cashier', 'waiter', 'chef'), (req: Request, res: Response) => {
   const includeInactive = req.query.include_inactive === 'true' && ['owner', 'manager'].includes((req as any).user.role);
   res.json({ payment_methods: list(includeInactive) });
 });
 
-router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+router.post('/', validateBody(paymentMethodCreateBodySchema), requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
     const name = normalizeName(req.body?.name);
     const db = getDatabase();
@@ -55,7 +63,7 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
   }
 });
 
-router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+router.put('/:id', requireRole('owner', 'manager'), validateParams(paymentMethodIdParamsSchema), validateBody(paymentMethodUpdateBodySchema), (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id);
     const db = getDatabase();
@@ -85,7 +93,7 @@ router.delete('/:id', requireRole('owner', 'manager'), (req: Request, res: Respo
   res.json({ success: true });
 });
 
-router.post('/:id/merge', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+router.post('/:id/merge', requireRole('owner', 'manager'), validateParams(paymentMethodIdParamsSchema), validateBody(paymentMethodMergeBodySchema), (req: Request, res: Response) => {
   try {
     const sourceId = Number(req.params.id);
     const targetType = req.body?.target_type === 'card' ? 'card' : 'custom';

@@ -513,7 +513,7 @@ router.post(
           tenants: [tenant],
         });
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Auth] Login error:', error);
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -563,7 +563,7 @@ router.post('/tenants/select', (req: Request, res: Response) => {
       token_type: 'bearer',
       tenant,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     res.status(401).json({ error: 'Invalid token' });
   }
 });
@@ -719,7 +719,7 @@ router.post('/password/change', (req: Request, res: Response) => {
     invalidateUserAuthCache(decoded.userId);
 
     res.json({ message: 'Password changed successfully' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -862,7 +862,7 @@ router.post(
             : 'Password reset successfully. You can now log in with your new password.',
         });
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Auth] Password recovery error:', error);
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -944,7 +944,7 @@ router.get('/setup/status', (_req: Request, res: Response) => {
       schemaVersion: getCurrentSchemaVersion(),
       masterPinAvailable: isMasterPinAvailable(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[API] Internal error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -1216,7 +1216,7 @@ router.post(
         tenant,
         tenants: [tenant],
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[Auth] Setup error:', error);
       const message = error.message || 'Setup failed';
       const status = message.includes('already complete')
@@ -1286,7 +1286,7 @@ router.post('/jwt-secret/rotate', authRateLimit(), (req: Request, res: Response)
       metadata: { method: 'rotate', actor_role: 'owner' },
     });
     res.json({ ok: true, message: 'JWT signing secret rotated. All sessions must sign in again.' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof JwtSecretError) {
       return res.status(503).json({ error: error.message, code: error.code });
     }
@@ -1335,7 +1335,7 @@ router.post('/jwt-secret/recover', authRateLimit(), (req: Request, res: Response
       ok: true,
       message: 'JWT signing secret recovered. Sign in again with your password.',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof JwtSecretError) {
       return res.status(503).json({ error: error.message, code: error.code });
     }

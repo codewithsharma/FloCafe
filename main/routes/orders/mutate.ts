@@ -65,6 +65,7 @@ import {
   lookupOrderIdempotencyReplay,
   storeOrderIdempotency,
   batchHydrateOrders,
+  getAuthUser, errorMessage, errorStatus, type OrderRow, type OrderItemRow,
 } from '../orders-shared';
 
 export { checkPinRateLimit } from '../orders-shared';
@@ -74,7 +75,7 @@ export function registerMutateRoutes(router: Router): void {
   router.patch('/:id/customer', requireRole('owner', 'manager'), (req: Request, res: Response) => {
     try {
       const db = getDatabase();
-      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as any;
+      const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as OrderRow | undefined;
       if (!order) {
         return res.status(404).json({ error: 'Order not found' });
       }
@@ -115,7 +116,7 @@ export function registerMutateRoutes(router: Router): void {
       notifyOrderUpdated();
 
       res.json({ order: { ...updatedOrder, customer } });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -130,7 +131,7 @@ export function registerMutateRoutes(router: Router): void {
         const nowStr = now();
 
         withTxn(() => {
-          const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as any;
+          const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as OrderRow | undefined;
           if (!order) {
             throw Object.assign(new Error('Order not found'), { statusCode: 404 });
           }
@@ -174,18 +175,18 @@ export function registerMutateRoutes(router: Router): void {
           db
             .prepare('SELECT * FROM order_items WHERE order_id = ?')
             .all(req.params.id)
-            .map(parseItemJson) as any[],
+            .map(parseItemJson) as OrderItemRow[],
         );
 
         cloudSync.recordOrderChanged(req.params.id as string, 'order.type_changed');
         if (isModuleEnabled('kds')) notifyKdsUpdate();
 
         res.json({ order: Object.assign({}, updatedOrder, { items: orderItems, table: null }) });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[API] Internal error:', error);
         res
-          .status(error.statusCode || 500)
-          .json({ error: error.statusCode ? error.message : 'Internal server error' });
+          .status(errorStatus(error) || 500)
+          .json({ error: errorStatus(error) ? errorMessage(error) : 'Internal server error' });
       }
     },
   );
