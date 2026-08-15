@@ -4870,6 +4870,23 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       `);
     },
   },
+  {
+    version: 76,
+    name: 'r2_table_assigned_waiter',
+    up: () => {
+      // R2 floor ops: optional waiter assignment on a table. Soft reference to
+      // users.id (role waiter/cashier/manager/owner enforced in service layer).
+      // Fresh installs may already have the column from createSchema — skip ALTER.
+      const tableColumns = getColumns(db, 'tables');
+      if (!tableColumns.includes('assigned_waiter_id')) {
+        db.exec(`ALTER TABLE tables ADD COLUMN assigned_waiter_id TEXT`);
+      }
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_tables_assigned_waiter
+          ON tables(assigned_waiter_id);
+      `);
+    },
+  },
 ];
 
 function syncBackupBeforeMigration(fromVersion: number, toVersion: number): void {
@@ -5138,6 +5155,7 @@ function createSchema(): void {
       position_x REAL,
       position_y REAL,
       kitchen_station_id TEXT,
+      assigned_waiter_id TEXT,
       is_active INTEGER DEFAULT 1,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP

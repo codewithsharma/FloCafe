@@ -11,6 +11,9 @@ export interface TablesGridProps {
   onMarkAvailable: (id: string) => void;
   onReserve: (table: Table) => void;
   onToggleActive: (table: Table) => void;
+  onTransfer?: (table: Table) => void;
+  onMerge?: (table: Table) => void;
+  onAssignWaiter?: (table: Table) => void;
 }
 
 export function TablesGrid({
@@ -20,6 +23,9 @@ export function TablesGrid({
   onMarkAvailable,
   onReserve,
   onToggleActive,
+  onTransfer,
+  onMerge,
+  onAssignWaiter,
 }: TablesGridProps) {
   if (showDetails) {
     return (
@@ -32,6 +38,9 @@ export function TablesGrid({
             onMarkAvailable={onMarkAvailable}
             onReserve={onReserve}
             onToggleActive={onToggleActive}
+            onTransfer={onTransfer}
+            onMerge={onMerge}
+            onAssignWaiter={onAssignWaiter}
           />
         ))}
       </div>

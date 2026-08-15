@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-15 — R2 Restaurant Floor Operations (Implemented)
+
+Authorized floor ops around existing POS. Schema v76 `tables.assigned_waiter_id`. Service `main/services/tables.ts`: occupy CAS, transfer harden + audit, unpaid merge/split (4.13 SAFE NOW; billed merge ADR_REQUIRED), waiter assign, status guards. UI: section field, transfer/merge/assign dialogs on `/tables` (no floor designer). Suite `npm run test:r2` S-FLOOR-01…10. Preserves R1/H1–H4/FIN-01. Doc: `docs/05-production/r2-floor-operations.md`. Do not start R3.
+
 ## 2026-08-15 — R1 POS Core Completion (Implemented)
 
 Authorized Restaurant POS core completion. Illegal terminal status transitions; cancel/discount Idempotency-Key; required addon group enforcement; print-bill reprint coerce + preview `bill_id`; `order.created` + item discount audits; WebUSB/local print log parity; frontend discount keys. Schema v75 unchanged. FIN-01/H1–H4 preserved. No service charge (ADR-014). No R2. Tests: `npm run test:r1`. Doc: `docs/05-production/r1-pos-core-completion.md`. STOP after R1.

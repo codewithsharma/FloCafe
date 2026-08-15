@@ -4,4 +4,7 @@ export { TableCompactCard } from './TableCompactCard';
 export { TableOrderDetail } from './TableOrderDetail';
 export { ReserveTableDialog } from './ReserveTableDialog';
 export { AddTableDialog } from './AddTableDialog';
+export { TransferTableDialog } from './TransferTableDialog';
+export { MergeTableDialog } from './MergeTableDialog';
+export { AssignWaiterDialog } from './AssignWaiterDialog';
 export type { AddTableFormState } from './AddTableDialog';

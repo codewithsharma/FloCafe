@@ -109,6 +109,7 @@ export interface Table {
   floor: string | null;
   section: string | null;
   is_active: boolean;
+  assigned_waiter_id?: string | null;
   activeOrder?: Order | null;
   current_order?: Order | null;
   reservation_customer_id?: number | null;

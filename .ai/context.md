@@ -9,7 +9,7 @@
 **Canonical strategy:** `STRATEGY.md` (pilot KPI unchanged).
 **Branding audit:** `docs/05-production/operavia-branding-normalization-audit.md`.
 
-Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v75**) + statically exported Next.js (`frontend/`).
+Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v76**) + statically exported Next.js (`frontend/`).
 
 **Canonical product plan:** `docs/00-product/capability-matrix.md` (Existing / Hardening / Planned / Later / Frozen, 2026-08-14).  
 **Complete Restaurant OS (R0):** `docs/00-product/restaurant-os-blueprint.md` · `restaurant-os-roadmap.md` (R0–R16). Docs only until R1+ authorized.  
@@ -88,11 +88,13 @@ M2 privacy consent · M3 audit_logs · M4 shifts · M5 cash recon + day close ·
 
 **R0 (2026-08-15): CLOSED.** Complete Restaurant OS blueprint + R0–R16 roadmap + contracts + simulation.
 
-**R1 (2026-08-15): CLOSED.** POS Core Completion — `docs/05-production/r1-pos-core-completion.md`. Suite `npm run test:r1` 34/34. **Do not start R2** without authorization.
+**R1 (2026-08-15): CLOSED.** POS Core Completion — `docs/05-production/r1-pos-core-completion.md`. Suite `npm run test:r1` 34/34.
 
-Do not invent 4.16. Do not push. Do not start H5/R2 unless authorized.
+**R2 (2026-08-15): CLOSED.** Floor Operations — `docs/05-production/r2-floor-operations.md`. Schema **v76**. Suite `npm run test:r2` 62/62. Unpaid merge/split; waiter assign; transfer harden + UI. Visual floor designer / billed merge / seats / timers remain gaps. **Do not start R3.**
+
+Do not invent 4.16. Do not push.
 
 - **Human/RELEASE + OPS:** signed RC + `ops-02-site-readiness-checklist.md` + `pilot-signoff.md`.
-- **Next software (if authorized):** **R2 Tables / Floor** or remaining Hardening (audit trail depth).
-- ADR-014 Proposed. Schema v75. Engineering baseline includes R1 on `restaurant-vertical`.
+- **Next software (if authorized):** **R3 Kitchen OS** or Hardening (audit trail depth) — only with explicit authorization.
+- ADR-014 Proposed. Schema v76. Engineering baseline includes R1+R2 on `restaurant-vertical`.
 - Test debt: `security-hardening.test.ts` isolation only (not live blocker).

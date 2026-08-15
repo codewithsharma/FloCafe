@@ -123,8 +123,8 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | Transfer table           | 🟢 Existing |
 | Split bill               | 🟢 Existing |
 | Visual floor plan        | 🔵 Planned  |
-| Sections                 | 🔵 Planned  |
-| Merge tables             | 🔵 Planned  |
+| Sections                 | 🟢 Existing |
+| Merge tables             | 🟢 Existing |
 | Seat management          | 🔵 Planned  |
 | Reservations             | ⚪ Later    |
 | Waitlist                 | ⚪ Later    |
@@ -581,7 +581,11 @@ Some 🔵 Planned rows already have a **shipped slice**. Treat Planned as remain
 | Waste management                         | Phase 4.15 SKU `action=wastage` (not ingredient waste)                                                                                             |
 | Inventory report                         | Phase 4.11 on-hand valuation (not food-cost %)                                                                                                     |
 | Service charge                           | ADR-014 **Proposed** — no wiring until human Accept                                                                                                |
-| Merge tables                             | Phase 4.13 discovery only; billed merge still ADR_REQUIRED                                                                                         |
+| Merge tables                             | R2 unpaid-only merge (`POST /api/tables/:id/merge`); billed merge still **ADR_REQUIRED** (4.13)                                                    |
+| Sections                                 | R2 free-text `section` on CRUD + list filter + create UI; no first-class section entity / floor designer                                           |
+| Table assignment                         | Kitchen station assignment + R2 `assigned_waiter_id` (`POST /api/tables/:id/assign-waiter`, owner/manager)                                         |
+| Transfer table                           | R2 hardened: held-cart/cleaning guards, audit `table.order_transferred`, transfer UI on `/tables`                                                  |
+| Table split                              | Split bill remains Existing; R2 adds unpaid physical split (`POST /api/tables/:id/split`) — UI still API-primary                                   |
 | Recipe / BOM, PO, suppliers              | STRATEGY historically frozen as ERP depth; this matrix now lists them 🔵 Planned — still require an authorized slice + ADR if schema/money changes |
 
 Recipe/BOM and procurement moving from STRATEGY freeze to Planned is a **product-plan change**. Do not implement until a human authorizes a phase; keep aggregators, terminals, multi-location, and AI frozen.

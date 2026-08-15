@@ -1,12 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useI18n } from '@/hooks/useI18n';
 
 export interface AddTableFormState {
@@ -78,6 +73,18 @@ export function AddTableDialog({
                 className="w-full px-3 py-2 border border-flo-border rounded-flo-md outline-none focus:ring-2 focus:ring-flo-brand-500 min-h-11"
               />
             </div>
+          </div>
+          <div>
+            <label className="block text-small font-medium text-flo-text mb-1">
+              {t('tables.section')}
+            </label>
+            <input
+              type="text"
+              value={form.section}
+              onChange={(e) => onFormChange({ ...form, section: e.target.value })}
+              placeholder={t('tables.sectionPlaceholder')}
+              className="w-full px-3 py-2 border border-flo-border rounded-flo-md outline-none focus:ring-2 focus:ring-flo-brand-500 min-h-11"
+            />
           </div>
           <Button type="submit" className="w-full min-h-11">
             {t('tables.createTable')}

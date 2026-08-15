@@ -19,6 +19,7 @@ import { logAuditEvent } from './audit-log';
 import { isQualifyingCashPaymentLineCents } from './payment-cash';
 import { assertOpenShiftForCashPayment, resolveActiveShiftForTerminal } from './shift';
 import { DOMAIN_SPAN, withSpanSync } from '../lib/tracing';
+import { freeTableIfModule } from './tables';
 
 /** Concerns Payment tender is responsible for coordinating / persisting. */
 export const PAYMENT_OWNED_CONCERNS: readonly string[] = [
@@ -704,10 +705,7 @@ export function applyPaymentBatch(
           // Soft-gate: Restaurant enables tables → identical to pre-2.15.
           // retail-test composition excludes tables → skip free-table side effect.
           if (isModuleEnabled('tables') && order?.table_id) {
-            db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?").run(
-              changedAt,
-              order.table_id,
-            );
+            freeTableIfModule(db, order.table_id, changedAt);
           }
         }
         const cashback = calculateCashback(db, bill, effectiveCustomerId);

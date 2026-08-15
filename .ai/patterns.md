@@ -21,6 +21,7 @@
 - **Shared module principle:** implement a capability once in the catalog; verticals compose via `enabledModules`. Prefer `isModuleEnabled` over `business_type === 'restaurant'` for reusable capability checks; keep genuine restaurant-only UX vertical-specific.
 - **Module vs feature vs permission:** module enablement ≠ feature flag ≠ user authorization (`requireRole`). Never collapse these layers.
 - Mutations that need audit: `withTxn(() => { write; logAuditEvent(); })`.
+- **R2 tables/floor:** domain logic in `main/services/tables.ts` (occupy assert+CAS, transfer, unpaid merge/split, waiter assign, status guards). Routes stay thin. Billed merge remains ADR_REQUIRED. No visual floor designer in R2.
 - Typed `*ServiceError` with `statusCode`; routes map to `{ error }` without SQL/stack leakage.
 - Feature flags live in `settings` (`'true'` / `'false'` strings).
 - POS client identity: origin-scoped `localStorage` UUID (`flo_terminal_id`) sent as `X-Flo-Terminal-Id` on selected POS routes only. Not an auth credential.

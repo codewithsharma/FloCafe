@@ -23,6 +23,9 @@ export interface TableDetailCardProps {
   onMarkAvailable: (id: string) => void;
   onReserve: (table: Table) => void;
   onToggleActive: (table: Table) => void;
+  onTransfer?: (table: Table) => void;
+  onMerge?: (table: Table) => void;
+  onAssignWaiter?: (table: Table) => void;
 }
 
 export function TableDetailCard({
@@ -31,9 +34,13 @@ export function TableDetailCard({
   onMarkAvailable,
   onReserve,
   onToggleActive,
+  onTransfer,
+  onMerge,
+  onAssignWaiter,
 }: TableDetailCardProps) {
   const { t } = useI18n();
   const hasOrders = orders.length > 0;
+  const isOccupied = table.status === 'occupied';
 
   return (
     <Panel
@@ -68,7 +75,40 @@ export function TableDetailCard({
         </p>
       )}
 
+      {isOccupied && table.assigned_waiter_id && (
+        <p className="px-4 pb-2 text-caption text-flo-text-secondary">
+          {t('tables.assignedWaiter')}: {table.assigned_waiter_id}
+        </p>
+      )}
+
       <div className="px-4 py-2 border-t border-flo-border flex justify-end gap-2 flex-wrap">
+        {isOccupied && onTransfer && (
+          <button
+            type="button"
+            onClick={() => onTransfer(table)}
+            className="text-caption text-flo-brand-600 hover:text-flo-brand-700 font-medium min-h-11 px-2"
+          >
+            {t('tables.transfer')}
+          </button>
+        )}
+        {isOccupied && onMerge && (
+          <button
+            type="button"
+            onClick={() => onMerge(table)}
+            className="text-caption text-flo-brand-600 hover:text-flo-brand-700 font-medium min-h-11 px-2"
+          >
+            {t('tables.merge')}
+          </button>
+        )}
+        {isOccupied && onAssignWaiter && (
+          <button
+            type="button"
+            onClick={() => onAssignWaiter(table)}
+            className="text-caption text-flo-brand-600 hover:text-flo-brand-700 font-medium min-h-11 px-2"
+          >
+            {t('tables.assignWaiter')}
+          </button>
+        )}
         {(table.status === 'occupied' || table.status === 'reserved') && (
           <button
             type="button"

@@ -13,6 +13,9 @@ import {
   TablesGrid,
   ReserveTableDialog,
   AddTableDialog,
+  TransferTableDialog,
+  MergeTableDialog,
+  AssignWaiterDialog,
   type AddTableFormState,
 } from '@/components/tables';
 import { useAuthStore } from '@/store/auth';
@@ -67,6 +70,10 @@ export default function TablesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [reservingTable, setReservingTable] = useState<Table | null>(null);
+  const [transferTable, setTransferTable] = useState<Table | null>(null);
+  const [mergeTable, setMergeTable] = useState<Table | null>(null);
+  const [assignWaiterTable, setAssignWaiterTable] = useState<Table | null>(null);
+  const [sectionFilter, setSectionFilter] = useState('');
   const [form, setForm] = useState<AddTableFormState>(DEFAULT_FORM);
   const [showDetails, setShowDetails] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -129,6 +136,14 @@ export default function TablesPage() {
     return () => clearInterval(interval);
   }, [tablesAvailable, showDetails]);
 
+  const sections = Array.from(
+    new Set(tables.map((tbl) => (tbl.section || '').trim()).filter(Boolean)),
+  ).sort();
+
+  const visibleTables = sectionFilter
+    ? tables.filter((tbl) => (tbl.section || '').trim() === sectionFilter)
+    : tables;
+
   const ordersByTable = showDetails ? buildOrdersByTable(orders) : new Map<string, Order[]>();
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -188,6 +203,21 @@ export default function TablesPage() {
         title={t('tables.title')}
         actions={
           <>
+            {sections.length > 0 && (
+              <select
+                value={sectionFilter}
+                onChange={(e) => setSectionFilter(e.target.value)}
+                className="px-3 py-2 text-small border border-flo-border rounded-flo-md bg-flo-surface text-flo-text outline-none focus:ring-2 focus:ring-flo-brand-500 min-h-11"
+                aria-label={t('tables.section')}
+              >
+                <option value="">{t('tables.sectionAll')}</option>
+                {sections.map((section) => (
+                  <option key={section} value={section}>
+                    {section}
+                  </option>
+                ))}
+              </select>
+            )}
             <label className="flex items-center gap-2 text-small text-flo-text-secondary cursor-pointer select-none min-h-11 px-2">
               <input
                 type="checkbox"
@@ -217,12 +247,15 @@ export default function TablesPage() {
         />
       ) : (
         <TablesGrid
-          tables={tables}
+          tables={visibleTables}
           ordersByTable={ordersByTable}
           showDetails={showDetails}
           onMarkAvailable={(id) => updateStatus(id, 'available')}
           onReserve={setReservingTable}
           onToggleActive={toggleActive}
+          onTransfer={setTransferTable}
+          onMerge={setMergeTable}
+          onAssignWaiter={setAssignWaiterTable}
         />
       )}
 
@@ -231,6 +264,35 @@ export default function TablesPage() {
         open={reservingTable !== null}
         onOpenChange={(open) => {
           if (!open) setReservingTable(null);
+        }}
+        onDone={fetchTables}
+      />
+
+      <TransferTableDialog
+        sourceTable={transferTable}
+        tables={tables}
+        open={transferTable !== null}
+        onOpenChange={(open) => {
+          if (!open) setTransferTable(null);
+        }}
+        onDone={fetchTables}
+      />
+
+      <MergeTableDialog
+        survivingTable={mergeTable}
+        tables={tables}
+        open={mergeTable !== null}
+        onOpenChange={(open) => {
+          if (!open) setMergeTable(null);
+        }}
+        onDone={fetchTables}
+      />
+
+      <AssignWaiterDialog
+        table={assignWaiterTable}
+        open={assignWaiterTable !== null}
+        onOpenChange={(open) => {
+          if (!open) setAssignWaiterTable(null);
         }}
         onDone={fetchTables}
       />

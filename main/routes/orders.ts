@@ -38,6 +38,12 @@ import { correlationId } from '../errors';
 import { validateOrderNotes, validateItemNotes } from './orders-validation';
 import { requireRole } from '../middleware/security';
 import { validateBody } from '../middleware/validate';
+import {
+  assertTableCanOpen,
+  freeTableIfModule,
+  markTableOccupiedCas,
+  TableServiceError,
+} from '../services/tables';
 import { DOMAIN_SPAN, withSpan } from '../lib/tracing';
 import { addOrderItemsBodySchema, createOrderBodySchema } from '../validation/orders';
 import { readTerminalIdHeaderFromRequest, resolveActiveShiftForOrder } from '../services/shift';
@@ -542,6 +548,11 @@ router.post(
           // Resolve operational shift association for the request terminal
           const shiftId = resolveActiveShiftForOrder(terminalIdHeader);
 
+          // R2: refuse second dine-in on occupied table before insert
+          if (isModuleEnabled('tables') && table_id && type === 'dine_in') {
+            assertTableCanOpen(db, table_id);
+          }
+
           // Generate order number inside transaction to prevent race conditions
           const orderNumber = generateOrderNumber();
 
@@ -740,12 +751,9 @@ router.post(
             orderId,
           );
 
-          // Phase 2.17 — soft-gate restaurant table occupy (Restaurant vertical keeps tables enabled).
+          // Phase 2.17 / R2 — soft-gate restaurant table occupy with CAS after insert.
           if (isModuleEnabled('tables') && table_id && type === 'dine_in') {
-            db.prepare("UPDATE tables SET status = 'occupied', updated_at = ? WHERE id = ?").run(
-              now(),
-              table_id,
-            );
+            markTableOccupiedCas(db, table_id, now());
           }
 
           const order = parseRowJson(
@@ -803,9 +811,13 @@ router.post(
       if (!(error?.statusCode >= 400 && error.statusCode < 500)) {
         console.error('[API] Internal error:', error);
       }
-      res
-        .status(error.statusCode || 500)
-        .json({ error: error.statusCode ? error.message : 'Internal server error' });
+      const payload: Record<string, unknown> = {
+        error: error.statusCode ? error.message : 'Internal server error',
+      };
+      if (error instanceof TableServiceError || error.code) {
+        payload.code = error.code;
+      }
+      res.status(error.statusCode || 500).json(payload);
     }
   },
 );
@@ -1343,10 +1355,7 @@ router.patch(
           `,
             ).run(nowStr, req.params.id);
             if (isModuleEnabled('tables') && (order as any).table_id) {
-              db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?").run(
-                nowStr,
-                (order as any).table_id,
-              );
+              freeTableIfModule(db, (order as any).table_id, nowStr);
             }
             break;
 
@@ -1377,10 +1386,7 @@ router.patch(
             ).run(status, nowStr, reason, nowStr, req.params.id);
             // Only free table if explicitly requested (default: true for backward compatibility)
             if (isModuleEnabled('tables') && (order as any).table_id && free_table !== false) {
-              db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?").run(
-                nowStr,
-                (order as any).table_id,
-              );
+              freeTableIfModule(db, (order as any).table_id, nowStr);
             }
             logAuditEvent({
               actorUserId: authUser?.userId ?? null,
@@ -1537,10 +1543,7 @@ router.patch(
         ).run(nowStr, req.params.id);
 
         if (isModuleEnabled('tables') && order.table_id) {
-          db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?").run(
-            nowStr,
-            order.table_id,
-          );
+          freeTableIfModule(db, order.table_id, nowStr);
         }
         return order.table_id;
       });
@@ -2529,10 +2532,7 @@ router.patch(
               orderId,
             );
             if (isModuleEnabled('tables') && order.table_id) {
-              db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?").run(
-                now(),
-                order.table_id,
-              );
+              freeTableIfModule(db, order.table_id, now());
             }
           } else {
             db.prepare(

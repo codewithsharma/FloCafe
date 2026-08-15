@@ -1,36 +1,38 @@
 import { Router, Request, Response } from 'express';
-import { getDatabase, now, parseRowJson, withTxn } from '../db';
+import { getDatabase, now, withTxn } from '../db';
 import { randomUUID } from 'crypto';
 import { requireRole } from '../middleware/security';
 import { notifyKdsUpdate } from '../services/kds';
 import { cloudSync } from '../services/cloud-sync';
+import { logAuditEvent } from '../services/audit-log';
+import {
+  activeOrderForTable,
+  applyTableStatus,
+  assignWaiterToTable,
+  mergeUnpaidTables,
+  splitOrderToTable,
+  TableServiceError,
+  tableShape,
+  transferOrderBetweenTables,
+} from '../services/tables';
 
 const router = Router();
 
-const ACTIVE_ORDER_STATUS_SQL = "status NOT IN ('completed', 'cancelled')";
-
-function activeOrderForTable(db: ReturnType<typeof getDatabase>, tableId: string, orderId?: number | string) {
-  const whereOrder = orderId ? ' AND id = ?' : '';
-  const params = orderId ? [tableId, orderId] : [tableId];
-  const order = parseRowJson(db.prepare(`
-    SELECT * FROM orders
-    WHERE table_id = ? AND ${ACTIVE_ORDER_STATUS_SQL}${whereOrder}
-    ORDER BY created_at DESC LIMIT 1
-  `).get(...params) as any);
-  if (!order?.customer_id) return order;
-
-  const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(order.customer_id);
-  return { ...order, customer: customer || null };
+function actorId(req: Request): string | null {
+  return (req as any).user?.userId ?? null;
 }
 
-function tableShape(table: any, activeOrder?: any) {
-  const currentOrder = activeOrder || null;
-  return {
-    ...table,
-    name: table.number,
-    activeOrder: currentOrder,
-    current_order: currentOrder,
-  };
+function sendTableError(res: Response, error: any): void {
+  if (error instanceof TableServiceError) {
+    res.status(error.statusCode).json({ error: error.message, code: error.code });
+    return;
+  }
+  const statusCode = error.status || error.statusCode || 500;
+  console.error('[API] Table operation failed:', error);
+  res.status(statusCode).json({
+    error: statusCode >= 500 ? 'Internal server error' : error.message,
+    code: error.code,
+  });
 }
 
 router.get('/', (req: Request, res: Response) => {
@@ -55,19 +57,22 @@ router.get('/', (req: Request, res: Response) => {
       query += ' AND kitchen_station_id = ?';
       params.push(req.query.kitchen_station_id);
     }
+    if (req.query.assigned_waiter_id) {
+      query += ' AND assigned_waiter_id = ?';
+      params.push(req.query.assigned_waiter_id);
+    }
     if (req.query.active === 'true' || req.query.active === '1') {
       query += ' AND is_active = 1';
     }
 
-    query += ' ORDER BY number';
+    query += ' ORDER BY section, number';
 
     const rows = db.prepare(query).all(...params);
-    // Normalize: frontend expects `name`, schema column is `number`
     const tables = rows.map((t: any) => tableShape(t, activeOrderForTable(db, t.id)));
     res.json({ tables });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -80,19 +85,17 @@ router.get('/:id', (req: Request, res: Response) => {
     }
 
     const activeOrder = activeOrderForTable(db, req.params.id as string);
-
-    // Normalize: frontend expects `name`, schema column is `number`
     res.json({ table: tableShape(table as any, activeOrder) });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
-    // Accept `number` (schema column) or `name` (legacy frontend field)
-    const { number, name, capacity, floor, section, position_x, position_y, kitchen_station_id } = req.body;
+    const { number, name, capacity, floor, section, position_x, position_y, kitchen_station_id } =
+      req.body;
     const tableNumber = number || name;
 
     if (!tableNumber) {
@@ -103,32 +106,54 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
     const existing = db.prepare('SELECT * FROM tables WHERE number = ?').get(tableNumber) as any;
     if (existing) {
       if (existing.is_active === 0) {
-        return res.status(400).json({ error: `Table ${tableNumber} already exists but is deactivated. Please reactivate it from the list.` });
-      } else {
-        return res.status(400).json({ error: 'Table number already exists' });
+        return res.status(400).json({
+          error: `Table ${tableNumber} already exists but is deactivated. Please reactivate it from the list.`,
+        });
       }
+      return res.status(400).json({ error: 'Table number already exists' });
     }
 
     const tableId = `tbl-${randomUUID().slice(0, 8)}`;
-    const result = db.prepare(`
+    const nowStr = now();
+    withTxn(() => {
+      db.prepare(
+        `
       INSERT INTO tables (id, number, capacity, floor, section, position_x, position_y, kitchen_station_id, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      tableId, tableNumber, capacity || 4, floor || null, section || null,
-      position_x || null, position_y || null, kitchen_station_id || null, now(), now()
-    );
+    `,
+      ).run(
+        tableId,
+        tableNumber,
+        capacity || 4,
+        floor || null,
+        section || null,
+        position_x || null,
+        position_y || null,
+        kitchen_station_id || null,
+        nowStr,
+        nowStr,
+      );
+      logAuditEvent({
+        actorUserId: actorId(req),
+        action: 'table.created',
+        entityType: 'table',
+        entityId: tableId,
+        metadata: { number: tableNumber, capacity: capacity || 4, floor, section },
+      });
+    });
 
     const table = db.prepare('SELECT * FROM tables WHERE id = ?').get(tableId);
-    res.status(201).json({ table });
+    res.status(201).json({ table: tableShape(table as any) });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
-    const { number, name, capacity, floor, section, position_x, position_y, kitchen_station_id } = req.body;
+    const { number, name, capacity, floor, section, position_x, position_y, kitchen_station_id } =
+      req.body;
     const tableNumber = number || name;
     const db = getDatabase();
 
@@ -138,13 +163,17 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
     }
 
     if (tableNumber) {
-      const existing = db.prepare('SELECT * FROM tables WHERE number = ? AND id != ?').get(tableNumber, req.params.id);
+      const existing = db
+        .prepare('SELECT * FROM tables WHERE number = ? AND id != ?')
+        .get(tableNumber, req.params.id);
       if (existing) {
         return res.status(400).json({ error: 'Table number already exists' });
       }
     }
 
-    db.prepare(`
+    withTxn(() => {
+      db.prepare(
+        `
       UPDATE tables SET
         number = COALESCE(?, number),
         capacity = COALESCE(?, capacity),
@@ -155,13 +184,34 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
         kitchen_station_id = COALESCE(?, kitchen_station_id),
         updated_at = ?
       WHERE id = ?
-    `).run(tableNumber, capacity, floor, section, position_x, position_y, kitchen_station_id, now(), req.params.id);
+    `,
+      ).run(
+        tableNumber,
+        capacity,
+        floor,
+        section,
+        position_x,
+        position_y,
+        kitchen_station_id,
+        now(),
+        req.params.id,
+      );
+      logAuditEvent({
+        actorUserId: actorId(req),
+        action: 'table.updated',
+        entityType: 'table',
+        entityId: req.params.id,
+        metadata: { number: tableNumber, capacity, floor, section },
+      });
+    });
 
     const updated = db.prepare('SELECT * FROM tables WHERE id = ?').get(req.params.id);
-    res.json({ table: updated });
+    res.json({
+      table: tableShape(updated as any, activeOrderForTable(db, req.params.id as string)),
+    });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -176,19 +226,28 @@ router.post('/:id/deactivate', requireRole('owner', 'manager'), (req: Request, r
       return res.status(400).json({ error: 'Already deactivated' });
     }
 
-    const activeOrder = db.prepare(`
-      SELECT * FROM orders WHERE table_id = ? AND ${ACTIVE_ORDER_STATUS_SQL}
-    `).get(req.params.id);
+    const activeOrder = activeOrderForTable(db, req.params.id as string);
     if (activeOrder) {
       return res.status(400).json({ error: 'Cannot deactivate table with active orders' });
     }
 
-    db.prepare('UPDATE tables SET is_active = 0, updated_at = ? WHERE id = ?').run(now(), req.params.id);
+    withTxn(() => {
+      db.prepare('UPDATE tables SET is_active = 0, updated_at = ? WHERE id = ?').run(
+        now(),
+        req.params.id,
+      );
+      logAuditEvent({
+        actorUserId: actorId(req),
+        action: 'table.deactivated',
+        entityType: 'table',
+        entityId: req.params.id,
+      });
+    });
     const updated = db.prepare('SELECT * FROM tables WHERE id = ?').get(req.params.id);
     res.json({ table: tableShape(updated as any) });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -203,123 +262,164 @@ router.post('/:id/reactivate', requireRole('owner', 'manager'), (req: Request, r
       return res.status(400).json({ error: 'Already active' });
     }
 
-    db.prepare('UPDATE tables SET is_active = 1, updated_at = ? WHERE id = ?').run(now(), req.params.id);
+    withTxn(() => {
+      db.prepare('UPDATE tables SET is_active = 1, updated_at = ? WHERE id = ?').run(
+        now(),
+        req.params.id,
+      );
+      logAuditEvent({
+        actorUserId: actorId(req),
+        action: 'table.reactivated',
+        entityType: 'table',
+        entityId: req.params.id,
+      });
+    });
     const updated = db.prepare('SELECT * FROM tables WHERE id = ?').get(req.params.id);
     res.json({ table: tableShape(updated as any) });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.post('/:id/move-order', requireRole('owner', 'manager', 'cashier', 'waiter'), (req: Request, res: Response) => {
-  try {
-    const sourceTableId = req.params.id as string;
-    const { target_table_id, order_id } = req.body;
+router.post(
+  '/:id/move-order',
+  requireRole('owner', 'manager', 'cashier', 'waiter'),
+  (req: Request, res: Response) => {
+    try {
+      const sourceTableId = req.params.id as string;
+      const { target_table_id, order_id } = req.body;
 
-    if (!target_table_id) {
-      return res.status(400).json({ error: 'target_table_id is required' });
+      if (!target_table_id) {
+        return res.status(400).json({ error: 'target_table_id is required' });
+      }
+
+      const moved = transferOrderBetweenTables({
+        sourceTableId,
+        targetTableId: target_table_id,
+        orderId: order_id,
+        actorUserId: actorId(req),
+      });
+
+      cloudSync.recordOrderChanged(moved.order.id, 'order.table_moved');
+      notifyKdsUpdate();
+
+      res.json({
+        order: moved.order,
+        sourceTable: moved.sourceTable,
+        targetTable: moved.targetTable,
+      });
+    } catch (error: any) {
+      sendTableError(res, error);
     }
-    if (target_table_id === sourceTableId) {
-      return res.status(400).json({ error: 'Order is already on this table' });
+  },
+);
+
+router.post(
+  '/:id/merge',
+  requireRole('owner', 'manager', 'cashier', 'waiter'),
+  (req: Request, res: Response) => {
+    try {
+      const survivingTableId = req.params.id as string;
+      const { source_table_id } = req.body;
+      if (!source_table_id) {
+        return res.status(400).json({ error: 'source_table_id is required' });
+      }
+
+      const result = mergeUnpaidTables({
+        survivingTableId,
+        sourceTableId: source_table_id,
+        actorUserId: actorId(req),
+      });
+
+      cloudSync.recordOrderChanged(result.survivingOrder.id, 'order.table_merged');
+      notifyKdsUpdate();
+
+      res.json({
+        order: result.survivingOrder,
+        sourceOrderId: result.sourceOrderId,
+        survivingTable: result.survivingTable,
+        sourceTable: result.sourceTable,
+      });
+    } catch (error: any) {
+      sendTableError(res, error);
     }
+  },
+);
 
-    const db = getDatabase();
-    const moved = withTxn(() => {
-      const sourceTable = db.prepare('SELECT * FROM tables WHERE id = ?').get(sourceTableId) as any;
-      if (!sourceTable) {
-        const error: any = new Error('Source table not found');
-        error.status = 404;
-        throw error;
+router.post(
+  '/:id/split',
+  requireRole('owner', 'manager', 'cashier', 'waiter'),
+  (req: Request, res: Response) => {
+    try {
+      const sourceTableId = req.params.id as string;
+      const { target_table_id, order_item_ids } = req.body;
+      if (!target_table_id) {
+        return res.status(400).json({ error: 'target_table_id is required' });
+      }
+      if (!Array.isArray(order_item_ids) || order_item_ids.length === 0) {
+        return res.status(400).json({ error: 'order_item_ids is required' });
       }
 
-      const targetTable = db.prepare('SELECT * FROM tables WHERE id = ?').get(target_table_id) as any;
-      if (!targetTable) {
-        const error: any = new Error('Target table not found');
-        error.status = 404;
-        throw error;
-      }
+      const result = splitOrderToTable({
+        sourceTableId,
+        targetTableId: target_table_id,
+        orderItemIds: order_item_ids,
+        actorUserId: actorId(req),
+      });
 
-      const order = activeOrderForTable(db, sourceTableId, order_id) as any;
-      if (!order) {
-        const error: any = new Error(order_id ? 'Active order not found on source table' : 'Source table has no active order');
-        error.status = 404;
-        throw error;
-      }
+      cloudSync.recordOrderChanged(result.newOrder.id, 'order.table_split');
+      notifyKdsUpdate();
 
-      const targetActiveOrder = activeOrderForTable(db, target_table_id) as any;
-      if (targetActiveOrder) {
-        const error: any = new Error('Target table already has an active order');
-        error.status = 409;
-        throw error;
-      }
+      res.json({
+        sourceOrder: result.sourceOrder,
+        newOrder: result.newOrder,
+        sourceTable: result.sourceTable,
+        targetTable: result.targetTable,
+      });
+    } catch (error: any) {
+      sendTableError(res, error);
+    }
+  },
+);
 
-      const nowStr = now();
-      db.prepare('UPDATE orders SET table_id = ?, type = ?, updated_at = ? WHERE id = ?')
-        .run(target_table_id, order.type, nowStr, order.id);
-      db.prepare("UPDATE tables SET status = 'available', updated_at = ? WHERE id = ?")
-        .run(nowStr, sourceTableId);
-      db.prepare("UPDATE tables SET status = 'occupied', updated_at = ? WHERE id = ?")
-        .run(nowStr, target_table_id);
+router.post(
+  '/:id/assign-waiter',
+  requireRole('owner', 'manager'),
+  (req: Request, res: Response) => {
+    try {
+      const waiterUserId =
+        req.body.waiter_user_id === undefined || req.body.waiter_user_id === null
+          ? null
+          : String(req.body.waiter_user_id);
 
-      const updatedOrder = parseRowJson(db.prepare('SELECT * FROM orders WHERE id = ?').get(order.id) as any);
-      const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(order.id);
-      const updatedSource = db.prepare('SELECT * FROM tables WHERE id = ?').get(sourceTableId) as any;
-      const updatedTarget = db.prepare('SELECT * FROM tables WHERE id = ?').get(target_table_id) as any;
-
-      return {
-        order: {
-          ...updatedOrder,
-          items,
-          table: { ...updatedTarget, name: updatedTarget.number },
-        },
-        sourceTable: tableShape(updatedSource, activeOrderForTable(db, sourceTableId)),
-        targetTable: tableShape(updatedTarget, activeOrderForTable(db, target_table_id)),
-      };
-    });
-
-    cloudSync.recordOrderChanged(moved.order.id, 'order.table_moved');
-    notifyKdsUpdate();
-
-    res.json({
-      order: moved.order,
-      sourceTable: moved.sourceTable,
-      targetTable: moved.targetTable,
-    });
-  } catch (error: any) {
-    const statusCode = error.status || 500;
-    console.error('[API] Table move failed:', error);
-    res.status(statusCode).json({ error: statusCode >= 500 ? 'Table move failed' : error.message });
-  }
-});
+      const table = assignWaiterToTable({
+        tableId: req.params.id as string,
+        waiterUserId,
+        actorUserId: actorId(req),
+      });
+      res.json({ table });
+    } catch (error: any) {
+      sendTableError(res, error);
+    }
+  },
+);
 
 router.patch('/:id/status', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
     const { status } = req.body;
-
     if (!status) {
       return res.status(400).json({ error: 'Status is required' });
     }
 
-    const validStatuses = ['available', 'occupied', 'reserved', 'cleaning', 'held'];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: `Invalid status. Use: ${validStatuses.join(', ')}` });
-    }
-
-    const db = getDatabase();
-    const table = db.prepare('SELECT * FROM tables WHERE id = ?').get(req.params.id);
-    if (!table) {
-      return res.status(404).json({ error: 'Table not found' });
-    }
-
-    db.prepare('UPDATE tables SET status = ?, updated_at = ? WHERE id = ?')
-      .run(status, now(), req.params.id);
-
-    const updated = db.prepare('SELECT * FROM tables WHERE id = ?').get(req.params.id);
-    res.json({ table: updated });
+    const table = applyTableStatus({
+      tableId: req.params.id as string,
+      status,
+      actorUserId: actorId(req),
+    });
+    res.json({ table });
   } catch (error: any) {
-    console.error("[API] Internal error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    sendTableError(res, error);
   }
 });
 
