@@ -2,7 +2,7 @@
 
 ## 2026-08-15 — R16 Production Release (BLOCKED — human-only)
 
-Engineering R-waves through R15 deepen COMPLETE (schema **v86**). R16 remains blocked on signed/notarized RC + OPS-02 site/human gates. Live Go-Live **NO-GO**. Doc: `docs/05-production/r16-production-release-blocker.md`. Completion report: `docs/05-production/roadmap-engineering-completion-r0-r16.md`.
+Engineering R-waves through R15 deepen COMPLETE (schema **v86**). R16 remains blocked on signed/notarized RC + OPS-02 site/human gates. Live Go-Live **NO-GO**. Doc: `docs/05-production/r16-production-release-blocker.md`. Completion report: `docs/05-production/roadmap-engineering-completion-r0-r16.md`. Gate checklist + operator templates: `docs/05-production/r16-release-gate-checklist.md`, `docs/13-operations/r16-ops-02-drill-script.md`, `r16-master-pin-escrow-attestation.md`, `r16-executive-signoff-packet.md`. **Do not fabricate gate PASS.**
 
 ## 2026-08-15 — R13 Print queue / retry (COMPLETE)
 

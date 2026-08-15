@@ -68,14 +68,15 @@ async function main(): Promise<void> {
   console.log('\nR10 — Online / QR Ordering');
   console.log('='.repeat(60));
 
-  assertEqual(getSupportedSchemaVersion(), 84, 'schema tip is v84');
+  const tip = getSupportedSchemaVersion();
+  assert(tip >= 84, `schema tip >= 84 (got ${tip})`);
   initTestDb();
   const db = getDatabase();
-  assertEqual(Number(db.pragma('user_version', { simple: true })), 84, 'fresh DB tip 84');
+  assertEqual(Number(db.pragma('user_version', { simple: true })), tip, 'fresh DB matches tip');
 
-  const systemUser = db.prepare(`SELECT id, is_active FROM users WHERE id = 'usr-system-qr-guest'`).get() as
-    | { id: string; is_active: number }
-    | undefined;
+  const systemUser = db
+    .prepare(`SELECT id, is_active FROM users WHERE id = 'usr-system-qr-guest'`)
+    .get() as { id: string; is_active: number } | undefined;
   assert(!!systemUser, 'system QR guest user exists');
   assertEqual(Number(systemUser!.is_active), 0, 'system QR guest is inactive for login');
 
@@ -136,7 +137,10 @@ async function main(): Promise<void> {
     const menu = await api(baseUrl, `/api/public/qr/menu?token=${encodeURIComponent(token)}`);
     assertEqual(menu.status, 200, 'public menu ok');
     const menuItems = menu.data.items as any[];
-    assert(menuItems.some((i) => i.id === productId), 'active product listed');
+    assert(
+      menuItems.some((i) => i.id === productId),
+      'active product listed',
+    );
     assert(!menuItems.some((i) => i.id === 'prod-r10-hidden'), 'inactive product hidden');
     assert(!menuItems.some((i) => 'cost' in i), 'public menu omits cost');
 
@@ -198,7 +202,10 @@ async function main(): Promise<void> {
     assertEqual(meta.pay_at_counter, true, 'audit pay_at_counter');
 
     const page = fs.readFileSync(path.join(__dirname, '../frontend/src/app/qr/page.tsx'), 'utf8');
-    assert(page.includes('pay at the counter') || page.includes('Pay at counter'), 'guest UI pay-at-counter');
+    assert(
+      page.includes('pay at the counter') || page.includes('Pay at counter'),
+      'guest UI pay-at-counter',
+    );
     const en = fs.readFileSync(path.join(__dirname, '../frontend/src/lib/i18n/en.json'), 'utf8');
     assert(en.includes('tables.qrTitle'), 'en QR i18n');
   } finally {

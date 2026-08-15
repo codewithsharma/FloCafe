@@ -66,10 +66,11 @@ async function main(): Promise<void> {
   console.log('\nR9 Slice 6 — Food-cost Report v1');
   console.log('='.repeat(60));
 
-  assertEqual(getSupportedSchemaVersion(), 83, 'schema tip remains v83');
+  const tip = getSupportedSchemaVersion();
+  assert(tip >= 83, `schema tip >= 83 (got ${tip})`);
   initTestDb();
   const db = getDatabase();
-  assertEqual(Number(db.pragma('user_version', { simple: true })), 83, 'fresh DB tip 83');
+  assertEqual(Number(db.pragma('user_version', { simple: true })), tip, 'fresh DB matches tip');
 
   const owner = seedOwnerUser(db);
   const manager = seedManagerUser(db);

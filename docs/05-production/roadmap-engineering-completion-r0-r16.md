@@ -40,3 +40,5 @@
 ## Stop condition met
 
 All currently planned **executable** R-waves (R10–R15 deepen) are complete. Remaining roadmap work is **R16 human-only**. No further autonomous implementation without human authorization for signing/site go-live or a new matrix edit.
+
+**R16 gate orchestrator pack (2026-08-15):** [`r16-release-gate-checklist.md`](./r16-release-gate-checklist.md) — engineering verified PASS WITH CONDITIONS; signed RC / OPS-02 / escrow / executive gates still incomplete → Live Go-Live **NO-GO**.
