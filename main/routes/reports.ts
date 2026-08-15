@@ -6,6 +6,8 @@ import {
   taxComponentsReportToCsv,
 } from '../services/tax-components-report';
 import { DayCloseServiceError, closeBusinessDay, getDayClose } from '../services/day-close';
+import { formatDayCloseZPlainText } from '../services/day-close-z-text';
+import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
 import { toCsvRow } from '../lib/csv';
 import {
@@ -14,7 +16,6 @@ import {
   listBillsForCsvExport,
   validateBillsCsvDateRange,
 } from '../services/bills-csv-export';
-import { logAuditEvent } from '../services/audit-log';
 
 function money2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -99,6 +100,54 @@ router.get('/day-close/:date', requireRole(...DAY_CLOSE_ROLES), (req: Request, r
     sendDayCloseError(res, error);
   }
 });
+
+router.get(
+  '/day-close/:date/export/z.txt',
+  requireRole(...DAY_CLOSE_ROLES),
+  (req: Request, res: Response) => {
+    try {
+      const date = String(req.params.date || '');
+      const dayClose = getDayClose(date);
+      if (!dayClose) {
+        return res.status(404).json({ error: 'Day close not found' });
+      }
+      let summary: Parameters<typeof formatDayCloseZPlainText>[0];
+      try {
+        summary = JSON.parse(dayClose.summary_json);
+      } catch {
+        return res.status(500).json({ error: 'Day close summary is unreadable' });
+      }
+
+      const businessName =
+        getSettingValue('business_name') || getSettingValue('store_name') || undefined;
+      const text = formatDayCloseZPlainText(summary, {
+        businessName: businessName || undefined,
+        closedAt: dayClose.created_at,
+      });
+
+      logAuditEvent({
+        actorUserId: (req as { user?: { userId?: string } }).user?.userId ?? null,
+        action: 'day_close.z_downloaded',
+        entityType: 'day_close',
+        entityId: dayClose.id,
+        result: 'success',
+        metadata: {
+          format: 'txt',
+          business_date: dayClose.business_date,
+        },
+      });
+
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="day-close-z-${dayClose.business_date}.txt"`,
+      );
+      res.status(200).send(text);
+    } catch (error) {
+      sendDayCloseError(res, error);
+    }
+  },
+);
 
 const WEEKDAY_NAMES = [
   'Sunday',

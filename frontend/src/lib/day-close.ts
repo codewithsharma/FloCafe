@@ -86,3 +86,39 @@ export async function postDayClose(businessDate?: string): Promise<DayCloseResul
     throw new Error(extractApiErrorMessage(error));
   }
 }
+
+function parseContentDispositionFilename(header: string | undefined): string | null {
+  if (!header) return null;
+  const match = /filename\*?=(?:UTF-8''|"?)([^";\n]+)/i.exec(header);
+  if (!match) return null;
+  const raw = match[1].replace(/^"|"$/g, '');
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
+/** Audited Z download from frozen summary (server formats; no client recomputation). */
+export async function downloadDayCloseZExport(businessDate: string): Promise<void> {
+  try {
+    const res = await api.get(
+      `/reports/day-close/${encodeURIComponent(businessDate)}/export/z.txt`,
+      {
+        responseType: 'blob',
+      },
+    );
+    const blob = res.data as Blob;
+    const disposition = res.headers['content-disposition'] as string | undefined;
+    const filename =
+      parseContentDispositionFilename(disposition) ?? `day-close-z-${businessDate}.txt`;
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    throw new Error(extractApiErrorMessage(error));
+  }
+}

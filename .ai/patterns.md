@@ -1,5 +1,6 @@
 # Patterns
 
+- **R9 day-close Z polish:** Confirmation + cash≠sales clarity + historical frozen load; Z txt export audits `day_close.z_downloaded` / print `day_close.z_printed`; never fold live Gross/Net into Z; no formula edits in `day-close.ts`.
 - **R9 tax export:** Reuse `aggregateTaxComponents` via `queryTaxComponentsReport`; CSV must match JSON for the same UTC `start_date`/`end_date`; `tax.exported` on success only; Filing exports stay Later.
 - **R9 audit trail:** Reuse `audit_logs` + `logAuditEvent`; Owner/Manager list + CSV export; `until` upper bound; successful export emits `audit.exported` (never on 403). No second audit system; no schema bump for viewer/export.
 - **R9 expenses:** Integer `amount_cents` only; posted→voided lifecycle (no hard delete); Owner/Manager via `requireRole`; audits `expense.created|updated|voided`; mount under reporting module; local SQLite SoR.

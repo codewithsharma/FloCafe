@@ -1,10 +1,16 @@
 # Decisions
 
-## 2026-08-15 — R9 Slice 4 Day-close / Z Polish (Proposed — Awaiting Authorization)
+## 2026-08-15 — R9 Slice 4 Day-close / Z Polish (Implemented)
 
-**Status:** NOT AUTHORIZED. Definition complete in `prompts/r9/R9-S4-day-close-z-polish-authorization.md`; gated implementation draft in `prompts/r9/R9-S4-day-close-z-polish-implementation.md`.
+Authorized under the R9 program (development only; not live go-live). Formula-preserving polish: close confirmation; cash Z clarity; historical frozen load; opening float + per-shift display; `GET .../export/z.txt` + `day_close.z_downloaded`; print success `day_close.z_printed`. Schema tip remains **v83**. Suite `npm run test:r9.4`. Doc: `docs/05-production/r9-day-close-z-polish-slice-4.md`. **Do not start R9 Slice 5+ / ops finance / food-cost without slice auth (create internal R9 governance ADR when executing).**
 
-Proposed formula-preserving polish only: close confirmation, cash-vs-sales clarity, historical frozen reprint, display of existing summary fields, optional Z print/download audits, i18n, `test:r9.4`. Schema tip expected **v83**. **Do not implement** until this entry is replaced by an **Authorized** decision (or equivalent project instruction) with checklist complete. Does **not** authorize Slice 5/6, Gross/Net-in-Z, formula changes, or live go-live.
+## 2026-08-15 — R9 Slice 4 Day-close / Z Polish (Authorized)
+
+Authorized under the R9 Restaurant Production / Finance Depth program (internal governance; not live go-live). Formula-preserving polish only (see Implemented entry). Schema tip remains **v83**.
+
+## 2026-08-15 — R9 Slice 4 Day-close / Z Polish (Proposed — superseded by Authorized)
+
+Superseded by the Authorized entry above. Definition lived in `prompts/r9/R9-S4-day-close-z-polish-authorization.md`.
 
 ## 2026-08-15 — R9 Slice 3 Tax Reporting Depth + Accountant Export (Implemented)
 

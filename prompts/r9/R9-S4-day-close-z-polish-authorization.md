@@ -1,11 +1,11 @@
 # R9 Slice 4 — Day-close / Z Polish
 
 **Type:** Authorization / Definition Prompt
-**Classification:** AUTHORIZATION_REQUIRED
-**Status:** NOT AUTHORIZED — do **not** implement until explicit slice auth exists in `.ai/decisions.md` (or equivalent project instruction)
+**Classification:** AUTHORIZED (R9 program governance)
+**Status:** AUTHORIZED — implement via `prompts/r9/R9-S4-day-close-z-polish-implementation.md`
 **Schema tip (current):** v83
-**Proposed suite:** `npm run test:r9.4` → `tests/r9-day-close-z-polish.test.ts`
-**Companion (gated):** `prompts/r9/R9-S4-day-close-z-polish-implementation.md` — **DO NOT EXECUTE** until auth
+**Suite:** `npm run test:r9.4` → `tests/r9-day-close-z-polish.test.ts`
+**Companion:** `prompts/r9/R9-S4-day-close-z-polish-implementation.md` — ACTIVE
 
 ---
 

@@ -4,12 +4,12 @@ import { useEffect, useState } from 'react';
 import { useI18n } from '@/hooks/useI18n';
 import { useAuthStore } from '@/store/auth';
 import {
+  downloadDayCloseZExport,
   getDayClose,
   postDayClose,
   type DayCloseRecord,
   type DayCloseSummary,
 } from '@/lib/day-close';
-import { downloadDayCloseZText } from '@/lib/day-close-z';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import { Panel } from '@/components/flo/Panel';
@@ -21,13 +21,15 @@ import { Button } from '@/components/ui/button';
 
 interface DayCloseCardProps {
   businessDate: string;
+  /** Local today (YYYY-MM-DD). Close is only offered for today. */
+  todayBusinessDate: string;
 }
 
-export default function DayCloseCard({ businessDate }: DayCloseCardProps) {
+export default function DayCloseCard({ businessDate, todayBusinessDate }: DayCloseCardProps) {
   const { t } = useI18n();
   const role = useAuthStore((s) => s.currentTenant?.role);
-  const businessName = useAuthStore((s) => s.currentTenant?.business_name);
   const canManage = role === 'owner' || role === 'manager';
+  const isToday = businessDate === todayBusinessDate;
 
   const [summary, setSummary] = useState<DayCloseSummary | null>(null);
   const [dayCloseRecord, setDayCloseRecord] = useState<DayCloseRecord | null>(null);
@@ -35,6 +37,7 @@ export default function DayCloseCard({ businessDate }: DayCloseCardProps) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [printing, setPrinting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (!canManage || !businessDate) {
@@ -74,6 +77,9 @@ export default function DayCloseCard({ businessDate }: DayCloseCardProps) {
   if (!canManage) return null;
 
   async function handleClose(): Promise<void> {
+    if (!window.confirm(t('dayClose.confirmClose'))) {
+      return;
+    }
     setSubmitting(true);
     try {
       const result = await postDayClose(businessDate);
@@ -88,16 +94,16 @@ export default function DayCloseCard({ businessDate }: DayCloseCardProps) {
     }
   }
 
-  function handleDownloadZ(): void {
+  async function handleDownloadZ(): Promise<void> {
     if (!summary) return;
+    setDownloading(true);
     try {
-      downloadDayCloseZText(summary, {
-        businessName: businessName || undefined,
-        closedAt: dayCloseRecord?.created_at ?? null,
-      });
+      await downloadDayCloseZExport(businessDate);
       toast.success(t('dayClose.downloadZSuccess'));
-    } catch {
-      toast.error(t('dayClose.downloadZFailed'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('dayClose.downloadZFailed'));
+    } finally {
+      setDownloading(false);
     }
   }
 
@@ -123,7 +129,7 @@ export default function DayCloseCard({ businessDate }: DayCloseCardProps) {
       title={t('dayClose.title')}
       description={`${t('dayClose.businessDate')}: ${businessDate}`}
       actions={
-        !closed && !loading ? (
+        !closed && !loading && isToday ? (
           <Button
             type="button"
             onClick={() => void handleClose()}
@@ -137,6 +143,7 @@ export default function DayCloseCard({ businessDate }: DayCloseCardProps) {
         ) : null
       }
     >
+      <p className="text-caption text-flo-text-muted mb-3">{t('dayClose.cashZClarity')}</p>
       {loading ? (
         <LoadingState label={t('dayClose.loading')} className="min-h-[120px]" />
       ) : summary ? (
@@ -150,6 +157,10 @@ export default function DayCloseCard({ businessDate }: DayCloseCardProps) {
             </p>
           )}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <p className="text-caption text-flo-text-muted mb-1">{t('dayClose.openingFloat')}</p>
+              <MoneyDisplay cents={summary.opening_float_cents_total ?? 0} size="lg" />
+            </div>
             <div>
               <p className="text-caption text-flo-text-muted mb-1">{t('shift.expectedCash')}</p>
               <MoneyDisplay cents={summary.expected_cash_cents_total ?? 0} size="lg" />
@@ -185,6 +196,24 @@ export default function DayCloseCard({ businessDate }: DayCloseCardProps) {
           <p className="text-caption text-flo-text-muted">
             {t('dayClose.shiftCount')}: {summary.shift_count}
           </p>
+          {summary.shifts?.length ? (
+            <div className="space-y-2">
+              <p className="text-caption text-flo-text-muted">{t('dayClose.perShift')}</p>
+              <ul className="space-y-1">
+                {summary.shifts.map((shift) => (
+                  <li
+                    key={shift.id}
+                    className="flex flex-wrap items-center justify-between gap-2 text-body border-b border-flo-border/40 py-1"
+                  >
+                    <span>
+                      #{shift.id} · {shift.terminal_id}
+                    </span>
+                    <MoneyDisplay cents={shift.net_cash_movement_cents} size="sm" />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           {closed ? (
             <div className="flex flex-wrap gap-2 pt-1">
               <Button
@@ -200,15 +229,23 @@ export default function DayCloseCard({ businessDate }: DayCloseCardProps) {
                 type="button"
                 variant="outline"
                 className="min-h-11"
-                onClick={handleDownloadZ}
+                disabled={downloading}
+                onClick={() => void handleDownloadZ()}
               >
-                {t('dayClose.downloadZ')}
+                {downloading ? t('dayClose.downloadingZ') : t('dayClose.downloadZ')}
               </Button>
             </div>
           ) : null}
+          {dayCloseRecord ? (
+            <p className="text-caption text-flo-text-muted">
+              {t('dayClose.closedAt')}: {dayCloseRecord.created_at}
+            </p>
+          ) : null}
         </div>
       ) : (
-        <p className="text-body text-flo-text-secondary">{t('dayClose.notClosedYet')}</p>
+        <p className="text-body text-flo-text-secondary">
+          {isToday ? t('dayClose.notClosedYet') : t('dayClose.noCloseForDate')}
+        </p>
       )}
     </Panel>
   );

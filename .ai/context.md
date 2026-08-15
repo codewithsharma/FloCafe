@@ -11,9 +11,10 @@
 
 Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v83**) + statically exported Next.js (`frontend/`).
 
-**R9 Slice 1 Expenses (2026-08-15):** COMPLETE — schema **v83** `expenses`; Owner/Manager API+UI; cents-only; audits; `npm run test:r9`.  
-**R9 Slice 2 Financial Audit-Trail Hardening (2026-08-15):** COMPLETE — `/audit` UI + CSV export + `until` + `audit.exported`; schema tip remains **v83**; `npm run test:r9.2`.  
-**R9 Slice 3 Tax Reporting Depth + Accountant Export (2026-08-15):** COMPLETE — Reports tax UI + `export/tax-components.csv` + `tax.exported`; schema tip remains **v83**; `npm run test:r9.3`. Remaining R9 slices NOT STARTED. Live Go-Live **NO-GO**. Doc: `docs/05-production/r9-tax-export-slice-3.md`.
+**R9 Slice 1 Expenses (2026-08-15):** COMPLETE — schema **v83** `expenses`; Owner/Manager API+UI; cents-only; audits; `npm run test:r9`.
+**R9 Slice 2 Financial Audit-Trail Hardening (2026-08-15):** COMPLETE — `/audit` UI + CSV export + `until` + `audit.exported`; schema tip remains **v83**; `npm run test:r9.2`.
+**R9 Slice 3 Tax Reporting Depth + Accountant Export (2026-08-15):** COMPLETE — Reports tax UI + `export/tax-components.csv` + `tax.exported`; schema tip remains **v83**; `npm run test:r9.3`.
+**R9 Slice 4 Day-close / Z Polish (2026-08-15):** COMPLETE — confirm + cash clarity + historical date + float/shifts display + Z txt export/`day_close.z_*` audits; schema tip remains **v83**; `npm run test:r9.4`. Remaining R9 slices NOT STARTED. Live Go-Live **NO-GO**. Doc: `docs/05-production/r9-day-close-z-polish-slice-4.md`.
 
 **Foundation Phase 2 (2026-08-15):** COMPLETE — prefer-cents readers + dual-write writers; process-kill harness; Zod expansion; `any` main&lt;600 / orders&lt;50. Doc: `docs/05-production/foundation-priority-deepen-phase2.md`.
 
@@ -31,9 +32,9 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 
 **Orders + products type-harden (2026-08-15):** `main/routes/orders/*` and `main/routes/products.ts` now report **0** `tsc` errors (shared helpers in `orders-shared`). Full `main/` harden still required for ship.
 
-**Canonical product plan:** `docs/00-product/capability-matrix.md` (Existing / Hardening / Planned / Later / Frozen, 2026-08-14).  
-**Complete Restaurant OS (R0):** `docs/00-product/restaurant-os-blueprint.md` · `restaurant-os-roadmap.md` (R0–R16). Docs only until R1+ authorized.  
-**Code evidence:** `docs/00-product/feature-list.md`.  
+**Canonical product plan:** `docs/00-product/capability-matrix.md` (Existing / Hardening / Planned / Later / Frozen, 2026-08-14).
+**Complete Restaurant OS (R0):** `docs/00-product/restaurant-os-blueprint.md` · `restaurant-os-roadmap.md` (R0–R16). Docs only until R1+ authorized.
+**Code evidence:** `docs/00-product/feature-list.md`.
 **Active development vertical:** Restaurant only (Retail deferred).
 
 ## Stage

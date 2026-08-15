@@ -1,20 +1,17 @@
 # R9 Slice 4 — Day-close / Z Polish — Implementation Prompt
 
 **Type:** Implementation Prompt
-**Classification:** AWAITING AUTHORIZATION — **DO NOT EXECUTE**
-**Status:** GATED. Execute only after `.ai/decisions.md` contains an explicit **Authorized** entry for R9 Slice 4 and the checklist in `R9-S4-day-close-z-polish-authorization.md` is complete.
+**Classification:** COMPLETE
+**Status:** COMPLETE — committed with `npm run test:r9.4`
 **Schema tip:** v83 (no migration)
 **Suite:** `npm run test:r9.4` → `tests/r9-day-close-z-polish.test.ts`
-**Auth source of truth:** `prompts/r9/R9-S4-day-close-z-polish-authorization.md`
+**Auth source of truth:** `prompts/r9/R9-S4-day-close-z-polish-authorization.md` + Authorized/Implemented ADR
 
 ---
 
 ## GATE
 
-If repository search finds **no** “R9 Slice 4 … (Authorized)” (or equivalent) decision:
-
-1. Do **not** edit production code.
-2. Stop and report authorization missing.
+Slice 4 implementation is complete. Do not re-execute unless a regression fix is authorized.
 
 ---
 

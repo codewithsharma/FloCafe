@@ -27,6 +27,7 @@ import { getSupportedPrinterProfiles, resolvePrinterProfile } from '../printers/
 import { requireRole } from '../middleware/security';
 import { getDayClose } from '../services/day-close';
 import { printReceipt as logSaleReceiptPrint } from '../services/receipt';
+import { logAuditEvent } from '../services/audit-log';
 
 const router = Router();
 
@@ -787,6 +788,17 @@ router.post(
 
       const result = await printDayCloseZ(summary, business, Boolean(useUnicode));
       if (result.ok) {
+        logAuditEvent({
+          actorUserId: (req as { user?: { userId?: string } }).user?.userId ?? null,
+          action: 'day_close.z_printed',
+          entityType: 'day_close',
+          entityId: record.id,
+          result: 'success',
+          metadata: {
+            business_date: record.business_date,
+            format: 'thermal',
+          },
+        });
         res.json({
           success: true,
           business_date: record.business_date,

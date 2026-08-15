@@ -2,7 +2,7 @@
 
 # Operavia Restaurant — capability matrix
 
-**Canonical product plan** for Operavia Restaurant (repo: FloCafe). Adopted 2026-08-14.  
+**Canonical product plan** for Operavia Restaurant (repo: FloCafe). Adopted 2026-08-14.
 **Complete Restaurant OS blueprint (R0):** [`restaurant-os-blueprint.md`](restaurant-os-blueprint.md) · roadmap [`restaurant-os-roadmap.md`](restaurant-os-roadmap.md) · architecture [`restaurant-os-architecture.md`](restaurant-os-architecture.md). R-waves do **not** replace this matrix’s status column.
 
 This matrix is the backlog and posture for what we keep, harden, build, defer, or freeze. It does **not** authorize implementation. Do not invent Phase 4.16. Prefer **R0–R16** sequencing in the Restaurant OS roadmap for post-4.15 work. Execute only an explicitly authorized slice.
@@ -13,10 +13,11 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 
 **R0 note (2026-08-15):** Blueprint documents the complete Restaurant OS. **No row statuses were promoted** to Existing solely because of R0. H1–H4 remain Hardening depth where listed. Live pilot remains OPS-02 **NO-GO** until signed RC + site gates.
 
-**R5–R8 note (2026-08-15):** R5 BOM (v79), R6 purchasing (v80), R7 CRM (v82), R8 staff workforce — **COMPLETE**.  
-**R9 Slice 1 note (2026-08-15):** Expenses **COMPLETE** — schema tip **v83**.  
-**R9 Slice 2 note (2026-08-15):** Financial Audit-Trail Hardening **COMPLETE** — schema tip remains **v83**.  
-**R9 Slice 3 note (2026-08-15):** Tax Reporting Depth + Accountant Export **COMPLETE** — schema tip remains **v83**. Remaining R9 (Z polish / ops reports / food-cost) not started. Live go-live still **NO-GO** (OPS-02). ADR-014 service charge remains out.
+**R5–R8 note (2026-08-15):** R5 BOM (v79), R6 purchasing (v80), R7 CRM (v82), R8 staff workforce — **COMPLETE**.
+**R9 Slice 1 note (2026-08-15):** Expenses **COMPLETE** — schema tip **v83**.
+**R9 Slice 2 note (2026-08-15):** Financial Audit-Trail Hardening **COMPLETE** — schema tip remains **v83**.
+**R9 Slice 3 note (2026-08-15):** Tax Reporting Depth + Accountant Export **COMPLETE** — schema tip remains **v83**.
+**R9 Slice 4 note (2026-08-15):** Day-close / Z Polish **COMPLETE** — schema tip remains **v83**. Remaining R9 (ops reports / food-cost) not started. Live go-live still **NO-GO** (OPS-02). ADR-014 service charge remains out.
 ---
 
 ## Legend

@@ -44,11 +44,18 @@ function main(): void {
   assert.ok(DAY_CLOSE_CARD.includes('dayClose.cashIn'), 'card shows Cash In');
   assert.ok(DAY_CLOSE_CARD.includes('dayClose.cashRefunds'), 'card shows Cash Refunds');
   assert.ok(DAY_CLOSE_CARD.includes('dayClose.netCash'), 'card shows Net Cash');
-  assert.ok(DAY_CLOSE_CARD.includes('downloadDayCloseZText'), 'card can download Z');
+  assert.ok(
+    DAY_CLOSE_CARD.includes('downloadDayCloseZExport') ||
+      DAY_CLOSE_CARD.includes('downloadDayCloseZText'),
+    'card can download Z',
+  );
   assert.ok(DAY_CLOSE_CARD.includes('print-day-close'), 'card can print Z');
+  assert.ok(DAY_CLOSE_CARD.includes('dayClose.confirmClose'), 'close confirmation');
+  assert.ok(DAY_CLOSE_CARD.includes('todayBusinessDate'), 'today vs selected date');
   console.log('   ✓ DayCloseCard contract');
 
   assert.ok(OPERATIONS_PAGE.includes('DayCloseCard'), 'operations wires DayCloseCard');
+  assert.ok(OPERATIONS_PAGE.includes('type="date"') || OPERATIONS_PAGE.includes("type='date'"), 'date picker');
   assert.ok(!DASHBOARD_PAGE.includes('DayCloseCard'), 'dashboard no longer wires DayCloseCard');
   console.log('   ✓ operations wires DayCloseCard (Phase 10)');
 
