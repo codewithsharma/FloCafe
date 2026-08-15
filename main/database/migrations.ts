@@ -2692,4 +2692,33 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       `);
     },
   },
+  {
+    version: 86,
+    name: 'r13_print_jobs',
+    up: () => {
+      // R13 — durable print outbox (bill print failure + manual retry). Terminals/aggregators stay Frozen.
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS print_jobs (
+          id TEXT PRIMARY KEY,
+          status TEXT NOT NULL DEFAULT 'pending'
+            CHECK (status IN ('pending', 'failed', 'done', 'cancelled')),
+          attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+          max_attempts INTEGER NOT NULL DEFAULT 2 CHECK (max_attempts >= 1),
+          job_type TEXT NOT NULL DEFAULT 'bill',
+          bill_id INTEGER,
+          order_id INTEGER,
+          payload_json TEXT,
+          last_error TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          completed_at TEXT,
+          FOREIGN KEY (bill_id) REFERENCES bills(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_print_jobs_status_created
+          ON print_jobs(status, created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_print_jobs_bill_id
+          ON print_jobs(bill_id);
+      `);
+    },
+  },
 ];

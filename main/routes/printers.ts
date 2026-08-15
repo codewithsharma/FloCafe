@@ -28,6 +28,12 @@ import { requireRole } from '../middleware/security';
 import { getDayClose } from '../services/day-close';
 import { printReceipt as logSaleReceiptPrint } from '../services/receipt';
 import { logAuditEvent } from '../services/audit-log';
+import {
+  enqueueBillPrintFailure,
+  listOpenPrintJobs,
+  retryPrintJob,
+  PrintQueueError,
+} from '../services/print-queue';
 
 const router = Router();
 
@@ -144,6 +150,42 @@ router.get('/detect', async (_req: Request, res: Response) => {
 router.get('/supported', (_req: Request, res: Response) => {
   res.json({ printers: getSupportedPrinterProfiles() });
 });
+
+// GET /api/printers/jobs — pending/failed print outbox (Owner/Manager)
+router.get('/jobs', requireRole('owner', 'manager'), (_req: Request, res: Response) => {
+  try {
+    res.json({ jobs: listOpenPrintJobs() });
+  } catch (error: any) {
+    console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/printers/jobs/:id/retry — one bounded reattempt
+router.post(
+  '/jobs/:id/retry',
+  requireRole('owner', 'manager'),
+  async (req: Request, res: Response) => {
+    try {
+      const actorUserId = String((req as any).user?.userId || '');
+      const job = await retryPrintJob(String(req.params.id), actorUserId);
+      if (job.status === 'done') {
+        return res.json({ success: true, job });
+      }
+      return res.status(502).json({
+        error: 'Print retry failed. Check printer connection and settings.',
+        code: 'PRINT_RETRY_FAILED',
+        job,
+      });
+    } catch (error: any) {
+      if (error instanceof PrintQueueError) {
+        return res.status(error.statusCode).json({ error: error.message, code: error.code });
+      }
+      console.error('[Print Job Retry] Error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 // GET /api/printers/:id
 router.get('/:id', (req: Request, res: Response) => {
@@ -586,11 +628,20 @@ router.post(
         await logSaleReceiptPrint(Number(bill.id), actorUserId, printType);
         res.json({ success: true, print_logged: true, warnings: result.warnings || [] });
       } else {
+        // R13 — durable outbox: never silently drop a failed bill print
+        const job = enqueueBillPrintFailure({
+          billId: Number(bill.id),
+          orderId: bill.order_id != null ? Number(bill.order_id) : null,
+          lastError: result.detail || result.code || 'Print failed',
+          payload: { useUnicode: Boolean(useUnicode), isReprint: effectiveIsReprint },
+          status: 'failed',
+        });
         res.status(502).json({
           error: 'Print failed. Check printer connection and settings.',
           code: result.code,
           correlation_id: result.correlationId,
           stage: result.stage,
+          print_job_id: job.id,
         });
       }
     } catch (error: any) {

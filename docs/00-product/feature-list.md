@@ -114,16 +114,17 @@ Restaurant vertical only (`ACTIVE_VERTICAL_ID=restaurant` or unset). Not mounted
 
 ## Printing
 
-| Feature                    | Status      | Evidence                                                                   | Production readiness |
-| -------------------------- | ----------- | -------------------------------------------------------------------------- | -------------------- |
-| ESC/POS thermal — network  | [BUILT]     | `main/printers/thermal.ts` TCP 9100                                        | High                 |
-| ESC/POS thermal — USB      | [BUILT]     | `main/printers/thermal.ts`                                                 | High                 |
-| WebUSB printing (renderer) | [BUILT]     | `PrinterService.ts`; bills + refund parity (Phase 3.6G)                    | Medium               |
-| Browser print fallback     | [BUILT]     | `frontend/src/lib/printer/web-print.ts`                                    | Medium               |
-| Bluetooth printing         | [NOT BUILT] | UI type stub only; DB CHECK excludes bluetooth; no print path              | —                    |
-| Printer profiles (58/80mm) | [BUILT]     | `main/printers/profiles.ts`                                                | High                 |
-| Print audit log            | [BUILT]     | `print_logs` table; H1: successful `/printers/print-bill` logs server-side | High                 |
-| Cash drawer kick           | [BUILT]     | `POST /api/printers/kick-drawer` + POS PrinterStatus (Phase 3.6F)          | High                 |
+| Feature                    | Status      | Evidence                                                                                                                 | Production readiness |
+| -------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------- |
+| ESC/POS thermal — network  | [BUILT]     | `main/printers/thermal.ts` TCP 9100                                                                                      | High                 |
+| ESC/POS thermal — USB      | [BUILT]     | `main/printers/thermal.ts`                                                                                               | High                 |
+| WebUSB printing (renderer) | [BUILT]     | `PrinterService.ts`; bills + refund parity (Phase 3.6G)                                                                  | Medium               |
+| Browser print fallback     | [BUILT]     | `frontend/src/lib/printer/web-print.ts`                                                                                  | Medium               |
+| Bluetooth printing         | [NOT BUILT] | UI type stub only; DB CHECK excludes bluetooth; no print path                                                            | —                    |
+| Printer profiles (58/80mm) | [BUILT]     | `main/printers/profiles.ts`                                                                                              | High                 |
+| Print audit log            | [BUILT]     | `print_logs` table; H1: successful `/printers/print-bill` logs server-side                                               | High                 |
+| Print queue / retry (R13)  | [BUILT]     | Schema v86 `print_jobs`; failed print-bill outbox; `GET/POST …/printers/jobs`; `npm run test:r13` (`r13-print-queue.md`) | High                 |
+| Cash drawer kick           | [BUILT]     | `POST /api/printers/kick-drawer` + POS PrinterStatus (Phase 3.6F)                                                        | High                 |
 
 Supported `printers.connection_type` values (VERIFIED): `network`, `usb`, `webusb`.
 
