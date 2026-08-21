@@ -7,7 +7,7 @@
 - Feature: Staff Performance Report
 - Feature ID: `RPT-STAFF`
 - Phase: P9
-- Commit: `2eb7ba5` (`2eb7ba562d1d732034e94b3e0acb0759b5266266`)
+- Commit: `7bdb66c` (`7bdb66cadd1d1a6e506d2917efb35bf0a6fe21d8`)
 - Schema version: **v88** (no bump)
 
 Live pilot / production remains **NO-GO** pending R16 human and release gates.
