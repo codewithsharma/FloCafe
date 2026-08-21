@@ -1,4 +1,4 @@
-<!-- Last updated: 2026-08-15, schema v82 -->
+<!-- Last updated: 2026-08-21, schema v88 -->
 
 # Operavia Restaurant — capability matrix
 
@@ -14,6 +14,7 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 **R0 note (2026-08-15):** Blueprint documents the complete Restaurant OS. **No row statuses were promoted** to Existing solely because of R0. H1–H4 remain Hardening depth where listed. Live pilot remains OPS-02 **NO-GO** until signed RC + site gates.
 
 **R5–R8 note (2026-08-15):** R5 BOM (v79), R6 purchasing (v80), R7 CRM (v82), R8 staff workforce — **COMPLETE**.
+**RCP-05 note (2026-08-21):** Recipe consumptions list UI **COMPLETE** (`/products/recipes/consumptions`); Consumption reports → Existing (thin). Schema tip remains **v88**. Advanced actual-vs-theoretical BI remains Later.
 **R9 Slice 1 note (2026-08-15):** Expenses **COMPLETE** — schema tip **v83**.
 **R9 Slice 2 note (2026-08-15):** Financial Audit-Trail Hardening **COMPLETE** — schema tip remains **v83**.
 **R9 Slice 3 note (2026-08-15):** Tax Reporting Depth + Accountant Export **COMPLETE** — schema tip remains **v83**.
@@ -213,7 +214,7 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | Expiry tracking          | 🔵 Planned  |
 | Inventory count          | 🟢 Existing |
 | Inventory reconciliation | 🟢 Existing |
-| Consumption reports      | 🔵 Planned  |
+| Consumption reports      | 🟢 Existing |
 | Food-cost percentage     | 🟢 Existing |
 | Auto-86 from stock       | 🟢 Existing |
 | Demand forecasting       | ⚪ Later    |

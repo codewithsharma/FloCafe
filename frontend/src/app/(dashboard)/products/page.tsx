@@ -683,6 +683,11 @@ export default function ProductsPage() {
                   </Link>
                 </Button>
                 <Button variant="outline" asChild>
+                  <Link href="/products/recipes/consumptions">
+                    <History size={16} className="mr-1" /> {t('recipeConsumptions.title')}
+                  </Link>
+                </Button>
+                <Button variant="outline" asChild>
                   <Link href="/products/purchasing">
                     <Truck size={16} className="mr-1" /> {t('purchasing.title')}
                   </Link>

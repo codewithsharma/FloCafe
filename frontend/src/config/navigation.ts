@@ -341,6 +341,7 @@ export function getRouteTitleKey(pathname: string): string {
   if (path === '/products/valuation') return 'inventoryValuation.title';
   if (path === '/products/counts') return 'inventoryCounts.title';
   if (path === '/products/recipes') return 'recipes.title';
+  if (path === '/products/recipes/consumptions') return 'recipeConsumptions.title';
   if (path === '/products/purchasing') return 'purchasing.title';
   if (path === '/expenses') return 'expenses.title';
   if (path === '/audit') return 'audit.title';

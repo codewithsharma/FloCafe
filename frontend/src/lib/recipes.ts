@@ -118,3 +118,49 @@ export function formatCents(cents: number | null | undefined): string {
   if (cents === null || cents === undefined) return '—';
   return (cents / 100).toFixed(2);
 }
+
+/** RCP-05 — historical recipe consumption rows from GET /api/recipes/consumptions */
+export interface RecipeConsumptionLine {
+  id: number;
+  consumption_id: string;
+  ingredient_product_id: string;
+  ingredient_name: string | null;
+  quantity_delta: number;
+  unit: string;
+  unit_cost_cents: number | null;
+  line_cost_cents: number | null;
+  inventory_movement_id: number | null;
+  created_at: string;
+}
+
+export interface RecipeConsumption {
+  id: string;
+  order_id: string;
+  order_item_id: number;
+  recipe_id: string;
+  recipe_name: string;
+  menu_product_id: string;
+  portions: number;
+  yield_qty: number;
+  status: 'consumed' | 'reversed';
+  actor_user_id: string | null;
+  created_at: string;
+  reversed_at: string | null;
+  lines?: RecipeConsumptionLine[];
+}
+
+export async function listRecipeConsumptions(opts?: {
+  orderId?: string;
+  limit?: number;
+  signal?: AbortSignal;
+}): Promise<RecipeConsumption[]> {
+  const params: Record<string, string | number> = {};
+  const orderId = opts?.orderId?.trim();
+  if (orderId) params.order_id = orderId;
+  if (opts?.limit !== undefined) params.limit = opts.limit;
+  const { data } = await api.get<{ consumptions: RecipeConsumption[] }>('/recipes/consumptions', {
+    params,
+    signal: opts?.signal,
+  });
+  return data.consumptions || [];
+}

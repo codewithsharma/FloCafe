@@ -4,7 +4,7 @@ import { getLandingPageForRole } from '@/lib/rbac';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, ChefHat, Plus } from 'lucide-react';
+import { ArrowLeft, ChefHat, History, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 import api from '@/lib/api';
@@ -427,12 +427,20 @@ export default function RecipesPage() {
         title={t('recipes.title')}
         description={t('recipes.description')}
         actions={
-          <Button asChild variant="outline" size="sm">
-            <Link href="/products">
-              <ArrowLeft className="mr-1 h-4 w-4" />
-              {t('recipes.backToProducts')}
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/products/recipes/consumptions">
+                <History className="mr-1 h-4 w-4" />
+                {t('recipeConsumptions.title')}
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/products">
+                <ArrowLeft className="mr-1 h-4 w-4" />
+                {t('recipes.backToProducts')}
+              </Link>
+            </Button>
+          </div>
         }
       />
 

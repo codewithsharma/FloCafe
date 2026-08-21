@@ -86,6 +86,7 @@
     "test:flo-products": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-products.test.ts",
     "test:stock-adjust-ui": "ts-node --transpile-only -P tests/tsconfig.json tests/stock-adjust-ui.test.ts",
     "test:inventory-counts-ui": "ts-node --transpile-only -P tests/tsconfig.json tests/inventory-counts-ui.test.ts",
+    "test:recipe-consumptions-ui": "ts-node --transpile-only -P tests/tsconfig.json tests/recipe-consumptions-ui.test.ts",
     "test:flo-customers": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-customers.test.ts",
     "test:flo-staff": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-staff.test.ts",
     "test:flo-reports": "ts-node --transpile-only -P tests/tsconfig.json tests/flo-reports.test.ts",
