@@ -4,7 +4,7 @@
 **Feature:** Inventory OS Hardening  
 **Feature ID:** `INV-OS-HARDENING`  
 **Date:** 2026-08-21  
-**Commit:** _(filled after commit)_  
+**Commit:** `3cb3806` (`3cb3806badb2adbe4305094fdbd0c997d990dcd9`)  
 **Schema:** **v88** (no bump)  
 **Live pilot:** NO-GO
 
@@ -116,7 +116,19 @@ See P0 table above. Matches `order-boundary` characterization + refund-restock v
 
 ## Regression Results
 
-_(filled after regression run)_
+| Suite                   | Result                           |
+| ----------------------- | -------------------------------- |
+| test:p15                | PASS                             |
+| test:p14                | PASS                             |
+| test:data-audit (P13)   | PASS                             |
+| test:inv-auto-86        | PASS                             |
+| test:inventory-boundary | PASS                             |
+| test:inventory-ledger   | PASS                             |
+| test:critical           | PASS                             |
+| order-void-cancel-stock | PASS                             |
+| npm run build           | PASS                             |
+| npm run build:frontend  | PASS                             |
+| Lint (touched files)    | 0 new errors (baseline warnings) |
 
 ---
 
