@@ -427,28 +427,27 @@ export function registerCreateRoutes(router: Router): void {
             if (idempotencyKey && requestHash) {
               storeOrderIdempotency(db, idempotencyUserId, idempotencyKey, requestHash, response);
             }
-            return { order, orderItems, idempotentReplay: false };
-          });
-
-          if (!result.idempotentReplay) {
-            if (isModuleEnabled('kds')) notifyKdsUpdate();
-            cloudSync.recordOrderChanged(result.order.id, 'order.created');
-
             logAuditEvent({
               actorUserId: authenticatedUserId ?? null,
               action: 'order.created',
               entityType: 'order',
-              entityId: String(result.order.id),
+              entityId: String(order.id),
               result: 'success',
               metadata: {
-                type: result.order.type,
-                item_count: Array.isArray(items) ? items.length : result.orderItems.length,
+                type: order.type,
+                item_count: Array.isArray(items) ? items.length : orderItems.length,
               },
               context: {
                 requestId: correlationId(),
                 clientIp: req.ip || req.socket.remoteAddress || null,
               },
             });
+            return { order, orderItems, idempotentReplay: false };
+          });
+
+          if (!result.idempotentReplay) {
+            if (isModuleEnabled('kds')) notifyKdsUpdate();
+            cloudSync.recordOrderChanged(result.order.id, 'order.created');
 
             if (customer_id) {
               try {

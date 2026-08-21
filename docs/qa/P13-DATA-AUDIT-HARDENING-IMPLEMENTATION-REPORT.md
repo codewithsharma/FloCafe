@@ -80,10 +80,27 @@ Not redesigned. Restore still replaces DB (post-restore trail only). Backup audi
 
 ## Test Results
 
-| Command                   | Result               |
-| ------------------------- | -------------------- |
-| `npm run test:data-audit` | PASS                 |
-| Regressions               | _(filled after run)_ |
+| Command                     | Result                                                   |
+| --------------------------- | -------------------------------------------------------- |
+| `npm run test:data-audit`   | PASS                                                     |
+| `npm run test:critical`     | PASS (24/24)                                             |
+| `npm run test:phase2`       | PASS                                                     |
+| `npm run test:kds-h-outbox` | PASS                                                     |
+| `npm run test:inv-auto-86`  | PASS                                                     |
+| `npm run test:rpt-pay`      | PASS                                                     |
+| `npm run test:rpt-disc`     | PASS                                                     |
+| `npm run test:kds-alerts`   | PASS                                                     |
+| `npm run test:rpt-staff`    | PASS                                                     |
+| `npm run test:print-health` | PASS                                                     |
+| `npm run test:rpt-product`  | PASS                                                     |
+| `npm run test:rpt-category` | PASS                                                     |
+| `npm run build`             | PASS                                                     |
+| `npm run build:frontend`    | PASS                                                     |
+| `npm run lint`              | Baseline ~13 errors / 9 warnings; **0 new** on P13 paths |
+
+## Regression Results
+
+P4–P12 suites green. Schema tip remains v88.
 
 ## Known Limitations
 
