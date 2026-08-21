@@ -10,7 +10,7 @@ POS-OFFLINE-CONFLICT-HARDENING
 
 ## Commit
 
-_(filled after commit)_
+`06d451d`
 
 ## Schema
 
