@@ -8,7 +8,7 @@
 | Feature ID | `RPT-CATEGORY`                                  |
 | Phase      | P12                                             |
 | Status     | **COMPLETE** (Implemented / Hardening verified) |
-| Commit     | _(see git after commit)_                        |
+| Commit     | `276b808`                                       |
 | Schema     | **v88** (no bump)                               |
 
 Live pilot remains **NO-GO** (R16).
