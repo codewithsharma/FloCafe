@@ -7,6 +7,7 @@
     "frontend/e2e/prepaid-payment-reconciliation.spec.ts",
     "frontend/src/lib/dates.test.ts",
     "frontend/src/lib/inventory-movements.test.ts",
+    "frontend/src/lib/kds-alerts.test.ts",
     "tests/audit-log.test.ts",
     "tests/auth-state-recovery.test.ts",
     "tests/authz-matrix-phase3.test.ts",
@@ -102,6 +103,7 @@
     "tests/kds-contract.test.ts",
     "tests/kds-frontend-conflict.test.ts",
     "tests/kds-h-outbox.test.ts",
+    "tests/kds-alerts.test.ts",
     "tests/kds-integration.test.ts",
     "tests/kds-websocket-revalidation.test.ts",
     "tests/kitchen-addons-parsing.test.ts",
@@ -255,6 +257,7 @@
     "frontend/e2e/prepaid-payment-reconciliation.spec.ts": "playwright",
     "frontend/src/lib/dates.test.ts": "vitest",
     "frontend/src/lib/inventory-movements.test.ts": "vitest",
+    "frontend/src/lib/kds-alerts.test.ts": "vitest",
     "tests/audit-log.test.ts": "electron",
     "tests/auth-state-recovery.test.ts": "electron",
     "tests/authz-matrix-phase3.test.ts": "electron",
@@ -493,6 +496,7 @@
     "tests/whatsapp-schema.test.ts": "electron",
     "tests/whatsapp-service.test.ts": "ts-node",
     "tests/kds-h-outbox.test.ts": "electron",
+    "tests/kds-alerts.test.ts": "ts-node",
     "tests/unit/kds-delivery-outbox.test.ts": "vitest"
   },
   "groups": {

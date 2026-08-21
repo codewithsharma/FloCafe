@@ -164,8 +164,8 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | KDS analytics              | 🔵 Planned   |
 | Offline KDS                | 🟡 Hardening |
 | KDS recovery               | 🟡 Hardening |
-| Sound alerts               | 🔵 Planned   |
-| Visual alerts              | 🔵 Planned   |
+| Sound alerts               | 🟢 Existing  |
+| Visual alerts              | 🟢 Existing  |
 
 ## Printing / Hardware
 

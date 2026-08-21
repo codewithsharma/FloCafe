@@ -23,6 +23,7 @@ import {
   ticketAgeClockClass,
   ticketAgeTier,
 } from '@/lib/kds-ticket-age';
+import { kdsNewTicketCardClass } from '@/lib/kds-alerts';
 import { ORDER_TYPE_LABEL_KEYS } from '@/lib/order-types';
 import { useI18n } from '@/hooks/useI18n';
 import { parseDbTimestamp } from '@/lib/utils';
@@ -35,6 +36,8 @@ export interface KdsKanbanBoardProps {
     status: KitchenStatus,
     opts?: { silent?: boolean; expectedStatus?: KitchenStatus },
   ) => Promise<boolean>;
+  highlightOrderIds?: Set<string>;
+  reducedMotion?: boolean;
 }
 
 interface DropData {
@@ -56,7 +59,13 @@ function statusOf(item: KdsOrderItem): KitchenStatus {
 // for the manager-PIN void flow.
 type BoardStatus = Exclude<KitchenStatus, 'voided'>;
 
-export function KdsKanbanBoard({ orders, updating, updateItemStatus }: KdsKanbanBoardProps) {
+export function KdsKanbanBoard({
+  orders,
+  updating,
+  updateItemStatus,
+  highlightOrderIds,
+  reducedMotion = false,
+}: KdsKanbanBoardProps) {
   const [modalItem, setModalItem] = useState<{ item: KdsOrderItem; orderNumber: string } | null>(
     null,
   );
@@ -175,6 +184,8 @@ export function KdsKanbanBoard({ orders, updating, updateItemStatus }: KdsKanban
                     items={items}
                     updating={updating}
                     timeSince={timeSince}
+                    highlighted={Boolean(highlightOrderIds?.has(String(order.id)))}
+                    reducedMotion={reducedMotion}
                     onItemOpen={(item) => setModalItem({ item, orderNumber: order.order_number })}
                   />
                 ))}
@@ -215,6 +226,8 @@ function KanbanOrderCard({
   items,
   updating,
   timeSince,
+  highlighted = false,
+  reducedMotion = false,
   onItemOpen,
 }: {
   order: KdsOrder;
@@ -222,6 +235,8 @@ function KanbanOrderCard({
   items: KdsOrderItem[];
   updating: number | null;
   timeSince: (dateStr: string) => string;
+  highlighted?: boolean;
+  reducedMotion?: boolean;
   onItemOpen: (item: KdsOrderItem) => void;
 }) {
   const { t } = useI18n();
@@ -232,6 +247,7 @@ function KanbanOrderCard({
   const ageTier = ticketAgeTier(ageAnchor);
   const cardBorder = ticketAgeCardClass(ageTier, config.border);
   const isRush = (order.kitchen_priority ?? 0) > 0;
+  const newTicketClass = kdsNewTicketCardClass(highlighted, reducedMotion);
   const { ref, isDragging } = useDraggable({
     id: `order-${order.id}-${status}`,
     data: { itemIds, fromStatus: status },
@@ -245,7 +261,9 @@ function KanbanOrderCard({
       } ${busy ? 'pointer-events-none opacity-60' : ''}`}
     >
       <div
-        className={`flex flex-col rounded-flo-lg border-2 bg-flo-surface p-3 shadow-sm ${cardBorder}`}
+        className={`flex flex-col rounded-flo-lg border-2 bg-flo-surface p-3 shadow-sm ${cardBorder} ${newTicketClass}`}
+        data-kds-new-ticket={highlighted ? 'true' : undefined}
+        aria-label={highlighted ? t('kds.newTicket') : undefined}
       >
         <div className="mb-2 flex items-center justify-between gap-2">
           <div className="flex min-w-0 flex-wrap items-center gap-1.5">

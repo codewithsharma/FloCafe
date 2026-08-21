@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-21 — P8 KDS-ALERTS Sound & visual alerts (COMPLETE)
+
+No schema bump (tip remains **v88**). FE-only `KdsAlertTracker` keys on `order_item.id`; first non-empty snapshot seeds without alerting; empty auth boards stay unarmed; reconnect replay does not storm. Device-local sound toggle + Web Audio beep. Suite `npm run test:kds-alerts`. Report `docs/qa/KDS-ALERTS-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**.
+
 ## 2026-08-21 — P7 RPT-DISC Discount report (COMPLETE)
 
 No schema bump (tip remains **v88**). SoR = settled `bills.discount_*` + active `order_items.discount_amount` (layered). Refunds do not reverse discounts. `GET /api/reports/discounts` + CSV + Reports UI. Suite `npm run test:rpt-disc`. Report `docs/qa/DISCOUNT-REPORT-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**.

@@ -19,6 +19,7 @@ import {
   ticketAgeClockClass,
   ticketAgeTier,
 } from '@/lib/kds-ticket-age';
+import { kdsNewTicketCardClass } from '@/lib/kds-alerts';
 import { ORDER_TYPE_LABEL_KEYS } from '@/lib/order-types';
 import { useI18n } from '@/hooks/useI18n';
 import { parseDbTimestamp } from '@/lib/utils';
@@ -31,6 +32,8 @@ export interface KdsTabsViewProps {
     status: KitchenStatus,
     opts?: { expectedStatus?: KitchenStatus },
   ) => Promise<boolean>;
+  highlightOrderIds?: Set<string>;
+  reducedMotion?: boolean;
 }
 
 interface ModalItem {
@@ -47,7 +50,13 @@ function nextStatus(current: KitchenStatus): KitchenStatus | null {
   return STATUS_ORDER[idx + 1] ?? null;
 }
 
-export function KdsTabsView({ orders, updating, updateItemStatus }: KdsTabsViewProps) {
+export function KdsTabsView({
+  orders,
+  updating,
+  updateItemStatus,
+  highlightOrderIds,
+  reducedMotion = false,
+}: KdsTabsViewProps) {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<KitchenStatus>('pending');
   const [modalItem, setModalItem] = useState<ModalItem | null>(null);
@@ -131,11 +140,15 @@ export function KdsTabsView({ orders, updating, updateItemStatus }: KdsTabsViewP
             const ageTier = ticketAgeTier(ageAnchor);
             const cardBorder = ticketAgeCardClass(ageTier, STATUS_CONFIG[activeTab].border);
             const isRush = (order.kitchen_priority ?? 0) > 0;
+            const highlighted = Boolean(highlightOrderIds?.has(String(order.id)));
+            const newTicketClass = kdsNewTicketCardClass(highlighted, reducedMotion);
 
             return (
               <div
                 key={order.id}
-                className={`flex flex-col rounded-flo-lg border-2 bg-flo-surface p-4 ${cardBorder}`}
+                className={`flex flex-col rounded-flo-lg border-2 bg-flo-surface p-4 ${cardBorder} ${newTicketClass}`}
+                data-kds-new-ticket={highlighted ? 'true' : undefined}
+                aria-label={highlighted ? t('kds.newTicket') : undefined}
               >
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <div className="flex min-w-0 flex-wrap items-center gap-1.5">

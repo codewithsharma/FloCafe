@@ -1,6 +1,6 @@
 'use client';
 
-import { ChefHat, LogOut, Wifi, WifiOff } from 'lucide-react';
+import { Bell, BellOff, ChefHat, LogOut, Wifi, WifiOff } from 'lucide-react';
 import type { ConnectionMode } from '@/hooks/useKdsConnection';
 import { useI18n } from '@/hooks/useI18n';
 import type { KdsViewMode } from '@/hooks/useKdsView';
@@ -13,6 +13,8 @@ export interface KdsHeaderProps {
   connectionMode: ConnectionMode;
   viewMode: KdsViewMode;
   onChangeView: (mode: KdsViewMode) => void;
+  soundEnabled?: boolean;
+  onToggleSound?: () => void;
   onLogout: () => void;
 }
 
@@ -24,6 +26,8 @@ export function KdsHeader({
   connectionMode,
   viewMode,
   onChangeView,
+  soundEnabled = false,
+  onToggleSound,
   onLogout,
 }: KdsHeaderProps) {
   const { t } = useI18n();
@@ -85,6 +89,24 @@ export function KdsHeader({
               {t('kds.viewKanban')}
             </button>
           </div>
+
+          {onToggleSound ? (
+            <button
+              type="button"
+              onClick={onToggleSound}
+              aria-pressed={soundEnabled}
+              aria-label={soundEnabled ? t('kds.soundOn') : t('kds.soundOff')}
+              title={soundEnabled ? t('kds.soundOn') : t('kds.soundOff')}
+              data-testid="kds-sound-toggle"
+              className={`ml-2 min-h-11 min-w-11 rounded-flo-md p-2 ${
+                soundEnabled
+                  ? 'text-flo-brand-600 hover:bg-flo-bg'
+                  : 'text-flo-text-secondary hover:bg-flo-bg'
+              }`}
+            >
+              {soundEnabled ? <Bell size={20} /> : <BellOff size={20} />}
+            </button>
+          ) : null}
 
           <button
             onClick={onLogout}

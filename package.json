@@ -115,6 +115,7 @@
     "test:cash-drawer-kick": "node tests/run-electron-node-test.cjs tests/cash-drawer-kick.test.ts",
     "test:h1": "node tests/run-electron-node-test.cjs tests/h1-pos-transaction-integrity.test.ts",
     "test:kds-h-outbox": "node tests/run-electron-node-test.cjs tests/kds-h-outbox.test.ts",
+    "test:kds-alerts": "cd frontend && npm run test:unit -- src/lib/kds-alerts.test.ts && cd .. && ts-node --transpile-only -P tests/tsconfig.json tests/kds-alerts.test.ts",
     "test:h2": "node tests/run-electron-node-test.cjs tests/h2-kds-offline-recovery.test.ts",
     "audit:db": "ts-node --transpile-only -P tests/tsconfig.json tests/db-audit.test.ts",
     "test:receipt-printing": "ts-node --transpile-only -P tests/tsconfig.json tests/receipt-printing.test.ts",

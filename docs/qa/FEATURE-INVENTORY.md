@@ -7,6 +7,8 @@
 **Source of truth (status):** [`docs/00-product/capability-matrix.md`](../00-product/capability-matrix.md) — **Existing** and **Hardening** only  
 **Code evidence:** [`docs/00-product/feature-list.md`](../00-product/feature-list.md), `main/routes/`, schema v88
 
+**P8 note (2026-08-21):** KDS-ALERTS Sound & visual alerts — FE-only seen-`order_item.id` tracker; suite `npm run test:kds-alerts`. Status: **Implemented / Hardening verified**. Schema tip remains **v88**.
+
 **P7 note (2026-08-21):** RPT-DISC Discount report — `GET /api/reports/discounts` + CSV; suite `npm run test:rpt-disc`. Status: **Implemented / Hardening verified**. Schema tip remains **v88**.
 
 **P6 note (2026-08-21):** RPT-PAY Payment report deepen — `GET /api/reports/payments` + CSV; suite `npm run test:rpt-pay`. Status: **Implemented / Hardening verified**. Schema tip remains **v88**.
@@ -69,6 +71,7 @@
 | KDS-08  | KDS           | Offline KDS / stale board                         | `/kds`, `/kds-standalone`          | `GET /api/kds-info` (503 when down)                                              | local client state                                                            | chef+                                   | Hardening |
 | KDS-09  | KDS           | KDS recovery / reconnect                          | `/kds-standalone`                  | WS/REST resync + status retry                                                    | `orders`, `order_items`                                                       | chef+                                   | Hardening |
 | KDS-10  | KDS           | Companion / server standalone                     | `/server-standalone`               | companion advertise / bind                                                       | n/a (process)                                                                 | ops                                     | Existing  |
+| KDS-11  | KDS           | Sound & visual alerts (KDS-ALERTS)                | `/kds`, `/kds-standalone`          | FE `useKdsAlerts` + local sound toggle                                           | session seen-set (presentation)                                               | chef+                                   | Existing  |
 | INV-01  | Inventory     | SKU quantity / low-stock                          | `/products`, `/products/low-stock` | `GET /api/products`, stock reads                                                 | `products`                                                                    | owner, manager                          | Existing  |
 | INV-02  | Inventory     | Stock ledger / movements                          | `/products/movements`              | `GET /api/inventory/movements`                                                   | `inventory_movements`                                                         | owner, manager                          | Existing  |
 | INV-03  | Inventory     | Stock adjustment (+ wastage reasons)              | `/products`                        | `POST /api/products/:id/stock`                                                   | `inventory_movements`, `stock_adjust_idempotency`                             | owner, manager                          | Existing  |

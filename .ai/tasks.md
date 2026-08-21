@@ -2,6 +2,7 @@
 
 ## Mandate
 
+- [x] **P8 KDS-ALERTS (2026-08-21):** Sound & visual KDS alerts; no schema bump; `npm run test:kds-alerts`. Report `docs/qa/KDS-ALERTS-IMPLEMENTATION-REPORT.md`.
 - [x] **P7 RPT-DISC (2026-08-21):** Discount report; no schema bump; `npm run test:rpt-disc`. Report `docs/qa/DISCOUNT-REPORT-IMPLEMENTATION-REPORT.md`.
 - [x] **P6 RPT-PAY (2026-08-21):** Payment report deepen; no schema bump; `npm run test:rpt-pay`. Report `docs/qa/PAYMENT-REPORT-DEEPENING-IMPLEMENTATION-REPORT.md`.
 - [x] **P5 INV-AUTO-86 (2026-08-21):** Auto-86 from stock; schema v88; `npm run test:inv-auto-86`. Report `docs/qa/AUTO-86-FROM-STOCK-IMPLEMENTATION-REPORT.md`.
