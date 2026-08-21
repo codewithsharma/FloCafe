@@ -10,7 +10,7 @@ SEC-SENSITIVE-ACTIONS
 
 ## Commit
 
-_(filled after commit)_
+`40f5fb9` (`40f5fb9755d78f5a059e09c0a47c38f34ab4215d`)
 
 ## Schema
 
