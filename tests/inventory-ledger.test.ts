@@ -43,11 +43,11 @@ async function main() {
   console.log('='.repeat(60));
 
   const db = initTestDb();
-  assertEqual(getSupportedSchemaVersion(), 86, 'supported schema version is 86');
+  assertEqual(getSupportedSchemaVersion(), 87, 'supported schema version is 87');
   assertEqual(
     Number(db.pragma('user_version', { simple: true })),
-    86,
-    'fresh DB migrates to user_version 86',
+    87,
+    'fresh DB migrates to user_version 87',
   );
 
   const table = db.prepare(

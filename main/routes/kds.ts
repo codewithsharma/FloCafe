@@ -25,12 +25,17 @@ import {
   isTokenStale,
 } from '../middleware/security';
 import { parseCategoryIds } from './auth';
-import { notifyKdsUpdate } from '../services/kds';
+import { notifyKdsUpdate, broadcastOrderUpdate } from '../services/kds';
 import {
   applyKitchenItemStatus,
   setOrderKitchenPriority,
   KitchenStatusError,
 } from '../services/kitchen-status';
+import {
+  listOpenKdsOutboxJobs,
+  processKdsOutboxOnce,
+  registerKdsOutboxBroadcaster,
+} from '../services/kds-delivery-outbox';
 import { validateBody } from '../middleware/validate';
 import {
   kdsItemStatusBodySchema,
@@ -280,6 +285,29 @@ router.get('/orders', requireKdsEnabled, (req: Request, res: Response) => {
     res.json({ orders: ordersWithItems, counts });
   } catch (error: unknown) {
     console.error('[API] Internal error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/** Owner/Manager: list open KDS delivery intents (KDS-H-OUTBOX). */
+router.get('/outbox', requireRole('owner', 'manager'), (_req: Request, res: Response) => {
+  try {
+    registerKdsOutboxBroadcaster(() => broadcastOrderUpdate());
+    res.json({ jobs: listOpenKdsOutboxJobs(getDatabase()) });
+  } catch (error: unknown) {
+    console.error('[API] KDS outbox list error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/** Owner/Manager: drain one eligible outbox job now. */
+router.post('/outbox/drain', requireRole('owner', 'manager'), (_req: Request, res: Response) => {
+  try {
+    registerKdsOutboxBroadcaster(() => broadcastOrderUpdate());
+    const result = processKdsOutboxOnce(getDatabase());
+    res.json(result);
+  } catch (error: unknown) {
+    console.error('[API] KDS outbox drain error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

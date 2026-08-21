@@ -125,13 +125,13 @@ function seedTaxedBill(db: any, atIso: string, productId: string): void {
 async function main() {
   console.log('\nR9 Slice 3 — Tax Reporting Depth + Accountant Export\n' + '='.repeat(60));
 
-  assertEqual(getSupportedSchemaVersion(), 86, 'schema tip is v86');
+  assertEqual(getSupportedSchemaVersion(), 87, 'schema tip is v87');
 
   const db = initTestDb();
   assertEqual(
     Number(db.pragma('user_version', { simple: true })),
     86,
-    'fresh DB at user_version 86',
+    'fresh DB at user_version 87',
   );
 
   const owner = seedOwnerUser(db);
@@ -336,7 +336,7 @@ async function main() {
     assertEqual(
       Number(getDb2().pragma('user_version', { simple: true })),
       86,
-      'tip still 86 after reopen',
+      'tip still 87 after reopen',
     );
     const bills = Number(
       getDb2().prepare(`SELECT COUNT(*) AS c FROM bills WHERE bill_number LIKE 'BILL-%'`).get().c,

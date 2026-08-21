@@ -12,6 +12,14 @@ import { useConfirm } from '@/hooks/use-confirm';
 export type KitchenStatus = 'pending' | 'preparing' | 'ready' | 'served' | 'voided';
 export type ConnectionMode = 'websocket' | 'rest' | null;
 
+/** KDS-H-OUTBOX: bounded exponential reconnect (ms). Cap 30s + small jitter. */
+export function computeKdsReconnectDelayMs(attempt: number): number {
+  const exp = Math.max(0, attempt);
+  const base = Math.min(30_000, 3000 * 2 ** exp);
+  const jitter = Math.floor(Math.random() * 400);
+  return base + jitter;
+}
+
 export const STATUS_CONFIG = {
   pending: {
     labelKey: 'kds.statusWaiting',
@@ -249,6 +257,7 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
   const restInitialFetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const restRequestSequenceRef = useRef(0);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reconnectAttemptRef = useRef(0);
   const sessionGenerationRef = useRef(0);
   const updatingIdsRef = useRef(new Set<number>());
   // Holds the latest tryWebSocket so its own reconnect timer can call it recursively without
@@ -260,7 +269,42 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
   );
   // H2 deepen: queue failed chef status PATCHes per item; flush after reconnect.
   // Clear only on success/409/auth — silent failures re-queue until attempt cap.
+  // KDS-H-OUTBOX: persist across tab reload via sessionStorage (not a second SoR).
+  const PENDING_STATUS_STORAGE_KEY = 'flocafe:kds-pending-status-retries';
   const pendingRetriesRef = useRef<Map<number, PendingStatusRetry>>(new Map());
+
+  const persistPendingRetries = useCallback(() => {
+    try {
+      const entries = Array.from(pendingRetriesRef.current.values());
+      if (entries.length === 0) {
+        window.sessionStorage.removeItem(PENDING_STATUS_STORAGE_KEY);
+      } else {
+        window.sessionStorage.setItem(PENDING_STATUS_STORAGE_KEY, JSON.stringify(entries));
+      }
+    } catch {
+      // ignore quota / private mode
+    }
+  }, []);
+
+  const loadPendingRetries = useCallback(() => {
+    try {
+      const raw = window.sessionStorage.getItem(PENDING_STATUS_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as PendingStatusRetry[];
+      if (!Array.isArray(parsed)) return;
+      for (const entry of parsed) {
+        if (entry && typeof entry.itemId === 'number' && typeof entry.status === 'string') {
+          pendingRetriesRef.current.set(entry.itemId, entry);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPendingRetries();
+  }, [loadPendingRetries]);
   const updateItemStatusRef = useRef<
     (
       itemId: number,
@@ -386,6 +430,7 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
           ...(opts.expectedStatus ? { expected_status: opts.expectedStatus } : {}),
         });
         pendingRetriesRef.current.delete(itemId);
+        persistPendingRetries();
         if (
           generation === sessionGenerationRef.current &&
           connectionMode === 'rest' &&
@@ -405,6 +450,7 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
         const kdsDisabled = /kds is disabled/i.test(errorMessage);
         if (statusCode === 409) {
           pendingRetriesRef.current.delete(itemId);
+          persistPendingRetries();
           await fetchOrdersRest();
           if (!opts.silent) toast.error(errorMessage);
           return false;
@@ -415,6 +461,7 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
           );
         if (statusCode === 401 || (statusCode === 403 && !kdsDisabled && authorizationFailure)) {
           pendingRetriesRef.current.clear();
+          persistPendingRetries();
           sessionGenerationRef.current += 1;
           if (statusCode === 401) window.localStorage.removeItem('token');
           else markKdsAuthBlocked();
@@ -440,6 +487,7 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
         }
         if (kdsDisabled) {
           pendingRetriesRef.current.clear();
+          persistPendingRetries();
           sessionGenerationRef.current += 1;
           restRequestSequenceRef.current += 1;
           updatingIdsRef.current.clear();
@@ -477,6 +525,7 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
               expectedStatus: opts.expectedStatus,
               attempts: 0,
             });
+            persistPendingRetries();
           } else if (attempts < MAX_PENDING_STATUS_RETRY_ATTEMPTS) {
             pendingRetriesRef.current.set(itemId, {
               itemId,
@@ -484,8 +533,10 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
               expectedStatus: opts.expectedStatus,
               attempts,
             });
+            persistPendingRetries();
           } else {
             pendingRetriesRef.current.delete(itemId);
+            persistPendingRetries();
           }
         }
         if (!opts.silent) {
@@ -501,7 +552,15 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
     },
     // statusLabel is derived from `t` (already in deps), so omit it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [api, connectionMode, fetchOrdersRest, itemStatusPath, stopRestPolling, t],
+    [
+      api,
+      connectionMode,
+      fetchOrdersRest,
+      itemStatusPath,
+      persistPendingRetries,
+      stopRestPolling,
+      t,
+    ],
   );
   updateItemStatusRef.current = updateItemStatus;
 
@@ -571,6 +630,8 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
         setLoading(false);
         if (!authenticated) {
           if (retryDuringMaintenance) {
+            const delay = computeKdsReconnectDelayMs(reconnectAttemptRef.current);
+            reconnectAttemptRef.current += 1;
             reconnectTimerRef.current = setTimeout(() => {
               if (
                 generation === sessionGenerationRef.current &&
@@ -578,15 +639,17 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
               ) {
                 tryWebSocketRef.current(token, true);
               }
-            }, 3000);
+            }, delay);
           }
           return;
         }
+        const delay = computeKdsReconnectDelayMs(reconnectAttemptRef.current);
+        reconnectAttemptRef.current += 1;
         reconnectTimerRef.current = setTimeout(() => {
           if (wsRef.current === ws && generation === sessionGenerationRef.current) {
             tryWebSocketRef.current(token);
           }
-        }, 3000);
+        }, delay);
       };
 
       ws.onerror = () => {
@@ -599,6 +662,7 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
           const msg: WsMessage = JSON.parse(event.data);
           if (msg.type === 'auth_success' && msg.user) {
             authenticated = true;
+            reconnectAttemptRef.current = 0;
             // A REST fallback request may still be in flight when the socket
             // authenticates. Invalidate it before accepting the snapshot so a
             // late REST response cannot overwrite newer WebSocket state.

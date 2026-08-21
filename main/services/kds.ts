@@ -22,6 +22,12 @@ import { getJWTSecret, parseCategoryIds } from '../routes/auth';
 import { getUserAuthStatus, isTokenRevoked, isTokenStale } from '../middleware/security';
 import { isModuleEnabled } from '../modules';
 import { applyKitchenItemStatus, KitchenStatusError } from './kitchen-status';
+import {
+  completeOpenKdsSnapshotJobs,
+  registerKdsOutboxBroadcaster,
+  startKdsOutboxWorker,
+  type KdsBroadcastResult,
+} from './kds-delivery-outbox';
 
 interface KdsClient {
   ws: WebSocket;
@@ -292,7 +298,14 @@ export function setupKdsWebSocket(wss: WebSocketServer): void {
       clearInterval(heartbeat);
       heartbeat = null;
     }
+    if (activeWebSocketServers === 0) {
+      const { stopKdsOutboxWorker } = require('./kds-delivery-outbox');
+      stopKdsOutboxWorker();
+    }
   });
+
+  registerKdsOutboxBroadcaster(() => broadcastOrderUpdate());
+  startKdsOutboxWorker();
 
   console.log('[KDS] WebSocket server setup complete');
 }
@@ -782,11 +795,17 @@ function sendActiveOrders(
 
 let broadcastQueued = false;
 
-function broadcastOrderUpdate(): void {
-  if (isDatabaseMaintenanceActive()) return;
+/**
+ * Push live SQLite board snapshots to authenticated KDS clients.
+ * Returns attempt/success counts for the delivery outbox worker.
+ */
+export function broadcastOrderUpdate(): KdsBroadcastResult {
+  let attempted = 0;
+  let succeeded = 0;
+  if (isDatabaseMaintenanceActive()) return { attempted, succeeded };
   if (!isKdsEnabled()) {
     clients.forEach((client) => closeKdsClient(client, 'KDS is disabled'));
-    return;
+    return { attempted, succeeded };
   }
   clients.forEach((client) => {
     if (!isKdsClientAuthorized(client)) {
@@ -794,6 +813,7 @@ function broadcastOrderUpdate(): void {
       return;
     }
     if (client.ws.readyState !== WebSocket.OPEN) return;
+    attempted += 1;
     try {
       sendActiveOrders(
         client.ws,
@@ -804,10 +824,19 @@ function broadcastOrderUpdate(): void {
       client.categoryIdsChanged = false;
       client.stationIdsChanged = false;
       client.lastExpiredVoidMarker = getExpiredVoidMarker();
+      succeeded += 1;
     } catch (err) {
       console.error('[KDS] Broadcast error for client:', err);
     }
   });
+  if (succeeded > 0) {
+    try {
+      completeOpenKdsSnapshotJobs(getDatabase());
+    } catch (err) {
+      console.error('[KDS Outbox] complete after broadcast failed:', err);
+    }
+  }
+  return { attempted, succeeded };
 }
 
 export function notifyKdsUpdate(): void {

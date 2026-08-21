@@ -284,7 +284,7 @@ async function main() {
 
     // ── 14. Schema stays v75 / no new migration ───────────────────────
     console.log('\n14. Schema version remains 86');
-    assertEqual(getSupportedSchemaVersion(), 86, 'getSupportedSchemaVersion() === 86');
+    assertEqual(getSupportedSchemaVersion(), 87, 'getSupportedSchemaVersion() === 86');
 
     const { failed: failCount } = getResults();
     if (failCount > 0) {

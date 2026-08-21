@@ -100,6 +100,7 @@
     "tests/kds-bind-degrade.test.ts",
     "tests/kds-contract.test.ts",
     "tests/kds-frontend-conflict.test.ts",
+    "tests/kds-h-outbox.test.ts",
     "tests/kds-integration.test.ts",
     "tests/kds-websocket-revalidation.test.ts",
     "tests/kitchen-addons-parsing.test.ts",
@@ -184,6 +185,7 @@
     "tests/unit/auth-validation.test.ts",
     "tests/unit/dates.test.ts",
     "tests/unit/helmet-headers.test.ts",
+    "tests/unit/kds-delivery-outbox.test.ts",
     "tests/unit/observability.test.ts",
     "tests/unit/order-validation.test.ts",
     "tests/unit/payment-validation.test.ts",
@@ -483,7 +485,9 @@
     "tests/webusb-refund-print.test.ts": "electron",
     "tests/whatsapp-middleware.test.ts": "electron",
     "tests/whatsapp-schema.test.ts": "electron",
-    "tests/whatsapp-service.test.ts": "ts-node"
+    "tests/whatsapp-service.test.ts": "ts-node",
+    "tests/kds-h-outbox.test.ts": "electron",
+    "tests/unit/kds-delivery-outbox.test.ts": "vitest"
   },
   "groups": {
     "critical": [

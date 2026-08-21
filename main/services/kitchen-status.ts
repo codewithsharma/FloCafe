@@ -182,6 +182,20 @@ export function applyKitchenItemStatus(
     },
   });
 
+  // KDS-H-OUTBOX: durable delivery intent in the same DB connection/txn as SoR.
+  // Payload is metadata only — board state is always re-read from SQLite on drain.
+  try {
+    const { enqueueKdsSnapshotDelivery } = require('./kds-delivery-outbox');
+    enqueueKdsSnapshotDelivery(db, {
+      orderId: item.order_id,
+      itemId: item.id,
+      reason: 'kitchen.item_status_changed',
+    });
+  } catch (err) {
+    // Outbox must not roll back kitchen SoR if table missing mid-upgrade; log only.
+    console.error('[KDS Outbox] enqueue after status change failed:', err);
+  }
+
   return {
     itemId: item.id,
     status: args.status,

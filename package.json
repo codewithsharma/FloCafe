@@ -113,6 +113,7 @@
     "test:printer": "ts-node --transpile-only -P tests/tsconfig.json tests/printer.test.ts",
     "test:cash-drawer-kick": "node tests/run-electron-node-test.cjs tests/cash-drawer-kick.test.ts",
     "test:h1": "node tests/run-electron-node-test.cjs tests/h1-pos-transaction-integrity.test.ts",
+    "test:kds-h-outbox": "node tests/run-electron-node-test.cjs tests/kds-h-outbox.test.ts",
     "test:h2": "node tests/run-electron-node-test.cjs tests/h2-kds-offline-recovery.test.ts",
     "audit:db": "ts-node --transpile-only -P tests/tsconfig.json tests/db-audit.test.ts",
     "test:receipt-printing": "ts-node --transpile-only -P tests/tsconfig.json tests/receipt-printing.test.ts",

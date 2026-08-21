@@ -9,7 +9,7 @@
 **Canonical strategy:** `STRATEGY.md` (pilot KPI unchanged).
 **Branding audit:** `docs/05-production/operavia-branding-normalization-audit.md`.
 
-Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v86**) + statically exported Next.js (`frontend/`).
+Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA user_version` → **schema v87**) + statically exported Next.js (`frontend/`).
 
 **R9 Slice 1 Expenses (2026-08-15):** COMPLETE — schema **v83** `expenses`; Owner/Manager API+UI; cents-only; audits; `npm run test:r9`.
 **R9 Slice 2 Financial Audit-Trail Hardening (2026-08-15):** COMPLETE — `/audit` UI + CSV export + `until` + `audit.exported`; schema tip remains **v83**; `npm run test:r9.2`.
@@ -47,6 +47,10 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 
 **Exhaustive QA audit (2026-08-15):** Pack at `docs/qa/`. Live GUI + RBAC + RC: PASS WITH CONDITIONS. Production readiness: **CONDITIONAL GO**. Final release hardening: **CONDITIONAL GO** (`docs/qa/FINAL-RELEASE-HARDENING-AUDIT.md`) — P1-06 unopenable DB fail-closed; OPS-02 drill checklist; RC checklist. Live café still blocked on signed/notarized RC + OPS-02 + Master-PIN DR + security residual acceptance + sign-off. Residual eng: JWT/CSP Phase C, REAL dual-write.
 
+
+**P4 KDS-H-OUTBOX (2026-08-21):** Schema **v87** durable `kds_delivery_outbox` + FE exponential reconnect backoff. SQLite remains SoR. Report `docs/qa/KDS-H-OUTBOX-IMPLEMENTATION-REPORT.md`.
+
+**P3 Feature Backlog Analysis (2026-08-21):** Docs only. Matrix universe **320** rows (not 405). Next build: `KDS-H-OUTBOX` durable KDS outbox (Hardening). Report `docs/roadmap/P3-FEATURE-BACKLOG-ANALYSIS.md`. No feature code.
 
 **P2 Security & Platform Hardening (2026-08-21):** Helmet parity on server-app/KDS; API no-store; HS256 pin; refresh token rotation; WS Origin + maxPayload; login timing. Electron sandbox verified unchanged. Report `docs/qa/P2-SECURITY-PLATFORM-HARDENING-REPORT.md`. Deferred: CSP Phase C, Master PIN length.
 

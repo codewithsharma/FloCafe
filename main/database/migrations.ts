@@ -2721,4 +2721,36 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       `);
     },
   },
+  {
+    version: 87,
+    name: 'kds_h_delivery_outbox',
+    up: () => {
+      // KDS-H-OUTBOX — durable snapshot delivery intent. SQLite order_items remain SoR.
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS kds_delivery_outbox (
+          id TEXT PRIMARY KEY,
+          event_id TEXT NOT NULL UNIQUE,
+          job_type TEXT NOT NULL DEFAULT 'snapshot'
+            CHECK (job_type IN ('snapshot')),
+          status TEXT NOT NULL DEFAULT 'pending'
+            CHECK (status IN ('pending', 'in_flight', 'done', 'failed', 'cancelled')),
+          attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+          max_attempts INTEGER NOT NULL DEFAULT 12 CHECK (max_attempts >= 1),
+          order_id INTEGER,
+          item_id INTEGER,
+          payload_json TEXT,
+          last_error TEXT,
+          next_attempt_at TEXT NOT NULL,
+          leased_at TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          completed_at TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_kds_delivery_outbox_drain
+          ON kds_delivery_outbox(status, next_attempt_at);
+        CREATE INDEX IF NOT EXISTS idx_kds_delivery_outbox_event
+          ON kds_delivery_outbox(event_id);
+      `);
+    },
+  },
 ];

@@ -137,10 +137,10 @@ async function main(): Promise<void> {
   console.log('\nR13 — Print queue / retry');
   console.log('='.repeat(60));
 
-  assertEqual(getSupportedSchemaVersion(), 86, 'schema tip is v86');
+  assertEqual(getSupportedSchemaVersion(), 87, 'schema tip is v87');
   initTestDb();
   const db = getDatabase();
-  assertEqual(Number(db.pragma('user_version', { simple: true })), 86, 'fresh DB tip 86');
+  assertEqual(Number(db.pragma('user_version', { simple: true })), 87, 'fresh DB tip 87');
 
   const cols = (
     db.prepare(`PRAGMA table_info(print_jobs)`).all() as { name: string }[]

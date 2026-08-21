@@ -105,10 +105,10 @@ async function main(): Promise<void> {
   console.log('\nR9 Slice 5 — Operations Finance Reports');
   console.log('='.repeat(60));
 
-  assertEqual(getSupportedSchemaVersion(), 86, 'schema tip is v86');
+  assertEqual(getSupportedSchemaVersion(), 87, 'schema tip is v87');
   initTestDb();
   const db = getDatabase();
-  assertEqual(Number(db.pragma('user_version', { simple: true })), 86, 'fresh DB tip 86');
+  assertEqual(Number(db.pragma('user_version', { simple: true })), 87, 'fresh DB tip 87');
 
   const owner = seedOwnerUser(db);
   const manager = seedManagerUser(db);

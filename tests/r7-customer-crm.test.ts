@@ -70,7 +70,7 @@ async function main() {
   console.log('\nR7 — Customer & CRM OS\n' + '='.repeat(60));
 
   const db = initTestDb();
-  assertEqual(getSupportedSchemaVersion(), 86, 'S-CRM schema tip v86');
+  assertEqual(getSupportedSchemaVersion(), 87, 'S-CRM schema tip v87');
 
   const owner = seedOwnerUser(db);
   const manager = seedManagerUser(db);
