@@ -2,6 +2,8 @@
 
 ## Active program notes (2026-08-21)
 
+- ⚠️ RISK: **Full `npm run lint`** remains red on pre-existing frontend React Compiler rules (`set-state-in-effect`, `refs` in `useKdsConnection.ts`, recipes/QR/TableQrDialog, etc.) — baseline debt; do not conflate with P6.
+- ⚠️ RISK: **RPT-PAY** payment-time window ≠ shift_id cash drawer window — operators must not expect exact match to expected cash without reading the semantics note.
 - ⚠️ RISK: **INV-AUTO-86** has no catalog WebSocket — POS must refresh to see auto-86; server reject covers stale UI. Modifier auto-86 not implemented.
 - ⚠️ RISK: **R16 live Go-Live** remains **NO-GO** until signed/notarized RC + OPS-02 human/site gates.
 

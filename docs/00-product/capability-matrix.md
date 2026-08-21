@@ -314,7 +314,7 @@ R8 (2026-08-15) deepened Existing staff management (search/filter, detail, shift
 | Tax report           | 🟢 Existing |
 | Z-report             | 🟢 Existing |
 | CSV export           | 🟢 Existing |
-| Payment report       | 🔵 Planned  |
+| Payment report       | 🟢 Existing |
 | Product performance  | 🔵 Planned  |
 | Category performance | 🔵 Planned  |
 | Discount report      | 🔵 Planned  |

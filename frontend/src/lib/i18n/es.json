@@ -2128,5 +2128,22 @@
   "reports.voidsExportCsv": "Exportar CSV de anulaciones",
   "reports.voidsExporting": "Exportando anulaciones…",
   "reports.voidsExportSuccess": "CSV de anulaciones descargado",
-  "reports.voidsExportFailed": "No se pudo exportar el reporte de anulaciones"
+  "reports.voidsExportFailed": "No se pudo exportar el reporte de anulaciones",
+  "reports.paymentsTitle": "Reporte de pagos",
+  "reports.paymentsEmpty": "No se pudo cargar el reporte de pagos para este rango.",
+  "reports.paymentsNoRows": "No hay pagos ni reembolsos en este rango de fechas.",
+  "reports.paymentsClarity": "Pagos recibidos es el tender bruto de las líneas de pago. Los reembolsos vienen del libro de refunds. Neto = recibido − reembolsos en este rango.",
+  "reports.paymentsGross": "Pagos recibidos",
+  "reports.paymentsRefunds": "Reembolsos",
+  "reports.paymentsNet": "Pagos netos",
+  "reports.paymentsColMethod": "Método",
+  "reports.paymentsColCount": "Líneas",
+  "reports.paymentsColReceived": "Recibido",
+  "reports.paymentsColRefunds": "Reembolsos",
+  "reports.paymentsColNet": "Neto",
+  "reports.paymentsSalesNote": "Ventas brutas/netas en otros paneles usan totales de cuenta — no son lo mismo que pagos recibidos.",
+  "reports.paymentsExportCsv": "Exportar CSV de pagos",
+  "reports.paymentsExporting": "Exportando pagos…",
+  "reports.paymentsExportSuccess": "CSV de pagos descargado",
+  "reports.paymentsExportFailed": "No se pudo exportar el reporte de pagos"
 }

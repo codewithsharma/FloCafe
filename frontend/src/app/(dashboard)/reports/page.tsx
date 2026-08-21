@@ -57,6 +57,11 @@ import {
   fetchVoidCancelReport,
   type VoidCancelPayload,
 } from '@/lib/void-cancel-report';
+import {
+  downloadPaymentsCsv,
+  fetchPaymentReport,
+  type PaymentReportPayload,
+} from '@/lib/payment-report';
 
 interface PaymentMethodBreakdown {
   method: string | null;
@@ -201,11 +206,13 @@ export default function ReportsPage() {
   const [opsFinance, setOpsFinance] = useState<OpsFinancePayload | null>(null);
   const [foodCost, setFoodCost] = useState<FoodCostPayload | null>(null);
   const [voidsReport, setVoidsReport] = useState<VoidCancelPayload | null>(null);
+  const [paymentReport, setPaymentReport] = useState<PaymentReportPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [exportingCsv, setExportingCsv] = useState(false);
   const [exportingTaxCsv, setExportingTaxCsv] = useState(false);
   const [exportingExpensesCsv, setExportingExpensesCsv] = useState(false);
   const [exportingVoidsCsv, setExportingVoidsCsv] = useState(false);
+  const [exportingPaymentsCsv, setExportingPaymentsCsv] = useState(false);
 
   const role = currentTenant?.role;
   const canView = role === 'owner' || role === 'manager';
@@ -255,18 +262,32 @@ export default function ReportsPage() {
       fetchOpsFinance(selectedDate, endDate),
       fetchFoodCostReport(selectedDate, endDate),
       fetchVoidCancelReport(selectedDate, endDate),
+      fetchPaymentReport(selectedDate, endDate),
     ])
-      .then(([statsRes, topRes, recentRes, insightsRes, taxRes, opsRes, foodRes, voidsRes]) => {
-        setStats(isToday ? statsRes.data : null);
-        setDaySummary(isToday ? null : statsRes.data.summary);
-        setTopProducts(topRes.data.topProducts || []);
-        setRecentOrders(recentRes.data.recentOrders || []);
-        setInsights(insightsRes.data);
-        setTaxComponents(taxRes);
-        setOpsFinance(opsRes);
-        setFoodCost(foodRes);
-        setVoidsReport(voidsRes);
-      })
+      .then(
+        ([
+          statsRes,
+          topRes,
+          recentRes,
+          insightsRes,
+          taxRes,
+          opsRes,
+          foodRes,
+          voidsRes,
+          paymentsRes,
+        ]) => {
+          setStats(isToday ? statsRes.data : null);
+          setDaySummary(isToday ? null : statsRes.data.summary);
+          setTopProducts(topRes.data.topProducts || []);
+          setRecentOrders(recentRes.data.recentOrders || []);
+          setInsights(insightsRes.data);
+          setTaxComponents(taxRes);
+          setOpsFinance(opsRes);
+          setFoodCost(foodRes);
+          setVoidsReport(voidsRes);
+          setPaymentReport(paymentsRes);
+        },
+      )
       .catch((err: unknown) => {
         if (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))
           return;
@@ -334,10 +355,17 @@ export default function ReportsPage() {
     }
   };
 
-  const paymentMethods = isToday
-    ? (stats?.paymentMethods ?? [])
-    : (daySummary?.paymentMethods ?? []);
-  const paymentMethodsTotal = paymentMethods.reduce((sum, pm) => sum + Number(pm.total), 0);
+  const handleExportPaymentsCsv = async () => {
+    setExportingPaymentsCsv(true);
+    try {
+      await downloadPaymentsCsv(selectedDate, endDate);
+      toast.success(t('reports.paymentsExportSuccess'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('reports.paymentsExportFailed'));
+    } finally {
+      setExportingPaymentsCsv(false);
+    }
+  };
 
   const dateScopedTiles = isToday
     ? [
@@ -1010,56 +1038,93 @@ export default function ReportsPage() {
             title={
               <span className="inline-flex items-center gap-2">
                 <Wallet className="size-4 text-flo-text-muted" aria-hidden />
-                {t('dashboard.paymentMethods')}
+                {t('reports.paymentsTitle')}
               </span>
             }
+            actions={
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void handleExportPaymentsCsv()}
+                disabled={exportingPaymentsCsv || loading}
+              >
+                {exportingPaymentsCsv
+                  ? t('reports.paymentsExporting')
+                  : t('reports.paymentsExportCsv')}
+              </Button>
+            }
           >
-            {paymentMethods.length === 0 ? (
-              <EmptyState title={t('dashboard.noPaymentsYet')} className="min-h-[120px] py-6" />
+            {!paymentReport ? (
+              <EmptyState title={t('reports.paymentsEmpty')} className="min-h-[120px] py-6" />
+            ) : paymentReport.payment_line_count === 0 && paymentReport.refund_count === 0 ? (
+              <EmptyState title={t('reports.paymentsNoRows')} className="min-h-[120px] py-6" />
             ) : (
               <div className="space-y-4">
-                {paymentMethods.map((pm) => {
-                  const meta = PAYMENT_METHODS.find((m) => m.key === pm.method);
-                  const Icon = meta?.icon ?? Wallet;
-                  const label = meta
-                    ? t(meta.labelKey)
-                    : pm.method === 'wallet'
-                      ? t('pos.methodWallet')
-                      : String(pm.method || t('common.unknown'));
-                  const percent =
-                    paymentMethodsTotal > 0
-                      ? Math.round((Number(pm.total) / paymentMethodsTotal) * 100)
-                      : 0;
-                  return (
-                    <div key={pm.method ?? 'unknown'}>
-                      <div className="flex items-center justify-between mb-1.5 gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Icon className="size-4 shrink-0 text-flo-text-muted" aria-hidden />
-                          <span className="text-body font-medium text-flo-text truncate">
-                            {label}
-                          </span>
-                        </div>
-                        <span className="text-numeric text-flo-text shrink-0">
-                          {fmt(Number(pm.total))}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 bg-flo-surface-muted rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-flo-brand-600 rounded-full"
-                            style={{ width: `${percent}%` }}
-                          />
-                        </div>
-                        <span className="text-caption text-flo-text-muted shrink-0 tabular-nums">
-                          {localizeTemplate(t('dashboard.paymentMethodCount'), {
-                            count: pm.count,
-                            percent,
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+                <p className="text-caption text-flo-text-muted">{t('reports.paymentsClarity')}</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="rounded-flo-md border border-flo-border p-3">
+                    <p className="text-caption text-flo-text-muted">{t('reports.paymentsGross')}</p>
+                    <p className="text-numeric-lg">{fmt(paymentReport.payments_received)}</p>
+                  </div>
+                  <div className="rounded-flo-md border border-flo-border p-3">
+                    <p className="text-caption text-flo-text-muted">
+                      {t('reports.paymentsRefunds')}
+                    </p>
+                    <p className="text-numeric-lg">{fmt(paymentReport.refunds)}</p>
+                  </div>
+                  <div className="rounded-flo-md border border-flo-border p-3">
+                    <p className="text-caption text-flo-text-muted">{t('reports.paymentsNet')}</p>
+                    <p className="text-numeric-lg">{fmt(paymentReport.net_payments)}</p>
+                  </div>
+                </div>
+                {paymentReport.by_method.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-flo-border text-flo-text-muted">
+                          <th className="py-2 pr-3">{t('reports.paymentsColMethod')}</th>
+                          <th className="py-2 pr-3 text-right">{t('reports.paymentsColCount')}</th>
+                          <th className="py-2 pr-3 text-right">
+                            {t('reports.paymentsColReceived')}
+                          </th>
+                          <th className="py-2 pr-3 text-right">
+                            {t('reports.paymentsColRefunds')}
+                          </th>
+                          <th className="py-2 text-right">{t('reports.paymentsColNet')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paymentReport.by_method.map((row) => {
+                          const meta = PAYMENT_METHODS.find((m) => m.key === row.method);
+                          const label = meta
+                            ? t(meta.labelKey)
+                            : row.method === 'wallet'
+                              ? t('pos.methodWallet')
+                              : String(row.method || t('common.unknown'));
+                          return (
+                            <tr key={row.method} className="border-b border-flo-border/60">
+                              <td className="py-2 pr-3 font-medium text-flo-text">{label}</td>
+                              <td className="py-2 pr-3 text-right text-numeric">
+                                {row.payment_count}
+                              </td>
+                              <td className="py-2 pr-3 text-right text-numeric">
+                                {fmt(row.payments_received)}
+                              </td>
+                              <td className="py-2 pr-3 text-right text-numeric">
+                                {fmt(row.refunds)}
+                              </td>
+                              <td className="py-2 text-right text-numeric">
+                                {fmt(row.net_payments)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : null}
+                <p className="text-caption text-flo-text-muted">{t('reports.paymentsSalesNote')}</p>
               </div>
             )}
           </Panel>

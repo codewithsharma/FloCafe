@@ -2300,5 +2300,22 @@
   "reports.voidsExportCsv": "Export voids CSV",
   "reports.voidsExporting": "Exporting voids…",
   "reports.voidsExportSuccess": "Voids CSV downloaded",
-  "reports.voidsExportFailed": "Could not export voids report"
+  "reports.voidsExportFailed": "Could not export voids report",
+  "reports.paymentsTitle": "Payment report",
+  "reports.paymentsEmpty": "Could not load payment report for this range.",
+  "reports.paymentsNoRows": "No payments or refunds in this date range.",
+  "reports.paymentsClarity": "Payments Received is gross tender from payment lines. Refunds come from the refunds ledger. Net payments = received − refunds for this range.",
+  "reports.paymentsGross": "Payments received",
+  "reports.paymentsRefunds": "Refunds",
+  "reports.paymentsNet": "Net payments",
+  "reports.paymentsColMethod": "Method",
+  "reports.paymentsColCount": "Lines",
+  "reports.paymentsColReceived": "Received",
+  "reports.paymentsColRefunds": "Refunds",
+  "reports.paymentsColNet": "Net",
+  "reports.paymentsSalesNote": "Sales Gross/Net on other panels use bill totals — they are not the same as Payments Received.",
+  "reports.paymentsExportCsv": "Export payments CSV",
+  "reports.paymentsExporting": "Exporting payments…",
+  "reports.paymentsExportSuccess": "Payments CSV downloaded",
+  "reports.paymentsExportFailed": "Could not export payment report"
 }

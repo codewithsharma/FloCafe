@@ -15,6 +15,11 @@ import {
 } from '../services/ops-finance-report';
 import { queryFoodCostReport } from '../services/food-cost-report';
 import { queryVoidCancelReport, voidCancelReportToCsv } from '../services/void-cancel-report';
+import {
+  paymentReportToCsv,
+  queryPaymentReport,
+  queryPaymentsReceivedByMethod,
+} from '../services/payment-report';
 import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
 import { toCsvRow } from '../lib/csv';
@@ -202,15 +207,8 @@ function bucketByLocalHourAndWeekday(
 }
 
 /**
- * Return payment lines in a UTC half-open range using SQLite JSON1. Keeping
- * expansion in SQL avoids loading every bill and tolerates both the current
- * array shape, legacy top-level objects, and invalid JSON.
- *
- * Semantics: this is Payments Received (gross tender from payment_details),
- * not Net Sales. See docs/15-project-management/reporting-financial-semantics.md.
- *
- * When paidOnly is true, include bills that settled at least once
- * (paid / partially_refunded / refunded) so refunds do not erase tender history.
+ * @deprecated Prefer queryPaymentsReceivedByMethod from payment-report service.
+ * Kept as a thin wrapper so daily-stats / summary / sales keep identical call sites.
  */
 function paymentMethodBreakdown(
   db: ReturnType<typeof getDatabase>,
@@ -218,50 +216,7 @@ function paymentMethodBreakdown(
   endDate = startDate,
   paidOnly = false,
 ) {
-  const start = utcDayBounds(startDate)[0];
-  const end = utcDayBounds(endDate)[1];
-  return db
-    .prepare(
-      `
-    WITH payment_lines AS (
-      SELECT b.paid_at, b.created_at, je.value AS line
-      FROM bills b
-      JOIN json_each(CASE
-        WHEN json_valid(b.payment_details) AND json_type(b.payment_details) = 'array'
-          THEN b.payment_details
-        WHEN json_valid(b.payment_details)
-          THEN json_array(b.payment_details)
-        ELSE '[]'
-      END) je
-      WHERE b.payment_details IS NOT NULL
-        AND b.created_at < ?
-        AND (b.paid_at IS NULL OR b.paid_at >= ?)
-        AND (
-          ? = 0
-          OR b.payment_status IN ('paid', 'partially_refunded', 'refunded')
-        )
-        AND json_type(je.value) = 'object'
-    ), normalized AS (
-      SELECT
-        COALESCE(NULLIF(json_extract(line, '$.method'), ''), 'unknown') AS method,
-        CAST(json_extract(line, '$.payment_method_id') AS INTEGER) AS payment_method_id,
-        json_extract(line, '$.amount') AS amount,
-        COALESCE(
-          datetime(NULLIF(json_extract(line, '$.timestamp'), '')),
-          datetime(NULLIF(paid_at, '')),
-          datetime(NULLIF(created_at, ''))
-        ) AS payment_time
-      FROM payment_lines
-    )
-    SELECT COALESCE(pm.name, normalized.method) AS method, COUNT(*) AS count,
-      COALESCE(SUM(CASE WHEN typeof(amount) IN ('integer', 'real') THEN amount ELSE 0 END), 0) AS total
-    FROM normalized LEFT JOIN payment_methods pm ON pm.id = normalized.payment_method_id
-    WHERE payment_time >= datetime(?) AND payment_time < datetime(?)
-    GROUP BY COALESCE(pm.name, normalized.method)
-    ORDER BY total DESC
-  `,
-    )
-    .all(end, start, paidOnly ? 1 : 0, start, end);
+  return queryPaymentsReceivedByMethod(db, startDate, endDate, paidOnly);
 }
 
 /** Day-window sales truth: Gross / Refunds / Net — owned by day-sales-semantics service. */
@@ -628,6 +583,71 @@ router.get('/export/voids.csv', requireRole('owner', 'manager'), (req: Request, 
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// RPT-PAY — Payment report (gross tender + refunds by method; no schema change).
+router.get('/payments', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const today = utcTodayDate();
+    const startDate = reportDate(req.query.start_date, today);
+    const endDate = reportDate(req.query.end_date, today);
+    if (startDate > endDate) {
+      return res.status(400).json({ error: 'start_date must be on or before end_date' });
+    }
+    const report = queryPaymentReport(db, startDate, endDate);
+    res.json({ payments: report });
+  } catch (error: unknown) {
+    console.error('[API] Payment report failed:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get(
+  '/export/payments.csv',
+  requireRole('owner', 'manager'),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const today = utcTodayDate();
+      const startDate = reportDate(req.query.start_date, today);
+      const endDate = reportDate(req.query.end_date, today);
+      if (startDate > endDate) {
+        return res.status(400).json({ error: 'start_date must be on or before end_date' });
+      }
+
+      const report = queryPaymentReport(db, startDate, endDate);
+      const csv = paymentReportToCsv(report);
+
+      logAuditEvent({
+        actorUserId: (req as { user?: { userId?: string } }).user?.userId ?? null,
+        action: 'report.payments_exported',
+        entityType: 'payment_report',
+        entityId: `${startDate}_${endDate}`,
+        result: 'success',
+        metadata: {
+          format: 'csv',
+          start_date: startDate,
+          end_date: endDate,
+          row_count: report.by_method.length,
+          payment_line_count: report.payment_line_count,
+          payments_received: report.payments_received,
+          refunds: report.refunds,
+          net_payments: report.net_payments,
+        },
+      });
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="operavia-payments-${startDate}-to-${endDate}.csv"`,
+      );
+      res.status(200).send(csv);
+    } catch (error: unknown) {
+      console.error('[API] Payments CSV export failed:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 router.get('/sales', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {

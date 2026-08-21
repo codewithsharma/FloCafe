@@ -2128,5 +2128,22 @@
   "reports.voidsExportCsv": "Exportar CSV de anulações",
   "reports.voidsExporting": "Exportando anulações…",
   "reports.voidsExportSuccess": "CSV de anulações baixado",
-  "reports.voidsExportFailed": "Não foi possível exportar o relatório de anulações"
+  "reports.voidsExportFailed": "Não foi possível exportar o relatório de anulações",
+  "reports.paymentsTitle": "Relatório de pagamentos",
+  "reports.paymentsEmpty": "Não foi possível carregar o relatório de pagamentos neste período.",
+  "reports.paymentsNoRows": "Sem pagamentos ou reembolsos neste intervalo de datas.",
+  "reports.paymentsClarity": "Pagamentos recebidos é o tender bruto das linhas. Reembolsos vêm do ledger de refunds. Líquido = recebido − reembolsos neste período.",
+  "reports.paymentsGross": "Pagamentos recebidos",
+  "reports.paymentsRefunds": "Reembolsos",
+  "reports.paymentsNet": "Pagamentos líquidos",
+  "reports.paymentsColMethod": "Método",
+  "reports.paymentsColCount": "Linhas",
+  "reports.paymentsColReceived": "Recebido",
+  "reports.paymentsColRefunds": "Reembolsos",
+  "reports.paymentsColNet": "Líquido",
+  "reports.paymentsSalesNote": "Vendas brutas/líquidas noutros painéis usam totais da conta — não são o mesmo que pagamentos recebidos.",
+  "reports.paymentsExportCsv": "Exportar CSV de pagamentos",
+  "reports.paymentsExporting": "A exportar pagamentos…",
+  "reports.paymentsExportSuccess": "CSV de pagamentos descarregado",
+  "reports.paymentsExportFailed": "Não foi possível exportar o relatório de pagamentos"
 }

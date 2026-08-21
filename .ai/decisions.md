@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-21 — P6 RPT-PAY Payment report deepen (COMPLETE)
+
+No schema bump (tip remains **v88**). Extracted `payment-report.ts` from thin `paymentMethodBreakdown`; composed Gross Payments Received / Refunds / Net + by-method; `GET /api/reports/payments` + CSV + Reports UI. Tender SoR = `payment_details`; refunds SoR = `refunds`. Suite `npm run test:rpt-pay`. Report `docs/qa/PAYMENT-REPORT-DEEPENING-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**.
+
 ## 2026-08-21 — P5 INV-AUTO-86 (COMPLETE)
 
 Auto-86 from stock. Schema **v88** `manual_unavailable` + `auto_unavailable`; effective `is_active`. Manual 86 never cleared by stock restore; manual restore cannot bypass zero stock. Central `notifyStockChanged` on inventory mutation boundary; recipe fan-out via R5. Staff orders reject inactive products. KDS: no availability events. Modifiers: not inventory-backed for auto-86. Suite `npm run test:inv-auto-86`. Report `docs/qa/AUTO-86-FROM-STOCK-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**. Live pilot still NO-GO.
