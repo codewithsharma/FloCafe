@@ -542,6 +542,224 @@ async function main() {
     });
     assertEqual(cancelRecv.status, 409, 'cannot cancel fully received PO');
 
+    // ─── PRC-DRAFT draft PO line amend ───
+    section('PRC-DRAFT draft PO line amend');
+    const draftAmend = await api(baseUrl, '/api/purchasing/purchase-orders', {
+      method: 'POST',
+      headers: { ...owner.authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        supplier_id: supplierId,
+        lines: [
+          { product_id: 'sku-flour', purchase_unit: 'kg', ordered_qty: 3, unit_cost_cents: 1500 },
+          { product_id: 'sku-oil', purchase_unit: 'L', ordered_qty: 1, unit_cost_cents: 2000 },
+        ],
+      }),
+    });
+    assertEqual(draftAmend.status, 201, 'draft amend fixture created');
+    const draftAmendId = draftAmend.data.purchase_order.id as string;
+    const movementsBefore = Number(
+      (db.prepare('SELECT COUNT(*) AS c FROM inventory_movements').get() as { c: number }).c,
+    );
+
+    const amendOk = await api(baseUrl, `/api/purchasing/purchase-orders/${draftAmendId}/lines`, {
+      method: 'PUT',
+      headers: { ...owner.authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lines: [
+          { product_id: 'sku-flour', purchase_unit: 'kg', ordered_qty: 5, unit_cost_cents: 1800 },
+        ],
+      }),
+    });
+    assertEqual(amendOk.status, 200, 'draft lines amended');
+    assertEqual(amendOk.data.purchase_order.status, 'draft', 'remains draft');
+    assertEqual(amendOk.data.lines.length, 1, 'line set replaced');
+    assertEqual(Number(amendOk.data.lines[0].ordered_qty), 5, 'qty updated');
+    assertEqual(Number(amendOk.data.lines[0].unit_cost_cents), 1800, 'cost updated');
+    assertEqual(Number(amendOk.data.purchase_order.subtotal_cents), 9000, 'header subtotal recomputed');
+    const movementsAfter = Number(
+      (db.prepare('SELECT COUNT(*) AS c FROM inventory_movements').get() as { c: number }).c,
+    );
+    assertEqual(movementsAfter, movementsBefore, 'amend does not create inventory movements');
+
+    const amendRetry = await api(baseUrl, `/api/purchasing/purchase-orders/${draftAmendId}/lines`, {
+      method: 'PUT',
+      headers: { ...owner.authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lines: [
+          { product_id: 'sku-flour', purchase_unit: 'kg', ordered_qty: 5, unit_cost_cents: 1800 },
+        ],
+      }),
+    });
+    assertEqual(amendRetry.status, 200, 'identical amend retry ok');
+    assertEqual(Number(amendRetry.data.lines[0].ordered_qty), 5, 'retry preserves qty');
+
+    const badQty = await api(baseUrl, `/api/purchasing/purchase-orders/${draftAmendId}/lines`, {
+      method: 'PUT',
+      headers: { ...owner.authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lines: [
+          { product_id: 'sku-flour', purchase_unit: 'kg', ordered_qty: 0, unit_cost_cents: 100 },
+        ],
+      }),
+    });
+    assertEqual(badQty.status, 400, 'invalid qty rejected');
+
+    const badProduct = await api(baseUrl, `/api/purchasing/purchase-orders/${draftAmendId}/lines`, {
+      method: 'PUT',
+      headers: { ...owner.authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lines: [
+          {
+            product_id: 'missing-sku',
+            purchase_unit: 'kg',
+            ordered_qty: 1,
+            unit_cost_cents: 100,
+          },
+        ],
+      }),
+    });
+    assertEqual(badProduct.status, 404, 'missing product rejected');
+
+    const cashierAmend = await api(
+      baseUrl,
+      `/api/purchasing/purchase-orders/${draftAmendId}/lines`,
+      {
+        method: 'PUT',
+        headers: { ...cashier.authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lines: [
+            { product_id: 'sku-flour', purchase_unit: 'kg', ordered_qty: 1, unit_cost_cents: 100 },
+          ],
+        }),
+      },
+    );
+    assertEqual(cashierAmend.status, 403, 'cashier cannot amend lines');
+
+    const chefAmend = await api(baseUrl, `/api/purchasing/purchase-orders/${draftAmendId}/lines`, {
+      method: 'PUT',
+      headers: { ...chef.authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lines: [
+          { product_id: 'sku-flour', purchase_unit: 'kg', ordered_qty: 1, unit_cost_cents: 100 },
+        ],
+      }),
+    });
+    assertEqual(chefAmend.status, 403, 'chef cannot amend lines');
+
+    const lineAudit = db
+      .prepare(`SELECT COUNT(*) AS c FROM audit_logs WHERE action = ? AND entity_id = ?`)
+      .get('purchase_order.lines_updated', draftAmendId) as { c: number };
+    assert(Number(lineAudit.c) >= 1, 'lines_updated audit present');
+
+    // ordered → reject
+    await api(baseUrl, `/api/purchasing/purchase-orders/${draftAmendId}/status`, {
+      method: 'POST',
+      headers: { ...owner.authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'ordered' }),
+    });
+    const amendOrdered = await api(
+      baseUrl,
+      `/api/purchasing/purchase-orders/${draftAmendId}/lines`,
+      {
+        method: 'PUT',
+        headers: { ...owner.authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lines: [
+            { product_id: 'sku-flour', purchase_unit: 'kg', ordered_qty: 9, unit_cost_cents: 100 },
+          ],
+        }),
+      },
+    );
+    assertEqual(amendOrdered.status, 409, 'ordered PO lines not editable');
+    assertEqual(amendOrdered.data.code, 'PO_LINES_NOT_DRAFT', 'not-draft code');
+
+    // partially_received / received → reject (poId is fully received)
+    const amendReceived = await api(baseUrl, `/api/purchasing/purchase-orders/${poId}/lines`, {
+      method: 'PUT',
+      headers: { ...owner.authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lines: [
+          { product_id: 'sku-flour', purchase_unit: 'kg', ordered_qty: 1, unit_cost_cents: 100 },
+        ],
+      }),
+    });
+    assertEqual(amendReceived.status, 409, 'received PO lines not editable');
+
+    // cancelled → reject
+    const cancelDraft = await api(baseUrl, '/api/purchasing/purchase-orders', {
+      method: 'POST',
+      headers: { ...owner.authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        supplier_id: supplierId,
+        lines: [
+          { product_id: 'sku-flour', purchase_unit: 'kg', ordered_qty: 1, unit_cost_cents: 100 },
+        ],
+      }),
+    });
+    const cancelDraftId = cancelDraft.data.purchase_order.id as string;
+    await api(baseUrl, `/api/purchasing/purchase-orders/${cancelDraftId}/status`, {
+      method: 'POST',
+      headers: { ...owner.authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'cancelled' }),
+    });
+    const amendCancelled = await api(
+      baseUrl,
+      `/api/purchasing/purchase-orders/${cancelDraftId}/lines`,
+      {
+        method: 'PUT',
+        headers: { ...owner.authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lines: [
+            { product_id: 'sku-flour', purchase_unit: 'kg', ordered_qty: 2, unit_cost_cents: 100 },
+          ],
+        }),
+      },
+    );
+    assertEqual(amendCancelled.status, 409, 'cancelled PO lines not editable');
+
+    // partially_received fixture
+    const partialPo = await api(baseUrl, '/api/purchasing/purchase-orders', {
+      method: 'POST',
+      headers: { ...owner.authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        supplier_id: supplierId,
+        lines: [
+          { product_id: 'sku-oil', purchase_unit: 'L', ordered_qty: 4, unit_cost_cents: 500 },
+        ],
+      }),
+    });
+    const partialId = partialPo.data.purchase_order.id as string;
+    await api(baseUrl, `/api/purchasing/purchase-orders/${partialId}/status`, {
+      method: 'POST',
+      headers: { ...owner.authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'ordered' }),
+    });
+    const partialGet = await api(baseUrl, `/api/purchasing/purchase-orders/${partialId}`, {
+      headers: owner.authHeader,
+    });
+    const partialLineId = partialGet.data.lines[0].id as string;
+    await api(baseUrl, `/api/purchasing/purchase-orders/${partialId}/receive`, {
+      method: 'POST',
+      headers: {
+        ...owner.authHeader,
+        'Content-Type': 'application/json',
+        'Idempotency-Key': 'prc-draft-partial-recv',
+      },
+      body: JSON.stringify({
+        lines: [{ po_line_id: partialLineId, quantity: 1 }],
+      }),
+    });
+    const amendPartial = await api(baseUrl, `/api/purchasing/purchase-orders/${partialId}/lines`, {
+      method: 'PUT',
+      headers: { ...owner.authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lines: [
+          { product_id: 'sku-oil', purchase_unit: 'L', ordered_qty: 9, unit_cost_cents: 500 },
+        ],
+      }),
+    });
+    assertEqual(amendPartial.status, 409, 'partially_received PO lines not editable');
+
     // ─── S-PUR-15 offline (local SoR) ───
     section('S-PUR-15 offline behavior');
     assert(getDatabase(), 'local SQLite SoR');

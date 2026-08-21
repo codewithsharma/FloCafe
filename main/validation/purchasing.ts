@@ -53,6 +53,12 @@ export const purchaseOrderCreateBodySchema = z.object({
   lines: z.array(purchaseOrderLineSchema).min(1).max(500),
 });
 
+/** PRC-DRAFT — replace all lines on a draft PO (same line shape as create). */
+export const purchaseOrderLinesReplaceBodySchema = z.object({
+  lines: z.array(purchaseOrderLineSchema).min(1).max(500),
+  tax_cents: moneyCents.optional(),
+});
+
 export const purchaseOrderStatusBodySchema = z.object({
   status: z.enum(['draft', 'ordered', 'partially_received', 'received', 'cancelled']),
 });

@@ -4,11 +4,7 @@
 import api from './api';
 
 export type PurchaseOrderStatus =
-  | 'draft'
-  | 'ordered'
-  | 'partially_received'
-  | 'received'
-  | 'cancelled';
+  'draft' | 'ordered' | 'partially_received' | 'received' | 'cancelled';
 
 export interface Supplier {
   id: string;
@@ -171,11 +167,11 @@ export async function addSupplierProduct(
   return data.mapping;
 }
 
-export async function listPurchaseOrders(
-  opts?: { status?: PurchaseOrderStatus | ''; signal?: AbortSignal },
-): Promise<PurchaseOrder[]> {
-  const params =
-    opts?.status && opts.status.length > 0 ? { status: opts.status } : undefined;
+export async function listPurchaseOrders(opts?: {
+  status?: PurchaseOrderStatus | '';
+  signal?: AbortSignal;
+}): Promise<PurchaseOrder[]> {
+  const params = opts?.status && opts.status.length > 0 ? { status: opts.status } : undefined;
   const { data } = await api.get<{ purchase_orders: PurchaseOrder[] }>(
     '/purchasing/purchase-orders',
     { params, signal: opts?.signal },
@@ -199,6 +195,18 @@ export async function createPurchaseOrder(
 ): Promise<{ purchase_order: PurchaseOrder; lines: PurchaseOrderLine[] }> {
   const { data } = await api.post<{ purchase_order: PurchaseOrder; lines: PurchaseOrderLine[] }>(
     '/purchasing/purchase-orders',
+    body,
+  );
+  return { purchase_order: data.purchase_order, lines: data.lines || [] };
+}
+
+/** PRC-DRAFT — replace lines on a draft PO only. */
+export async function replacePurchaseOrderLines(
+  id: string,
+  body: { lines: CreatePurchaseOrderLineInput[] },
+): Promise<{ purchase_order: PurchaseOrder; lines: PurchaseOrderLine[] }> {
+  const { data } = await api.put<{ purchase_order: PurchaseOrder; lines: PurchaseOrderLine[] }>(
+    `/purchasing/purchase-orders/${id}/lines`,
     body,
   );
   return { purchase_order: data.purchase_order, lines: data.lines || [] };

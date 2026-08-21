@@ -2,6 +2,7 @@
 
 ## Mandate
 
+- [x] **PRC-DRAFT Draft PO line amend (2026-08-21):** COMPLETE — draft-only `PUT …/lines`; FE amend; `test:r6` + UI contract. Next P2: movements CSV / supplier edit UI.
 - [x] **RCP-05 Recipe consumptions list UI (2026-08-21):** COMPLETE — FE `/products/recipes/consumptions`; API unchanged; schema v88; `npm run test:recipe-consumptions-ui`. Next deepen: draft PO line amend.
 - [x] **R16 / OPS-02 eng gate pack (2026-08-21):** PARTIAL — gap matrix, release gates, test report, manual matrix, final report under `docs/qa/OPS-02-*.md`. Eng P1 OBS-001 + KDS-001 closed; merge 194/194; Playwright 4/4; unsigned pack PASS. Live **NO-GO** until signed RC + site + PIN escrow + sign-off. QR-ORD-IDEM not started.
 - [ ] **R16 Production Release** — **HUMAN BLOCKED** (signed RC + OPS-02 site + escrow + exec sign-off). Gate checklist: `r16-release-gate-checklist.md`. Live **NO-GO**. Eng CONDITIONAL GO per `docs/qa/OPS-02-FINAL-REPORT.md`.

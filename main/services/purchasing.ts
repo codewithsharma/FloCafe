@@ -6,10 +6,7 @@
 import { createHash, randomUUID } from 'crypto';
 import { getDatabase, now, withTxn } from '../db';
 import { logAuditEvent } from './audit-log';
-import {
-  applyPurchaseReceiptStock,
-  type StockTrackedProduct,
-} from './inventory';
+import { applyPurchaseReceiptStock, type StockTrackedProduct } from './inventory';
 import {
   ALLOWED_INVENTORY_UNITS,
   convertQuantity,
@@ -30,11 +27,7 @@ export class PurchasingServiceError extends Error {
 }
 
 export type PurchaseOrderStatus =
-  | 'draft'
-  | 'ordered'
-  | 'partially_received'
-  | 'received'
-  | 'cancelled';
+  'draft' | 'ordered' | 'partially_received' | 'received' | 'cancelled';
 
 const LEGAL_TRANSITIONS: Record<PurchaseOrderStatus, PurchaseOrderStatus[]> = {
   draft: ['ordered', 'cancelled'],
@@ -56,9 +49,7 @@ function generatePoNumber(db: ReturnType<typeof getDatabase>): string {
   const day = now().slice(0, 10).replace(/-/g, '');
   const prefix = `PO-${day}-`;
   const row = db
-    .prepare(
-      `SELECT COUNT(*) as c FROM purchase_orders WHERE po_number LIKE ?`,
-    )
+    .prepare(`SELECT COUNT(*) as c FROM purchase_orders WHERE po_number LIKE ?`)
     .get(`${prefix}%`) as { c: number };
   const seq = String(Number(row.c) + 1).padStart(4, '0');
   return `${prefix}${seq}`;
@@ -66,16 +57,14 @@ function generatePoNumber(db: ReturnType<typeof getDatabase>): string {
 
 function requireSupplier(db: ReturnType<typeof getDatabase>, id: string) {
   const row = db.prepare('SELECT * FROM suppliers WHERE id = ?').get(id) as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   if (!row) throw new PurchasingServiceError(404, 'Supplier not found');
   return row;
 }
 
 function requirePo(db: ReturnType<typeof getDatabase>, id: string) {
   const row = db.prepare('SELECT * FROM purchase_orders WHERE id = ?').get(id) as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   if (!row) throw new PurchasingServiceError(404, 'Purchase order not found');
   return row;
 }
@@ -160,9 +149,10 @@ export function listSuppliers(opts?: { activeOnly?: boolean }): Record<string, u
       .prepare(`SELECT * FROM suppliers WHERE is_active = 1 ORDER BY name COLLATE NOCASE`)
       .all() as Record<string, unknown>[];
   }
-  return db
-    .prepare(`SELECT * FROM suppliers ORDER BY name COLLATE NOCASE`)
-    .all() as Record<string, unknown>[];
+  return db.prepare(`SELECT * FROM suppliers ORDER BY name COLLATE NOCASE`).all() as Record<
+    string,
+    unknown
+  >[];
 }
 
 export function getSupplier(id: string): Record<string, unknown> {
@@ -189,7 +179,9 @@ export function updateSupplier(
   const next = {
     name: patch.name !== undefined ? patch.name.trim() : String(current.name),
     contact_name:
-      patch.contact_name !== undefined ? patch.contact_name : (current.contact_name as string | null),
+      patch.contact_name !== undefined
+        ? patch.contact_name
+        : (current.contact_name as string | null),
     phone: patch.phone !== undefined ? patch.phone : (current.phone as string | null),
     email: patch.email !== undefined ? patch.email : (current.email as string | null),
     address: patch.address !== undefined ? patch.address : (current.address as string | null),
@@ -446,6 +438,147 @@ export function createPurchaseOrder(
   });
 }
 
+/**
+ * PRC-DRAFT — replace all lines on a draft PO. Does not touch inventory.
+ * Naturally idempotent for identical payloads (delete + insert same values).
+ */
+export function replacePurchaseOrderLines(
+  id: string,
+  input: {
+    lines: Array<{
+      product_id: string;
+      purchase_unit: string;
+      ordered_qty: number;
+      unit_cost_cents: number;
+      tax_cents?: number;
+    }>;
+    tax_cents?: number;
+  },
+  actorUserId: string | null,
+): { purchase_order: Record<string, unknown>; lines: Record<string, unknown>[] } {
+  const db = getDatabase();
+  if (!input.lines?.length) {
+    throw new PurchasingServiceError(400, 'At least one PO line is required');
+  }
+
+  return withTxn(() => {
+    const po = requirePo(db, id);
+    const status = String(po.status) as PurchaseOrderStatus;
+    if (status !== 'draft') {
+      throw new PurchasingServiceError(
+        409,
+        'Only draft purchase orders can amend lines',
+        'PO_LINES_NOT_DRAFT',
+      );
+    }
+
+    const existing = loadPoLines(db, id);
+    if (existing.some((l) => Number(l.received_qty) > 0)) {
+      throw new PurchasingServiceError(
+        409,
+        'Cannot amend lines after receiving inventory',
+        'PO_LINES_AFTER_RECEIVE',
+      );
+    }
+
+    const preparedLines: Array<{
+      id: string;
+      product_id: string;
+      purchase_unit: string;
+      ordered_qty: number;
+      unit_cost_cents: number;
+      tax_cents: number;
+      line_total_cents: number;
+    }> = [];
+    for (const line of input.lines) {
+      const product = db
+        .prepare('SELECT id, inventory_unit FROM products WHERE id = ?')
+        .get(line.product_id) as { id: string; inventory_unit?: string } | undefined;
+      if (!product) throw new PurchasingServiceError(404, `Product not found: ${line.product_id}`);
+      if (!isAllowedInventoryUnit(line.purchase_unit)) {
+        throw new PurchasingServiceError(400, 'Invalid purchase unit');
+      }
+      const invUnit = (product.inventory_unit || 'pcs') as InventoryUnit;
+      convertQuantity(line.ordered_qty, line.purchase_unit as InventoryUnit, invUnit);
+      const lineTax = Number(line.tax_cents || 0);
+      preparedLines.push({
+        id: randomUUID(),
+        product_id: line.product_id,
+        purchase_unit: line.purchase_unit,
+        ordered_qty: line.ordered_qty,
+        unit_cost_cents: line.unit_cost_cents,
+        tax_cents: lineTax,
+        line_total_cents: lineTotalCents(line.ordered_qty, line.unit_cost_cents) + lineTax,
+      });
+    }
+
+    const headerTax = Number(input.tax_cents || 0);
+    const lineTaxSum = preparedLines.reduce((s, l) => s + l.tax_cents, 0);
+    const taxCents = headerTax + lineTaxSum;
+    const subtotalCents = preparedLines.reduce(
+      (s, l) => s + lineTotalCents(l.ordered_qty, l.unit_cost_cents),
+      0,
+    );
+    const totalCents = subtotalCents + taxCents;
+    const ts = now();
+
+    db.prepare(`DELETE FROM purchase_order_lines WHERE purchase_order_id = ?`).run(id);
+
+    const insertLine = db.prepare(
+      `INSERT INTO purchase_order_lines (
+        id, purchase_order_id, product_id, purchase_unit, ordered_qty, unit_cost_cents,
+        tax_cents, line_total_cents, received_qty, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+    );
+    for (const line of preparedLines) {
+      insertLine.run(
+        line.id,
+        id,
+        line.product_id,
+        line.purchase_unit,
+        line.ordered_qty,
+        line.unit_cost_cents,
+        line.tax_cents,
+        line.line_total_cents,
+        ts,
+        ts,
+      );
+    }
+
+    db.prepare(
+      `UPDATE purchase_orders
+       SET subtotal_cents = ?, tax_cents = ?, total_cents = ?, updated_at = ?
+       WHERE id = ? AND status = 'draft'`,
+    ).run(subtotalCents, taxCents, totalCents, ts, id);
+
+    const after = requirePo(db, id);
+    if (String(after.status) !== 'draft') {
+      throw new PurchasingServiceError(
+        409,
+        'Only draft purchase orders can amend lines',
+        'PO_LINES_NOT_DRAFT',
+      );
+    }
+
+    logAuditEvent({
+      action: 'purchase_order.lines_updated',
+      entityType: 'purchase_order',
+      entityId: id,
+      actorUserId: actorUserId ?? undefined,
+      metadata: {
+        po_number: after.po_number,
+        line_count: preparedLines.length,
+        subtotal_cents: subtotalCents,
+      },
+    });
+
+    return {
+      purchase_order: after,
+      lines: loadPoLines(db, id),
+    };
+  });
+}
+
 export function listPurchaseOrders(opts?: {
   status?: string;
   supplierId?: string;
@@ -463,9 +596,7 @@ export function listPurchaseOrders(opts?: {
   }
   const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
   return db
-    .prepare(
-      `SELECT * FROM purchase_orders ${where} ORDER BY created_at DESC, po_number DESC`,
-    )
+    .prepare(`SELECT * FROM purchase_orders ${where} ORDER BY created_at DESC, po_number DESC`)
     .all(...params) as Record<string, unknown>[];
 }
 
@@ -567,8 +698,7 @@ export function receivePurchaseOrder(input: {
        WHERE user_id = ? AND idempotency_key = ?`,
     )
     .get(input.actorUserId, input.idempotencyKey) as
-    | { purchase_order_id: string; request_hash: string; response_json: string }
-    | undefined;
+    { purchase_order_id: string; request_hash: string; response_json: string } | undefined;
   if (prior) {
     if (
       String(prior.purchase_order_id) !== String(input.purchaseOrderId) ||
@@ -591,8 +721,7 @@ export function receivePurchaseOrder(input: {
          WHERE user_id = ? AND idempotency_key = ?`,
       )
       .get(input.actorUserId, input.idempotencyKey) as
-      | { purchase_order_id: string; request_hash: string; response_json: string }
-      | undefined;
+      { purchase_order_id: string; request_hash: string; response_json: string } | undefined;
     if (nested) {
       return JSON.parse(nested.response_json);
     }
@@ -615,14 +744,7 @@ export function receivePurchaseOrder(input: {
     db.prepare(
       `INSERT INTO purchase_receipts (id, purchase_order_id, received_at, received_by, notes, created_at)
        VALUES (?, ?, ?, ?, ?, ?)`,
-    ).run(
-      receiptId,
-      input.purchaseOrderId,
-      ts,
-      input.actorUserId,
-      input.notes ?? null,
-      ts,
-    );
+    ).run(receiptId, input.purchaseOrderId, ts, input.actorUserId, input.notes ?? null, ts);
 
     const insertReceiptLine = db.prepare(
       `INSERT INTO purchase_receipt_lines (
@@ -719,10 +841,9 @@ export function receivePurchaseOrder(input: {
       input.purchaseOrderId,
     );
 
-    const receipt = db.prepare('SELECT * FROM purchase_receipts WHERE id = ?').get(receiptId) as Record<
-      string,
-      unknown
-    >;
+    const receipt = db
+      .prepare('SELECT * FROM purchase_receipts WHERE id = ?')
+      .get(receiptId) as Record<string, unknown>;
     const result = {
       receipt,
       purchase_order: requirePo(db, input.purchaseOrderId),

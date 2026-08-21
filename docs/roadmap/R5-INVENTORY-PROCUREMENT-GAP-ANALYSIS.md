@@ -9,14 +9,14 @@
 
 ## Baseline
 
-| Field                   | Value                                           |
-| ----------------------- | ----------------------------------------------- |
-| Branch                  | `restaurant-vertical`                           |
-| Product eng tip         | **`b236ef0`**                                   |
-| Current HEAD (docs tip) | `c5b5225` (docs-only; product code ≡ `b236ef0`) |
-| Schema                  | **v88**                                         |
-| Package                 | **3.0.5**                                       |
-| Working tree at audit   | Clean vs origin                                 |
+| Field                   | Value                                         |
+| ----------------------- | --------------------------------------------- |
+| Branch                  | `restaurant-vertical`                         |
+| Product eng tip         | **`b236ef0`**                                 |
+| Current HEAD (docs tip) | `ab4d465`+ (RCP-05; PRC-DRAFT on this branch) |
+| Schema                  | **v88**                                       |
+| Package                 | **3.0.5**                                     |
+| Working tree at audit   | Clean vs origin                               |
 
 **Protected:** OPS-02 / P13–P18 hardening, order/payment idempotency, KDS outbox, recovery, RBAC, SQLite SoR.  
 **Deferred:** Apple signing, QR-ORD-IDEM, multi-location (Frozen).
@@ -65,10 +65,10 @@
 | Addon/modifier BOM                         | RCP-ADDON | **MISSING**           | Price-only addons                                                      | New design                                        | DEFERRED        | Auth required    |
 | Suppliers CRUD                             | PRC-01    | **COMPLETE**          | `suppliers`; API + UI create/deactivate                                | Edit/reactivate UI                                | P2              | —                |
 | Supplier↔SKU mappings                      | PRC-02    | **COMPLETE**          | `supplier_products`                                                    | Mapping deactivate API/UI                         | P3              | —                |
-| Purchase orders lifecycle                  | PRC-03    | **COMPLETE**          | draft→ordered→partial→received; cancel rules                           | Draft line amend                                  | **P1 deepen**   | Suppliers        |
+| Purchase orders lifecycle                  | PRC-03    | **COMPLETE**          | draft→ordered→partial→received; cancel rules                           | —                                                 | —               | Suppliers        |
 | Partial/full receive → stock               | PRC-04    | **COMPLETE**          | `applyPurchaseReceiptStock`; idempotency                               | Reject non-tracked at PO create                   | P2              | INV              |
 | Last purchase cost update                  | PRC-05    | **COMPLETE**          | REAL + cost_cents on receive                                           | WAC/FIFO                                          | DEFERRED        | —                |
-| Draft PO line edit                         | PRC-DRAFT | **MISSING**           | Create-only lines                                                      | PATCH lines before ordered                        | **P1 deepen**   | PRC-03           |
+| Draft PO line edit                         | PRC-DRAFT | **COMPLETE**          | `PUT …/purchase-orders/:id/lines` draft-only; FE amend on purchasing   | —                                                 | —               | PRC-03           |
 | Purchase returns                           | PRC-RET   | **MISSING**           | —                                                                      | Thin return slice                                 | DEFERRED        | Auth             |
 | Auto-reorder                               | PRC-REO   | **DEFERRED**          | —                                                                      | Later                                             | Later           | Demand data      |
 | Stock transfer                             | INV-XFER  | **DEFERRED**          | Matrix Planned                                                         | Single-location only                              | Frozen-adjacent | Multi-loc Frozen |
@@ -111,44 +111,46 @@ UI hubs: /products/{low-stock,counts,movements,valuation,recipes,purchasing}
 
 ## Critical gaps (not rebuilds)
 
-| Priority         | Gap                                            | Why it matters                                           |
-| ---------------- | ---------------------------------------------- | -------------------------------------------------------- |
-| **P1**           | Draft PO line amend                            | Forces cancel+recreate; ops friction on core procurement |
-| **P2**           | Movements CSV / ledger-check UI                | Ops/audit export                                         |
-| **P2**           | Soft FK on recipe ingredients                  | Integrity                                                |
-| **P2**           | Supplier edit/reactivate UI                    | API ahead of UI                                          |
-| **P3**           | Promote r4/r5/r6 suites to merge               | Regression signal                                        |
-| **Frozen/Later** | Transfer, expiry, multi-loc, WAC, auto-reorder | Do not start                                             |
+| Priority         | Gap                                            | Why it matters    |
+| ---------------- | ---------------------------------------------- | ----------------- |
+| **P2**           | Movements CSV / ledger-check UI                | Ops/audit export  |
+| **P2**           | Soft FK on recipe ingredients                  | Integrity         |
+| **P2**           | Supplier edit/reactivate UI                    | API ahead of UI   |
+| **P3**           | Promote r4/r5/r6 suites to merge               | Regression signal |
+| **Frozen/Later** | Transfer, expiry, multi-loc, WAC, auto-reorder | Do not start      |
 
 No inventory **P0** integrity hole found post-P16/P17 for the shipped core paths.
 
 ---
 
-## Recommended first feature
+## Shipped deepen (2026-08-21)
 
-### Feature: Recipe consumptions list UI (RCP-05 thin) — **SHIPPED**
+### Feature: Recipe consumptions list UI (RCP-05) — **SHIPPED**
 
 | Field            | Value                                                                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------- |
 | **Status**       | **COMPLETE** — `/products/recipes/consumptions`; `listRecipeConsumptions`; filters `order_id` + `limit` |
 | **Out of scope** | Actual-vs-theoretical BI, addon BOM, WAC, transfers, QR-ORD-IDEM                                        |
 
+### Feature: Draft PO line amend (PRC-DRAFT) — **SHIPPED**
+
+| Field            | Value                                                                                                                              |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Status**       | **COMPLETE** — `PUT /api/purchasing/purchase-orders/:id/lines` draft-only; FE amend on `/products/purchasing`; no inventory impact |
+| **Editable**     | `product_id`, `purchase_unit`, `ordered_qty`, `unit_cost_cents`, optional `tax_cents` (full line replace)                          |
+| **Not editable** | Non-draft POs; `received_qty`; line IDs (replaced); inventory                                                                      |
+| **Concurrency**  | No optimistic version field on PO; last-write-wins on concurrent draft edits (documented; no new mechanism)                        |
+
 ### Next deepen candidate
 
-**Draft PO line amend (PRC-DRAFT)** — procurement UX; draft lines still cancel+recreate.
-
----
-
-## Proposed implementation (recommendation only — not started)
-
-Superseded by RCP-05 ship: FE at `/products/recipes/consumptions`; API unchanged; schema still v88.
+**Movements CSV / ledger-check UI** or **supplier edit/reactivate UI** (P2).
 
 ---
 
 ## Recommendation
 
 ```text
-PROCEED — authorize next deepen (draft PO line amend) when ready
+PROCEED — authorize next P2 deepen when ready
 ```
 
 **Do not** start multi-location, transfers, signing, or QR-ORD-IDEM.  

@@ -18,6 +18,7 @@ import {
   listSuppliers,
   PurchasingServiceError,
   receivePurchaseOrder,
+  replacePurchaseOrderLines,
   transitionPurchaseOrderStatus,
   updateSupplier,
   upsertSupplierProduct,
@@ -25,6 +26,7 @@ import {
 } from '../services/purchasing';
 import {
   purchaseOrderCreateBodySchema,
+  purchaseOrderLinesReplaceBodySchema,
   purchaseOrderStatusBodySchema,
   purchaseReceiveBodySchema,
   supplierCreateBodySchema,
@@ -201,6 +203,22 @@ router.get('/purchase-orders/:id', requireRole('owner', 'manager', 'chef'), (req
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+router.put(
+  '/purchase-orders/:id/lines',
+  requireRole('owner', 'manager'),
+  validateBody(purchaseOrderLinesReplaceBodySchema),
+  (req, res) => {
+    try {
+      const result = replacePurchaseOrderLines(routeParam(req.params.id), req.body, actorId(req));
+      res.json(result);
+    } catch (error: unknown) {
+      if (mapError(error, res)) return;
+      console.error('[API] PO lines replace error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 router.get('/purchase-orders/:id/receipts', requireRole('owner', 'manager', 'chef'), (req, res) => {
   try {

@@ -25,6 +25,7 @@ import {
   listSupplierProducts,
   listSuppliers,
   receivePurchaseOrder,
+  replacePurchaseOrderLines,
   setPurchaseOrderStatus,
   type PurchaseOrder,
   type PurchaseOrderLine,
@@ -115,6 +116,21 @@ export default function PurchasingPage() {
     }>
   >([]);
 
+  /** Editable copy of lines for draft POs (PRC-DRAFT). */
+  const [amendLines, setAmendLines] = useState<
+    Array<{
+      product_id: string;
+      purchase_unit: string;
+      ordered_qty: number;
+      unit_cost_cents: number;
+      name?: string;
+    }>
+  >([]);
+  const [amendProductId, setAmendProductId] = useState('');
+  const [amendUnit, setAmendUnit] = useState('kg');
+  const [amendQty, setAmendQty] = useState('');
+  const [amendCost, setAmendCost] = useState('');
+
   const [receiveOpen, setReceiveOpen] = useState(false);
   const [receiveQtyByLine, setReceiveQtyByLine] = useState<Record<string, string>>({});
 
@@ -177,17 +193,31 @@ export default function PurchasingPage() {
         setPoLines(data.lines);
         const receiptRows = await listPurchaseOrderReceipts(poId, signal);
         setReceipts(receiptRows);
+        if (data.purchase_order.status === 'draft') {
+          setAmendLines(
+            data.lines.map((l) => ({
+              product_id: l.product_id,
+              purchase_unit: l.purchase_unit,
+              ordered_qty: Number(l.ordered_qty),
+              unit_cost_cents: Number(l.unit_cost_cents),
+              name: l.product_name || productName(l.product_id),
+            })),
+          );
+        } else {
+          setAmendLines([]);
+        }
       } catch (err: unknown) {
         if ((err as { name?: string })?.name === 'CanceledError') return;
         toast.error(apiError(err, t('purchasing.loadPoFailed')));
         setPoDetail(null);
         setPoLines([]);
         setReceipts([]);
+        setAmendLines([]);
       } finally {
         setLoadingPoDetail(false);
       }
     },
-    [t],
+    [t, productName],
   );
 
   useEffect(() => {
@@ -230,6 +260,7 @@ export default function PurchasingPage() {
       setPoDetail(null);
       setPoLines([]);
       setReceipts([]);
+      setAmendLines([]);
       return;
     }
     const ac = new AbortController();
@@ -391,6 +422,54 @@ export default function PurchasingPage() {
       await loadPoDetail(selectedPoId);
     } catch (err: unknown) {
       toast.error(apiError(err, t('purchasing.poStatusFailed')));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function addAmendLine() {
+    const qty = Number(amendQty);
+    const costParsed = parseCurrencyInputToCents(amendCost);
+    if (!amendProductId || !(qty > 0) || !costParsed.ok) {
+      toast.error(t('purchasing.poLineInvalid'));
+      return;
+    }
+    setAmendLines((prev) => [
+      ...prev.filter((l) => l.product_id !== amendProductId),
+      {
+        product_id: amendProductId,
+        purchase_unit: amendUnit,
+        ordered_qty: qty,
+        unit_cost_cents: costParsed.cents,
+        name: productName(amendProductId),
+      },
+    ]);
+    setAmendProductId('');
+    setAmendQty('');
+    setAmendCost('');
+  }
+
+  async function handleSaveAmendLines() {
+    if (!selectedPoId || poDetail?.status !== 'draft') return;
+    if (amendLines.length === 0) {
+      toast.error(t('purchasing.poCreateInvalid'));
+      return;
+    }
+    setBusy(true);
+    try {
+      await replacePurchaseOrderLines(selectedPoId, {
+        lines: amendLines.map((l) => ({
+          product_id: l.product_id,
+          purchase_unit: l.purchase_unit,
+          ordered_qty: l.ordered_qty,
+          unit_cost_cents: l.unit_cost_cents,
+        })),
+      });
+      toast.success(t('purchasing.linesSaved'));
+      await refreshOrders();
+      await loadPoDetail(selectedPoId);
+    } catch (err: unknown) {
+      toast.error(apiError(err, t('purchasing.linesSaveFailed')));
     } finally {
       setBusy(false);
     }
@@ -875,6 +954,106 @@ export default function PurchasingPage() {
                   </table>
                 </div>
               )}
+
+              {canOrder ? (
+                <div className="space-y-3 rounded-md border border-flo-border p-3">
+                  <h3 className="text-sm font-semibold">{t('purchasing.amendLinesTitle')}</h3>
+                  <p className="text-xs text-muted-foreground">{t('purchasing.amendLinesHint')}</p>
+                  {amendLines.length > 0 ? (
+                    <ul className="space-y-1 text-sm">
+                      {amendLines.map((l) => (
+                        <li
+                          key={l.product_id}
+                          className="flex flex-wrap items-center justify-between gap-2 border-b border-flo-border/50 py-1"
+                        >
+                          <span>
+                            {l.name || productName(l.product_id)} · {l.ordered_qty}{' '}
+                            {l.purchase_unit} · {money(l.unit_cost_cents)}
+                          </span>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            disabled={busy}
+                            onClick={() =>
+                              setAmendLines((prev) =>
+                                prev.filter((x) => x.product_id !== l.product_id),
+                              )
+                            }
+                          >
+                            {t('purchasing.removeLine')}
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{t('purchasing.noLines')}</p>
+                  )}
+                  <div className="grid gap-2 sm:grid-cols-4">
+                    <select
+                      className={inputClass}
+                      value={amendProductId}
+                      onChange={(e) => setAmendProductId(e.target.value)}
+                      aria-label={t('purchasing.product')}
+                    >
+                      <option value="">{t('purchasing.selectProduct')}</option>
+                      {products.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      className={inputClass}
+                      value={amendUnit}
+                      onChange={(e) => setAmendUnit(e.target.value)}
+                      aria-label={t('purchasing.unit')}
+                    >
+                      {PURCHASE_UNITS.map((u) => (
+                        <option key={u} value={u}>
+                          {u}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      className={inputClass}
+                      inputMode="decimal"
+                      placeholder={t('purchasing.qty')}
+                      value={amendQty}
+                      onChange={(e) => setAmendQty(e.target.value)}
+                      aria-label={t('purchasing.qty')}
+                    />
+                    <input
+                      className={inputClass}
+                      inputMode="decimal"
+                      placeholder={t('purchasing.unitCost')}
+                      value={amendCost}
+                      onChange={(e) => setAmendCost(e.target.value)}
+                      aria-label={t('purchasing.unitCost')}
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={busy}
+                      onClick={addAmendLine}
+                    >
+                      <Plus className="mr-1 h-4 w-4" />
+                      {t('purchasing.addLine')}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={busy || amendLines.length === 0}
+                      onClick={() => void handleSaveAmendLines()}
+                    >
+                      {t('purchasing.saveLines')}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
 
               {receipts.length > 0 ? (
                 <div className="text-xs text-muted-foreground">
