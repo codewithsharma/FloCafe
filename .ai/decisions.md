@@ -1,6 +1,8 @@
 # Decisions
 
-## 2026-08-21 — R16 / OPS-02 eng gate (PARTIAL — CONDITIONAL GO)
+## 2026-08-21 — ADR-015 Recipe-linked waste (ROPS-RWASTE) — Proposed (design only)
+
+Policy ADR: `docs/14-decisions/ADR-015-recipe-linked-waste.md`. Separate from SKU wastage and sale `recipe_consumptions`. v1 = waste N portions of active recipe; ledger `adjustment` + `reason=recipe_waste*`; cost snapshots; food-cost % unchanged; schema v89 required only after Accept + implement auth. No code/schema in this step. Sibling ROPS-REFREV remains separate.
 
 Docs: `docs/qa/OPS-02-PRODUCTION-GAP-MATRIX.md`, `OPS-02-RELEASE-GATES.md`, `OPS-02-TEST-EXECUTION-REPORT.md`, `OPS-02-MANUAL-TEST-MATRIX.md`, `OPS-02-FINAL-REPORT.md`. Eng fixes only: health version from package.json; `notifyKdsUpdate` → KDS outbox enqueue; recovery tier includes REC-01; stale P18/P15 test helpers. QR-ORD-IDEM not authorized. Live NO-GO until signed RC + site + escrow + sign-off. Score **78/100**.
 
