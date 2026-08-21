@@ -370,7 +370,7 @@ R8 (2026-08-15) deepened Existing staff management (search/filter, detail, shift
 | Authentication            | 🟢 Existing  |
 | Authorization             | 🟡 Hardening |
 | Role-based access         | 🟡 Hardening |
-| Sensitive-action controls | 🔵 Planned   |
+| Sensitive-action controls | 🟢 Existing  |
 | Audit trail               | 🟢 Existing  |
 | Financial auditability    | 🟢 Existing  |
 
@@ -534,7 +534,7 @@ Remaining after H2 (not falsely marked Existing): durable offline ticket outbox,
 | Authorization     | 🟡 Hardening | Same server `requireRole` + UI gates; test `createApp` uses DB role over JWT claim                                                  |
 | Role-based access | 🟡 Hardening | Role gates aligned on cancel/restore/status + discount/settings; no auth rewrite                                                    |
 
-Remaining after H3 (not falsely marked Existing): Sensitive-action controls (Planned); authz-denial audit flood; cashier in-progress void UI; manager settings save UX quirks; broader audit-trail Hardening.
+Remaining after H3 (not falsely marked Existing): authz-denial audit flood; cashier in-progress void UI; manager settings save UX quirks; broader audit-trail Hardening. **Sensitive-action controls closed by P15 (2026-08-21)** — see `docs/qa/P15-SENSITIVE-ACTION-CONTROLS-IMPLEMENTATION-REPORT.md`.
 
 ### H4 delivered depth (2026-08-15)
 

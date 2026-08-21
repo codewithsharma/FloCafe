@@ -146,6 +146,11 @@ export function registerCancelRoutes(router: Router): void {
           const isPrivilegedRole = ['owner', 'manager'].includes(userRole);
           const canUseOverride = ['cashier', 'waiter'].includes(userRole) && isInProgressVoid;
           let pinApproverId: string | null = null;
+          const actorUserId = authUser.userId ?? null;
+          const auditContext = {
+            requestId: correlationId(),
+            clientIp: req.ip || req.socket.remoteAddress || null,
+          };
           if (!isPrivilegedRole && !canUseOverride) {
             return res.status(403).json({ error: 'Only owner or manager can cancel this item' });
           }
@@ -190,16 +195,20 @@ export function registerCancelRoutes(router: Router): void {
               }
             }
             if (!pinUser) {
+              logAuditEvent({
+                actorUserId,
+                action: 'order.item_void_pin_failed',
+                entityType: 'order_item',
+                entityId: itemId,
+                result: 'failure',
+                reason: 'invalid_manager_pin',
+                metadata: { order_id: orderId, item_status: item.status },
+                context: auditContext,
+              });
               return res.status(403).json({ error: 'Invalid manager PIN' });
             }
             pinApproverId = String(pinUser.id);
           }
-
-          const auditContext = {
-            requestId: correlationId(),
-            clientIp: req.ip || req.socket.remoteAddress || null,
-          };
-          const actorUserId = getAuthUser(req)?.userId ?? null;
 
           // BUG #17 FIX: Wrap cancel + total recalc in transaction
           const result = withTxn(() => {

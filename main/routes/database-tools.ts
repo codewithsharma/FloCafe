@@ -1,10 +1,16 @@
 import { Router, Request, Response } from 'express';
 import { resetDatabaseWithBackup, listBackups, deleteBackup } from '../db';
-import { clearInMemoryRevokedTokens, clearUserAuthCache, requireRole } from '../middleware/security';
+import {
+  clearInMemoryRevokedTokens,
+  clearUserAuthCache,
+  requireRole,
+} from '../middleware/security';
 import { requireMasterPin } from '../middleware/master-pin';
 import { runHealthCheck, applySafeFixes } from '../services/schema-health';
 import { isMasterPinAvailable, isMasterPinSet, resetMasterPin } from '../services/master-pin';
 import { clearJWTSecretCache } from './auth';
+import { logAuditEvent } from '../services/audit-log';
+import { correlationId } from '../errors';
 
 const router = Router();
 
@@ -42,15 +48,20 @@ router.get('/backups', requireRole('owner'), (_req: Request, res: Response) => {
 // Deletes one backup from the managed backups/ directory (#120) — same
 // master-PIN gate as creating one, since a backup is the safety net a
 // restore/initialize depends on.
-router.post('/backups/:fileName/delete', requireRole('owner'), requireMasterPin, (req: Request, res: Response) => {
-  try {
-    deleteBackup(req.params.fileName as string);
-    res.json({ success: true });
-  } catch (error: any) {
-    console.error('[DB Tools] delete backup error:', error);
-    res.status(400).json({ error: 'Deleting backup failed' });
-  }
-});
+router.post(
+  '/backups/:fileName/delete',
+  requireRole('owner'),
+  requireMasterPin,
+  (req: Request, res: Response) => {
+    try {
+      deleteBackup(req.params.fileName as string);
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('[DB Tools] delete backup error:', error);
+      res.status(400).json({ error: 'Deleting backup failed' });
+    }
+  },
+);
 
 router.get('/master-pin/status', requireRole('owner'), (_req: Request, res: Response) => {
   res.json({ available: isMasterPinAvailable(), isSet: isMasterPinSet() });
@@ -69,7 +80,21 @@ router.post('/master-pin/reset', requireRole('owner'), (req: Request, res: Respo
     return res.status(409).json({ error: 'Master PIN is not available on this device' });
   }
   try {
+    const wasSet = isMasterPinSet();
     resetMasterPin(cleanPin);
+    const actorUserId = (req as { user?: { userId?: string } }).user?.userId ?? null;
+    logAuditEvent({
+      actorUserId,
+      action: 'master_pin.reset',
+      entityType: 'security',
+      entityId: 'master_pin',
+      result: 'success',
+      metadata: { previously_set: wasSet },
+      context: {
+        requestId: correlationId(),
+        clientIp: req.ip || req.socket.remoteAddress || null,
+      },
+    });
     res.json({ success: true });
   } catch (error: any) {
     console.error('[DB Tools] set Master PIN error:', error);
@@ -79,20 +104,25 @@ router.post('/master-pin/reset', requireRole('owner'), (req: Request, res: Respo
 
 const INITIALIZE_CONFIRM_PHRASE = 'INITIALIZE';
 
-router.post('/initialize', requireRole('owner'), requireMasterPin, async (req: Request, res: Response) => {
-  if (req.body?.confirmation_phrase !== INITIALIZE_CONFIRM_PHRASE) {
-    return res.status(400).json({ error: `Type "${INITIALIZE_CONFIRM_PHRASE}" to confirm` });
-  }
-  try {
-    const { backupPath } = await resetDatabaseWithBackup();
-    clearUserAuthCache();
-    clearInMemoryRevokedTokens();
-    clearJWTSecretCache();
-    res.json({ success: true, backupPath });
-  } catch (error: any) {
-    console.error('[DB Tools] initialize error:', error);
-    res.status(500).json({ error: 'Initialize failed' });
-  }
-});
+router.post(
+  '/initialize',
+  requireRole('owner'),
+  requireMasterPin,
+  async (req: Request, res: Response) => {
+    if (req.body?.confirmation_phrase !== INITIALIZE_CONFIRM_PHRASE) {
+      return res.status(400).json({ error: `Type "${INITIALIZE_CONFIRM_PHRASE}" to confirm` });
+    }
+    try {
+      const { backupPath } = await resetDatabaseWithBackup();
+      clearUserAuthCache();
+      clearInMemoryRevokedTokens();
+      clearJWTSecretCache();
+      res.json({ success: true, backupPath });
+    } catch (error: any) {
+      console.error('[DB Tools] initialize error:', error);
+      res.status(500).json({ error: 'Initialize failed' });
+    }
+  },
+);
 
 export const databaseToolsRoutes = router;

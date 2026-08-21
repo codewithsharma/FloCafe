@@ -26,8 +26,10 @@ import {
   requireRole,
 } from '../middleware/security';
 import { requireMasterPin } from '../middleware/master-pin';
+import { authorizeMasterPin } from '../services/master-pin';
 import { clearJWTSecretCache } from './auth';
 import { logAuditEvent } from '../services/audit-log';
+import { correlationId } from '../errors';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -123,6 +125,22 @@ router.get('/export', requireRole('owner'), (req: Request, res: Response) => {
 
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    const actorUserId = (req as { user?: { userId?: string } }).user?.userId ?? null;
+    logAuditEvent({
+      actorUserId,
+      action: 'db.exported',
+      entityType: 'database',
+      entityId: 'export',
+      result: 'success',
+      metadata: {
+        schema_version: String(getCurrentSchemaVersion()),
+        redacted_field_count: result.redactedFields.length,
+      },
+      context: {
+        requestId: correlationId(),
+        clientIp: req.ip || req.socket.remoteAddress || null,
+      },
+    });
     res.json({
       version: 1,
       app: 'FloDesktop',
@@ -234,8 +252,19 @@ router.post(
           });
         }
 
-        const { path: backupPath } = await createBackupUnlocked();
         const hasVersionMismatch = importSchemaVersion !== getCurrentSchemaVersion();
+        const destructive = Boolean(overwrite) || hasVersionMismatch;
+
+        // P15: schema-mismatch wipe path also requires Master PIN (overwrite already gated).
+        if (hasVersionMismatch && !overwrite) {
+          const ip = req.ip || req.socket.remoteAddress || 'unknown';
+          const pinResult = authorizeMasterPin(req.body?.master_pin, `http:${ip}:/api/db/import`);
+          if (!pinResult.ok) {
+            return res.status(pinResult.status).json({ error: pinResult.error });
+          }
+        }
+
+        const { path: backupPath } = await createBackupUnlocked();
 
         if (hasVersionMismatch) {
           console.log(
@@ -357,6 +386,26 @@ router.post(
             clearUserAuthCache();
             clearInMemoryRevokedTokens();
             clearJWTSecretCache();
+            const actorUserId = (req as { user?: { userId?: string } }).user?.userId ?? null;
+            logAuditEvent({
+              actorUserId,
+              action: 'db.imported',
+              entityType: 'database',
+              entityId: 'import',
+              result: 'success',
+              metadata: {
+                overwrite: Boolean(overwrite),
+                schema_version_mismatch: hasVersionMismatch,
+                imported_schema_version: importSchemaVersion,
+                current_schema_version: getCurrentSchemaVersion(),
+                destructive,
+                backup: backupPath || null,
+              },
+              context: {
+                requestId: correlationId(),
+                clientIp: req.ip || req.socket.remoteAddress || null,
+              },
+            });
             res.json({
               success: true,
               message: hasVersionMismatch

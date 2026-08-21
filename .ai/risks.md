@@ -2,6 +2,7 @@
 
 ## Active program notes (2026-08-21)
 
+- ⚠️ RISK: **P15** does not cover served-item soft-cancel policy, cashier void UI, IPC restore null actor, or authz-denial audit flood.
 - ⚠️ RISK: **P14** clients omitting `expected_status` can still last-writer-win on *forward* order-status races; prefer sending `expected_status`. Not full offline/disaster recovery.
 - ⚠️ RISK: **Audit_logs append-only is convention-only** (no UPDATE/DELETE deny triggers yet — R12 fixtures rewrite `created_at`).
 - ⚠️ RISK: **RPT-CATEGORY / RPT-PRODUCT** merchandise ≠ app Gross Sales; category is live join (not snapshotted). Operators must read the clarity notes.

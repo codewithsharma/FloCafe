@@ -198,6 +198,7 @@ export function registerStatusRoutes(router: Router): void {
           (currentStatusIndex > 0 || hasItemsInProgress || authUser?.role === 'chef') &&
           status === 'cancelled';
 
+        let pinApproverId: string | null = null;
         if (requiresOverride) {
           if (!override_pin) {
             return res
@@ -215,16 +216,31 @@ export function registerStatusRoutes(router: Router): void {
           }
 
           // Validate PIN against active owner/manager accounts only
-          const user = db
+          const pinUser = db
             .prepare(
               "SELECT * FROM users WHERE is_active = 1 AND pin_hash IS NOT NULL AND role IN ('owner', 'manager')",
             )
             .all()
             .find((u: any) => verifyPin(u.pin_hash, override_pin));
 
-          if (!user) {
+          if (!pinUser) {
+            // P15: failure audit — no PIN material in metadata.
+            logAuditEvent({
+              actorUserId: authUser?.userId ?? null,
+              action: 'order.cancel_pin_failed',
+              entityType: 'order',
+              entityId: orderId,
+              result: 'failure',
+              reason: 'invalid_manager_pin',
+              metadata: { status: order.status },
+              context: {
+                requestId: correlationId(),
+                clientIp: req.ip || req.socket.remoteAddress || null,
+              },
+            });
             return res.status(403).json({ error: 'Invalid manager PIN' });
           }
+          pinApproverId = String((pinUser as { id: string | number }).id);
         }
 
         const nowStr = now();
@@ -418,6 +434,7 @@ export function registerStatusRoutes(router: Router): void {
                 metadata: {
                   previous_status: locked.status,
                   reason: reason || null,
+                  ...(pinApproverId ? { pin_approved_by: pinApproverId } : {}),
                 },
                 context: {
                   requestId: correlationId(),

@@ -9,6 +9,8 @@
 
 **P8 note (2026-08-21):** KDS-ALERTS Sound & visual alerts — FE-only seen-`order_item.id` tracker; suite `npm run test:kds-alerts`. Status: **Implemented / Hardening verified**. Schema tip remains **v88**.
 
+**P15 note (2026-08-21):** SEC-SENSITIVE-ACTIONS — bill discount tender guard; cancel/void PIN accountability; LAN network_mode owner+Master PIN; Drive/export/import/master-pin audits; `pin_approved_by` sanitizer allowlist; suite `npm run test:p15`. Schema tip **v88**. Matrix Sensitive-action controls → **🟢 Existing**. Authorization / RBAC remain **🟡 Hardening**.
+
 **P14 note (2026-08-21):** POS-OFFLINE-CONFLICT-HARDENING — order-status CAS + payment-complete guard; stock FE Idempotency-Key stability; POS/KDS conflict retry hygiene; suite `npm run test:p14`. Schema tip remains **v88**. Matrix Offline Conflict handling / App restart recovery remain **🟡 Hardening**.
 
 **P13 note (2026-08-21):** DATA-AUDIT-HARDENING — audit atomicity deepen (bill discount, order create/item discount/restore in-txn, print retry false-success removed, payment-method merge audited); suite `npm run test:data-audit`. Schema tip remains **v88**. Matrix Audit logging / Data integrity validation remain **🟡 Hardening**.
@@ -38,6 +40,7 @@
 | AUTH-05 | Auth          | JWT secret rotate / recover                       | `/recovery`, `/settings`           | `POST /api/auth/jwt-secret/rotate\|recover`                                                           | install / safeStorage                                                         | owner                                   | Existing  |
 | AUTH-06 | Auth          | Health endpoint                                   | n/a                                | `GET /api/health`                                                                                     | integrity latch                                                               | public                                  | Existing  |
 | AUTH-07 | Auth          | Authorization / RBAC / role-based access          | all gated screens                  | `requireAuth` + `requireRole`                                                                         | `users.role`                                                                  | all                                     | Hardening |
+| AUTH-08 | Auth          | Sensitive-action controls (P15)                   | Settings / POS / DB tools          | Master PIN + PIN override accountability + tender guards                                              | `audit_logs`, settings, orders                                                | owner (+ PIN paths)                     | Existing  |
 | DASH-01 | Dashboard     | Owner management home (stats / insights)          | `/dashboard`                       | `GET /api/reports/daily-stats\|summary\|insights`                                                     | `orders`, `bills`, `shifts`                                                   | owner, manager                          | Existing  |
 | DASH-02 | Dashboard     | Recent orders / tables snapshot                   | `/dashboard`                       | `GET /api/reports/recentOrders\|tables`                                                               | `orders`, `tables`                                                            | owner, manager                          | Existing  |
 | POS-01  | POS           | Order creation + items                            | `/pos`                             | `POST /api/orders`, `POST /api/orders/:id/items`                                                      | `orders`, `order_items`, `order_item_addons`, `order_idempotency`             | owner, manager, cashier, waiter         | Existing  |
@@ -228,7 +231,6 @@ Do **not** treat these capability-matrix rows as QA pass/fail requirements for t
 - Self-ordering; customer notifications; rider/delivery status tracking
 - Product/category/discount/staff/KDS/customer analytics reports; management dashboard; profitability
 - Device failure recovery; printer recovery; disaster recovery; health/error/ops monitoring as Planned
-- Sensitive-action controls (beyond current PIN gates)
 - Incident / device-setup procedures as Planned ops rows
 
 ---

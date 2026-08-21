@@ -14,9 +14,12 @@ import {
 } from '../validation/settings';
 import { requireRole } from '../middleware/security';
 import { requireMasterPin } from '../middleware/master-pin';
+import { authorizeMasterPin } from '../services/master-pin';
 import { validateTaxRegistrationNumber } from '../services/tax';
 import { sendEvent, telemetry } from '../services/telemetry';
 import { recordDiagnosticsConsent, recordTelemetryConsent } from '../services/privacy-consent';
+import { logAuditEvent } from '../services/audit-log';
+import { correlationId } from '../errors';
 
 const router = Router();
 
@@ -305,40 +308,45 @@ router.get(
   },
 );
 
-router.put('/loyalty', requireRole('owner', 'manager'), validateBody(settingsLoyaltyBodySchema), (req: Request, res: Response) => {
-  try {
-    const { loyalty_enabled, global_cashback_percent } = req.body;
+router.put(
+  '/loyalty',
+  requireRole('owner', 'manager'),
+  validateBody(settingsLoyaltyBodySchema),
+  (req: Request, res: Response) => {
+    try {
+      const { loyalty_enabled, global_cashback_percent } = req.body;
 
-    let finalGlobalCb: number | undefined = undefined;
-    if (global_cashback_percent !== undefined) {
-      if (
-        typeof global_cashback_percent !== 'number' ||
-        !Number.isFinite(global_cashback_percent) ||
-        global_cashback_percent < 0 ||
-        global_cashback_percent > 100
-      ) {
-        return res
-          .status(400)
-          .json({ error: 'Global cashback percent must be a number between 0 and 100' });
+      let finalGlobalCb: number | undefined = undefined;
+      if (global_cashback_percent !== undefined) {
+        if (
+          typeof global_cashback_percent !== 'number' ||
+          !Number.isFinite(global_cashback_percent) ||
+          global_cashback_percent < 0 ||
+          global_cashback_percent > 100
+        ) {
+          return res
+            .status(400)
+            .json({ error: 'Global cashback percent must be a number between 0 and 100' });
+        }
+        finalGlobalCb = global_cashback_percent;
       }
-      finalGlobalCb = global_cashback_percent;
-    }
 
-    const db = getDatabase();
-    upsertSettings(db, {
-      loyalty_enabled,
-      ...(finalGlobalCb !== undefined && { global_cashback_percent: String(finalGlobalCb) }),
-    });
-    const s = getAllSettings(db);
-    res.json({
-      loyalty_enabled: s.loyalty_enabled === 'true' || s.loyalty_enabled === '1',
-      global_cashback_percent: parseFloat(s.global_cashback_percent || '0'),
-    });
-  } catch (error: unknown) {
-    console.error('[API] Internal error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+      const db = getDatabase();
+      upsertSettings(db, {
+        loyalty_enabled,
+        ...(finalGlobalCb !== undefined && { global_cashback_percent: String(finalGlobalCb) }),
+      });
+      const s = getAllSettings(db);
+      res.json({
+        loyalty_enabled: s.loyalty_enabled === 'true' || s.loyalty_enabled === '1',
+        global_cashback_percent: parseFloat(s.global_cashback_percent || '0'),
+      });
+    } catch (error: unknown) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 // ─── Discount settings ──────────────────────────────────────────────────────
 
@@ -362,61 +370,66 @@ router.get(
   },
 );
 
-router.put('/discount', requireRole('owner', 'manager'), validateBody(settingsDiscountBodySchema), (req: Request, res: Response) => {
-  try {
-    const {
-      discount_max_percentage,
-      discount_max_amount,
-      discount_mode,
-      discount_requires_approval,
-    } = req.body;
+router.put(
+  '/discount',
+  requireRole('owner', 'manager'),
+  validateBody(settingsDiscountBodySchema),
+  (req: Request, res: Response) => {
+    try {
+      const {
+        discount_max_percentage,
+        discount_max_amount,
+        discount_mode,
+        discount_requires_approval,
+      } = req.body;
 
-    // Validate inputs
-    if (discount_max_percentage !== undefined) {
-      const val = parseFloat(discount_max_percentage);
-      if (isNaN(val) || val < 1 || val > 100) {
+      // Validate inputs
+      if (discount_max_percentage !== undefined) {
+        const val = parseFloat(discount_max_percentage);
+        if (isNaN(val) || val < 1 || val > 100) {
+          return res
+            .status(400)
+            .json({ error: 'discount_max_percentage must be a number between 1 and 100' });
+        }
+      }
+      if (discount_max_amount !== undefined) {
+        const val = parseFloat(discount_max_amount);
+        if (isNaN(val) || val < 0 || val > 999999) {
+          return res
+            .status(400)
+            .json({ error: 'discount_max_amount must be a number between 0 and 999999' });
+        }
+      }
+      if (discount_mode !== undefined && !['percentage', 'flat', 'both'].includes(discount_mode)) {
         return res
           .status(400)
-          .json({ error: 'discount_max_percentage must be a number between 1 and 100' });
+          .json({ error: 'discount_mode must be "percentage", "flat", or "both"' });
       }
-    }
-    if (discount_max_amount !== undefined) {
-      const val = parseFloat(discount_max_amount);
-      if (isNaN(val) || val < 0 || val > 999999) {
-        return res
-          .status(400)
-          .json({ error: 'discount_max_amount must be a number between 0 and 999999' });
-      }
-    }
-    if (discount_mode !== undefined && !['percentage', 'flat', 'both'].includes(discount_mode)) {
-      return res
-        .status(400)
-        .json({ error: 'discount_mode must be "percentage", "flat", or "both"' });
-    }
 
-    const db = getDatabase();
-    upsertSettings(db, {
-      discount_max_percentage,
-      discount_max_amount,
-      discount_mode,
-      discount_requires_approval:
-        discount_requires_approval === true || discount_requires_approval === 'true'
-          ? 'true'
-          : 'false',
-    });
-    const s = getAllSettings(db);
-    res.json({
-      discount_max_percentage: parseFloat(s.discount_max_percentage || '25'),
-      discount_max_amount: parseFloat(s.discount_max_amount || '0'),
-      discount_mode: s.discount_mode || 'percentage',
-      discount_requires_approval:
-        s.discount_requires_approval === 'true' || s.discount_requires_approval === '1',
-    });
-  } catch (error: unknown) {
-    console.error('[API] Internal error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+      const db = getDatabase();
+      upsertSettings(db, {
+        discount_max_percentage,
+        discount_max_amount,
+        discount_mode,
+        discount_requires_approval:
+          discount_requires_approval === true || discount_requires_approval === 'true'
+            ? 'true'
+            : 'false',
+      });
+      const s = getAllSettings(db);
+      res.json({
+        discount_max_percentage: parseFloat(s.discount_max_percentage || '25'),
+        discount_max_amount: parseFloat(s.discount_max_amount || '0'),
+        discount_mode: s.discount_mode || 'percentage',
+        discount_requires_approval:
+          s.discount_requires_approval === 'true' || s.discount_requires_approval === '1',
+      });
+    } catch (error: unknown) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 // ─── KDS settings (must come BEFORE /:key wildcard) ─────────────────────────
 
@@ -436,24 +449,29 @@ router.get('/kds', (_req: Request, res: Response) => {
   }
 });
 
-router.put('/kds', requireRole('owner', 'manager'), validateBody(settingsKdsBodySchema), (req: Request, res: Response) => {
-  try {
-    const { kds_default_view } = req.body;
-    if (kds_default_view !== undefined && !['tabs', 'kanban'].includes(kds_default_view)) {
-      return res.status(400).json({ error: 'kds_default_view must be "tabs" or "kanban"' });
+router.put(
+  '/kds',
+  requireRole('owner', 'manager'),
+  validateBody(settingsKdsBodySchema),
+  (req: Request, res: Response) => {
+    try {
+      const { kds_default_view } = req.body;
+      if (kds_default_view !== undefined && !['tabs', 'kanban'].includes(kds_default_view)) {
+        return res.status(400).json({ error: 'kds_default_view must be "tabs" or "kanban"' });
+      }
+      if (kds_default_view !== undefined) {
+        upsertSettings(getDatabase(), { kds_default_view });
+      }
+      const s = getAllSettings(getDatabase());
+      res.json({
+        kds_default_view: s.kds_default_view === 'kanban' ? 'kanban' : 'tabs',
+      });
+    } catch (error: unknown) {
+      console.error('[API] Internal error:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
-    if (kds_default_view !== undefined) {
-      upsertSettings(getDatabase(), { kds_default_view });
-    }
-    const s = getAllSettings(getDatabase());
-    res.json({
-      kds_default_view: s.kds_default_view === 'kanban' ? 'kanban' : 'tabs',
-    });
-  } catch (error: unknown) {
-    console.error('[API] Internal error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+  },
+);
 
 // ─── Order numbering settings (must come BEFORE /:key wildcard) ─────────────
 
@@ -844,9 +862,22 @@ router.post(
   '/google-drive/backup-now',
   requireRole('owner'),
   requireMasterPin,
-  async (_req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     try {
       const status = await googleDrive.backupNow();
+      const actorUserId = (req as { user?: { userId?: string } }).user?.userId ?? null;
+      logAuditEvent({
+        actorUserId,
+        action: 'backup.created',
+        entityType: 'backup',
+        entityId: 'google-drive',
+        result: 'success',
+        metadata: { channel: 'google_drive', destination: 'google_drive' },
+        context: {
+          requestId: correlationId(),
+          clientIp: req.ip || req.socket.remoteAddress || null,
+        },
+      });
       res.json(status);
     } catch (error: unknown) {
       console.error('[API] Google Drive backup failed:', error);
@@ -979,6 +1010,29 @@ router.put('/:key', requireRole('owner', 'manager'), (req: Request, res: Respons
           code: 'INVALID_NETWORK_MODE',
         });
       }
+      const previous =
+        (
+          db.prepare('SELECT value FROM settings WHERE key = ?').get('network_mode') as
+            { value?: string } | undefined
+        )?.value ?? 'localhost';
+      // P15: expanding LAN bind surface requires owner + Master PIN.
+      if (normalized === 'kds_lan' || normalized === 'lan') {
+        const role = (req as { user?: { role?: string } }).user?.role;
+        if (role !== 'owner') {
+          return res.status(403).json({
+            error: 'Only owner can enable LAN network modes',
+            code: 'NETWORK_MODE_OWNER_REQUIRED',
+          });
+        }
+        const ip = req.ip || req.socket.remoteAddress || 'unknown';
+        const pinResult = authorizeMasterPin(
+          req.body?.master_pin,
+          `http:${ip}:/api/settings/network_mode`,
+        );
+        if (!pinResult.ok) {
+          return res.status(pinResult.status).json({ error: pinResult.error });
+        }
+      }
       db.prepare(
         `
         INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
@@ -986,6 +1040,19 @@ router.put('/:key', requireRole('owner', 'manager'), (req: Request, res: Respons
       `,
       ).run(req.params.key, normalized, now());
       const setting = db.prepare('SELECT * FROM settings WHERE key = ?').get(req.params.key);
+      const actorUserId = (req as { user?: { userId?: string } }).user?.userId ?? null;
+      logAuditEvent({
+        actorUserId,
+        action: 'settings.network_mode_changed',
+        entityType: 'setting',
+        entityId: 'network_mode',
+        result: 'success',
+        metadata: { from: previous, to: normalized },
+        context: {
+          requestId: correlationId(),
+          clientIp: req.ip || req.socket.remoteAddress || null,
+        },
+      });
       return res.json({
         setting,
         restart_required: true,

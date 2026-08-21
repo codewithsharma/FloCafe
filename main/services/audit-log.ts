@@ -32,6 +32,8 @@ export interface AuditLogInput {
 
 const SENSITIVE_KEY_PATTERN =
   /(password|pin|token|secret|authorization|jwt|card|cvv|access_token|refresh_token|api_key|device_secret)/i;
+/** Safe accountability keys that contain sensitive substrings but store only user ids. */
+const AUDIT_METADATA_KEY_ALLOWLIST = new Set(['pin_approved_by', 'override_approved_by']);
 const MAX_ACTION_LENGTH = 128;
 const MAX_ENTITY_TYPE_LENGTH = 64;
 const MAX_ENTITY_ID_LENGTH = 128;
@@ -57,7 +59,7 @@ function sanitizeMetadataValue(value: unknown, depth: number): unknown {
   if (typeof value === 'object') {
     const out: Record<string, unknown> = {};
     for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
-      if (SENSITIVE_KEY_PATTERN.test(key)) continue;
+      if (SENSITIVE_KEY_PATTERN.test(key) && !AUDIT_METADATA_KEY_ALLOWLIST.has(key)) continue;
       out[key] = sanitizeMetadataValue(entry, depth + 1);
     }
     return out;

@@ -65,15 +65,16 @@ Restaurant vertical only (`ACTIVE_VERTICAL_ID=restaurant` or unset). Not mounted
 
 ## Staff & Access Control
 
-| Feature                                   | Status    | Evidence                               | Production readiness   |
-| ----------------------------------------- | --------- | -------------------------------------- | ---------------------- |
-| Roles (owner/manager/cashier/waiter/chef) | [BUILT]   | `users.role`, `main/routes/staff.ts`   | High                   |
-| Staff creation                            | [BUILT]   | `POST /api/staff` or `POST /api/users` | High                   |
-| JWT authentication                        | [BUILT]   | `main/routes/auth.ts`, `jsonwebtoken`  | High                   |
-| Manager PIN overrides                     | [BUILT]   | `manager-pin-verification.test.ts`     | High                   |
-| Master PIN (destructive ops)              | [BUILT]   | `main/services/master-pin.ts`          | High                   |
-| Kitchen station user scoping              | [BUILT]   | `station_users`, KDS tests             | High                   |
-| Permission matrix                         | [PARTIAL] | Role checks per-route; no RBAC table   | High for current model |
+| Feature                                   | Status    | Evidence                                                                                                                       | Production readiness    |
+| ----------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
+| Roles (owner/manager/cashier/waiter/chef) | [BUILT]   | `users.role`, `main/routes/staff.ts`                                                                                           | High                    |
+| Staff creation                            | [BUILT]   | `POST /api/staff` or `POST /api/users`                                                                                         | High                    |
+| JWT authentication                        | [BUILT]   | `main/routes/auth.ts`, `jsonwebtoken`                                                                                          | High                    |
+| Manager PIN overrides                     | [BUILT]   | `manager-pin-verification.test.ts`                                                                                             | High                    |
+| Master PIN (destructive ops)              | [BUILT]   | `main/services/master-pin.ts`                                                                                                  | High                    |
+| Sensitive-action controls (P15)           | [BUILT]   | Bill tender guard; cancel/void PIN audits; LAN Master PIN; export/import audits; `tests/p15-sensitive-action-controls.test.ts` | High — suite `test:p15` |
+| Kitchen station user scoping              | [BUILT]   | `station_users`, KDS tests                                                                                                     | High                    |
+| Permission matrix                         | [PARTIAL] | Role checks per-route; no RBAC table                                                                                           | High for current model  |
 
 ## Kitchen (KOT/KDS)
 

@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-21 — P15 SEC-SENSITIVE-ACTIONS (COMPLETE)
+
+No schema bump (tip **v88**). Bill discount after successful tender → 409; order cancel `pin_approved_by` + failed PIN audits; item void failed PIN audit; audit sanitizer allowlists `pin_approved_by`; Drive backup-now / DB export-import / Master PIN reset audits; LAN `network_mode` owner+Master PIN. Suite `npm run test:p15`. Matrix **Sensitive-action controls → 🟢 Existing**. Authorization / RBAC remain **🟡 Hardening**. LIVE PILOT NO-GO.
+
 ## 2026-08-21 — P14 POS-OFFLINE-CONFLICT-HARDENING (COMPLETE)
 
 No schema bump (tip **v88**). Order-status CAS (`expected_status` + monotonicity → `409 ORDER_STATUS_CONFLICT`); payment settle cannot overwrite cancelled; stock FE stable Idempotency-Key; POS sticky-attempt clear on permanent/409; KDS pending clear on permanent 4xx (backoff unchanged). Suite `npm run test:p14`. Offline Conflict handling / App restart recovery remain **🟡 Hardening**. LIVE PILOT NO-GO.

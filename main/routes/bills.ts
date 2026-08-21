@@ -32,7 +32,7 @@ import {
 } from '../services/tax';
 import { sendEvent } from '../services/telemetry';
 import { readTerminalIdHeaderFromRequest } from '../services/shift';
-import { applyPaymentBatch } from '../services/payment-tender';
+import { applyPaymentBatch, orderHasSuccessfulTender } from '../services/payment-tender';
 import {
   batchPaymentBodySchema,
   billDiscountBodySchema,
@@ -819,6 +819,13 @@ router.post(
       const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(bill.order_id) as any;
       if (!order) {
         return res.status(404).json({ error: 'Order not found' });
+      }
+      // P15 / H1 parity: block after any successful tender (not only fully paid).
+      if (orderHasSuccessfulTender(db, String(bill.order_id))) {
+        return res.status(409).json({
+          error: 'Cannot apply discount after successful tender; refund the bill instead',
+          code: 'ORDER_HAS_SUCCESSFUL_TENDER',
+        });
       }
 
       // Check if approval is required
