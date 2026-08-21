@@ -105,10 +105,10 @@ async function main(): Promise<void> {
   console.log('\nR11 — Coupon codes (marketing thin slice)');
   console.log('='.repeat(60));
 
-  assertEqual(getSupportedSchemaVersion(), 87, 'schema tip is v87');
+  assertEqual(getSupportedSchemaVersion(), 88, 'schema tip is v88');
   initTestDb();
   const db = getDatabase();
-  assertEqual(Number(db.pragma('user_version', { simple: true })), 87, 'fresh DB tip 87');
+  assertEqual(Number(db.pragma('user_version', { simple: true })), 88, 'fresh DB tip 88');
 
   const cols = (
     db.prepare(`PRAGMA table_info(coupons)`).all() as { name: string }[]

@@ -125,13 +125,13 @@ function seedTaxedBill(db: any, atIso: string, productId: string): void {
 async function main() {
   console.log('\nR9 Slice 3 — Tax Reporting Depth + Accountant Export\n' + '='.repeat(60));
 
-  assertEqual(getSupportedSchemaVersion(), 87, 'schema tip is v87');
+  assertEqual(getSupportedSchemaVersion(), 88, 'schema tip is v88');
 
   const db = initTestDb();
   assertEqual(
     Number(db.pragma('user_version', { simple: true })),
     86,
-    'fresh DB at user_version 87',
+    'fresh DB at user_version 88',
   );
 
   const owner = seedOwnerUser(db);

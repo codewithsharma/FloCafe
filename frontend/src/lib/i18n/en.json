@@ -293,6 +293,8 @@
   "pos.eightySixed": "86'd items",
   "pos.eightySixSuccess": "{name} is 86'd",
   "pos.eightySixFailed": "Could not 86 this item",
+  "pos.autoEightySix": "auto",
+  "pos.autoEightySixHint": "Unavailable from stock. Restoring clears the manual 86 only; stock must be replenished to sell again.",
   "pos.unEightySix": "Restore",
   "pos.unEightySixSuccess": "{name} is available",
   "pos.unEightySixFailed": "Could not restore this item",

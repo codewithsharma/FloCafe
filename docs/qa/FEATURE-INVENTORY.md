@@ -2,10 +2,12 @@
 
 **Product:** OPERAVIA Restaurant (repo legacy: FloCafe)  
 **Commit:** `b996b9806d3075b852895273ca4eda2289a143a8`  
-**Schema tip:** v86 (`print_jobs`)  
+**Schema tip:** v88 (`inv_auto_86_availability_flags`)  
 **Roles:** owner, manager, cashier, waiter, chef  
 **Source of truth (status):** [`docs/00-product/capability-matrix.md`](../00-product/capability-matrix.md) — **Existing** and **Hardening** only  
-**Code evidence:** [`docs/00-product/feature-list.md`](../00-product/feature-list.md), `main/routes/`, schema v86
+**Code evidence:** [`docs/00-product/feature-list.md`](../00-product/feature-list.md), `main/routes/`, schema v88
+
+**P5 note (2026-08-21):** INV-AUTO-86 shipped — effective `is_active` = !(manual_unavailable \|\| auto_unavailable); suite `npm run test:inv-auto-86`. Status for QA catalog: **Implemented / Hardening verified** (automated). Live pilot still NO-GO pending R16.
 
 **QA Status note (2026-08-15 session):** Inventory rows remain the catalog of implemented Existing/Hardening features. Execution evidence is **not** row-complete. Critical modules have **automated** evidence via `test:h1`–`h4`, `test:r1`–`r15`, authz suites, and Playwright (4 specs). Full per-row GUI/API/DB verification was **not** completed — treat unverified rows as `NOT TESTED` for manual GUI; see `COMPLETE-QA-REPORT.md`.
 
@@ -51,6 +53,7 @@
 | MENU-04 | Menu/Products | Recipe-linked items                              | `/products/recipes`                | recipes + `product_id`                                                           | `recipes`, `products`                                                         | owner, manager                          | Existing  |
 | MENU-05 | Menu/Products | Product image serve / fetch                      | `/products`                        | `GET /api/products/:id/image`, `POST …/fetch-url`                                | `products`                                                                    | public GET; fetch: O/M                  | Existing  |
 | MENU-06 | Menu/Products | Availability / 86 control                        | `/products`, `/pos`                | `POST /api/products/:id/availability`                                            | `products`                                                                    | owner, manager                          | Existing  |
+| INV-09  | Inventory     | Auto-86 from stock (INV-AUTO-86)                 | `/pos`, `/products`                | stock mutations → availability; `POST …/availability`                            | `products.manual_unavailable`, `products.auto_unavailable` (v88)              | owner, manager                          | Existing  |
 | MENU-07 | Menu/Products | Menu CSV import / export                         | `/products`                        | `/api/menu-csv/import\|export/*`                                                 | `categories`, `products`, `addons`                                            | owner, manager                          | Existing  |
 | KDS-01  | KDS           | KDS board / queue / WS notifications             | `/kds`, `/kds-standalone`          | `GET /api/kds/orders\|display`, WS                                               | `orders`, `order_items`                                                       | chef, manager, owner                    | Existing  |
 | KDS-02  | KDS           | Item status (preparing / ready / completed)      | `/kds`                             | `PATCH /api/kds/items/:id/status`, `PATCH /api/order-items/:id/status`           | `order_items`                                                                 | chef, manager, owner                    | Existing  |
@@ -193,7 +196,7 @@ Do **not** treat these capability-matrix rows as QA pass/fail requirements for t
 - Partial payment as Planned product row (collectible `partial` may exist — do not expand scope)
 - Expediter; KDS analytics; sound/visual alerts
 - Multiple printer routing / bar printer / printer health-recovery as Planned depth
-- Stock transfer; expiry tracking; consumption reports (beyond recipe consumptions); auto-86 from stock
+- Stock transfer; expiry tracking; consumption reports (beyond recipe consumptions)
 - CRM birthday/anniversary/feedback; loyalty rewards/redemption/gift cards
 - Attendance; scheduling
 - Self-ordering; customer notifications; rider/delivery status tracking

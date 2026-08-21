@@ -292,6 +292,8 @@
   "pos.eightySixed": "Itens 86",
   "pos.eightySixSuccess": "{name} está 86",
   "pos.eightySixFailed": "Não foi possível marcar este item como 86",
+  "pos.autoEightySix": "auto",
+  "pos.autoEightySixHint": "Indisponível por estoque. Restaurar remove só o 86 manual; reponha o estoque para vender.",
   "pos.unEightySix": "Restaurar",
   "pos.unEightySixSuccess": "{name} está disponível",
   "pos.unEightySixFailed": "Não foi possível restaurar este item",

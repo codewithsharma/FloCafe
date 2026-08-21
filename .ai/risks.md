@@ -1,5 +1,10 @@
 # Risks
 
+## Active program notes (2026-08-21)
+
+- ⚠️ RISK: **INV-AUTO-86** has no catalog WebSocket — POS must refresh to see auto-86; server reject covers stale UI. Modifier auto-86 not implemented.
+- ⚠️ RISK: **R16 live Go-Live** remains **NO-GO** until signed/notarized RC + OPS-02 human/site gates.
+
 ## Active program notes (2026-08-15)
 
 - ⚠️ RISK: **R13 print queue** is manual retry only (no background flush worker). Jobs with `attempts >= max_attempts` stay failed until ops intervene or a future deepen adds reset. Terminals/aggregators remain Frozen.

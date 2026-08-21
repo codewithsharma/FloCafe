@@ -157,7 +157,7 @@ async function main() {
   const { baseUrl, server } = await startServer(app);
 
   try {
-    assertEqual(schemaVersion(db), 87, 'schema remains at tip v87');
+    assertEqual(schemaVersion(db), 88, 'schema remains at tip v88');
 
     // ── Characterization: PUT { is_active } is COALESCE-safe ──────────
     console.log('\n1. Characterization — PUT is_active does not clobber name/price/stock');
@@ -393,7 +393,7 @@ async function main() {
     );
     assertEqual(retailRestore.status, 200, 'retail can restore via shared adapter');
 
-    assertEqual(schemaVersion(db), 87, 'schema still at tip v87 after adapter use');
+    assertEqual(schemaVersion(db), 88, 'schema still at tip v88 after adapter use');
   } finally {
     server.close();
     closeDatabase();

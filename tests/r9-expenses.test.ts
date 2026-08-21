@@ -65,7 +65,7 @@ async function main() {
   console.log('\nR9 — Expenses Slice 1\n' + '='.repeat(60));
 
   const db = initTestDb();
-  assertEqual(getSupportedSchemaVersion(), 87, 'R9-EXP schema tip is v87 (post R10–R14 tip)');
+  assertEqual(getSupportedSchemaVersion(), 88, 'R9-EXP schema tip is v88 (post R10–R14 tip)');
   assertEqual(getCurrentSchemaVersion(), 87, 'R9-EXP fresh install migrates to tip v86');
 
   const table = db
@@ -247,7 +247,7 @@ async function main() {
     assertEqual(paymentsAfter.c, paymentsBefore.c, 'no payment schema side effects');
 
     const tip = getSupportedSchemaVersion();
-    assertEqual(tip, 87, 'schema tip includes R10–R14 + KDS outbox (v87); REAL cutover still deferred');
+    assertEqual(tip, 88, 'schema tip includes INV-AUTO-86 (v88); REAL cutover still deferred');
 
     // Offline / local SoR: second create persists without network simulation (in-process SQLite).
     const offlineCreate = await api(baseUrl, '/api/expenses', {

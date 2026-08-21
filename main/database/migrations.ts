@@ -2753,4 +2753,67 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       `);
     },
   },
+  {
+    version: 88,
+    name: 'inv_auto_86_availability_flags',
+    up: () => {
+      // INV-AUTO-86 — split manual vs stock-derived unavailability; is_active is effective cache.
+      const productColumns = getColumns(db, 'products');
+      if (!productColumns.includes('manual_unavailable')) {
+        db.exec(`ALTER TABLE products ADD COLUMN manual_unavailable INTEGER NOT NULL DEFAULT 0`);
+      }
+      if (!productColumns.includes('auto_unavailable')) {
+        db.exec(`ALTER TABLE products ADD COLUMN auto_unavailable INTEGER NOT NULL DEFAULT 0`);
+      }
+
+      // Preserve existing manual 86 (is_active=0) as manual_unavailable.
+      db.exec(`
+        UPDATE products
+        SET manual_unavailable = 1
+        WHERE deleted_at IS NULL AND is_active = 0
+      `);
+
+      // Tracked sellable stock already at/below zero → auto_unavailable.
+      db.exec(`
+        UPDATE products
+        SET auto_unavailable = 1
+        WHERE deleted_at IS NULL
+          AND track_inventory = 1
+          AND stock_quantity <= 0
+      `);
+
+      // Menu items whose active recipe has any tracked ingredient at/below zero.
+      db.exec(`
+        UPDATE products
+        SET auto_unavailable = 1
+        WHERE deleted_at IS NULL
+          AND id IN (
+            SELECT r.product_id
+            FROM recipes r
+            INNER JOIN recipe_ingredients ri ON ri.recipe_id = r.id
+            INNER JOIN products ing ON ing.id = ri.ingredient_product_id
+            WHERE r.is_active = 1
+              AND ing.deleted_at IS NULL
+              AND ing.track_inventory = 1
+              AND ing.stock_quantity <= 0
+          )
+      `);
+
+      // Recompute effective is_active from both flags.
+      db.exec(`
+        UPDATE products
+        SET is_active = CASE
+          WHEN manual_unavailable = 0 AND auto_unavailable = 0 THEN 1
+          ELSE 0
+        END
+        WHERE deleted_at IS NULL
+      `);
+
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_products_auto_unavailable
+          ON products(auto_unavailable)
+          WHERE auto_unavailable = 1 AND deleted_at IS NULL;
+      `);
+    },
+  },
 ];

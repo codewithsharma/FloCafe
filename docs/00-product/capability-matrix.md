@@ -215,7 +215,7 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | Inventory reconciliation | 🟢 Existing |
 | Consumption reports      | 🔵 Planned  |
 | Food-cost percentage     | 🟢 Existing |
-| Auto-86 from stock       | 🔵 Planned  |
+| Auto-86 from stock       | 🟢 Existing |
 | Demand forecasting       | ⚪ Later    |
 
 ## CRM

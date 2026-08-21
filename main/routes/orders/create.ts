@@ -31,6 +31,7 @@ import {
   restoreTrackedStock,
 } from '../../services/inventory';
 import type { StockTrackedProduct } from '../../services/inventory';
+import { assertProductOrderable } from '../../services/product-availability';
 import {
   consumeRecipeForOrderItem,
   reverseRecipeConsumptionForOrder,
@@ -244,6 +245,7 @@ export function registerCreateRoutes(router: Router): void {
               if (!product) {
                 throw new Error(`Product ${item.product_id} not found`);
               }
+              assertProductOrderable(product as { name?: string; is_active?: number });
               assertStockAvailable(product as StockTrackedProduct, item.quantity);
 
               const unitPrice = fromCents(

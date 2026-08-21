@@ -65,6 +65,7 @@
     "test:phase-4.4": "node tests/run-electron-node-test.cjs tests/phase-4.4-accounting-csv-export.test.ts",
     "test:phase-4.5": "node tests/run-electron-node-test.cjs tests/phase-4.5-retail-exchange.test.ts",
     "test:phase-4.7": "node tests/run-electron-node-test.cjs tests/phase-4.7-menu-86.test.ts",
+    "test:inv-auto-86": "node tests/run-electron-node-test.cjs tests/inv-auto-86.test.ts",
     "test:phase-4.8": "node tests/run-electron-node-test.cjs tests/phase-4.8-reports-date-range.test.ts",
     "test:phase-4.9": "node tests/run-electron-node-test.cjs tests/phase-4.9-customer-deactivate.test.ts",
     "test:phase-4.10": "node tests/run-electron-node-test.cjs tests/phase-4.10-fin01-display.test.ts",

@@ -40,17 +40,17 @@ Restaurant vertical only (`ACTIVE_VERTICAL_ID=restaurant` or unset). Not mounted
 
 ## Menu & Products
 
-| Feature                          | Status      | Evidence                                                                                      | Production readiness            |
-| -------------------------------- | ----------- | --------------------------------------------------------------------------------------------- | ------------------------------- |
-| Categories (hierarchical)        | [BUILT]     | `main/routes/categories.ts`                                                                   | High                            |
-| Products CRUD                    | [BUILT]     | `main/routes/products.ts`                                                                     | High                            |
-| Addon groups & modifiers         | [BUILT]     | `main/routes/addon-groups.ts`, `addon_groups`, `addons`                                       | High                            |
-| Product images                   | [BUILT]     | `main/routes/products.ts`, `tests/product-images.test.ts`                                     | High                            |
-| CSV menu import/export           | [BUILT]     | `main/routes/menu-csv.ts`                                                                     | Medium                          |
-| Dietary tags                     | [BUILT]     | `products.tags`, `DietaryBadge.tsx`                                                           | Medium                          |
-| Menu availability / deactivation | [BUILT]     | `products.is_active`; Restaurant POS 86 via `POST /api/products/:id/availability` (Phase 4.7) | High — `npm run test:phase-4.7` |
-| Product-level stock tracking     | [PARTIAL]   | `track_inventory`, `stock_quantity` — no recipes/BOM                                          | Medium                          |
-| Combos / bundles                 | [NOT BUILT] | No combo entity                                                                               | —                               |
+| Feature                          | Status      | Evidence                                                                                                                                                   | Production readiness |
+| -------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| Categories (hierarchical)        | [BUILT]     | `main/routes/categories.ts`                                                                                                                                | High                 |
+| Products CRUD                    | [BUILT]     | `main/routes/products.ts`                                                                                                                                  | High                 |
+| Addon groups & modifiers         | [BUILT]     | `main/routes/addon-groups.ts`, `addon_groups`, `addons`                                                                                                    | High                 |
+| Product images                   | [BUILT]     | `main/routes/products.ts`, `tests/product-images.test.ts`                                                                                                  | High                 |
+| CSV menu import/export           | [BUILT]     | `main/routes/menu-csv.ts`                                                                                                                                  | Medium               |
+| Dietary tags                     | [BUILT]     | `products.tags`, `DietaryBadge.tsx`                                                                                                                        | Medium               |
+| Menu availability / deactivation | [BUILT]     | `products.is_active` effective = !(manual_unavailable \|\| auto_unavailable); Phase 4.7 + INV-AUTO-86 (v88); `npm run test:phase-4.7` + `test:inv-auto-86` | High                 |
+| Product-level stock tracking     | [PARTIAL]   | `track_inventory`, `stock_quantity` — no recipes/BOM                                                                                                       | Medium               |
+| Combos / bundles                 | [NOT BUILT] | No combo entity                                                                                                                                            | —                    |
 
 ## Customers & CRM
 

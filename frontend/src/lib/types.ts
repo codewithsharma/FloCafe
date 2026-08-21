@@ -68,6 +68,10 @@ export interface Product {
   inventory_unit?: string | null;
   low_stock_threshold: number | null;
   is_active: boolean;
+  /** INV-AUTO-86: stock-derived unavailability flag when present on API payload. */
+  auto_unavailable?: boolean | number | null;
+  /** INV-AUTO-86: intentional manual 86 flag when present on API payload. */
+  manual_unavailable?: boolean | number | null;
   available_online: boolean;
   has_image: boolean;
   updated_at: string;

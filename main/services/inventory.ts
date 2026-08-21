@@ -26,6 +26,7 @@
 
 import { getDatabase, now, withTxn } from '../db';
 import { DOMAIN_SPAN, withSpanSync } from '../lib/tracing';
+import { notifyStockChanged } from './product-availability';
 
 export class InventoryServiceError extends Error {
   readonly statusCode: number;
@@ -152,6 +153,8 @@ export function applyAbsoluteStockChange(
   const current = readStockAfter(db, productId);
   const delta = newQuantity - current;
   if (delta === 0) {
+    // Still sync availability (e.g. opening stock 0 on tracked SKU).
+    notifyStockChanged(db, [productId], { reason: ref?.reason ?? 'set' });
     return { changed: false, delta: 0, stockAfter: current };
   }
 
@@ -182,6 +185,7 @@ export function applyAbsoluteStockChange(
     createdAt: updatedAt,
   });
 
+  notifyStockChanged(db, [productId], { reason: ref?.reason ?? 'set' });
   return { changed: true, delta, stockAfter };
 }
 
@@ -220,6 +224,7 @@ export function applyRecipeStockDelta(
     reason: ref.reason,
     createdAt: updatedAt,
   });
+  notifyStockChanged(db, [product.id], { reason: ref.reason });
   return { movementId, stockAfter };
 }
 
@@ -260,6 +265,7 @@ export function applyPurchaseReceiptStock(
     reason: ref.reason,
     createdAt: updatedAt,
   });
+  notifyStockChanged(db, [product.id], { reason: ref.reason });
   return { movementId, stockAfter };
 }
 
@@ -291,6 +297,7 @@ export function decrementTrackedStock(
         reason: ref?.reason ?? null,
         createdAt: updatedAt,
       });
+      notifyStockChanged(db, [product.id], { reason: ref?.reason ?? 'sale' });
     },
     { 'product.id': String(product.id), quantity },
   );
@@ -319,6 +326,7 @@ export function restoreTrackedStock(
     reason: ref?.reason ?? null,
     createdAt: updatedAt,
   });
+  notifyStockChanged(db, [product.id], { reason: ref?.reason ?? 'cancel_restore' });
 }
 
 /**
@@ -354,6 +362,7 @@ export function restockTrackedForRefund(
     reason: `refund_restock:order_item:${args.orderItemId}`,
     createdAt: updatedAt,
   });
+  notifyStockChanged(db, [product.id], { reason: 'refund_restock' });
   return { stockAfter, quantityDelta: quantity };
 }
 
@@ -504,6 +513,8 @@ export function adjustProductStock(
           reason: movementReason,
           createdAt: updatedAt,
         });
+
+        notifyStockChanged(db, [productId], { reason: movementReason });
 
         return db.prepare('SELECT * FROM products WHERE id = ?').get(productId) as Record<
           string,

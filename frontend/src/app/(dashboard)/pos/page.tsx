@@ -45,7 +45,11 @@ import { isFeatureAvailable, isModuleEnabled } from '@/lib/modules';
 import { placePostpaidOrder, placePrepaidOrder } from '@/lib/pos/checkout-coordinator';
 import { usePlatformComposition } from '@/hooks/usePlatformComposition';
 import { findProductByScanCode } from '@/lib/pos/product-search';
-import { canShowRestaurantEightySix, isProductInactive } from '@/lib/pos/eighty-six';
+import {
+  canShowRestaurantEightySix,
+  isProductInactive,
+  eightySixRestoreHint,
+} from '@/lib/pos/eighty-six';
 import { canAccessPos, getLandingPageForRole } from '@/lib/rbac';
 import { useRouter } from 'next/navigation';
 
@@ -1101,10 +1105,26 @@ export default function POSPage() {
                     key={product.id}
                     type="button"
                     data-testid="pos-product-un86"
+                    data-eighty-six-reason={eightySixRestoreHint(product)}
                     className="min-h-11 px-3 rounded-flo-md border border-flo-border text-sm text-flo-text hover:border-flo-brand-500"
                     onClick={() => setProductAvailability(product, true)}
+                    title={
+                      eightySixRestoreHint(product) === 'auto' ||
+                      eightySixRestoreHint(product) === 'both'
+                        ? t('pos.autoEightySixHint')
+                        : undefined
+                    }
                   >
                     {t('pos.unEightySix')} · {product.name}
+                    {(eightySixRestoreHint(product) === 'auto' ||
+                      eightySixRestoreHint(product) === 'both') && (
+                      <span
+                        className="ml-1 text-xs text-flo-text-secondary"
+                        data-testid="pos-auto-86-badge"
+                      >
+                        {t('pos.autoEightySix')}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>

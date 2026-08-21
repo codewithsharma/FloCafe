@@ -66,13 +66,13 @@ function section(title: string): void {
 
 async function main() {
   console.log('\nR6 — Purchasing & Supplier OS\n' + '='.repeat(60));
-  assertEqual(getSupportedSchemaVersion(), 87, 'schema version is 87');
+  assertEqual(getSupportedSchemaVersion(), 88, 'schema version is 88');
 
   const db = initTestDb();
   assertEqual(
     Number(db.pragma('user_version', { simple: true })),
     86,
-    'fresh DB user_version 87',
+    'fresh DB user_version 88',
   );
 
   const owner = seedOwnerUser(db);
@@ -561,7 +561,7 @@ async function main() {
     const Database = require('better-sqlite3');
     const bakDb = new Database(bakPath, { readonly: true });
     const bakVer = Number(bakDb.pragma('user_version', { simple: true }));
-    assertEqual(bakVer, 87, 'backup schema v87');
+    assertEqual(bakVer, 88, 'backup schema v88');
     const hasSup = bakDb
       .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='suppliers'`)
       .get();

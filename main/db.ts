@@ -3058,6 +3058,8 @@ function createSchema(): void {
       -- cb_percent explicitly, and NULL is written as NULL.
       cb_percent REAL DEFAULT 0,
       tags TEXT,
+      manual_unavailable INTEGER NOT NULL DEFAULT 0,
+      auto_unavailable INTEGER NOT NULL DEFAULT 0,
       deleted_at TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,

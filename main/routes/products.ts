@@ -23,6 +23,7 @@ import { convertQuantity, isAllowedInventoryUnit } from '../services/inventory-u
 import { stockAdjustBodySchema } from '../validation/inventory';
 import { productAvailabilityBodySchema } from '../validation/products';
 import { logAuditEvent } from '../services/audit-log';
+import { ProductAvailabilityError, setManualAvailability } from '../services/product-availability';
 import { createHash } from 'crypto';
 import * as crypto from 'crypto';
 import * as dns from 'dns';
@@ -363,6 +364,8 @@ router.get('/', (req: Request, res: Response) => {
     const db = getDatabase();
     let query = `SELECT p.id, p.category_id, p.name, p.description, p.price, p.cost, p.sku, p.barcode,
       p.is_active, p.sort_order, p.track_inventory, p.stock_quantity, p.low_stock_threshold,
+      COALESCE(p.manual_unavailable, 0) AS manual_unavailable,
+      COALESCE(p.auto_unavailable, 0) AS auto_unavailable,
       p.tax_type, p.tax_rate, p.tax_category_id, p.tax_behavior, p.cb_percent, p.tags, p.deleted_at, p.created_at, p.updated_at,
       CASE WHEN p.image_url IS NULL OR p.image_url = '' THEN 0 ELSE 1 END AS has_image
       FROM products p 
@@ -1009,6 +1012,7 @@ router.post(
       const db = getDatabase();
       const productId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
       const { is_active } = req.body as { is_active: boolean };
+      const actorUserId = (req as any).user?.userId ?? null;
 
       const existing = db
         .prepare('SELECT id FROM products WHERE id = ? AND deleted_at IS NULL')
@@ -1018,22 +1022,15 @@ router.post(
       }
 
       withTxn(() => {
-        db.prepare(
-          'UPDATE products SET is_active = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
-        ).run(is_active ? 1 : 0, now(), productId);
-        logAuditEvent({
-          actorUserId: (req as any).user?.userId ?? null,
-          action: 'product.availability',
-          entityType: 'product',
-          entityId: productId,
-          result: 'success',
-          metadata: { is_active },
-        });
+        setManualAvailability(db, productId, is_active, { actorUserId });
       });
 
       const product = db.prepare('SELECT * FROM products WHERE id = ?').get(productId);
       res.json({ product });
     } catch (error: unknown) {
+      if (error instanceof ProductAvailabilityError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
       console.error('[API] Internal error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }

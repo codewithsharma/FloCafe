@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-21 — P5 INV-AUTO-86 (COMPLETE)
+
+Auto-86 from stock. Schema **v88** `manual_unavailable` + `auto_unavailable`; effective `is_active`. Manual 86 never cleared by stock restore; manual restore cannot bypass zero stock. Central `notifyStockChanged` on inventory mutation boundary; recipe fan-out via R5. Staff orders reject inactive products. KDS: no availability events. Modifiers: not inventory-backed for auto-86. Suite `npm run test:inv-auto-86`. Report `docs/qa/AUTO-86-FROM-STOCK-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**. Live pilot still NO-GO.
+
 ## 2026-08-15 — R16 Production Release (BLOCKED — human-only)
 
 Engineering R-waves through R15 deepen COMPLETE (schema **v86**). R16 remains blocked on signed/notarized RC + OPS-02 site/human gates. Live Go-Live **NO-GO**. Doc: `docs/05-production/r16-production-release-blocker.md`. Completion report: `docs/05-production/roadmap-engineering-completion-r0-r16.md`. Gate checklist + operator templates: `docs/05-production/r16-release-gate-checklist.md`, `docs/13-operations/r16-ops-02-drill-script.md`, `r16-master-pin-escrow-attestation.md`, `r16-executive-signoff-packet.md`. **Do not fabricate gate PASS.**
