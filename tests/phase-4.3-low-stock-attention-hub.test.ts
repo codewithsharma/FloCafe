@@ -81,7 +81,12 @@ async function main() {
   assert(page.includes('StockAdjustmentDialog'), 'reuses stock adjust dialog');
   assert(page.includes('postProductStockAdjust'), 'adjust uses existing stock API');
   assert(!page.includes('POST') || page.includes('postProductStockAdjust'), 'no inventing stock paths');
-  assert(page.includes("router.replace('/pos')"), 'non owner/manager redirected');
+  assert(page.includes('getLandingPageForRole'), 'non owner/manager uses role landing redirect');
+  assert(
+    page.includes('router.replace(getLandingPageForRole') ||
+      /router\.replace\(\s*getLandingPageForRole/.test(page),
+    'non owner/manager redirected via getLandingPageForRole',
+  );
   assert(page.includes("isModuleEnabled('inventory')"), 'inventory module gate');
   console.log('   ✓ low-stock page contracts');
 

@@ -36,6 +36,16 @@ function count(table: string): number {
   return (db.prepare(`SELECT COUNT(*) as count FROM ${table}`).get() as { count: number }).count;
 }
 
+/** Operational café users only — R10 system QR guest is migration-seeded. */
+function operationalUserCount(): number {
+  const db = getDatabase();
+  return (
+    db
+      .prepare(`SELECT COUNT(*) as count FROM users WHERE id != 'usr-system-qr-guest'`)
+      .get() as { count: number }
+  ).count;
+}
+
 function setting(key: string): string | null {
   const db = getDatabase();
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined;
@@ -84,7 +94,7 @@ async function main() {
   }
 
 assert.equal(getCurrentSchemaVersion(), MIGRATIONS[MIGRATIONS.length - 1].version, 'fresh database migrates to latest schema');
-  assert.equal(count('users'), 0, 'fresh install starts without users');
+  assert.equal(operationalUserCount(), 0, 'fresh install starts without operational users');
   assert.equal(count('categories'), 0, 'fresh install starts with no sample categories');
   assert.equal(count('products'), 0, 'fresh install starts with no sample products');
   assert.equal(count('tables'), 0, 'fresh install starts with no sample tables');
@@ -144,7 +154,7 @@ assert.equal(getCurrentSchemaVersion(), MIGRATIONS[MIGRATIONS.length - 1].versio
       }),
     });
     assert.equal(withoutTerms.status, 400, 'setup rejects account creation without terms acceptance');
-    assert.equal(count('users'), 0, 'no user is created when terms are not accepted');
+    assert.equal(operationalUserCount(), 0, 'no user is created when terms are not accepted');
     console.log('   ✓ setup endpoint requires terms_accepted before creating the owner account');
 
     const first = await request(baseUrl, '/setup/initialize', {
@@ -168,7 +178,7 @@ assert.equal(getCurrentSchemaVersion(), MIGRATIONS[MIGRATIONS.length - 1].versio
     assert.equal(first.status, 200);
     assert.equal(first.data.user.email, 'owner@example.com');
     assert.equal(first.data.user.role, 'owner');
-    assert.equal(count('users'), 1, 'setup creates the first owner');
+    assert.equal(operationalUserCount(), 1, 'setup creates the first owner');
     const ownerRow = getDatabase().prepare('SELECT terms_accepted_at FROM users WHERE email = ?').get('owner@example.com') as { terms_accepted_at: string | null };
     assert.ok(ownerRow.terms_accepted_at, 'terms acceptance is stamped with a timestamp on the owner record');
     assert.equal(setting('business_name'), 'First Cafe');
@@ -209,7 +219,7 @@ assert.equal(getCurrentSchemaVersion(), MIGRATIONS[MIGRATIONS.length - 1].versio
     });
 
     assert.equal(second.status, 403);
-    assert.equal(count('users'), 1, 'setup cannot create a second owner');
+    assert.equal(operationalUserCount(), 1, 'setup cannot create a second owner');
     console.log('   ✓ setup endpoint is disabled after the first user exists');
 
     // Cloud v2 coordination is automatic for new installs.
@@ -260,7 +270,7 @@ assert.equal(getCurrentSchemaVersion(), MIGRATIONS[MIGRATIONS.length - 1].versio
       }),
     });
     assert.equal(badUrl.status, 400, 'an invalid cloud server URL is rejected when cloud sync is enabled');
-    assert.equal(count('users'), 0, 'no owner is created when the cloud server URL is invalid');
+    assert.equal(operationalUserCount(), 0, 'no owner is created when the cloud server URL is invalid');
     console.log('   ✓ setup rejects an invalid cloud server URL when cloud sync is enabled');
 
     const enabled = await request(cloudBaseUrl, '/setup/initialize', {

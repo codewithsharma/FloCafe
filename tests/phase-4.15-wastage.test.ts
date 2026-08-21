@@ -47,13 +47,13 @@ async function main() {
   console.log('Phase 4.15 — Wastage stock decrease');
   console.log('='.repeat(60));
 
-  const dbTs = fs.readFileSync(path.join(ROOT, 'main/db.ts'), 'utf8');
+  const migrationsTs = fs.readFileSync(path.join(ROOT, 'main/database/migrations.ts'), 'utf8');
   assert(
-    dbTs.includes("CHECK (movement_type IN ('sale', 'cancel_restore', 'adjustment'))"),
+    migrationsTs.includes("CHECK (movement_type IN ('sale', 'cancel_restore', 'adjustment'))"),
     'movement_type CHECK unchanged (no wastage type)',
   );
-  assert(!/movement_type IN \([^)]*wastage/.test(dbTs), 'CHECK does not include wastage type');
-  console.log('   ✓ schema v75 CHECK intact');
+  assert(!/movement_type IN \([^)]*wastage/.test(migrationsTs), 'CHECK does not include wastage type');
+  console.log('   ✓ schema CHECK intact in migrations (no wastage type)');
 
   const zod = fs.readFileSync(path.join(ROOT, 'main/validation/inventory.ts'), 'utf8');
   assert(zod.includes("'wastage'"), 'Zod allows wastage action');

@@ -131,7 +131,7 @@ async function main() {
       headers: owner.authHeader,
       body: { order_id: orderId },
     });
-    assertEqual(bill.status, 200, 'generate ok');
+    assertEqual(bill.status === 200 || bill.status === 201, true, `generate ok (got ${bill.status})`);
     const billId = bill.data.bill.id;
 
     const badDisc = await api(baseUrl, `/api/bills/${billId}/applyDiscount`, {

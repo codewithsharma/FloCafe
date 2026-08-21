@@ -104,7 +104,16 @@ function buildLocalTenant(db: ReturnType<typeof getDatabase>, userRole: string) 
 }
 
 function getUserCount(db: ReturnType<typeof getDatabase>): number {
-  return (db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number }).count;
+  // R10 seeds inactive `usr-system-qr-guest` during migration. That account must
+  // not count as an operational user or first-run setup is permanently 403'd.
+  const { QR_GUEST_USER_ID } = require('../services/qr-ordering') as {
+    QR_GUEST_USER_ID: string;
+  };
+  return (
+    db.prepare('SELECT COUNT(*) as count FROM users WHERE id != ?').get(QR_GUEST_USER_ID) as {
+      count: number;
+    }
+  ).count;
 }
 
 function normalizeEmail(email: unknown): string {

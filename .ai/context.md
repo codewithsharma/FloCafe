@@ -47,6 +47,9 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 
 **Exhaustive QA audit (2026-08-15):** Pack at `docs/qa/`. Live GUI + RBAC + RC: PASS WITH CONDITIONS. Production readiness: **CONDITIONAL GO**. Final release hardening: **CONDITIONAL GO** (`docs/qa/FINAL-RELEASE-HARDENING-AUDIT.md`) — P1-06 unopenable DB fail-closed; OPS-02 drill checklist; RC checklist. Live café still blocked on signed/notarized RC + OPS-02 + Master-PIN DR + security residual acceptance + sign-off. Residual eng: JWT/CSP Phase C, REAL dual-write.
 
+
+**P1 Test/CI Hardening + P1.1 Stabilization (2026-08-21):** 239 tests classified (0 unintentional orphans). Merge Electron **180/180 PASS**, extended **45/45 PASS**, recovery/critical/units PASS. `database-tools` backup audit best-effort + real owner token. Docs: `docs/qa/P1-TEST-CI-HARDENING-REPORT.md`. Manual: `db-audit`, `translations` (i18n backlog).
+
 ## Stage
 
 Advanced single-location café POS. Executive scores (audit 2026-08-12): Product 68 · Eng 78 · Arch 70 · Sec 66 · Rel 74 · Test 84 · Prod 62 · **Overall 64/100**. CEO: GO WITH CHANGES. CTO: ARCHITECTURE READY WITH CHANGES.

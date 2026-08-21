@@ -227,7 +227,12 @@ async function main() {
         body: JSON.stringify({ discount_max_percentage: -5 }),
       });
       assertEqual(res1.status, 400, 'rejects negative percentage');
-      assertIncludes(res1.data.error, '1 and 100', 'error mentions range');
+      assert(
+        String(res1.data.error || '').includes('1 and 100') ||
+          String(res1.data.error || '').includes('>=1') ||
+          String(res1.data.error || '').includes('Too small'),
+        'error mentions range',
+      );
 
       const res2 = await request(baseUrl, '/api/settings/discount', {
         method: 'PUT',

@@ -28,14 +28,20 @@ function run() {
     '.c8rc.json must exist',
   );
 
-  const dbSource = fs.readFileSync(path.join(repoRoot, 'main/db.ts'), 'utf8');
-  const versionMatch = dbSource.match(/version:\s*(\d+)/g);
-  assert.ok(versionMatch && versionMatch.length > 0, 'db.ts must define migration versions');
+  const migrationsSource = fs.readFileSync(
+    path.join(repoRoot, 'main/database/migrations.ts'),
+    'utf8',
+  );
+  const versionMatch = migrationsSource.match(/version:\s*(\d+)/g);
+  assert.ok(versionMatch && versionMatch.length > 0, 'migrations.ts must define migration versions');
   const maxVersion = Math.max(
     ...versionMatch.map((entry) => Number(entry.replace(/\D/g, ''))),
   );
-  assert.ok(maxVersion >= 75, 'schema migrations reach at least v75 (inventory ledger)');
-  assert.ok(dbSource.includes('jwt_secret_storage') || maxVersion >= 74, 'P0.2 jwt_secret_storage migration present');
+  assert.ok(maxVersion >= 86, 'schema migrations reach at least v86 (print jobs tip)');
+  assert.ok(
+    migrationsSource.includes('jwt_secret_storage') || maxVersion >= 74,
+    'P0.2 jwt_secret_storage migration present',
+  );
 
   console.log('✅ M1 engineering gate checks passed');
 }

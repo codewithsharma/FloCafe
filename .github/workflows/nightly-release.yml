@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   build-matrix:
-    timeout-minutes: 30
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -67,8 +67,14 @@ jobs:
       - name: Compile main process
         run: npm run build
 
-      - name: Run full platform test suite
-        run: npm test
+      - name: Test discovery guard
+        run: npm run test:discover-guard
+
+      - name: Merge gate (unit + integration/critical)
+        run: npm run test:merge
+
+      - name: Extended tier (R-waves / phase / GUI)
+        run: npm run test:extended
 
       - name: Package (unpacked directory, no installer)
         run: npx electron-builder ${{ matrix.target }} --dir --publish never

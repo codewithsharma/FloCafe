@@ -98,9 +98,9 @@ export function hasSecureJWTSecretFile(): boolean {
 function readLegacySqliteSecret(): string | null {
   try {
     const db = getDatabase();
-    const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(LEGACY_JWT_SECRET_KEY) as
-      | { value: string }
-      | undefined;
+    const row = db
+      .prepare('SELECT value FROM settings WHERE key = ?')
+      .get(LEGACY_JWT_SECRET_KEY) as { value: string } | undefined;
     return row?.value || null;
   } catch {
     return null;
@@ -110,9 +110,9 @@ function readLegacySqliteSecret(): string | null {
 function getStorageMarker(): string | null {
   try {
     const db = getDatabase();
-    const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(JWT_SECRET_STORAGE_KEY) as
-      | { value: string }
-      | undefined;
+    const row = db
+      .prepare('SELECT value FROM settings WHERE key = ?')
+      .get(JWT_SECRET_STORAGE_KEY) as { value: string } | undefined;
     return row?.value || null;
   } catch {
     return null;
@@ -121,10 +121,12 @@ function getStorageMarker(): string | null {
 
 function setStorageMarker(value: string): void {
   const db = getDatabase();
-  db.prepare(`
+  db.prepare(
+    `
     INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-  `).run(JWT_SECRET_STORAGE_KEY, value, now());
+  `,
+  ).run(JWT_SECRET_STORAGE_KEY, value, now());
 }
 
 function deleteLegacySqliteSecret(): void {
@@ -134,7 +136,10 @@ function deleteLegacySqliteSecret(): void {
 
 function installHasUsers(): boolean {
   try {
-    const row = getDatabase().prepare('SELECT COUNT(*) AS c FROM users').get() as { c: number };
+    const { QR_GUEST_USER_ID } = require('./qr-ordering') as { QR_GUEST_USER_ID: string };
+    const row = getDatabase()
+      .prepare('SELECT COUNT(*) AS c FROM users WHERE id != ?')
+      .get(QR_GUEST_USER_ID) as { c: number };
     return Number(row?.c) > 0;
   } catch {
     return false;
@@ -238,7 +243,11 @@ export function migrateLegacyJWTSecret(): { migrated: boolean; secret: string | 
   writeEncryptedSecret(legacy);
   const verified = readEncryptedSecret();
   if (verified !== legacy) {
-    try { fs.unlinkSync(getSecretFilePath()); } catch { /* ignore */ }
+    try {
+      fs.unlinkSync(getSecretFilePath());
+    } catch {
+      /* ignore */
+    }
     throw new JwtSecretError(
       'JWT secret migration verification failed — legacy SQLite secret preserved',
       'JWT_SECRET_MIGRATE_FAILED',
@@ -263,7 +272,11 @@ function generateAndPersistSecret(): string {
   writeEncryptedSecret(secret);
   const verified = readEncryptedSecret();
   if (verified !== secret) {
-    try { fs.unlinkSync(getSecretFilePath()); } catch { /* ignore */ }
+    try {
+      fs.unlinkSync(getSecretFilePath());
+    } catch {
+      /* ignore */
+    }
     throw new JwtSecretError(
       'JWT secret persistence verification failed',
       'JWT_SECRET_MIGRATE_FAILED',
@@ -312,7 +325,10 @@ export function initializeJWTSecret(): string {
   if (status === 'legacy_pending_migration') {
     const { secret } = migrateLegacyJWTSecret();
     if (!secret) {
-      throw new JwtSecretError('Legacy JWT migration produced no secret', 'JWT_SECRET_MIGRATE_FAILED');
+      throw new JwtSecretError(
+        'Legacy JWT migration produced no secret',
+        'JWT_SECRET_MIGRATE_FAILED',
+      );
     }
     return secret;
   }
@@ -342,14 +358,20 @@ export function recoverJWTSecret(): string {
   }
   // Remove corrupt file if present
   if (hasSecureJWTSecretFile()) {
-    try { fs.unlinkSync(getSecretFilePath()); } catch { /* ignore */ }
+    try {
+      fs.unlinkSync(getSecretFilePath());
+    } catch {
+      /* ignore */
+    }
   }
   deleteLegacySqliteSecret();
   const secret = generateAndPersistSecret();
   // Force credential-era invalidation as belt-and-suspenders (new secret already breaks verify)
   try {
     getDatabase().prepare('UPDATE users SET tokens_valid_after = ?').run(now());
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   console.log('[Auth] JWT secret recovered — all prior tokens invalidated');
   return secret;
 }

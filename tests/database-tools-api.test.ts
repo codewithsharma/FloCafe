@@ -105,6 +105,7 @@ async function runTests() {
   console.log('Database Tools API Tests (supertest)');
   console.log('='.repeat(50));
 
+  let ownerToken = '';
   // ── Test 1: setup/initialize requires a 4-digit master_pin when available ──
   console.log('\nTest 1: setup requires master_pin');
   {
@@ -123,9 +124,13 @@ async function runTests() {
     assert(ok.status === 200, `setup with valid master_pin succeeds (got ${ok.status}, ${JSON.stringify(ok.body)})`);
     assert(isMasterPinSet(), 'master PIN is set on disk after setup');
     assert(verifyMasterPin('1234'), 'the PIN submitted during setup verifies afterward');
+    assert(!!ok.body.access_token, 'setup returns access_token for the real owner');
+    ownerToken = ok.body.access_token;
   }
 
-  const ownerToken = tokenFor('owner-1', 'owner');
+  // Real setup owner token — forged JWTs with non-existent user ids fail
+  // audit_logs.actor_user_id FK after a successful backup.
+  assert(!!ownerToken, 'ownerToken captured from setup');
   const db = getDatabase();
   db.exec(`INSERT OR IGNORE INTO users (id, name, password, role, is_active) VALUES ('cashier-1', 'Cashier', 'hash', 'cashier', 1)`);
   const cashierToken = tokenFor('cashier-1', 'cashier');
@@ -230,7 +235,7 @@ async function runTests() {
     assert(!!ok.body.backupPath, 'response includes the forced pre-wipe backup path');
 
     const freshDb = getDatabase();
-    const userCount = (freshDb.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number }).c;
+    const userCount = (freshDb.prepare("SELECT COUNT(*) as c FROM users WHERE id != 'usr-system-qr-guest'").get() as { c: number }).c;
     assert(userCount === 0, 'no users remain after initialize — back to first-run state');
     assert(getCurrentSchemaVersion() === MIGRATIONS[MIGRATIONS.length - 1].version, 'the recreated database is at the latest schema version');
 

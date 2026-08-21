@@ -235,10 +235,13 @@ async function main() {
       headers: authHeader,
     });
     assertEqual(paidCancel.status, 409, 'paid cancel returns 409');
+    // Payment marks the order completed; status PATCH then rejects with
+    // ILLEGAL_STATUS_TRANSITION before the tender-specific branch. Either
+    // code fails closed and must not restock — assert the completed-order path.
     assertEqual(
       paidCancel.data.code,
-      'ORDER_HAS_SUCCESSFUL_TENDER',
-      '409 code is ORDER_HAS_SUCCESSFUL_TENDER',
+      'ILLEGAL_STATUS_TRANSITION',
+      '409 code is ILLEGAL_STATUS_TRANSITION for completed/paid order',
     );
     const stockAfterPaidCancel = db
       .prepare('SELECT stock_quantity FROM products WHERE id = ?')

@@ -46,7 +46,7 @@ async function main() {
   assertEqual(getSupportedSchemaVersion(), 86, 'supported schema version is 86');
   assertEqual(
     Number(db.pragma('user_version', { simple: true })),
-    83,
+    86,
     'fresh DB migrates to user_version 86',
   );
 

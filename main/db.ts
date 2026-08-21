@@ -656,7 +656,14 @@ export function initDatabase(
   // REC-01: marker + empty operational café must not look like first install.
   // R14: never clear a corrupt_database latch just because users>0.
   try {
-    const userCount = (db.prepare('SELECT COUNT(*) AS c FROM users').get() as { c: number }).c;
+    const { QR_GUEST_USER_ID } = require('./services/qr-ordering') as {
+      QR_GUEST_USER_ID: string;
+    };
+    const userCount = (
+      db.prepare('SELECT COUNT(*) AS c FROM users WHERE id != ?').get(QR_GUEST_USER_ID) as {
+        c: number;
+      }
+    ).c;
     if (dbHealthError) {
       // Integrity fail-closed already latched — refuse ACTIVE / marker backfill as healthy.
       console.error('[DB] R14: refusing normal service after integrity failure');

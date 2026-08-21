@@ -195,7 +195,8 @@ async function main() {
     console.log('\n─── Scenario D: last item cancel frees the table (dine-in) ───');
     {
       seedTable(db, 'tbl-132-1', 132, 4);
-      getDatabase().prepare("UPDATE tables SET status = 'occupied' WHERE id = ?").run('tbl-132-1');
+      // R2 occupy CAS: table must be available/reserved/cleaning before dine-in create.
+      getDatabase().prepare("UPDATE tables SET status = 'available' WHERE id = ?").run('tbl-132-1');
 
       const createRes = await api(baseUrl, '/api/orders', {
         method: 'POST',
@@ -207,6 +208,8 @@ async function main() {
       assertEqual(createRes.status, 201, 'D: dine-in order created');
       const orderId = createRes.data.order.id;
       const itemId = createRes.data.order.items[0].id;
+      const occupied = getDatabase().prepare('SELECT status FROM tables WHERE id = ?').get('tbl-132-1') as any;
+      assertEqual(occupied.status, 'occupied', 'D: table occupied after dine-in create');
 
       const cancelRes = await api(baseUrl, `/api/orders/${orderId}/items/${itemId}/cancel`, {
         method: 'PATCH',

@@ -59,7 +59,14 @@ async function main() {
     ).run(`cust-pag-${i}`, `Pagination Customer ${i}`, `+91900000000${i}`, now(), now());
   }
 
-  const ownerAuth = makeToken('owner-pag-001', 'owner', 'owner@pag.test');
+  const ownerId = 'owner-pag-001';
+  const ts = now();
+  db.prepare(
+    `INSERT OR IGNORE INTO users (id, name, email, password, role, is_active, created_at, updated_at)
+     VALUES (?, 'Pagination Owner', 'owner@pag.test', 'hash', 'owner', 1, ?, ?)`,
+  ).run(ownerId, ts, ts);
+
+  const ownerAuth = makeToken(ownerId, 'owner', 'owner@pag.test');
   const app = createApp({ '/api/customers': customerRoutes });
 
   // Test 1: Missing per_page returns all customers (200)

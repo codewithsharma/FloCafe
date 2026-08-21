@@ -24,9 +24,9 @@ function main(): void {
   assert.ok(page.includes('StaffGrid'), 'staff page uses StaffGrid');
   assert.ok(page.includes('StaffFormDialog'), 'staff page uses StaffFormDialog');
   assert.ok(page.includes('StaffResetPasswordDialog'), 'staff page uses StaffResetPasswordDialog');
-  assert.ok(page.includes("api.get('/staff')"), 'staff list API preserved');
-  assert.ok(page.includes("api.post('/staff'"), 'create staff API preserved');
-  assert.ok(page.includes("api.put(`/staff/${"), 'update staff API preserved');
+  assert.ok(page.includes(".get('/staff'") || page.includes("api.get('/staff')"), 'staff list API preserved');
+  assert.ok(page.includes("api.post('/staff'") || page.includes(".post('/staff'"), 'create staff API preserved');
+  assert.ok(page.includes("api.put(`/staff/${") || page.includes(".put(`/staff/${"), 'update staff API preserved');
   assert.ok(page.includes('deactivate') && page.includes('reactivate'), 'activate toggle APIs preserved');
   assert.ok(page.includes('editingLastActiveOwner'), 'last active owner guard preserved');
   assert.ok(page.includes('pin'), 'PIN fields preserved');

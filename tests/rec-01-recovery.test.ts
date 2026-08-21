@@ -90,7 +90,11 @@ function seedOwner(): void {
 }
 
 function userCount(): number {
-  return (getDatabase().prepare('SELECT COUNT(*) AS c FROM users').get() as { c: number }).c;
+  return (
+    getDatabase()
+      .prepare("SELECT COUNT(*) AS c FROM users WHERE id != 'usr-system-qr-guest'")
+      .get() as { c: number }
+  ).c;
 }
 
 async function main(): Promise<void> {

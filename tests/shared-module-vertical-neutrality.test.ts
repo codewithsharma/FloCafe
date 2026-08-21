@@ -76,9 +76,14 @@ function main(): void {
   assert.equal(sharedValid.valid, true, 'all non-restaurant modules form a valid set');
   console.log('   ✓ retail-test and shared-only set dependencies valid');
 
-  const ordersSrc = readRepo('main/routes/orders.ts');
-  assert.match(ordersSrc, /isModuleEnabled\('tables'\)/);
-  assert.match(ordersSrc, /isModuleEnabled\('kds'\)/);
+  const ordersDir = path.join(__dirname, '..', 'main/routes/orders');
+  const ordersPackageSrc = fs
+    .readdirSync(ordersDir)
+    .filter((f) => f.endsWith('.ts'))
+    .map((f) => fs.readFileSync(path.join(ordersDir, f), 'utf8'))
+    .join('\n');
+  assert.match(ordersPackageSrc, /isModuleEnabled\('tables'\)/);
+  assert.match(ordersPackageSrc, /isModuleEnabled\('kds'\)/);
   const tenderSrc = readRepo('main/services/payment-tender.ts');
   assert.match(tenderSrc, /isModuleEnabled\('tables'\)/);
   const billsSrc = readRepo('main/routes/bills.ts');

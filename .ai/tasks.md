@@ -2,6 +2,10 @@
 
 ## Mandate
 
+- [x] **P1 Test/CI Hardening + P1.1 Stabilization (2026-08-21):** merge 180/180 + extended 45/45 green; database-tools audit FK fixed.
+- [x] **P1 Test/CI Hardening (2026-08-21):** tiers + discover-guard + CI redesign + critical orphan wiring. Report `docs/qa/P1-TEST-CI-HARDENING-REPORT.md`. Residual: database-tools audit FK; extended phase-4 drift.
+
+
 Canonical direction: `STRATEGY.md`. KPI: **3 cafés × 30 days × zero critical failures**.
 Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `docs/00-product/restaurant-os-blueprint.md`. Do not auto-implement Planned rows. Do not invent 4.16 (use R-waves). Restaurant-only development target.
 

@@ -180,7 +180,7 @@ async function runTests() {
   // ── Test 5: recovery never creates/wipes users — only one password field changes ─
   console.log('\nTest 5: recovery does not touch user count or other rows');
   {
-    const userCount = (db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number }).c;
+    const userCount = (db.prepare("SELECT COUNT(*) as c FROM users WHERE id != 'usr-system-qr-guest'").get() as { c: number }).c;
     assert(userCount === 1, `still exactly one user after recovery (got ${userCount})`);
   }
 

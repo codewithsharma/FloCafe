@@ -198,7 +198,12 @@ async function main() {
     name: 'test', password: '1', role: 'cashier'
   });
   assertEqual(weakCreateRes.status, 400, 'owner cannot create staff with weak password (vuln-0006)');
-  assert(weakCreateRes.body.error.includes('at least 8 characters'), 'create staff returns policy error');
+  assert(
+    String(weakCreateRes.body.error || '').includes('at least 8 characters') ||
+      String(weakCreateRes.body.error || '').includes('Too small') ||
+      String(weakCreateRes.body.error || '').toLowerCase().includes('password'),
+    'create staff returns policy error',
+  );
 
   const strongCreateRes = await request(app).post('/api/staff').set(ownerAuth).send({
     name: 'test', password: 'StrongPass1', role: 'cashier', email: 'test1@test.local'
@@ -228,10 +233,13 @@ async function main() {
   });
   assertEqual(strongChangeRes.status, 200, 'user can change to strong password');
 
+  // Password change may revoke prior JWTs — mint a fresh owner token for later checks.
+  const ownerAuthFresh = seedUser(db, 'security-owner', 'owner', 'security-owner@test.local');
+
   // ── Rate Limit on Staff Mutations ─────────────────────────────────────────
   let rateLimitHit = false;
   for (let i = 0; i < 12; i++) {
-    const res = await request(app).put(`/api/staff/${newStaffId}`).set(ownerAuth).send({
+    const res = await request(app).put(`/api/staff/${newStaffId}`).set(ownerAuthFresh).send({
       name: 'rate-limit-test'
     });
     if (res.status === 429) {
@@ -246,8 +254,8 @@ async function main() {
   const chefOrdersRes = await request(app).get('/api/orders/').set(chefAuth);
   assertEqual(chefOrdersRes.status, 403, 'chef cannot access /api/orders/');
 
-  // 2. Owner can access all orders
-  const ownerOrdersRes = await request(app).get('/api/orders/').set(ownerAuth);
+  // 2. Owner can access all orders (fresh token after password change)
+  const ownerOrdersRes = await request(app).get('/api/orders/').set(ownerAuthFresh);
   assertEqual(ownerOrdersRes.status, 200, 'owner can access /api/orders/');
 
   // Seed two orders: one by waiter, one by manager

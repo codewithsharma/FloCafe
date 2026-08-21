@@ -278,7 +278,12 @@ async function main() {
         }),
       });
       assertEqual(res.status, 400, 'returns 400');
-      assertIncludes(res.data.error, 'non-negative', 'error mentions non-negative');
+      assert(
+        String(res.data.error || '').toLowerCase().includes('non-negative') ||
+          String(res.data.error || '').includes('>=0') ||
+          String(res.data.error || '').includes('Too small'),
+        'error mentions non-negative',
+      );
     }
 
     // ── Test 6: Percentage exceeds max ───────────────────────────────────

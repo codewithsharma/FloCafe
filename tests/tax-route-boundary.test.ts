@@ -84,10 +84,18 @@ async function main() {
     const indexSrc = fs.readFileSync(path.join(__dirname, '../main/routes/index.ts'), 'utf8');
     assert(taxSrc.includes("'/preview'") || taxSrc.includes('"/preview"'), 'tax router has /preview');
     assert(taxSrc.includes("'/categories'") || taxSrc.includes('"/categories"'), 'tax router has /categories');
-    assert(/app\.use\(\s*['"]\/api\/tax['"]/.test(indexSrc), 'index mounts /api/tax');
+    // Composition uses mount('/api/tax', …) / mount('/api/tax-packs', …) (not raw app.use).
+    assert(
+      /mount\(\s*['"]\/api\/tax['"]/.test(indexSrc) || /app\.use\(\s*['"]\/api\/tax['"]/.test(indexSrc),
+      'index mounts /api/tax',
+    );
     assert(!/app\.post\(\s*['"]\/api\/tax\/preview['"]/.test(indexSrc), 'index has no inline preview');
     assert(!/app\.get\(\s*['"]\/api\/tax\/categories['"]/.test(indexSrc), 'index has no inline categories');
-    assert(/app\.use\(\s*['"]\/api\/tax-packs['"]/.test(indexSrc), 'tax-packs still composed separately');
+    assert(
+      /mount\(\s*['"]\/api\/tax-packs['"]/.test(indexSrc) ||
+        /app\.use\(\s*['"]\/api\/tax-packs['"]/.test(indexSrc),
+      'tax-packs still composed separately',
+    );
 
     // ── 2. Paths + methods available ──────────────────────────────────
     console.log('\n2. Existing endpoint paths and methods remain');

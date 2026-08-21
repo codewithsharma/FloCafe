@@ -404,18 +404,25 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const { path: backupPath, schemaVersion } = await createBackup();
-      logAuditEvent({
-        actorUserId: (req as any).user?.userId ?? null,
-        action: 'backup.created',
-        entityType: 'database',
-        entityId: path.basename(backupPath),
-        result: 'success',
-        metadata: { schema_version: schemaVersion },
-        context: {
-          requestId: (req as any).correlationId || null,
-          clientIp: req.ip || req.socket.remoteAddress || null,
-        },
-      });
+      // Best-effort audit: a successful backup must not become HTTP 500 if
+      // audit_logs insert fails (e.g. stale actor id). Failure-path audit is
+      // likewise non-fatal so clients still receive a structured error body.
+      try {
+        logAuditEvent({
+          actorUserId: (req as any).user?.userId ?? null,
+          action: 'backup.created',
+          entityType: 'database',
+          entityId: path.basename(backupPath),
+          result: 'success',
+          metadata: { schema_version: schemaVersion },
+          context: {
+            requestId: (req as any).correlationId || null,
+            clientIp: req.ip || req.socket.remoteAddress || null,
+          },
+        });
+      } catch (auditErr: unknown) {
+        console.error('[DB Backup] Audit log failed after successful backup:', auditErr);
+      }
       res.json({
         success: true,
         path: backupPath,
@@ -424,16 +431,20 @@ router.post(
       });
     } catch (error: any) {
       console.error('[DB Backup] Error:', error);
-      logAuditEvent({
-        actorUserId: (req as any).user?.userId ?? null,
-        action: 'backup.created',
-        entityType: 'database',
-        result: 'failure',
-        reason: error?.message || 'Backup failed',
-        context: {
-          clientIp: req.ip || req.socket.remoteAddress || null,
-        },
-      });
+      try {
+        logAuditEvent({
+          actorUserId: (req as any).user?.userId ?? null,
+          action: 'backup.created',
+          entityType: 'database',
+          result: 'failure',
+          reason: error?.message || 'Backup failed',
+          context: {
+            clientIp: req.ip || req.socket.remoteAddress || null,
+          },
+        });
+      } catch (auditErr: unknown) {
+        console.error('[DB Backup] Failure-path audit log failed:', auditErr);
+      }
       res.status(500).json({ error: 'Backup failed' });
     }
   },

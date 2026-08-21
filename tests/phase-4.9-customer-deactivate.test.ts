@@ -192,7 +192,7 @@ async function main() {
 
     const schema = (db.prepare('PRAGMA user_version').get() as { user_version: number })
       .user_version;
-    assertEqual(schema, 75, 'schema remains v75');
+    assertEqual(schema, 86, 'schema remains at tip v86');
   } finally {
     server.close();
     closeDatabase();
