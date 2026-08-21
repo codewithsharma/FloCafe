@@ -20,6 +20,8 @@ import { printReceipt } from '../services/receipt';
 import { requireRole } from '../middleware/security';
 import { validateBody } from '../middleware/validate';
 import { dualFromMajor, billPaidCents, billTotalCents, fromCents, preferCents } from '../lib/money';
+import { logAuditEvent } from '../services/audit-log';
+import { correlationId } from '../errors';
 import {
   applyPayableRounding,
   calculateConfiguredChargeTaxes,
@@ -1027,6 +1029,25 @@ router.post(
           now(),
           bill.order_id,
         );
+
+        logAuditEvent({
+          actorUserId: (req as { user?: { userId?: string } }).user?.userId ?? null,
+          action: 'bill.discount_applied',
+          entityType: 'bill',
+          entityId: String(req.params.id),
+          result: 'success',
+          reason: reason || null,
+          metadata: {
+            order_id: bill.order_id,
+            discount_type: type,
+            discount_value: value,
+            discount_amount: discountAmount,
+          },
+          context: {
+            requestId: correlationId(),
+            clientIp: req.ip || req.socket.remoteAddress || null,
+          },
+        });
 
         return parseRowJson(db.prepare('SELECT * FROM bills WHERE id = ?').get(req.params.id));
       });

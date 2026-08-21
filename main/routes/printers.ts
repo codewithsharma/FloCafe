@@ -180,15 +180,6 @@ router.post(
     const actorUserId = String((req as { user?: { userId?: string } }).user?.userId || '');
     const jobId = String(req.params.id || '');
     try {
-      logAuditEvent({
-        actorUserId: actorUserId || null,
-        action: 'print_job.retry_requested',
-        entityType: 'print_job',
-        entityId: jobId,
-        result: 'success',
-        metadata: { job_id: jobId },
-      });
-
       const job = await retryPrintJob(jobId, actorUserId);
       if (job.status === 'done') {
         logAuditEvent({

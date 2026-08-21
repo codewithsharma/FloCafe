@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-21 — P13 DATA-AUDIT-HARDENING (COMPLETE)
+
+No schema bump (tip **v88**). Close critical audit gaps: bill applyDiscount audited; order/QR create + item discount + item restore audits inside `withTxn`; remove false print retry_requested success; payment-method merge audited. DB deny-triggers deferred (fixture compatibility). Suite `npm run test:data-audit`. Audit logging / Data integrity matrix rows remain **🟡 Hardening**. LIVE PILOT NO-GO.
+
 ## 2026-08-21 — P12 RPT-CATEGORY Category performance report (COMPLETE)
 
 No schema bump (tip remains **v88**). Thin projection of `queryProductReport().by_category` — no duplicate settlement SQL. Live catalog category attribution; Uncategorized bucket; refunds/order discounts context only. Suite `npm run test:rpt-category`. Report `docs/qa/CATEGORY-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**.

@@ -772,6 +772,18 @@ export function registerCancelRoutes(router: Router): void {
               .map(parseItemJson) as OrderItemRow[],
           ),
         );
+        logAuditEvent({
+          actorUserId: getAuthUser(req)?.userId ?? null,
+          action: 'order.item_restored',
+          entityType: 'order',
+          entityId: String(orderId),
+          result: 'success',
+          metadata: { item_id: itemId },
+          context: {
+            requestId: correlationId(),
+            clientIp: req.ip || req.socket.remoteAddress || null,
+          },
+        });
         return { updatedOrder, items };
       });
 

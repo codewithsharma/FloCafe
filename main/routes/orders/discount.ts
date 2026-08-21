@@ -769,31 +769,34 @@ export function registerDiscountRoutes(router: Router): void {
             }
           }
 
-          return db.prepare('SELECT * FROM order_items WHERE id = ?').get(req.params.itemId) as
-            OrderItemRow | undefined;
+          const row = db
+            .prepare('SELECT * FROM order_items WHERE id = ?')
+            .get(req.params.itemId) as OrderItemRow | undefined;
+          if (row) {
+            logAuditEvent({
+              actorUserId: getAuthUser(req)?.userId ?? null,
+              action: 'order.item_discount_applied',
+              entityType: 'order',
+              entityId: String(req.params.id),
+              result: 'success',
+              metadata: {
+                item_id: row.id ?? req.params.itemId,
+                discount_type,
+                discount_value,
+                discount_amount: row.discount_amount ?? discountAmount,
+              },
+              context: {
+                requestId: correlationId(),
+                clientIp: req.ip || req.socket.remoteAddress || null,
+              },
+            });
+          }
+          return row;
         });
 
         if (!updatedItem) {
           return res.status(404).json({ error: 'Item not found' });
         }
-
-        logAuditEvent({
-          actorUserId: getAuthUser(req)?.userId ?? null,
-          action: 'order.item_discount_applied',
-          entityType: 'order',
-          entityId: String(req.params.id),
-          result: 'success',
-          metadata: {
-            item_id: updatedItem.id ?? req.params.itemId,
-            discount_type,
-            discount_value,
-            discount_amount: updatedItem.discount_amount ?? discountAmount,
-          },
-          context: {
-            requestId: correlationId(),
-            clientIp: req.ip || req.socket.remoteAddress || null,
-          },
-        });
 
         res.json({ item: updatedItem });
       } catch (error: unknown) {

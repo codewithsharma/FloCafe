@@ -48,6 +48,8 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 **Exhaustive QA audit (2026-08-15):** Pack at `docs/qa/`. Live GUI + RBAC + RC: PASS WITH CONDITIONS. Production readiness: **CONDITIONAL GO**. Final release hardening: **CONDITIONAL GO** (`docs/qa/FINAL-RELEASE-HARDENING-AUDIT.md`) — P1-06 unopenable DB fail-closed; OPS-02 drill checklist; RC checklist. Live café still blocked on signed/notarized RC + OPS-02 + Master-PIN DR + security residual acceptance + sign-off. Residual eng: JWT/CSP Phase C, REAL dual-write.
 
 
+**P13 DATA-AUDIT-HARDENING (2026-08-21):** Data & audit integrity hardening — no schema bump; `npm run test:data-audit`. Plan `docs/qa/P13-DATA-AUDIT-HARDENING-PLAN.md`. Report `docs/qa/P13-DATA-AUDIT-HARDENING-IMPLEMENTATION-REPORT.md`. Deepens audit atomicity; matrix Audit logging / Data integrity remain 🟡 Hardening.
+
 **P12 RPT-CATEGORY (2026-08-21):** Category performance report — no schema bump; `npm run test:rpt-category`. Report `docs/qa/CATEGORY-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`. Thin projection of P11 `by_category`; Category Performance → Existing.
 
 **P11 RPT-PRODUCT (2026-08-21):** Product performance report — no schema bump; `npm run test:rpt-product`. Report `docs/qa/PRODUCT-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`. Settled merchandise + category rollup; Category Performance closed by P12.

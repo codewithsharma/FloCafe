@@ -422,8 +422,8 @@ R8 (2026-08-15) deepened Existing staff management (search/filter, detail, shift
 | Feature                      | Status       |
 | ---------------------------- | ------------ |
 | Restaurant schema/data model | 🟢 Existing  |
-| Data integrity validation    | 🟡 Hardening |
-| Audit logging                | 🟡 Hardening |
+| Data integrity validation    | 🟡 Hardening | P13 deepened targeted mutation audits; full integrity warehouse still open      |
+| Audit logging                | 🟡 Hardening | P13 closed critical post-commit / missing-audit gaps; DB deny-triggers deferred |
 
 ## Branding
 

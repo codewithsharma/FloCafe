@@ -2,6 +2,7 @@
 
 ## Mandate
 
+- [x] **P13 DATA-AUDIT-HARDENING (2026-08-21):** Data & audit integrity; no schema bump; `npm run test:data-audit`. Report `docs/qa/P13-DATA-AUDIT-HARDENING-IMPLEMENTATION-REPORT.md`.
 - [x] **P12 RPT-CATEGORY (2026-08-21):** Category performance report; no schema bump; `npm run test:rpt-category`. Report `docs/qa/CATEGORY-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`.
 - [x] **P11 RPT-PRODUCT (2026-08-21):** Product performance report; no schema bump; `npm run test:rpt-product`. Report `docs/qa/PRODUCT-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`.
 - [x] **P10 PRINT-HEALTH (2026-08-21):** Printer health & recovery UX; no schema bump; `npm run test:print-health`. Report `docs/qa/PRINTER-HEALTH-RECOVERY-IMPLEMENTATION-REPORT.md`.

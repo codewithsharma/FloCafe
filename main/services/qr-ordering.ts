@@ -384,29 +384,29 @@ export function createQrGuestOrder(
         .all(orderId)
         .map(parseItemJson) as any[],
     );
+    logAuditEvent({
+      actorUserId: QR_GUEST_USER_ID,
+      action: 'order.created',
+      entityType: 'order',
+      entityId: String(order.id),
+      result: 'success',
+      metadata: {
+        type: 'dine_in',
+        source: 'qr_guest',
+        table_id: table.id,
+        item_count: input.items.length,
+        pay_at_counter: true,
+      },
+      context: {
+        requestId: correlationId(),
+        clientIp: input.clientIp || null,
+      },
+    });
     return { order, orderItems };
   });
 
   if (isModuleEnabled('kds')) notifyKdsUpdate();
   cloudSync.recordOrderChanged(result.order.id as string | number, 'order.created');
-  logAuditEvent({
-    actorUserId: QR_GUEST_USER_ID,
-    action: 'order.created',
-    entityType: 'order',
-    entityId: String(result.order.id),
-    result: 'success',
-    metadata: {
-      type: 'dine_in',
-      source: 'qr_guest',
-      table_id: table.id,
-      item_count: input.items.length,
-      pay_at_counter: true,
-    },
-    context: {
-      requestId: correlationId(),
-      clientIp: input.clientIp || null,
-    },
-  });
 
   return result;
 }
