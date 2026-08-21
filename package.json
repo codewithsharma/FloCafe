@@ -240,6 +240,7 @@
     "test:rpt-pay": "node tests/run-electron-node-test.cjs tests/rpt-pay-payment-report.test.ts",
     "test:rpt-disc": "node tests/run-electron-node-test.cjs tests/rpt-disc-discount-report.test.ts",
     "test:rpt-staff": "node tests/run-electron-node-test.cjs tests/rpt-staff-staff-report.test.ts",
+    "test:rpt-product": "node tests/run-electron-node-test.cjs tests/rpt-product-product-report.test.ts",
     "test:r13": "node tests/run-electron-node-test.cjs tests/r13-print-queue.test.ts",
     "test:print-health": "node tests/run-electron-node-test.cjs tests/print-health.test.ts",
     "test:r14": "node tests/run-electron-node-test.cjs tests/r14-corrupt-db-fail-closed.test.ts",

@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-21 — P11 RPT-PRODUCT Product performance report (COMPLETE)
+
+No schema bump (tip remains **v88**). Settled bills → DISTINCT orders → active `order_items`; merchandise = line `subtotal` (not app Gross Sales); item discounts on rows; order discounts + refunds as context only; category from live join with in-report rollup. Suite `npm run test:rpt-product`. Report `docs/qa/PRODUCT-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**. Category Performance matrix row remains Planned.
+
 ## 2026-08-21 — P10 PRINT-HEALTH Printer health & recovery (COMPLETE)
 
 No schema bump (tip remains **v88**). Health derived from open `print_jobs` + default printer config (not live ESC/POS ACK). Concurrent retries claimed via `failed→pending` lease (`PRINT_JOB_BUSY`). Settings Receipts/Printers recovery panel. Suite `npm run test:print-health`. Report `docs/qa/PRINTER-HEALTH-RECOVERY-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**.

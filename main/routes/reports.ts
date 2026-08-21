@@ -22,6 +22,7 @@ import {
 } from '../services/payment-report';
 import { discountReportToCsv, queryDiscountReport } from '../services/discount-report';
 import { queryStaffReport, staffReportToCsv } from '../services/staff-report';
+import { productReportToCsv, queryProductReport } from '../services/product-report';
 import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
 import { toCsvRow } from '../lib/csv';
@@ -777,6 +778,83 @@ router.get('/export/staff.csv', requireRole('owner', 'manager'), (req: Request, 
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// RPT-PRODUCT — Product performance (settled order_items merchandise; no schema change).
+router.get('/products', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const today = utcTodayDate();
+    const startDate = reportDate(req.query.start_date, today);
+    const endDate = reportDate(req.query.end_date, today);
+    if (startDate > endDate) {
+      return res.status(400).json({ error: 'start_date must be on or before end_date' });
+    }
+    const categoryIdRaw = req.query.category_id;
+    const categoryId =
+      typeof categoryIdRaw === 'string' && categoryIdRaw.trim() ? categoryIdRaw.trim() : null;
+    const productIdRaw = req.query.product_id;
+    const productId =
+      typeof productIdRaw === 'string' && productIdRaw.trim() ? productIdRaw.trim() : null;
+    const sortRaw = req.query.sort;
+    const sort =
+      sortRaw === 'quantity_sold' || sortRaw === 'product_name' || sortRaw === 'merchandise_sales'
+        ? sortRaw
+        : 'merchandise_sales';
+    const report = queryProductReport(db, startDate, endDate, { categoryId, productId, sort });
+    res.json({ products: report });
+  } catch (error: unknown) {
+    console.error('[API] Product report failed:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get(
+  '/export/products.csv',
+  requireRole('owner', 'manager'),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const today = utcTodayDate();
+      const startDate = reportDate(req.query.start_date, today);
+      const endDate = reportDate(req.query.end_date, today);
+      if (startDate > endDate) {
+        return res.status(400).json({ error: 'start_date must be on or before end_date' });
+      }
+      const categoryIdRaw = req.query.category_id;
+      const categoryId =
+        typeof categoryIdRaw === 'string' && categoryIdRaw.trim() ? categoryIdRaw.trim() : null;
+      const report = queryProductReport(db, startDate, endDate, { categoryId });
+      const csv = productReportToCsv(report);
+
+      logAuditEvent({
+        actorUserId: (req as { user?: { userId?: string } }).user?.userId ?? null,
+        action: 'report.products_exported',
+        entityType: 'product_report',
+        entityId: `${startDate}_${endDate}`,
+        result: 'success',
+        metadata: {
+          format: 'csv',
+          start_date: startDate,
+          end_date: endDate,
+          category_id: categoryId,
+          product_count: report.totals.product_count,
+          merchandise_sales: report.totals.merchandise_sales,
+          quantity_sold: report.totals.quantity_sold,
+        },
+      });
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="operavia-products-${startDate}-to-${endDate}.csv"`,
+      );
+      res.status(200).send(csv);
+    } catch (error: unknown) {
+      console.error('[API] Products CSV export failed:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 router.get('/sales', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {
