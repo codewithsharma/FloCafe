@@ -1,6 +1,5 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import jwt from 'jsonwebtoken';
 import { WebSocketServer } from 'ws';
 import * as http from 'http';
 import * as path from 'path';
@@ -35,6 +34,13 @@ import {
   isTokenStale,
   revokeToken,
 } from './middleware/security';
+import { applyApiNoStoreCache, applySecurityHeaders } from './middleware/http-observability';
+import { signAccessToken, verifyAccessToken } from './security/jwt';
+import {
+  assertKdsUpgradeOrigin,
+  KDS_WS_MAX_PAYLOAD_BYTES,
+  rejectWebSocketUpgrade,
+} from './security/websocket-upgrade';
 import { getNetworkMode, resolveListenHost, type ListenHost } from './services/network-mode';
 
 let kdsServer: http.Server | null = null;
@@ -108,6 +114,8 @@ export function startKdsServer(): Promise<void> {
     const app: Express = express();
 
     app.use(cors(corsOptions));
+    applySecurityHeaders(app);
+    applyApiNoStoreCache(app);
     app.use(express.json());
     // body-parser 2.x (bundled with Express 5) leaves req.body undefined
     // instead of {} when a request has no parseable body -- restore the
@@ -133,7 +141,7 @@ export function startKdsServer(): Promise<void> {
         return res.status(401).json({ error: 'Invalid token' });
       }
       try {
-        const decoded = jwt.verify(token, getJWTSecret()) as any;
+        const decoded = verifyAccessToken(token, getJWTSecret()) as any;
         const db = getDatabase();
         const user = db
           .prepare(
@@ -244,7 +252,7 @@ export function startKdsServer(): Promise<void> {
             .json({ error: 'No active kitchen station is assigned to this user' });
         }
 
-        const token = jwt.sign(
+        const token = signAccessToken(
           { userId: user.id, email: user.email, role: user.role, jti: uuidv4() },
           getJWTSecret(),
           { expiresIn: '24h' },
@@ -273,7 +281,7 @@ export function startKdsServer(): Promise<void> {
       if (authHeader?.startsWith('Bearer ')) {
         const token = authHeader.slice('Bearer '.length);
         try {
-          const decoded = jwt.verify(token, getJWTSecret()) as { exp?: number };
+          const decoded = verifyAccessToken(token, getJWTSecret()) as { exp?: number };
           revokeToken(token, typeof decoded.exp === 'number' ? decoded.exp * 1000 : undefined);
         } catch {
           // Logout remains idempotent without persisting arbitrary bearer data.
@@ -745,31 +753,29 @@ export function startKdsServer(): Promise<void> {
         // noServer + a manual 'upgrade' handler so a disabled KDS can 404 the
         // upgrade instead of completing it — see main/server.ts for the same
         // pattern on the primary API server (issue #133).
-        const wss = new WebSocketServer({ noServer: true });
+        const wss = new WebSocketServer({ noServer: true, maxPayload: KDS_WS_MAX_PAYLOAD_BYTES });
         kdsWss = wss;
         setupKdsWebSocket(wss);
 
         kdsServer.on('upgrade', (request, socket, head) => {
           const pathname = (request.url || '').split('?')[0];
           if (pathname !== '/kds') {
-            socket.write(
-              'HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-Length: 0\r\n\r\n',
-            );
-            socket.destroy();
+            rejectWebSocketUpgrade(socket, 'HTTP/1.1 404 Not Found');
+            return;
+          }
+
+          if (!assertKdsUpgradeOrigin(request)) {
+            rejectWebSocketUpgrade(socket, 'HTTP/1.1 403 Forbidden');
             return;
           }
 
           if (isDatabaseMaintenanceActive()) {
-            socket.write(
-              'HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\nContent-Length: 0\r\n\r\n',
-            );
-            socket.destroy();
+            rejectWebSocketUpgrade(socket, 'HTTP/1.1 503 Service Unavailable');
             return;
           }
 
           if (!isKdsEnabled()) {
-            socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
-            socket.destroy();
+            rejectWebSocketUpgrade(socket, 'HTTP/1.1 404 Not Found');
             return;
           }
 

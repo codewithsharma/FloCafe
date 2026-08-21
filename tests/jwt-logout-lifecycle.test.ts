@@ -74,36 +74,47 @@ async function run() {
     .set('Authorization', `Bearer ${token}`);
   assertEqual(meRes1.status, 200, '/api/auth/me succeeds with valid token');
 
-  // Step 3: Refresh token with valid token -> 200
+  // Step 3: Refresh token with valid token -> 200 (rotates: old revoked)
   const refreshRes1 = await request(app)
     .post('/api/auth/refresh')
     .set('Authorization', `Bearer ${token}`);
   assertEqual(refreshRes1.status, 200, '/api/auth/refresh succeeds with valid token');
   const newToken = refreshRes1.body.access_token;
   assert(!!newToken, 'New token returned on refresh');
+  assert(newToken !== token, 'Refresh returns a distinct token');
 
-  // Step 4: Logout using original token -> 200
+  const meAfterRefreshOld = await request(app)
+    .get('/api/auth/me')
+    .set('Authorization', `Bearer ${token}`);
+  assertEqual(meAfterRefreshOld.status, 401, 'Presented token is revoked after refresh rotation');
+
+  const meAfterRefreshNew = await request(app)
+    .get('/api/auth/me')
+    .set('Authorization', `Bearer ${newToken}`);
+  assertEqual(meAfterRefreshNew.status, 200, 'Rotated token works after refresh');
+
+  // Step 4: Logout using rotated token -> 200
   const logoutRes = await request(app)
     .post('/api/auth/logout')
-    .set('Authorization', `Bearer ${token}`);
+    .set('Authorization', `Bearer ${newToken}`);
   assertEqual(logoutRes.status, 200, 'Logout succeeds');
 
   // Step 5: Attempt token reuse after logout -> 401
   const meRes2 = await request(app)
     .get('/api/auth/me')
-    .set('Authorization', `Bearer ${token}`);
+    .set('Authorization', `Bearer ${newToken}`);
   assertEqual(meRes2.status, 401, 'Token reuse after logout fails with 401');
 
   // Step 6: Refresh using revoked token -> 401
   const refreshRes2 = await request(app)
     .post('/api/auth/refresh')
-    .set('Authorization', `Bearer ${token}`);
+    .set('Authorization', `Bearer ${newToken}`);
   assertEqual(refreshRes2.status, 401, 'Refresh with revoked token fails with 401');
 
   // Revoked sessions must not perform authenticated password changes.
   const passwordChangeRes = await request(app)
     .post('/api/auth/password/change')
-    .set('Authorization', `Bearer ${token}`)
+    .set('Authorization', `Bearer ${newToken}`)
     .send({ current_password: 'Pass1234!', password: 'NewPass1234!' });
   assertEqual(passwordChangeRes.status, 401, 'Password change with revoked token fails with 401');
 
@@ -112,7 +123,7 @@ async function run() {
   initDatabase();
   const afterRestart = await request(app)
     .get('/api/auth/me')
-    .set('Authorization', `Bearer ${token}`);
+    .set('Authorization', `Bearer ${newToken}`);
   assertEqual(afterRestart.status, 401, 'logged-out token remains rejected after database restart');
 
   // A bounded in-memory cache must not evict durable revocations.
@@ -120,31 +131,32 @@ async function run() {
     const churnToken = jwt.sign(
       { userId: 'jwt-owner-1', email: 'jwt-owner@test.local', role: 'owner', jti: `churn-${i}` },
       getJWTSecret(),
-      { expiresIn: '1h' },
+      { expiresIn: '1h', algorithm: 'HS256' },
     );
     revokeToken(churnToken);
   }
-  assertEqual(isTokenRevoked(token), true, 'original logout remains revoked after token churn');
+  assertEqual(isTokenRevoked(newToken), true, 'original logout remains revoked after token churn');
 
   // Step 7: Test expired token -> 401
   const expiredToken = jwt.sign(
     { userId: 'jwt-owner-1', email: 'jwt-owner@test.local', role: 'owner' },
     getJWTSecret(),
-    { expiresIn: '-1s' }
+    { expiresIn: '-1s', algorithm: 'HS256' },
   );
   const meRes3 = await request(app)
     .get('/api/auth/me')
     .set('Authorization', `Bearer ${expiredToken}`);
   assertEqual(meRes3.status, 401, 'Expired token fails with 401');
 
-  // Step 8: New token from refresh is still valid
+  // Step 8: Login again — fresh token works (post-logout baseline)
+  const loginRes2 = await request(app)
+    .post('/api/auth/login')
+    .send({ email: 'jwt-owner@test.local', password: 'Pass1234!' });
+  assertEqual(loginRes2.status, 200, 'Re-login after logout succeeds');
   const meRes4 = await request(app)
     .get('/api/auth/me')
-    .set('Authorization', `Bearer ${newToken}`);
-  if (meRes4.status !== 200) {
-    console.log('meRes4 status:', meRes4.status, 'body:', meRes4.body);
-  }
-  assertEqual(meRes4.status, 200, 'Refreshed token remains valid');
+    .set('Authorization', `Bearer ${loginRes2.body.access_token}`);
+  assertEqual(meRes4.status, 200, 'Fresh login token remains valid');
 
   const results = getResults();
   if (results.failed > 0) {

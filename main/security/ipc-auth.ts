@@ -2,7 +2,7 @@
  * Minimal IPC JWT authorization for privileged desktop-bridge mutators.
  * Reuses HTTP auth primitives — not a second session system.
  */
-import jwt from 'jsonwebtoken';
+import { verifyAccessToken } from './jwt';
 import { getJWTSecret } from '../routes/auth';
 import { getUserAuthStatus, isTokenRevoked, isTokenStale } from '../middleware/security';
 
@@ -36,7 +36,7 @@ export function authorizeOwnerManagerJwt(token: string | undefined | null): IpcJ
       return { ok: false, error: 'Invalid or expired token', code: 'unauthorized' };
     }
 
-    const decoded = jwt.verify(token, getJWTSecret()) as {
+    const decoded = verifyAccessToken(token, getJWTSecret()) as {
       userId?: unknown;
       iat?: number;
     };

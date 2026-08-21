@@ -17,7 +17,7 @@ import {
   registerDatabaseMaintenanceStartListener,
   withTxn,
 } from '../db';
-import * as jwt from 'jsonwebtoken';
+import { verifyAccessToken } from '../security/jwt';
 import { getJWTSecret, parseCategoryIds } from '../routes/auth';
 import { getUserAuthStatus, isTokenRevoked, isTokenStale } from '../middleware/security';
 import { isModuleEnabled } from '../modules';
@@ -105,7 +105,7 @@ function isKdsClientAuthorized(client: KdsClient): boolean {
   if (!isKdsEnabled() || !client.userId || !client.token || isTokenRevoked(client.token))
     return false;
   try {
-    const decoded = jwt.verify(client.token, getJWTSecret()) as any;
+    const decoded = verifyAccessToken(client.token, getJWTSecret()) as any;
     const status = getUserAuthStatus(decoded.userId, { fresh: true });
     if (
       decoded.userId !== client.userId ||
@@ -343,7 +343,7 @@ function handleAuth(ws: WebSocket, client: KdsClient, message: any): void {
   }
 
   try {
-    const decoded = jwt.verify(token, getJWTSecret()) as any;
+    const decoded = verifyAccessToken(token, getJWTSecret()) as any;
     const db = getDatabase();
     const user = db
       .prepare('SELECT * FROM users WHERE id = ? AND is_active = 1')

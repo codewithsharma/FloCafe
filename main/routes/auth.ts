@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
-import jwt, { SignOptions } from 'jsonwebtoken';
+import { signAccessToken, verifyAccessToken } from '../security/jwt';
 import { v4 as uuidv4 } from 'uuid';
 import { getCountryCallingCode, type CountryCode } from 'libphonenumber-js';
 import { getCurrentSchemaVersion, getDatabase, now } from '../db';
@@ -53,7 +53,7 @@ const JWT_EXPIRES_IN = '24h';
 const JWT_REMEMBER_EXPIRES_IN = '10d';
 const JWT_REMEMBER_EXPIRES_IN_SECONDS = 10 * 24 * 60 * 60;
 
-function expiresInFor(remember: boolean): SignOptions['expiresIn'] {
+function expiresInFor(remember: boolean): string {
   return remember ? JWT_REMEMBER_EXPIRES_IN : JWT_EXPIRES_IN;
 }
 
@@ -459,13 +459,21 @@ router.post(
         const user = db
           .prepare('SELECT * FROM users WHERE email = ? AND is_active = 1')
           .get(email) as any;
+        // Always run bcrypt.compare so missing users take a similar amount of
+        // time as wrong-password lookups (mitigate user enumeration timing).
+        const LOGIN_TIMING_DUMMY_HASH =
+          '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
         let passwordMatches = false;
-        if (user) {
-          try {
-            passwordMatches = await bcrypt.compare(password, user.password);
-          } catch {
-            passwordMatches = false;
-          }
+        try {
+          passwordMatches = await bcrypt.compare(
+            password,
+            user?.password || LOGIN_TIMING_DUMMY_HASH,
+          );
+        } catch {
+          passwordMatches = false;
+        }
+        if (!user) {
+          passwordMatches = false;
         }
 
         if (!user || !passwordMatches) {
@@ -489,7 +497,7 @@ router.post(
         resetSuccessfulLogin(ip);
 
         const remember = !!rememberMe;
-        const token = jwt.sign(
+        const token = signAccessToken(
           { userId: user.id, email: user.email, role: user.role, remember, jti: uuidv4() },
           getJWTSecret(),
           { expiresIn: expiresInFor(remember) },
@@ -544,7 +552,7 @@ router.post('/tenants/select', (req: Request, res: Response) => {
     if (isTokenRevoked(token)) {
       return res.status(401).json({ error: 'Invalid token' });
     }
-    const decoded = jwt.verify(token, getJWTSecret()) as any;
+    const decoded = verifyAccessToken(token, getJWTSecret()) as any;
 
     const db = getDatabase();
     const user = db
@@ -561,11 +569,12 @@ router.post('/tenants/select', (req: Request, res: Response) => {
 
     // Re-issue token with tenant context embedded (same payload — desktop is single-tenant)
     const remember = !!decoded.remember;
-    const newToken = jwt.sign(
+    const newToken = signAccessToken(
       { userId: user.id, email: user.email, role: user.role, tenantId: 1, remember, jti: uuidv4() },
       getJWTSecret(),
       { expiresIn: expiresInFor(remember) },
     );
+    revokeToken(token, typeof decoded.exp === 'number' ? decoded.exp * 1000 : undefined);
 
     res.json({
       access_token: newToken,
@@ -584,7 +593,7 @@ router.post('/logout', (req: Request, res: Response) => {
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice('Bearer '.length);
     try {
-      const decoded = jwt.verify(token, getJWTSecret()) as { exp?: number };
+      const decoded = verifyAccessToken(token, getJWTSecret()) as { exp?: number };
       revokeToken(token, typeof decoded.exp === 'number' ? decoded.exp * 1000 : undefined);
     } catch {
       // Logout is intentionally idempotent; invalid credentials are not
@@ -607,7 +616,7 @@ router.post('/refresh', (req: Request, res: Response) => {
     if (isTokenRevoked(token)) {
       return res.status(401).json({ error: 'Invalid token' });
     }
-    const decoded = jwt.verify(token, getJWTSecret()) as any;
+    const decoded = verifyAccessToken(token, getJWTSecret()) as any;
 
     // Without this, a token minted before a password/PIN change (#173) could
     // keep refreshing itself into new tokens forever, bypassing revocation entirely.
@@ -620,11 +629,18 @@ router.post('/refresh', (req: Request, res: Response) => {
     }
 
     const remember = !!decoded.remember;
-    const newToken = jwt.sign(
+    // Load role from DB so refresh cannot perpetuate a stale JWT role claim.
+    const roleRow = db
+      .prepare('SELECT role FROM users WHERE id = ? AND is_active = 1')
+      .get(decoded.userId) as { role: string } | undefined;
+    if (!roleRow) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    const newToken = signAccessToken(
       {
         userId: decoded.userId,
         email: decoded.email,
-        role: decoded.role,
+        role: roleRow.role,
         tenantId: decoded.tenantId,
         remember,
         jti: uuidv4(),
@@ -632,6 +648,9 @@ router.post('/refresh', (req: Request, res: Response) => {
       getJWTSecret(),
       { expiresIn: expiresInFor(remember) },
     );
+    // Refresh rotates the session: presented token is revoked so stolen
+    // refresh siblings cannot remain valid after rotation.
+    revokeToken(token, typeof decoded.exp === 'number' ? decoded.exp * 1000 : undefined);
 
     res.json({
       access_token: newToken,
@@ -656,7 +675,7 @@ router.get('/me', (req: Request, res: Response) => {
     if (isTokenRevoked(token)) {
       return res.status(401).json({ error: 'Invalid token' });
     }
-    const decoded = jwt.verify(token, getJWTSecret()) as any;
+    const decoded = verifyAccessToken(token, getJWTSecret()) as any;
 
     const db = getDatabase();
     const user = db
@@ -695,7 +714,7 @@ router.post('/password/change', (req: Request, res: Response) => {
     if (isTokenRevoked(token)) {
       return res.status(401).json({ error: 'Invalid token' });
     }
-    const decoded = jwt.verify(token, getJWTSecret()) as any;
+    const decoded = verifyAccessToken(token, getJWTSecret()) as any;
 
     const db = getDatabase();
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.userId) as any;
@@ -1209,7 +1228,7 @@ router.post(
         console.warn('[Auth] Cloud registration profile refresh deferred after setup:', error);
       }
 
-      const token = jwt.sign(
+      const token = signAccessToken(
         { userId, email, role: INITIAL_ADMIN_ROLE, jti: uuidv4() },
         getJWTSecret(),
         { expiresIn: JWT_EXPIRES_IN },
@@ -1262,7 +1281,7 @@ router.post('/jwt-secret/rotate', authRateLimit(), (req: Request, res: Response)
     if (isTokenRevoked(token)) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
-    const decoded = jwt.verify(token, getJWTSecret()) as {
+    const decoded = verifyAccessToken(token, getJWTSecret()) as {
       userId: string;
       role?: string;
       iat?: number;

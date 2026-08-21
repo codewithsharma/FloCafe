@@ -1,6 +1,5 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import jwt from 'jsonwebtoken';
 import * as http from 'http';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -15,6 +14,8 @@ import {
   rateLimit,
   revokeToken,
 } from './middleware/security';
+import { applyApiNoStoreCache, applySecurityHeaders } from './middleware/http-observability';
+import { signAccessToken, verifyAccessToken } from './security/jwt';
 import { getServerPort } from './server';
 import {
   getDefaultServerAppPort,
@@ -83,7 +84,7 @@ function requireServerAppAuth(req: Request, res: Response, next: NextFunction) {
   if (isTokenRevoked(token)) return res.status(401).json({ error: 'Invalid token' });
 
   try {
-    const decoded = jwt.verify(token, getJWTSecret()) as any;
+    const decoded = verifyAccessToken(token, getJWTSecret()) as any;
     const db = getDatabase();
     const user = db
       .prepare(
@@ -148,6 +149,8 @@ export function startServerApp(): Promise<void> {
     const app: Express = express();
 
     app.use(cors(corsOptions));
+    applySecurityHeaders(app);
+    applyApiNoStoreCache(app);
     app.use(express.json());
     app.use((req: Request, _res: Response, next: NextFunction) => {
       if (req.body === undefined) req.body = {};
@@ -208,7 +211,7 @@ export function startServerApp(): Promise<void> {
           return res.status(403).json({ error: 'Access denied. Only service staff allowed.' });
         }
 
-        const token = jwt.sign(
+        const token = signAccessToken(
           { userId: user.id, email: user.email, role: user.role, jti: uuidv4() },
           getJWTSecret(),
           { expiresIn: remember_me ? '10d' : '24h' },

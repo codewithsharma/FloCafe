@@ -24,8 +24,14 @@ const CONNECT_SRC = [
 /**
  * Helmet with Electron/static-export-friendly CSP.
  * Preserves existing connect-src localhost allowances for KDS/dev.
+ *
+ * Intentional exceptions (local-first POS):
+ * - script/style 'unsafe-inline' — Next static export (Phase C: nonces)
+ * - HSTS disabled — listeners are plain HTTP (localhost / LAN)
+ * - COEP off — Electron + static loads
  */
 export function applySecurityHeaders(app: Express): void {
+  app.disable('x-powered-by');
   app.use(
     helmet({
       // Next.js static export + Tailwind need unsafe-inline for scripts/styles.
@@ -43,13 +49,39 @@ export function applySecurityHeaders(app: Express): void {
           baseUri: ["'self'"],
         },
       },
+      // Local/LAN HTTP POS — do not advertise HTTPS-only to clients.
+      strictTransportSecurity: false,
       // API is same-origin / localhost; COEP/COOP can break Electron file loads.
       crossOriginEmbedderPolicy: false,
       crossOriginOpenerPolicy: { policy: 'same-origin' },
       originAgentCluster: false,
       frameguard: { action: 'deny' },
+      referrerPolicy: { policy: 'no-referrer' },
     }),
   );
+  // Helmet 8 no longer ships Permissions-Policy; set explicitly for POS HTML.
+  app.use((_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader(
+      'Permissions-Policy',
+      'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+    );
+    next();
+  });
+}
+
+/**
+ * Sensitive API responses must not be stored by shared LAN browser caches.
+ * Product image GET sets its own Cache-Control (no-cache + ETag) later.
+ */
+export function applyApiNoStoreCache(app: Express): void {
+  app.use('/api', (req: Request, res: Response, next: NextFunction) => {
+    const path = req.path || '';
+    if (req.method === 'GET' && /\/products\/[^/]+\/image\/?$/.test(path)) {
+      return next();
+    }
+    res.setHeader('Cache-Control', 'no-store');
+    next();
+  });
 }
 
 /**

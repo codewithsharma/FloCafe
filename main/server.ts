@@ -5,7 +5,6 @@ import * as http from 'http';
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
-import jwt from 'jsonwebtoken';
 import { registerRoutes } from './routes';
 import { getJWTSecret } from './routes/auth';
 import {
@@ -27,6 +26,7 @@ import {
   applyCompression,
   applyRequestLogging,
   applySecurityHeaders,
+  applyApiNoStoreCache,
 } from './middleware/http-observability';
 import { initFromDb as initWhatsAppFromDb } from './services/whatsapp';
 import {
@@ -37,6 +37,12 @@ import {
   type NetworkMode,
 } from './services/network-mode';
 import { isRecoveryRequired } from './services/install-state';
+import {
+  assertKdsUpgradeOrigin,
+  KDS_WS_MAX_PAYLOAD_BYTES,
+  rejectWebSocketUpgrade,
+} from './security/websocket-upgrade';
+import { verifyAccessToken } from './security/jwt';
 
 let server: http.Server | null = null;
 let app: Express;
@@ -136,7 +142,7 @@ function requireAuth(req: Request, res: Response, next: NextFunction): void {
       res.status(401).json({ error: 'Invalid or expired token' });
       return;
     }
-    const decoded = jwt.verify(token, getJWTSecret()) as any;
+    const decoded = verifyAccessToken(token, getJWTSecret()) as any;
 
     // Reject tokens for users deactivated (or deleted) since the token was
     // issued, instead of trusting the JWT's signature/expiry alone (vuln-0001).
@@ -247,6 +253,7 @@ export function startServer(): Promise<void> {
     app.use(cors(corsOptions));
     // Helmet before body parsers — Electron-friendly CSP (unsafe-inline for Next export).
     applySecurityHeaders(app);
+    applyApiNoStoreCache(app);
     applyRequestLogging(app);
     applyCompression(app);
     app.use(express.json());
@@ -397,32 +404,28 @@ export function startServer(): Promise<void> {
         // straight to WebSocketServer) so a disabled KDS can 404 the upgrade
         // instead of completing it — checked fresh on every request since
         // kds_enabled can change at runtime without a restart (issue #133).
-        wss = new WebSocketServer({ noServer: true });
+        wss = new WebSocketServer({ noServer: true, maxPayload: KDS_WS_MAX_PAYLOAD_BYTES });
         setupKdsWebSocket(wss);
 
         server.on('upgrade', (request, socket, head) => {
           const pathname = (request.url || '').split('?')[0];
           if (pathname !== '/kds') {
-            socket.write(
-              'HTTP/1.1 404 Not Found\r\nConnection: close\r\nContent-Length: 0\r\n\r\n',
-            );
-            socket.destroy();
+            rejectWebSocketUpgrade(socket, 'HTTP/1.1 404 Not Found');
+            return;
+          }
+
+          if (!assertKdsUpgradeOrigin(request)) {
+            rejectWebSocketUpgrade(socket, 'HTTP/1.1 403 Forbidden');
             return;
           }
 
           if (isRecoveryRequired() || !isDatabaseOpen()) {
-            socket.write(
-              'HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\nContent-Length: 0\r\n\r\n',
-            );
-            socket.destroy();
+            rejectWebSocketUpgrade(socket, 'HTTP/1.1 503 Service Unavailable');
             return;
           }
 
           if (isDatabaseMaintenanceActive()) {
-            socket.write(
-              'HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\nContent-Length: 0\r\n\r\n',
-            );
-            socket.destroy();
+            rejectWebSocketUpgrade(socket, 'HTTP/1.1 503 Service Unavailable');
             return;
           }
 
@@ -430,8 +433,7 @@ export function startServer(): Promise<void> {
             // Pretend the endpoint doesn't exist rather than confirming it's
             // just disabled — less to probe from a stale/misconfigured KDS
             // device on the LAN (issue #133).
-            socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
-            socket.destroy();
+            rejectWebSocketUpgrade(socket, 'HTTP/1.1 404 Not Found');
             return;
           }
 

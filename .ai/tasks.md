@@ -2,6 +2,7 @@
 
 ## Mandate
 
+- [x] **P2 Security & Platform Hardening (2026-08-21):** headers/JWT/WS; report `docs/qa/P2-SECURITY-PLATFORM-HARDENING-REPORT.md`.
 - [x] **P1 Test/CI Hardening + P1.1 Stabilization (2026-08-21):** merge 180/180 + extended 45/45 green; database-tools audit FK fixed.
 - [x] **P1 Test/CI Hardening (2026-08-21):** tiers + discover-guard + CI redesign + critical orphan wiring. Report `docs/qa/P1-TEST-CI-HARDENING-REPORT.md`. Residual: database-tools audit FK; extended phase-4 drift.
 
