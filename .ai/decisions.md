@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-21 — P7 RPT-DISC Discount report (COMPLETE)
+
+No schema bump (tip remains **v88**). SoR = settled `bills.discount_*` + active `order_items.discount_amount` (layered). Refunds do not reverse discounts. `GET /api/reports/discounts` + CSV + Reports UI. Suite `npm run test:rpt-disc`. Report `docs/qa/DISCOUNT-REPORT-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**.
+
 ## 2026-08-21 — P6 RPT-PAY Payment report deepen (COMPLETE)
 
 No schema bump (tip remains **v88**). Extracted `payment-report.ts` from thin `paymentMethodBreakdown`; composed Gross Payments Received / Refunds / Net + by-method; `GET /api/reports/payments` + CSV + Reports UI. Tender SoR = `payment_details`; refunds SoR = `refunds`. Suite `npm run test:rpt-pay`. Report `docs/qa/PAYMENT-REPORT-DEEPENING-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**.

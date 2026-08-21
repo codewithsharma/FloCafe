@@ -20,6 +20,7 @@ import {
   queryPaymentReport,
   queryPaymentsReceivedByMethod,
 } from '../services/payment-report';
+import { discountReportToCsv, queryDiscountReport } from '../services/discount-report';
 import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
 import { toCsvRow } from '../lib/csv';
@@ -644,6 +645,70 @@ router.get(
       res.status(200).send(csv);
     } catch (error: unknown) {
       console.error('[API] Payments CSV export failed:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+// RPT-DISC — Discount report (applied order + item discounts on settled bills; no schema change).
+router.get('/discounts', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const today = utcTodayDate();
+    const startDate = reportDate(req.query.start_date, today);
+    const endDate = reportDate(req.query.end_date, today);
+    if (startDate > endDate) {
+      return res.status(400).json({ error: 'start_date must be on or before end_date' });
+    }
+    const report = queryDiscountReport(db, startDate, endDate);
+    res.json({ discounts: report });
+  } catch (error: unknown) {
+    console.error('[API] Discount report failed:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get(
+  '/export/discounts.csv',
+  requireRole('owner', 'manager'),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const today = utcTodayDate();
+      const startDate = reportDate(req.query.start_date, today);
+      const endDate = reportDate(req.query.end_date, today);
+      if (startDate > endDate) {
+        return res.status(400).json({ error: 'start_date must be on or before end_date' });
+      }
+
+      const report = queryDiscountReport(db, startDate, endDate);
+      const csv = discountReportToCsv(report);
+
+      logAuditEvent({
+        actorUserId: (req as { user?: { userId?: string } }).user?.userId ?? null,
+        action: 'report.discounts_exported',
+        entityType: 'discount_report',
+        entityId: `${startDate}_${endDate}`,
+        result: 'success',
+        metadata: {
+          format: 'csv',
+          start_date: startDate,
+          end_date: endDate,
+          discounted_bill_count: report.discounted_bill_count,
+          total_discounts: report.total_discounts,
+          order_discounts: report.order_discounts,
+          item_discounts: report.item_discounts,
+        },
+      });
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="operavia-discounts-${startDate}-to-${endDate}.csv"`,
+      );
+      res.status(200).send(csv);
+    } catch (error: unknown) {
+      console.error('[API] Discounts CSV export failed:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   },

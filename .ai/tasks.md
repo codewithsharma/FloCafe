@@ -2,6 +2,7 @@
 
 ## Mandate
 
+- [x] **P7 RPT-DISC (2026-08-21):** Discount report; no schema bump; `npm run test:rpt-disc`. Report `docs/qa/DISCOUNT-REPORT-IMPLEMENTATION-REPORT.md`.
 - [x] **P6 RPT-PAY (2026-08-21):** Payment report deepen; no schema bump; `npm run test:rpt-pay`. Report `docs/qa/PAYMENT-REPORT-DEEPENING-IMPLEMENTATION-REPORT.md`.
 - [x] **P5 INV-AUTO-86 (2026-08-21):** Auto-86 from stock; schema v88; `npm run test:inv-auto-86`. Report `docs/qa/AUTO-86-FROM-STOCK-IMPLEMENTATION-REPORT.md`.
 - [x] **P4 KDS-H-OUTBOX (2026-08-21):** durable KDS snapshot outbox v87 + reconnect backoff.

@@ -237,6 +237,7 @@
     "test:r11": "node tests/run-electron-node-test.cjs tests/r11-coupons.test.ts",
     "test:r12": "node tests/run-electron-node-test.cjs tests/r12-void-report.test.ts",
     "test:rpt-pay": "node tests/run-electron-node-test.cjs tests/rpt-pay-payment-report.test.ts",
+    "test:rpt-disc": "node tests/run-electron-node-test.cjs tests/rpt-disc-discount-report.test.ts",
     "test:r13": "node tests/run-electron-node-test.cjs tests/r13-print-queue.test.ts",
     "test:r14": "node tests/run-electron-node-test.cjs tests/r14-corrupt-db-fail-closed.test.ts",
     "test:r15": "node tests/run-electron-node-test.cjs tests/r15-sim-s1-normal-sale.test.ts",

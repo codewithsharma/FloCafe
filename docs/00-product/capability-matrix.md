@@ -317,7 +317,7 @@ R8 (2026-08-15) deepened Existing staff management (search/filter, detail, shift
 | Payment report       | 🟢 Existing |
 | Product performance  | 🔵 Planned  |
 | Category performance | 🔵 Planned  |
-| Discount report      | 🔵 Planned  |
+| Discount report      | 🟢 Existing |
 | Void report          | 🟢 Existing |
 | Staff report         | 🔵 Planned  |
 | Shift report         | 🟢 Existing |

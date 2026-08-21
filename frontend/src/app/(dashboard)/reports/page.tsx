@@ -19,6 +19,7 @@ import {
   Tags,
   BarChart3,
   Wallet,
+  BadgePercent,
   Download,
   Loader2,
 } from 'lucide-react';
@@ -62,6 +63,11 @@ import {
   fetchPaymentReport,
   type PaymentReportPayload,
 } from '@/lib/payment-report';
+import {
+  downloadDiscountsCsv,
+  fetchDiscountReport,
+  type DiscountReportPayload,
+} from '@/lib/discount-report';
 
 interface PaymentMethodBreakdown {
   method: string | null;
@@ -207,12 +213,14 @@ export default function ReportsPage() {
   const [foodCost, setFoodCost] = useState<FoodCostPayload | null>(null);
   const [voidsReport, setVoidsReport] = useState<VoidCancelPayload | null>(null);
   const [paymentReport, setPaymentReport] = useState<PaymentReportPayload | null>(null);
+  const [discountReport, setDiscountReport] = useState<DiscountReportPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [exportingCsv, setExportingCsv] = useState(false);
   const [exportingTaxCsv, setExportingTaxCsv] = useState(false);
   const [exportingExpensesCsv, setExportingExpensesCsv] = useState(false);
   const [exportingVoidsCsv, setExportingVoidsCsv] = useState(false);
   const [exportingPaymentsCsv, setExportingPaymentsCsv] = useState(false);
+  const [exportingDiscountsCsv, setExportingDiscountsCsv] = useState(false);
 
   const role = currentTenant?.role;
   const canView = role === 'owner' || role === 'manager';
@@ -263,6 +271,7 @@ export default function ReportsPage() {
       fetchFoodCostReport(selectedDate, endDate),
       fetchVoidCancelReport(selectedDate, endDate),
       fetchPaymentReport(selectedDate, endDate),
+      fetchDiscountReport(selectedDate, endDate),
     ])
       .then(
         ([
@@ -275,6 +284,7 @@ export default function ReportsPage() {
           foodRes,
           voidsRes,
           paymentsRes,
+          discountsRes,
         ]) => {
           setStats(isToday ? statsRes.data : null);
           setDaySummary(isToday ? null : statsRes.data.summary);
@@ -286,6 +296,7 @@ export default function ReportsPage() {
           setFoodCost(foodRes);
           setVoidsReport(voidsRes);
           setPaymentReport(paymentsRes);
+          setDiscountReport(discountsRes);
         },
       )
       .catch((err: unknown) => {
@@ -364,6 +375,18 @@ export default function ReportsPage() {
       toast.error(err instanceof Error ? err.message : t('reports.paymentsExportFailed'));
     } finally {
       setExportingPaymentsCsv(false);
+    }
+  };
+
+  const handleExportDiscountsCsv = async () => {
+    setExportingDiscountsCsv(true);
+    try {
+      await downloadDiscountsCsv(selectedDate, endDate);
+      toast.success(t('reports.discountsExportSuccess'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('reports.discountsExportFailed'));
+    } finally {
+      setExportingDiscountsCsv(false);
     }
   };
 
@@ -1125,6 +1148,178 @@ export default function ReportsPage() {
                   </div>
                 ) : null}
                 <p className="text-caption text-flo-text-muted">{t('reports.paymentsSalesNote')}</p>
+              </div>
+            )}
+          </Panel>
+
+          <Panel
+            className="mt-4"
+            title={
+              <span className="inline-flex items-center gap-2">
+                <BadgePercent className="size-4 text-flo-text-muted" aria-hidden />
+                {t('reports.discountsTitle')}
+              </span>
+            }
+            actions={
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void handleExportDiscountsCsv()}
+                disabled={exportingDiscountsCsv || loading}
+              >
+                {exportingDiscountsCsv
+                  ? t('reports.discountsExporting')
+                  : t('reports.discountsExportCsv')}
+              </Button>
+            }
+          >
+            {!discountReport ? (
+              <EmptyState title={t('reports.discountsEmpty')} className="min-h-[120px] py-6" />
+            ) : discountReport.total_discounts === 0 &&
+              discountReport.discounted_bill_count === 0 ? (
+              <EmptyState title={t('reports.discountsNoRows')} className="min-h-[120px] py-6" />
+            ) : (
+              <div className="space-y-4">
+                <p className="text-caption text-flo-text-muted">{t('reports.discountsClarity')}</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="rounded-flo-md border border-flo-border p-3">
+                    <p className="text-caption text-flo-text-muted">
+                      {t('reports.discountsTotal')}
+                    </p>
+                    <p className="text-numeric-lg">{fmt(discountReport.total_discounts)}</p>
+                  </div>
+                  <div className="rounded-flo-md border border-flo-border p-3">
+                    <p className="text-caption text-flo-text-muted">
+                      {t('reports.discountsOrders')}
+                    </p>
+                    <p className="text-numeric-lg">{discountReport.discounted_bill_count}</p>
+                  </div>
+                  <div className="rounded-flo-md border border-flo-border p-3">
+                    <p className="text-caption text-flo-text-muted">
+                      {t('reports.discountsAverage')}
+                    </p>
+                    <p className="text-numeric-lg">{fmt(discountReport.average_discount)}</p>
+                  </div>
+                  <div className="rounded-flo-md border border-flo-border p-3">
+                    <p className="text-caption text-flo-text-muted">
+                      {t('reports.discountsMerchandise')}
+                    </p>
+                    <p className="text-numeric-lg">{fmt(discountReport.merchandise_subtotal)}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {discountReport.by_type.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <p className="text-caption text-flo-text-muted mb-2">
+                        {t('reports.discountsByType')}
+                      </p>
+                      <table className="w-full text-left text-sm">
+                        <thead>
+                          <tr className="border-b border-flo-border text-flo-text-muted">
+                            <th className="py-2 pr-3">{t('reports.discountsColType')}</th>
+                            <th className="py-2 pr-3 text-right">
+                              {t('reports.discountsColCount')}
+                            </th>
+                            <th className="py-2 text-right">{t('reports.discountsColAmount')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {discountReport.by_type.map((row) => (
+                            <tr key={row.type} className="border-b border-flo-border/60">
+                              <td className="py-2 pr-3 font-medium text-flo-text">
+                                {row.type === 'percentage'
+                                  ? t('reports.discountsTypePercentage')
+                                  : row.type === 'amount'
+                                    ? t('reports.discountsTypeFixed')
+                                    : row.type}
+                              </td>
+                              <td className="py-2 pr-3 text-right text-numeric">{row.count}</td>
+                              <td className="py-2 text-right text-numeric">{fmt(row.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : null}
+                  {discountReport.by_source.length > 0 || discountReport.by_scope.length > 0 ? (
+                    <div className="space-y-4">
+                      {discountReport.by_source.length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <p className="text-caption text-flo-text-muted mb-2">
+                            {t('reports.discountsBySource')}
+                          </p>
+                          <table className="w-full text-left text-sm">
+                            <thead>
+                              <tr className="border-b border-flo-border text-flo-text-muted">
+                                <th className="py-2 pr-3">{t('reports.discountsColSource')}</th>
+                                <th className="py-2 pr-3 text-right">
+                                  {t('reports.discountsColCount')}
+                                </th>
+                                <th className="py-2 text-right">
+                                  {t('reports.discountsColAmount')}
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {discountReport.by_source.map((row) => (
+                                <tr key={row.source} className="border-b border-flo-border/60">
+                                  <td className="py-2 pr-3 font-medium text-flo-text">
+                                    {row.source === 'coupon'
+                                      ? t('reports.discountsSourceCoupon')
+                                      : t('reports.discountsSourceManual')}
+                                  </td>
+                                  <td className="py-2 pr-3 text-right text-numeric">{row.count}</td>
+                                  <td className="py-2 text-right text-numeric">
+                                    {fmt(row.amount)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : null}
+                      {discountReport.by_scope.length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <p className="text-caption text-flo-text-muted mb-2">
+                            {t('reports.discountsByScope')}
+                          </p>
+                          <table className="w-full text-left text-sm">
+                            <thead>
+                              <tr className="border-b border-flo-border text-flo-text-muted">
+                                <th className="py-2 pr-3">{t('reports.discountsColScope')}</th>
+                                <th className="py-2 pr-3 text-right">
+                                  {t('reports.discountsColCount')}
+                                </th>
+                                <th className="py-2 text-right">
+                                  {t('reports.discountsColAmount')}
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {discountReport.by_scope.map((row) => (
+                                <tr key={row.scope} className="border-b border-flo-border/60">
+                                  <td className="py-2 pr-3 font-medium text-flo-text">
+                                    {row.scope === 'order'
+                                      ? t('reports.discountsScopeOrder')
+                                      : t('reports.discountsScopeItem')}
+                                  </td>
+                                  <td className="py-2 pr-3 text-right text-numeric">{row.count}</td>
+                                  <td className="py-2 text-right text-numeric">
+                                    {fmt(row.amount)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+                <p className="text-caption text-flo-text-muted">
+                  {t('reports.discountsSalesNote')}
+                </p>
               </div>
             )}
           </Panel>

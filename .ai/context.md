@@ -48,6 +48,8 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 **Exhaustive QA audit (2026-08-15):** Pack at `docs/qa/`. Live GUI + RBAC + RC: PASS WITH CONDITIONS. Production readiness: **CONDITIONAL GO**. Final release hardening: **CONDITIONAL GO** (`docs/qa/FINAL-RELEASE-HARDENING-AUDIT.md`) — P1-06 unopenable DB fail-closed; OPS-02 drill checklist; RC checklist. Live café still blocked on signed/notarized RC + OPS-02 + Master-PIN DR + security residual acceptance + sign-off. Residual eng: JWT/CSP Phase C, REAL dual-write.
 
 
+**P7 RPT-DISC (2026-08-21):** Discount report — no schema bump; `npm run test:rpt-disc`. Report `docs/qa/DISCOUNT-REPORT-IMPLEMENTATION-REPORT.md`.
+
 **P6 RPT-PAY (2026-08-21):** Payment report deepen — no schema bump; `npm run test:rpt-pay`. Report `docs/qa/PAYMENT-REPORT-DEEPENING-IMPLEMENTATION-REPORT.md`.
 
 **P5 INV-AUTO-86 (2026-08-21):** Schema **v88** manual/auto unavailable flags; stock → effective `is_active`; POS server reject; suite `npm run test:inv-auto-86`. Report `docs/qa/AUTO-86-FROM-STOCK-IMPLEMENTATION-REPORT.md`.
