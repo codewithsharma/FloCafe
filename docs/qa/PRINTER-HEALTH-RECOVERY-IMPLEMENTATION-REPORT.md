@@ -2,14 +2,14 @@
 
 ## Summary
 
-| Field      | Value                                           |
-| ---------- | ----------------------------------------------- |
-| Feature    | Printer Health & Recovery UX                    |
-| Feature ID | `PRINT-HEALTH`                                  |
-| Phase      | P10                                             |
-| Status     | **COMPLETE** (Implemented / Hardening verified) |
-| Commit     | _(see git after commit)_                        |
-| Schema     | **v88** (no bump)                               |
+| Field      | Value                                                  |
+| ---------- | ------------------------------------------------------ |
+| Feature    | Printer Health & Recovery UX                           |
+| Feature ID | `PRINT-HEALTH`                                         |
+| Phase      | P10                                                    |
+| Status     | **COMPLETE** (Implemented / Hardening verified)        |
+| Commit     | `e875f96` (`e875f9629a929527cbec69bc2bbfd97b526ec409`) |
+| Schema     | **v88** (no bump)                                      |
 
 Live pilot remains **NO-GO** (R16).
 
