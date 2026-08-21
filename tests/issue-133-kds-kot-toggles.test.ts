@@ -25,7 +25,16 @@ const os = require('os');
 const path = require('path');
 const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'flo-issue-133-'));
 Module._load = function (request: string, parent: unknown, isMain: boolean) {
-  if (request === 'electron') return { app: { isPackaged: true, getPath: () => testDir, getVersion: () => 'test' } };
+  if (request === 'electron') {
+    return {
+      app: { isPackaged: true, getPath: () => testDir, getVersion: () => 'test' },
+      safeStorage: {
+        isEncryptionAvailable: () => true,
+        encryptString: (s: string) => Buffer.from(s, 'utf8'),
+        decryptString: (b: Buffer) => b.toString('utf8'),
+      },
+    };
+  }
   return originalLoad.apply(this, arguments as any);
 };
 
@@ -46,6 +55,9 @@ const { kdsInfoRoutes } = require('../main/routes/kds-info');
 const { printerRoutes } = require('../main/routes/printers');
 const { getJWTSecret } = require('../main/routes/auth');
 const { startKdsServer, stopKdsServer } = require('../main/kds-server');
+const { setMasterPin } = require('../main/services/master-pin');
+
+const MASTER_PIN = '4321';
 
 function seedUser(db: any, id: string, role: string, email: string) {
   db.prepare(`
@@ -67,6 +79,7 @@ async function main() {
   console.log('='.repeat(60));
 
   const db = initTestDb();
+  setMasterPin(MASTER_PIN);
   const ownerAuth = seedUser(db, 'issue133-owner', 'owner', 'issue133-owner@test.local');
   const cashierAuth = seedUser(db, 'issue133-cashier', 'cashier', 'issue133-cashier@test.local');
   const waiterAuth = seedUser(db, 'issue133-waiter', 'waiter', 'issue133-waiter@test.local');
@@ -137,8 +150,11 @@ async function main() {
 
     // ── Both features on: existing KDS endpoints work normally ─────────────
     console.log('\n2. KDS enabled — endpoints reachable');
-    // LAN KDS pairing QR requires network_mode=kds_lan|lan (P0.1)
-    const enableLanKds = await request(app).put('/api/settings/network_mode').set(ownerAuth).send({ value: 'kds_lan' });
+    // LAN KDS pairing QR requires network_mode=kds_lan|lan (P0.1) + owner Master PIN (P15).
+    const enableLanKds = await request(app)
+      .put('/api/settings/network_mode')
+      .set(ownerAuth)
+      .send({ value: 'kds_lan', master_pin: MASTER_PIN });
     assertEqual(enableLanKds.status, 200, 'PUT /api/settings/network_mode kds_lan succeeds');
     // H2: /api/kds-info only returns 200 when the companion process is live.
     await startKdsServer();

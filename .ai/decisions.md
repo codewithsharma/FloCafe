@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-21 — R16 / OPS-02 eng gate (PARTIAL — CONDITIONAL GO)
+
+Docs: `docs/qa/OPS-02-PRODUCTION-GAP-MATRIX.md`, `OPS-02-RELEASE-GATES.md`, `OPS-02-TEST-EXECUTION-REPORT.md`, `OPS-02-MANUAL-TEST-MATRIX.md`, `OPS-02-FINAL-REPORT.md`. Eng fixes only: health version from package.json; `notifyKdsUpdate` → KDS outbox enqueue; recovery tier includes REC-01; stale P18/P15 test helpers. QR-ORD-IDEM not authorized. Live NO-GO until signed RC + site + escrow + sign-off. Score **78/100**.
+
 ## 2026-08-21 — P18 ORD-IDEM-HARDENING (COMPLETE)
 
 No schema bump (**v88**). Require `Idempotency-Key` on `POST /api/orders` and `POST /api/orders/:id/items`; canonical request fingerprint; `ORDER_IDEMPOTENCY_*` codes; reuse `order_idempotency` user scope; cancel/discount remain optional; QR public create exception. Suite `npm run test:p18`. LIVE PILOT NO-GO. Do not start P19 without audit.

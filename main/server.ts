@@ -290,7 +290,8 @@ export function startServer(): Promise<void> {
           reason: getRecoveryReason(),
           install_state: getInstallState().state,
           service: 'Flo Local API',
-          version: process.env.npm_package_version || '2.4.7',
+          // OPS-02-OBS-001: prefer package.json over stale hard-coded fallback.
+          version: require('../package.json').version,
           timestamp: new Date().toISOString(),
         });
       }
@@ -299,7 +300,8 @@ export function startServer(): Promise<void> {
         status: db.ok ? 'ok' : 'error',
         db: db.ok ? 'ok' : db.error,
         service: 'Flo Local API',
-        version: process.env.npm_package_version || '2.4.7',
+        // OPS-02-OBS-001: prefer package.json over stale hard-coded fallback.
+        version: require('../package.json').version,
         timestamp: new Date().toISOString(),
       });
     });

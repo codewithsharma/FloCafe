@@ -24,6 +24,7 @@ import { isModuleEnabled } from '../modules';
 import { applyKitchenItemStatus, KitchenStatusError } from './kitchen-status';
 import {
   completeOpenKdsSnapshotJobs,
+  enqueueKdsSnapshotDelivery,
   registerKdsOutboxBroadcaster,
   startKdsOutboxWorker,
   type KdsBroadcastResult,
@@ -841,6 +842,13 @@ export function broadcastOrderUpdate(): KdsBroadcastResult {
 
 export function notifyKdsUpdate(): void {
   if (!isModuleEnabled('kds')) return;
+  // OPS-02-KDS-001: durable snapshot intent for create/cancel/pay (not only kitchen bumps).
+  // Coalesces with any open job; live success still clears via completeOpenKdsSnapshotJobs.
+  try {
+    enqueueKdsSnapshotDelivery(getDatabase(), { reason: 'kds.notify' });
+  } catch (err) {
+    console.error('[KDS Outbox] enqueue on notify failed:', err);
+  }
   if (broadcastQueued) return;
   broadcastQueued = true;
   queueMicrotask(() => {

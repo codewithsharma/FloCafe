@@ -64,13 +64,17 @@ async function request(
 ): Promise<{ status: number; data: any }> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(options.headers || {}) };
   const method = String(options.method || 'GET').toUpperCase();
+  const isPaymentMutation = method === 'POST' && /\/api\/bills\/[^/]+\/payments?(?:\?|$)/.test(urlPath);
+  const isOrderCreate = method === 'POST' && /^\/api\/orders\/?(?:\?|$)/.test(urlPath);
+  const isOrderAddItems = method === 'POST' && /^\/api\/orders\/[^/]+\/items(?:\?|$)/.test(urlPath);
   if (
-    method === 'POST'
-    && /\/api\/bills\/[^/]+\/payments?(?:\?|$)/.test(urlPath)
+    (isPaymentMutation || isOrderCreate || isOrderAddItems)
     && headers['Idempotency-Key'] === undefined
     && headers['idempotency-key'] === undefined
   ) {
-    headers['Idempotency-Key'] = `test-pay-${require('crypto').randomUUID()}`;
+    headers['Idempotency-Key'] = isPaymentMutation
+      ? `test-pay-${require('crypto').randomUUID()}`
+      : `test-ord-${require('crypto').randomUUID()}`;
   }
   const fetchOptions: any = { headers };
   if (options.method) fetchOptions.method = options.method;

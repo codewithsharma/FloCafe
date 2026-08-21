@@ -2,6 +2,9 @@
 
 ## Mandate
 
+- [x] **R16 / OPS-02 eng gate pack (2026-08-21):** PARTIAL — gap matrix, release gates, test report, manual matrix, final report under `docs/qa/OPS-02-*.md`. Eng P1 OBS-001 + KDS-001 closed; merge 194/194; Playwright 4/4; unsigned pack PASS. Live **NO-GO** until signed RC + site + PIN escrow + sign-off. QR-ORD-IDEM not started.
+- [ ] **R16 Production Release** — **HUMAN BLOCKED** (signed RC + OPS-02 site + escrow + exec sign-off). Gate checklist: `r16-release-gate-checklist.md`. Live **NO-GO**. Eng CONDITIONAL GO per `docs/qa/OPS-02-FINAL-REPORT.md`.
+- [x] **P19 Post-P18 Deep Audit (2026-08-21):** COMPLETE (docs only) — `docs/qa/P19-POST-P18-DEEP-AUDIT.md`. Recommend ENGINEERING HOLD (R16/OPS-02); optional parallel QR-ORD-IDEM. Implementation NOT STARTED.
 - [x] **P18 ORD-IDEM-HARDENING (2026-08-21):** COMPLETE — mandatory order create/add-items Idempotency-Key; `npm run test:p18`. Report `docs/qa/P18-ORDER-IDEMPOTENCY-IMPLEMENTATION-REPORT.md`.
 - [x] **P18 Deep Audit (2026-08-21):** COMPLETE — `docs/qa/P18-DEEP-AUDIT.md`.
 - [x] **P17 Recipe Consumption / Food Cost Hardening (2026-08-21):** COMPLETE — cost_cents prefer path; FE BOM edit; CAS/atomic/idempotency/P16 policy tests; schema v88; `npm run test:p17`. Report `docs/qa/P17-RECIPE-CONSUMPTION-IMPLEMENTATION-REPORT.md`.
@@ -69,7 +72,7 @@ Product plan: `docs/00-product/capability-matrix.md`. Restaurant OS blueprint: `
 - [x] **R14 Reliability / DR thin deepen GREEN (2026-08-15):** Corrupt-openable live DB fail-closed — `checkSqliteIntegrity` + install-state `corrupt_database`; health/money 503; good restore clears latch; `npm run test:r14`. Doc: `r14-corrupt-db-fail-closed.md`. Full DR product / live drill still open. No schema bump.
 - [x] **R15 Simulation S1 foundation GREEN (2026-08-15):** test/fixture/docs only; `npm run test:r15` 27/27; open shift → order → pay → close → day-close/Z → local backup; fixtures `tests/fixtures/restaurant-sim/`; banner simulation ≠ OPS-02. Doc: `r15-simulation-s1.md`. KDS/receipt/S2–S10 later.
 - [x] **R15 Simulation S1 GREEN (2026-08-15):** sim pack order→pay→Z→backup; `npm run test:r15`. Doc: `r15-simulation-s1.md`. Sim ≠ OPS-02.
-- [ ] **R16 Production Release** — **HUMAN BLOCKED** (signed RC + OPS-02 + escrow + exec sign-off). Gate checklist: `r16-release-gate-checklist.md`. Live **NO-GO**. Orchestrator prepared drill/escrow/signoff templates; do not invent PASS.
+- [ ] **R16 Production Release** — **HUMAN BLOCKED** (signed RC + OPS-02 + escrow + exec sign-off). Gate checklist: `r16-release-gate-checklist.md`. Live **NO-GO**. Eng pack: `docs/qa/OPS-02-FINAL-REPORT.md` (CONDITIONAL GO). **Primary next: human signing + site drills.**
 - [x] **Exhaustive QA audit pack (2026-08-15):** docs under `docs/qa/` + evidence; H1–H4/R1–R15/authz/Playwright executed; schema-tip test locks → v86; **QA INCOMPLETE** for mega-suite/offline/R16. Live multi-role GUI → **GUI QA COMPLETE — PASS WITH CONDITIONS** (`docs/qa/evidence/gui/full/SESSION-FULL.md`). Live still **NO-GO**.
 - [x] **GUI P1/P2 fix + retest (2026-08-15):** GUI-0002 prepaid zero-confirm, GUI-0003 waiter/chef POS gate, QA-GUI-KDS-DEEPLINK-01 SPA `/kds`. Evidence `docs/qa/evidence/gui/full/FINAL-RETEST.md`. Verdict: **GUI REGRESSION PASS — FULL QA STILL INCOMPLETE**.
 - [x] **Full GUI coverage continuation (2026-08-15):** Owner exhaust + Manager/Cashier sales + Waiter/Chef + takeaway + QR + backup UI + RBAC matrix on live :3001. Report `docs/qa/evidence/gui/full/FINAL-FULL-COVERAGE.md`. Verdict: **GUI QA PASS WITH CONDITIONS**. Open: GUI-0005 (direct-URL RBAC), GUI-0006 (Chef KDS nav).

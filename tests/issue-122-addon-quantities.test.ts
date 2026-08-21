@@ -77,6 +77,20 @@ function makeRequest(
         'Content-Type': 'application/json',
         ...headers,
       };
+      // OPS-02 / P18: local helper parity with tests/helpers/test-setup.ts api().
+      const methodUpper = String(method || 'GET').toUpperCase();
+      const isPaymentMutation = methodUpper === 'POST' && /\/api\/bills\/[^/]+\/payments?(?:\?|$)/.test(urlPath);
+      const isOrderCreate = methodUpper === 'POST' && /^\/api\/orders\/?(?:\?|$)/.test(urlPath);
+      const isOrderAddItems = methodUpper === 'POST' && /^\/api\/orders\/[^/]+\/items(?:\?|$)/.test(urlPath);
+      if (
+        (isPaymentMutation || isOrderCreate || isOrderAddItems)
+        && reqHeaders['Idempotency-Key'] === undefined
+        && reqHeaders['idempotency-key'] === undefined
+      ) {
+        reqHeaders['Idempotency-Key'] = isPaymentMutation
+          ? `test-pay-${require('crypto').randomUUID()}`
+          : `test-ord-${require('crypto').randomUUID()}`;
+      }
       if (body) {
         reqHeaders['Content-Length'] = String(Buffer.byteLength(dataStr));
       }

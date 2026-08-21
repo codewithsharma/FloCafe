@@ -170,6 +170,19 @@ async function main() {
     .get(eventId) as { c: number };
   assertEqual(Number(uniq.c), 1, 'event_id remains unique');
 
+  // OPS-02-KDS-001: notifyKdsUpdate enqueues durable snapshot when no client accepts push.
+  completeOpenKdsSnapshotJobs(db);
+  assertEqual(listOpenKdsOutboxJobs(db).length, 0, 'cleared before notify enqueue check');
+  registerKdsOutboxBroadcaster(() => ({ attempted: 0, succeeded: 0 }));
+  const { notifyKdsUpdate } = require('../main/services/kds');
+  notifyKdsUpdate();
+  await new Promise((r) => setImmediate(r));
+  assertEqual(
+    listOpenKdsOutboxJobs(db).length,
+    1,
+    'OPS-02-KDS-001: notifyKdsUpdate leaves open outbox when no WS client succeeds',
+  );
+
   const results = getResults();
   if (results.failed > 0) {
     throw new Error(`${results.failed} assertions failed`);

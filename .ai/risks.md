@@ -2,19 +2,11 @@
 
 ## Active program notes (2026-08-21)
 
-- ⚠️ RISK: **P18 audit** — Live NO-GO is R16/OPS-02 (signing+ops), not feature deficit. Top eng residual if authorized: order-create Idempotency-Key optional → duplicate order/stock/recipe (P17 GAP-009 / P18-GAP-001).
-- ⚠️ RISK: **P16** retained REAL qty; typed ledger / reserved_qty / inventory CSV deferred. Partial cancel still does not restock until full-order cancel catch-up.
-- ⚠️ RISK: **P15** does not cover served-item soft-cancel policy, cashier void UI, IPC restore null actor, or authz-denial audit flood.
-- ⚠️ RISK: **P14** clients omitting `expected_status` can still last-writer-win on *forward* order-status races; prefer sending `expected_status`. Not full offline/disaster recovery.
-- ⚠️ RISK: **Audit_logs append-only is convention-only** (no UPDATE/DELETE deny triggers yet — R12 fixtures rewrite `created_at`).
-- ⚠️ RISK: **RPT-CATEGORY / RPT-PRODUCT** merchandise ≠ app Gross Sales; category is live join (not snapshotted). Operators must read the clarity notes.
-- ⚠️ RISK: **PRINT-HEALTH** is queue/config derived — not live paper-out/ACK. Multiple open jobs per bill can still double-print if each is retried (pre-existing R13).
-- ⚠️ RISK: **RPT-STAFF** “Sales from Orders Created” is creator attribution — not cashier or waiter performance. Operators must read the clarity note.
-- ⚠️ RISK: **Full `npm run lint`** remains red on pre-existing frontend React Compiler rules — baseline debt; do not conflate with P6–P13.
-- ⚠️ RISK: **KDS-ALERTS** sound default is off; autoplay policies may block beep until toggle click — visual highlight remains primary signal.
-- ⚠️ RISK: **RPT-DISC** app Gross Sales is post-discount bill total (incl. tax) — operators must not expect Gross − Discount = Net merchandise without reading the report note.
-- ⚠️ RISK: **RPT-PAY** payment-time window ≠ shift_id cash drawer window — operators must not expect exact match to expected cash without reading the semantics note.
-- ⚠️ RISK: **INV-AUTO-86** has no catalog WebSocket — POS must refresh to see auto-86; server reject covers stale UI. Modifier auto-86 not implemented.
+- ⚠️ RISK: **R16 / OPS-02** — Eng **CONDITIONAL GO** (`docs/qa/OPS-02-FINAL-REPORT.md`, score 78/100). Live **NO-GO** until signed RC + site drills + Master PIN escrow + exec sign-off. Eng P1 OBS-001 + KDS-001 closed this phase.
+- ⚠️ RISK: **P19 audit** — QR guest order create still keyless (P1) — **out of OPS-02 scope**; authorize QR-ORD-IDEM separately. Do not treat Phase C / offline queue / REAL cutover as default next without authorize.
+- ⚠️ RISK: **P18 audit** — Live NO-GO is R16/OPS-02 (signing+ops), not feature deficit. Staff create/add-items Idempotency closed by P18; QR exception remains.
+- ⚠️ RISK: Full `npm run lint` remains red on pre-existing frontend React Compiler rules — baseline debt; merge/backend lint green.
+- ⚠️ RISK: **KDS** — no per-client delivery ACK (any-one success); companion bind degrade intentional (LIF-002 accepted).
 - ⚠️ RISK: **R16 live Go-Live** remains **NO-GO** until signed/notarized RC + OPS-02 human/site gates.
 
 ## Active program notes (2026-08-15)
@@ -51,7 +43,7 @@
 - ⚠️ RISK: Lost `terminal_id` (cleared localStorage) orphans an open shift; managers must force-close.
 - ⚠️ RISK: Doc drift — some older architecture pages / PM audit may lag shipped 3.5A–3.6G; Phase 2–4 truth is **closeout gate + `.ai/` + `docs/04-product/phase-4-product-completion-discovery.md`** (Phase 3.1–3.4 COMPLETE; 3.5A+3.6A–G COMPLETE; 3.5B DEFERRED; 3.5C NO SAFE EXTRACTION; Phase 4 discovery COMPLETE).
 - 🔴 DEBT: Legacy `products.tax_type` / `tax_rate` remain on schema (forced none/0; not authoritative). **Phase 3.5B DEFERRED** until pilot evidence; Mode B vs DROP not chosen. See `phase-3.5b-legacy-tax-cleanup-discovery.md`.
-- ⚠️ RISK: **R3 kitchen deepen** — companion `kds-server.ts` status PATCH uses `applyKitchenItemStatus` (CAS + timestamps + audit). Residual: client-side bump retry is in-memory (tab reload still drops intent); durable KDS outbox remains deferred.
+- ⚠️ RISK: **R3 kitchen deepen** — companion `kds-server.ts` status PATCH uses `applyKitchenItemStatus` (CAS + timestamps + audit). Chef pending PATCH in sessionStorage; **P4 durable snapshot outbox shipped** (`kds_delivery_outbox`); OPS-02-KDS-001 also enqueues on `notifyKdsUpdate`. Residual: no per-client ACK.
 - ⚠️ RISK (ops): Café pilots must keep `ACTIVE_VERTICAL_ID` unset or `restaurant`. Accidental `=retail` selects production Retail (wrong for café); `=retail-test` selects synthetic composition.
 - ⚠️ RISK: Brand consolidation to **Operavia** (ADR-010) — living docs/STRATEGY/`productName`/UI i18n updated; historical `15-*` audits still say Operavia/FloCafe; `appId`/`executableName` remain flo\* for upgrade continuity; Drive folder is `Operavia Backups` (old `Operavia Backups` not auto-migrated).
 - ⚠️ RISK: Phase 2.6 capabilities are metadata only — any future consumer must not treat `CapabilityId` as authorization (roles/`requireRole` remain authoritative).

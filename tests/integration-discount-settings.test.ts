@@ -88,9 +88,22 @@ function assertIncludes(haystack: string, needle: string, message: string) {
 
 async function request(baseUrl: string, urlPath: string, options: any = {}) {
   const url = new URL(urlPath, baseUrl);
-  const method = options.method || 'GET';
+  const method = String(options.method || 'GET').toUpperCase();
   const headers: any = { 'Content-Type': 'application/json' };
   if (options.headers) Object.assign(headers, options.headers);
+  // OPS-02 / P18: local helper parity with tests/helpers/test-setup.ts api().
+  const isPaymentMutation = method === 'POST' && /\/api\/bills\/[^/]+\/payments?(?:\?|$)/.test(urlPath);
+  const isOrderCreate = method === 'POST' && /^\/api\/orders\/?(?:\?|$)/.test(urlPath);
+  const isOrderAddItems = method === 'POST' && /^\/api\/orders\/[^/]+\/items(?:\?|$)/.test(urlPath);
+  if (
+    (isPaymentMutation || isOrderCreate || isOrderAddItems)
+    && headers['Idempotency-Key'] === undefined
+    && headers['idempotency-key'] === undefined
+  ) {
+    headers['Idempotency-Key'] = isPaymentMutation
+      ? `test-pay-${require('crypto').randomUUID()}`
+      : `test-ord-${require('crypto').randomUUID()}`;
+  }
 
   return new Promise<any>((resolve) => {
     const req = http.request(

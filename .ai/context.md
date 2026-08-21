@@ -48,7 +48,11 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 **Exhaustive QA audit (2026-08-15):** Pack at `docs/qa/`. Live GUI + RBAC + RC: PASS WITH CONDITIONS. Production readiness: **CONDITIONAL GO**. Final release hardening: **CONDITIONAL GO** (`docs/qa/FINAL-RELEASE-HARDENING-AUDIT.md`) — P1-06 unopenable DB fail-closed; OPS-02 drill checklist; RC checklist. Live café still blocked on signed/notarized RC + OPS-02 + Master-PIN DR + security residual acceptance + sign-off. Residual eng: JWT/CSP Phase C, REAL dual-write.
 
 
-**P18 ORD-IDEM-HARDENING (2026-08-21):** COMPLETE — mandatory Idempotency-Key on order create + add-items; canonical fingerprint; conflict 409; Server App sticky key; schema **v88**; `npm run test:p18`. Audit `docs/qa/P18-DEEP-AUDIT.md`. Report `docs/qa/P18-ORDER-IDEMPOTENCY-IMPLEMENTATION-REPORT.md`. QR guest create exception. LIVE PILOT NO-GO. P19 NOT STARTED.
+**R16 / OPS-02 Production Gate (2026-08-21):** **PARTIAL / CONDITIONAL GO (eng)** — Live **NO-GO**. Deliverables: `docs/qa/OPS-02-*.md`. Eng fixes: health version (OBS-001), KDS notify→outbox (KDS-001), recovery tier+REC-01, post-P18/P15 stale test remediation. Merge **194/194**, Playwright **4/4**, unsigned pack VERIFIED. Signed RC + site drills + PIN escrow + sign-off remain human P0. QR-ORD-IDEM out of scope.
+
+**P19 POST-P18 DEEP AUDIT (2026-08-21):** Docs only — `docs/qa/P19-POST-P18-DEEP-AUDIT.md`. Recommendation: **ENGINEERING HOLD** for R16/OPS-02. Optional parallel eng if authorized: **QR-ORD-IDEM**. Implementation NOT STARTED. LIVE PILOT NO-GO.
+
+**P18 ORD-IDEM-HARDENING (2026-08-21):** COMPLETE — mandatory Idempotency-Key on order create + add-items; canonical fingerprint; conflict 409; Server App sticky key; schema **v88**; `npm run test:p18`. Audit `docs/qa/P18-DEEP-AUDIT.md`. Report `docs/qa/P18-ORDER-IDEMPOTENCY-IMPLEMENTATION-REPORT.md`. QR guest create exception. LIVE PILOT NO-GO.
 
 **P17 RCP-CONSUMPTION-HARDENING (2026-08-21):** COMPLETE — consume/live cost prefer `cost_cents`; FE BOM edit + prep_loss/yield PATCH; CAS/atomic/idempotency/P16 policy tests; schema **v88**; `npm run test:p17`. Audit `docs/qa/P17-RECIPE-CONSUMPTION-AUDIT.md`. Report `docs/qa/P17-RECIPE-CONSUMPTION-IMPLEMENTATION-REPORT.md`. LIVE PILOT NO-GO.
 

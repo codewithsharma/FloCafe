@@ -263,14 +263,24 @@ async function main() {
   const prodId = 'test-prod-1';
   db.prepare("INSERT OR REPLACE INTO products (id, name, price, stock_quantity, tax_type) VALUES (?, 'Test', 100, 10, 'exclusive')").run(prodId);
 
-  const managerOrderRes = await request(app).post('/api/orders/').set(managerAuth).send({
-    type: 'dine_in', user_id: 'security-manager', items: [{ product_id: prodId, quantity: 1 }]
-  });
+  const managerOrderRes = await request(app)
+    .post('/api/orders/')
+    .set(managerAuth)
+    .set('Idempotency-Key', `sec-mgr-${require('crypto').randomUUID()}`)
+    .send({
+      type: 'dine_in', user_id: 'security-manager', items: [{ product_id: prodId, quantity: 1 }]
+    });
+  assertEqual(managerOrderRes.status, 201, 'manager creates order for IDOR fixture');
   const managerOrderId = managerOrderRes.body.order.id;
 
-  const waiterOrderRes = await request(app).post('/api/orders/').set(waiterAuth).send({
-    type: 'dine_in', user_id: 'security-waiter', items: [{ product_id: prodId, quantity: 1 }]
-  });
+  const waiterOrderRes = await request(app)
+    .post('/api/orders/')
+    .set(waiterAuth)
+    .set('Idempotency-Key', `sec-wtr-${require('crypto').randomUUID()}`)
+    .send({
+      type: 'dine_in', user_id: 'security-waiter', items: [{ product_id: prodId, quantity: 1 }]
+    });
+  assertEqual(waiterOrderRes.status, 201, 'waiter creates order for IDOR fixture');
   const waiterOrderId = waiterOrderRes.body.order.id;
 
   // 3. Waiter fetching /api/orders/ should ONLY see their own order
@@ -293,9 +303,13 @@ async function main() {
   // this, every order gets user_id=NULL and a waiter can never see any order
   // they place (the /api/orders/ list scopes waiters to `user_id = <their
   // id>`, which NULL never matches).
-  const noBodyUserIdRes = await request(app).post('/api/orders/').set(waiterAuth).send({
-    type: 'dine_in', items: [{ product_id: prodId, quantity: 1 }]
-  });
+  const noBodyUserIdRes = await request(app)
+    .post('/api/orders/')
+    .set(waiterAuth)
+    .set('Idempotency-Key', `sec-nobody-${require('crypto').randomUUID()}`)
+    .send({
+      type: 'dine_in', items: [{ product_id: prodId, quantity: 1 }]
+    });
   assertEqual(noBodyUserIdRes.status, 201, 'waiter can create an order without sending user_id');
   const noBodyUserIdOrderId = noBodyUserIdRes.body.order.id;
   assertEqual(noBodyUserIdRes.body.order.user_id, 'security-waiter', 'order is attributed to the authenticated waiter, not left NULL');
@@ -306,9 +320,13 @@ async function main() {
 
   // A spoofed user_id in the body must be ignored — attribution always comes
   // from the session, never the client.
-  const spoofedUserIdRes = await request(app).post('/api/orders/').set(waiterAuth).send({
-    type: 'dine_in', user_id: 'security-owner', items: [{ product_id: prodId, quantity: 1 }]
-  });
+  const spoofedUserIdRes = await request(app)
+    .post('/api/orders/')
+    .set(waiterAuth)
+    .set('Idempotency-Key', `sec-spoof-${require('crypto').randomUUID()}`)
+    .send({
+      type: 'dine_in', user_id: 'security-owner', items: [{ product_id: prodId, quantity: 1 }]
+    });
   assertEqual(spoofedUserIdRes.body.order.user_id, 'security-waiter', 'a client-supplied user_id is ignored — the order is still attributed to the real authenticated caller');
 
   const results = getResults();

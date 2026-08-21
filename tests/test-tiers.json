@@ -549,7 +549,8 @@
     "recovery": [
       "tests/r14-corrupt-db-fail-closed.test.ts",
       "tests/p1-06-unopenable-db.test.ts",
-      "tests/process-kill-recovery.test.ts"
+      "tests/process-kill-recovery.test.ts",
+      "tests/rec-01-recovery.test.ts"
     ]
   }
 }

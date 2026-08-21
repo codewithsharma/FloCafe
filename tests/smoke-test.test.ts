@@ -37,6 +37,12 @@ async function run() {
     const res1 = await request(`http://127.0.0.1:${mainPort}`).get('/api/health');
     assert(res1.status === 200, 'Primary API health check responds with 200');
     assert(res1.body.status === 'ok', 'Primary API health check body is ok');
+    // OPS-02-OBS-001: health version must match package.json (not a stale hard-coded fallback).
+    const expectedVersion = String(require('../package.json').version);
+    assert(
+      res1.body.version === expectedVersion,
+      `Primary API health version matches package.json (${expectedVersion}), got ${res1.body.version}`,
+    );
 
     const kdsPort = getKdsPort();
     const res2 = await request(`http://127.0.0.1:${kdsPort}`).get('/api/health');

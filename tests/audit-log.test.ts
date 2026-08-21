@@ -66,9 +66,22 @@ async function request(
   urlPath: string,
   options: Record<string, any> = {},
 ): Promise<{ status: number; data: any }> {
-  const fetchOptions: any = {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-  };
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  const method = String(options.method || 'GET').toUpperCase();
+  // OPS-02 / P18: local helper parity with tests/helpers/test-setup.ts api().
+  const isPaymentMutation = method === 'POST' && /\/api\/bills\/[^/]+\/payments?(?:\?|$)/.test(urlPath);
+  const isOrderCreate = method === 'POST' && /^\/api\/orders\/?(?:\?|$)/.test(urlPath);
+  const isOrderAddItems = method === 'POST' && /^\/api\/orders\/[^/]+\/items(?:\?|$)/.test(urlPath);
+  if (
+    (isPaymentMutation || isOrderCreate || isOrderAddItems)
+    && headers['Idempotency-Key'] === undefined
+    && headers['idempotency-key'] === undefined
+  ) {
+    headers['Idempotency-Key'] = isPaymentMutation
+      ? `test-pay-${require('crypto').randomUUID()}`
+      : `test-ord-${require('crypto').randomUUID()}`;
+  }
+  const fetchOptions: any = { headers };
   if (options.method) fetchOptions.method = options.method;
   if (options.body) fetchOptions.body = options.body;
   const response = await (globalThis as any).fetch(baseUrl + urlPath, fetchOptions);
