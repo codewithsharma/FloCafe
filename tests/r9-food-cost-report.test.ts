@@ -138,6 +138,55 @@ async function main(): Promise<void> {
     assertEqual(report.net_sales, 200, 'net sales reused');
     assertEqual(report.food_cost_percent, 5, 'food cost % = 10/200*100');
     assertEqual(report.by_recipe.length, 1, 'recipe rollup');
+    assert(Array.isArray(report.by_ingredient), 'by_ingredient present');
+    assertEqual(report.by_ingredient.length, 2, 'two ingredients');
+    const milk = report.by_ingredient.find((r: any) => r.ingredient_product_id === 'ing-milk');
+    const coffee = report.by_ingredient.find((r: any) => r.ingredient_product_id === 'ing-coffee');
+    assert(milk, 'milk row');
+    assert(coffee, 'coffee row');
+    assertEqual(Number(milk.quantity_consumed), 0.2, 'milk qty');
+    assertEqual(Number(milk.theoretical_cogs_cents), 1000, 'milk cogs');
+    assertEqual(Number(milk.effective_unit_cost_cents), 5000, 'milk effective unit cost 1000/0.2');
+    assertEqual(Number(milk.pct_of_cogs), 100, 'milk is 100% of known COGS');
+    assertEqual(Number(coffee.theoretical_cogs_cents), 0, 'coffee unknown cost → 0');
+    assertEqual(Number(coffee.insufficient_line_count), 1, 'coffee insufficient');
+    const ingSum = report.by_ingredient.reduce(
+      (s: number, r: any) => s + Number(r.theoretical_cogs_cents || 0),
+      0,
+    );
+    assertEqual(ingSum, report.theoretical_cogs_cents, 'ingredient rollup reconciles to food-cost total');
+
+    // Second consumption sharing milk across another recipe (aggregation + reconcile)
+    db.prepare(
+      `INSERT INTO recipe_consumptions (
+        id, order_id, order_item_id, recipe_id, recipe_name, menu_product_id,
+        portions, yield_qty, status, actor_user_id, created_at, reversed_at
+      ) VALUES ('rc-2', ?, 2, 'recipe-mocha', 'Mocha Recipe', 'prod-mocha', 1, 1, 'consumed', ?, ?, NULL)`,
+    ).run(String(orderId), owner.userId, at);
+    db.prepare(
+      `INSERT INTO recipe_consumption_lines (
+        consumption_id, ingredient_product_id, ingredient_name, quantity_delta, unit,
+        unit_cost_cents, line_cost_cents, inventory_movement_id, created_at
+      ) VALUES ('rc-2', 'ing-milk', 'Milk', -0.1, 'L', 500, 500, NULL, ?)`,
+    ).run(at);
+
+    const ok2 = await api(baseUrl, `/api/reports/food-cost?${q}`, { headers: owner.authHeader });
+    assertEqual(ok2.status, 200, 'food-cost after second consumption');
+    const report2 = ok2.data.foodCost;
+    assertEqual(report2.theoretical_cogs_cents, 1500, 'period COGS 1000+500');
+    const milk2 = report2.by_ingredient.find((r: any) => r.ingredient_product_id === 'ing-milk');
+    assertEqual(Number(milk2.quantity_consumed), 0.3, 'milk qty aggregated across recipes');
+    assertEqual(Number(milk2.theoretical_cogs_cents), 1500, 'milk cogs aggregated');
+    const ingSum2 = report2.by_ingredient.reduce(
+      (s: number, r: any) => s + Number(r.theoretical_cogs_cents || 0),
+      0,
+    );
+    assertEqual(
+      ingSum2,
+      report2.theoretical_cogs_cents,
+      'ingredient rollup reconciles after multi-recipe aggregation',
+    );
+    assertEqual(report2.by_recipe.length, 2, 'two recipes');
 
     const mgr = await api(baseUrl, `/api/reports/food-cost?${q}`, { headers: manager.authHeader });
     assertEqual(mgr.status, 200, 'Manager food-cost 200');
@@ -152,6 +201,8 @@ async function main(): Promise<void> {
     assert(csvOk.contentType.includes('text/csv'), 'CSV content-type');
     assert(csvOk.text.includes('recipe_id'), 'CSV has recipe_id header');
     assert(csvOk.text.includes('Latte Recipe'), 'CSV has recipe row');
+    assert(csvOk.text.includes('ingredient_product_id'), 'CSV has ingredient section header');
+    assert(csvOk.text.includes('Milk'), 'CSV has ingredient row');
 
     const csvDenied = await apiText(
       baseUrl,
@@ -172,9 +223,11 @@ async function main(): Promise<void> {
     const en = fs.readFileSync(path.join(__dirname, '../frontend/src/lib/i18n/en.json'), 'utf8');
     assert(page.includes('foodCost') || page.includes('food-cost'), 'reports UI food cost');
     assert(page.includes('downloadFoodCostCsv'), 'reports UI food-cost CSV download');
+    assert(page.includes('by_ingredient') || page.includes('foodCostByIngredient'), 'UI by-ingredient');
     assert(en.includes('reports.foodCostTitle'), 'en food cost title');
     assert(en.includes('reports.foodCostClarity'), 'en food cost clarity');
     assert(en.includes('reports.foodCostExportCsv'), 'en food cost export');
+    assert(en.includes('reports.foodCostByIngredient'), 'en by ingredient');
   } finally {
     server.close();
     closeDatabase();

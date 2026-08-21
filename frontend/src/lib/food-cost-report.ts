@@ -10,6 +10,17 @@ export type FoodCostRecipeLine = {
   insufficient_line_count: number;
 };
 
+export type FoodCostIngredientLine = {
+  ingredient_product_id: string;
+  ingredient_name: string;
+  unit: string;
+  quantity_consumed: number;
+  effective_unit_cost_cents: number | null;
+  theoretical_cogs_cents: number;
+  insufficient_line_count: number;
+  pct_of_cogs: number | null;
+};
+
 export type FoodCostPayload = {
   startDate: string;
   endDate: string;
@@ -19,6 +30,7 @@ export type FoodCostPayload = {
   insufficient_line_count: number;
   consumption_count: number;
   by_recipe: FoodCostRecipeLine[];
+  by_ingredient: FoodCostIngredientLine[];
 };
 
 export async function fetchFoodCostReport(
@@ -61,7 +73,7 @@ async function extractApiErrorMessage(error: unknown): Promise<string> {
   return error.message || 'Request failed';
 }
 
-/** ROPS-FC-CSV — download theoretical food-cost rollup as CSV. */
+/** Download food-cost CSV (recipe section + by-ingredient section). */
 export async function downloadFoodCostCsv(startDate: string, endDate: string): Promise<void> {
   try {
     const res = await api.get('/reports/export/food-cost.csv', {

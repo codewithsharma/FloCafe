@@ -2,6 +2,7 @@
 
 ## Mandate
 
+- [x] **ROPS-FC-ING By-ingredient food-cost rollup (2026-08-21):** COMPLETE — same SoT as R9.6; Σ ingredient == period COGS; `test:r9.6`. Next: RECIPE_WASTE (design) or refund→recipe reverse (ADR).
 - [x] **ROPS-FC-CSV Food-cost CSV export (2026-08-21):** COMPLETE — Restaurant Ops first deepen; `test:r9.6`. Next: by-ingredient rollup or RECIPE_WASTE (design). R5 inventory polish stays secondary.
 - [x] **PRC-DRAFT Draft PO line amend (2026-08-21):** COMPLETE — draft-only `PUT …/lines`; FE amend; `test:r6` + UI contract. Next P2: movements CSV / supplier edit UI.
 - [x] **RCP-05 Recipe consumptions list UI (2026-08-21):** COMPLETE — FE `/products/recipes/consumptions`; API unchanged; schema v88; `npm run test:recipe-consumptions-ui`. Next deepen: draft PO line amend.

@@ -14,6 +14,7 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 **RCP-05 Recipe consumptions list UI (2026-08-21):** COMPLETE — `/products/recipes/consumptions`; reuses `GET /api/recipes/consumptions`; no schema/mutation change; `npm run test:recipe-consumptions-ui` + `test:r5` + `test:p17`.
 **PRC-DRAFT Draft PO line amend (2026-08-21):** COMPLETE — `PUT …/purchase-orders/:id/lines` draft-only replace; FE on purchasing hub; no inventory impact; `npm run test:r6` + `test:purchasing-draft-amend-ui`. Schema tip **v88**.
 **ROPS-FC-CSV Food-cost CSV (2026-08-21):** COMPLETE — export parity for theoretical food-cost report; `npm run test:r9.6`. Gap doc: `docs/roadmap/RESTAURANT-OPS-RECIPES-INGREDIENT-GAP-ANALYSIS.md`. Next: by-ingredient rollup or recipe-linked waste (design).
+**ROPS-FC-ING By-ingredient food-cost (2026-08-21):** COMPLETE — `by_ingredient` on food-cost report; reconciles to period COGS; `test:r9.6`. Next: RECIPE_WASTE (design) or refund→recipe reverse (policy ADR).
 
 **R9 Slice 1 Expenses (2026-08-15):** COMPLETE — schema **v83** `expenses`; Owner/Manager API+UI; cents-only; audits; `npm run test:r9`.
 **R9 Slice 2 Financial Audit-Trail Hardening (2026-08-15):** COMPLETE — `/audit` UI + CSV export + `until` + `audit.exported`; schema tip remains **v83**; `npm run test:r9.2`.

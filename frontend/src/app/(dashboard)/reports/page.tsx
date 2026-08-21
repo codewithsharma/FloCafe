@@ -796,6 +796,9 @@ export default function ReportsPage() {
                   ) : null}
                   {foodCost.by_recipe.length > 0 ? (
                     <div className="overflow-x-auto">
+                      <p className="text-caption font-medium text-flo-text mb-2">
+                        {t('reports.foodCostByRecipe')}
+                      </p>
                       <table className="w-full text-left text-sm">
                         <thead>
                           <tr className="border-b text-muted-foreground">
@@ -820,6 +823,60 @@ export default function ReportsPage() {
                       {t('reports.foodCostNoRows')}
                     </p>
                   )}
+                  {(foodCost.by_ingredient?.length ?? 0) > 0 ? (
+                    <div className="overflow-x-auto">
+                      <p className="text-caption font-medium text-flo-text mb-2">
+                        {t('reports.foodCostByIngredient')}
+                      </p>
+                      <table className="w-full text-left text-sm">
+                        <thead>
+                          <tr className="border-b text-muted-foreground">
+                            <th className="py-2 pr-3">{t('reports.foodCostColIngredient')}</th>
+                            <th className="py-2 pr-3">{t('reports.foodCostColUnit')}</th>
+                            <th className="py-2 pr-3 text-right">{t('reports.foodCostColQty')}</th>
+                            <th className="py-2 pr-3 text-right">
+                              {t('reports.foodCostColUnitCost')}
+                            </th>
+                            <th className="py-2 pr-3 text-right">{t('reports.foodCostColCogs')}</th>
+                            <th className="py-2 text-right">{t('reports.foodCostColPct')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {foodCost.by_ingredient.map((row) => (
+                            <tr
+                              key={`${row.ingredient_product_id}:${row.unit}`}
+                              className="border-b border-border/60"
+                            >
+                              <td className="py-2 pr-3">{row.ingredient_name}</td>
+                              <td className="py-2 pr-3">{row.unit}</td>
+                              <td className="py-2 pr-3 text-right tabular-nums">
+                                {Number.isInteger(row.quantity_consumed)
+                                  ? row.quantity_consumed
+                                  : Number(row.quantity_consumed)
+                                      .toFixed(4)
+                                      .replace(/\.?0+$/, '')}
+                              </td>
+                              <td className="py-2 pr-3 text-right tabular-nums">
+                                {row.effective_unit_cost_cents === null
+                                  ? '—'
+                                  : fmt(row.effective_unit_cost_cents / 100)}
+                              </td>
+                              <td className="py-2 pr-3 text-right tabular-nums">
+                                {fmt(row.theoretical_cogs_cents / 100)}
+                              </td>
+                              <td className="py-2 text-right tabular-nums">
+                                {row.pct_of_cogs === null ? '—' : `${row.pct_of_cogs}%`}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : foodCost.by_recipe.length > 0 ? (
+                    <p className="text-body text-flo-text-secondary">
+                      {t('reports.foodCostNoIngredientRows')}
+                    </p>
+                  ) : null}
                 </div>
               )}
             </Panel>

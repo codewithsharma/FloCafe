@@ -48,40 +48,49 @@ Evidence: `recipe.ts`, `recipe-consumption.ts`, `recipe-cost.ts`, `food-cost-rep
 
 ## 3. Restaurant Operations — feature gap matrix
 
-| Feature                            | ID          | State          | Evidence                                                   | Deps ready?            | Priority      |
-| ---------------------------------- | ----------- | -------------- | ---------------------------------------------------------- | ---------------------- | ------------- |
-| BOM + yield + prep_loss            | ROPS-BOM    | **COMPLETE**   | Recipes UI + consume                                       | —                      | —             |
-| Sale consume / cancel reverse      | ROPS-CON    | **COMPLETE**   | Order txn + RCP-REV                                        | —                      | —             |
-| Consumptions list UI               | ROPS-HIST   | **COMPLETE**   | RCP-05                                                     | —                      | —             |
-| Theoretical food-cost report       | ROPS-FC     | **COMPLETE**   | R9.6 JSON + UI                                             | —                      | —             |
-| Food-cost CSV export               | ROPS-FC-CSV | **COMPLETE**   | `GET /api/reports/export/food-cost.csv` + Reports Download | —                      | —             |
-| Food-cost by-ingredient rollup     | ROPS-FC-ING | **MISSING**    | Lines exist; report is by_recipe only                      | Yes                    | P2            |
-| Actual vs theoretical BI           | ROPS-AVT    | **LATER**      | Matrix/R9.6/P17 explicit Later                             | Eng yes; product Later | Auth required |
-| Recipe-linked waste                | ROPS-RWASTE | **MISSING**    | SKU wastage only; food-cost excludes wastage               | Thin design            | P2            |
-| Restaurant refund → recipe reverse | ROPS-REFREV | **POLICY GAP** | Cancel reverse exists; refund restock asymmetry            | Policy ADR             | P2            |
-| Addon/modifier BOM                 | ROPS-ADDON  | **DEFERRED**   | Price-only addons                                          | Design + auth          | Deferred      |
-| Formal recipe versions             | ROPS-VER    | **MISSING**    | Snapshots only                                             | Schema                 | Deferred      |
-| Prep / production batches          | ROPS-PREP   | **MISSING**    | Yield is sale math only                                    | New model              | Do not invent |
-| Ingredient substitution            | ROPS-SUB    | **NONE**       | No code                                                    | —                      | Do not invent |
-| Allergen / recipe notes ops        | ROPS-ALG    | **NONE**       | No recipe allergen model                                   | —                      | Do not invent |
-| Matrix 86 doc lag                  | ROPS-86-DOC | **DOC**        | Auto-86 Existing in inventory                              | Docs only              | P3            |
+| Feature                            | ID          | State          | Evidence                                                                        | Deps ready?            | Priority      |
+| ---------------------------------- | ----------- | -------------- | ------------------------------------------------------------------------------- | ---------------------- | ------------- |
+| BOM + yield + prep_loss            | ROPS-BOM    | **COMPLETE**   | Recipes UI + consume                                                            | —                      | —             |
+| Sale consume / cancel reverse      | ROPS-CON    | **COMPLETE**   | Order txn + RCP-REV                                                             | —                      | —             |
+| Consumptions list UI               | ROPS-HIST   | **COMPLETE**   | RCP-05                                                                          | —                      | —             |
+| Theoretical food-cost report       | ROPS-FC     | **COMPLETE**   | R9.6 JSON + UI                                                                  | —                      | —             |
+| Food-cost CSV export               | ROPS-FC-CSV | **COMPLETE**   | `GET /api/reports/export/food-cost.csv` + Reports Download                      | —                      | —             |
+| Food-cost by-ingredient rollup     | ROPS-FC-ING | **COMPLETE**   | `by_ingredient` on food-cost JSON + UI + CSV section; reconciles to period COGS | —                      | —             |
+| Actual vs theoretical BI           | ROPS-AVT    | **LATER**      | Matrix/R9.6/P17 explicit Later                                                  | Eng yes; product Later | Auth required |
+| Recipe-linked waste                | ROPS-RWASTE | **MISSING**    | SKU wastage only; food-cost excludes wastage                                    | Thin design            | P2            |
+| Restaurant refund → recipe reverse | ROPS-REFREV | **POLICY GAP** | Cancel reverse exists; refund restock asymmetry                                 | Policy ADR             | P2            |
+| Addon/modifier BOM                 | ROPS-ADDON  | **DEFERRED**   | Price-only addons                                                               | Design + auth          | Deferred      |
+| Formal recipe versions             | ROPS-VER    | **MISSING**    | Snapshots only                                                                  | Schema                 | Deferred      |
+| Prep / production batches          | ROPS-PREP   | **MISSING**    | Yield is sale math only                                                         | New model              | Do not invent |
+| Ingredient substitution            | ROPS-SUB    | **NONE**       | No code                                                                         | —                      | Do not invent |
+| Allergen / recipe notes ops        | ROPS-ALG    | **NONE**       | No recipe allergen model                                                        | —                      | Do not invent |
+| Matrix 86 doc lag                  | ROPS-86-DOC | **DOC**        | Auto-86 Existing in inventory                                                   | Docs only              | P3            |
 
 ---
 
-## 4. First deepen — ROPS-FC-CSV (SHIPPED)
+## 4. Shipped deepens
 
-### Food-cost CSV export — **COMPLETE**
+### Food-cost CSV export (ROPS-FC-CSV) — **COMPLETE**
 
 | Field            | Value                                                                                                     |
 | ---------------- | --------------------------------------------------------------------------------------------------------- |
 | **Status**       | `GET /api/reports/export/food-cost.csv`; Reports Download; audit `report.food_cost_exported`; `test:r9.6` |
-| **Out of scope** | Actual-vs-theoretical BI, by-ingredient rollup, waste inclusion, WAC, QR-ORD-IDEM, signing                |
+| **Out of scope** | Actual-vs-theoretical BI, waste inclusion, WAC, QR-ORD-IDEM, signing                                      |
+
+### By-ingredient food-cost rollup (ROPS-FC-ING) — **COMPLETE**
+
+| Field              | Value                                                                                                            |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| **Status**         | Same `queryFoodCostReport` SoT; `by_ingredient` on JSON; UI table; CSV second section after blank line           |
+| **Reconciliation** | Σ `by_ingredient.theoretical_cogs_cents` == period `theoretical_cogs_cents` (integer cents; null line costs → 0) |
+| **Rounding**       | Qty: 6 dp; effective unit cost: round(cogs / known_qty); % of COGS: 2 dp                                         |
+| **Filters**        | Same as food-cost: `start_date` / `end_date` only                                                                |
 
 ### Next deepen candidates
 
-1. By-ingredient food-cost rollup (ROPS-FC-ING)
-2. Recipe-linked waste thin slice (ROPS-RWASTE) — needs design note
-3. Refund→recipe reverse — **policy ADR first**
+1. Recipe-linked waste thin slice (ROPS-RWASTE) — needs design note
+2. Refund→recipe reverse — **policy ADR first**
+3. Actual-vs-theoretical BI — Later (auth required)
 
 ---
 
