@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-21 — P12 RPT-CATEGORY Category performance report (COMPLETE)
+
+No schema bump (tip remains **v88**). Thin projection of `queryProductReport().by_category` — no duplicate settlement SQL. Live catalog category attribution; Uncategorized bucket; refunds/order discounts context only. Suite `npm run test:rpt-category`. Report `docs/qa/CATEGORY-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**.
+
 ## 2026-08-21 — P11 RPT-PRODUCT Product performance report (COMPLETE)
 
 No schema bump (tip remains **v88**). Settled bills → DISTINCT orders → active `order_items`; merchandise = line `subtotal` (not app Gross Sales); item discounts on rows; order discounts + refunds as context only; category from live join with in-report rollup. Suite `npm run test:rpt-product`. Report `docs/qa/PRODUCT-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**. Category Performance matrix row remains Planned.

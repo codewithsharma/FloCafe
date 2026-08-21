@@ -23,6 +23,7 @@ import {
 import { discountReportToCsv, queryDiscountReport } from '../services/discount-report';
 import { queryStaffReport, staffReportToCsv } from '../services/staff-report';
 import { productReportToCsv, queryProductReport } from '../services/product-report';
+import { categoryReportToCsv, queryCategoryReport } from '../services/category-report';
 import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
 import { toCsvRow } from '../lib/csv';
@@ -851,6 +852,80 @@ router.get(
       res.status(200).send(csv);
     } catch (error: unknown) {
       console.error('[API] Products CSV export failed:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+// RPT-CATEGORY — Category performance (projects P11 product by_category; no schema change).
+router.get('/categories', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const today = utcTodayDate();
+    const startDate = reportDate(req.query.start_date, today);
+    const endDate = reportDate(req.query.end_date, today);
+    if (startDate > endDate) {
+      return res.status(400).json({ error: 'start_date must be on or before end_date' });
+    }
+    const categoryIdRaw = req.query.category_id;
+    const categoryId =
+      typeof categoryIdRaw === 'string' && categoryIdRaw.trim() ? categoryIdRaw.trim() : null;
+    const sortRaw = req.query.sort;
+    const sort =
+      sortRaw === 'quantity_sold' || sortRaw === 'merchandise_sales'
+        ? sortRaw
+        : 'merchandise_sales';
+    const report = queryCategoryReport(db, startDate, endDate, { categoryId, sort });
+    res.json({ categories: report });
+  } catch (error: unknown) {
+    console.error('[API] Category report failed:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get(
+  '/export/categories.csv',
+  requireRole('owner', 'manager'),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const today = utcTodayDate();
+      const startDate = reportDate(req.query.start_date, today);
+      const endDate = reportDate(req.query.end_date, today);
+      if (startDate > endDate) {
+        return res.status(400).json({ error: 'start_date must be on or before end_date' });
+      }
+      const categoryIdRaw = req.query.category_id;
+      const categoryId =
+        typeof categoryIdRaw === 'string' && categoryIdRaw.trim() ? categoryIdRaw.trim() : null;
+      const report = queryCategoryReport(db, startDate, endDate, { categoryId });
+      const csv = categoryReportToCsv(report);
+
+      logAuditEvent({
+        actorUserId: (req as { user?: { userId?: string } }).user?.userId ?? null,
+        action: 'report.categories_exported',
+        entityType: 'category_report',
+        entityId: `${startDate}_${endDate}`,
+        result: 'success',
+        metadata: {
+          format: 'csv',
+          start_date: startDate,
+          end_date: endDate,
+          category_id: categoryId,
+          category_count: report.totals.category_count,
+          merchandise_sales: report.totals.merchandise_sales,
+          quantity_sold: report.totals.quantity_sold,
+        },
+      });
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="operavia-categories-${startDate}-to-${endDate}.csv"`,
+      );
+      res.status(200).send(csv);
+    } catch (error: unknown) {
+      console.error('[API] Categories CSV export failed:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   },

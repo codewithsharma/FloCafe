@@ -2,6 +2,7 @@
 
 ## Mandate
 
+- [x] **P12 RPT-CATEGORY (2026-08-21):** Category performance report; no schema bump; `npm run test:rpt-category`. Report `docs/qa/CATEGORY-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`.
 - [x] **P11 RPT-PRODUCT (2026-08-21):** Product performance report; no schema bump; `npm run test:rpt-product`. Report `docs/qa/PRODUCT-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`.
 - [x] **P10 PRINT-HEALTH (2026-08-21):** Printer health & recovery UX; no schema bump; `npm run test:print-health`. Report `docs/qa/PRINTER-HEALTH-RECOVERY-IMPLEMENTATION-REPORT.md`.
 - [x] **P9 RPT-STAFF (2026-08-21):** Staff performance report; no schema bump; `npm run test:rpt-staff`. Report `docs/qa/STAFF-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`.

@@ -76,6 +76,11 @@ import {
   fetchProductReport,
   type ProductReportPayload,
 } from '@/lib/product-report';
+import {
+  downloadCategoriesCsv,
+  fetchCategoryReport,
+  type CategoryReportPayload,
+} from '@/lib/category-report';
 
 interface PaymentMethodBreakdown {
   method: string | null;
@@ -224,6 +229,7 @@ export default function ReportsPage() {
   const [discountReport, setDiscountReport] = useState<DiscountReportPayload | null>(null);
   const [staffReport, setStaffReport] = useState<StaffReportPayload | null>(null);
   const [productReport, setProductReport] = useState<ProductReportPayload | null>(null);
+  const [categoryReport, setCategoryReport] = useState<CategoryReportPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [exportingCsv, setExportingCsv] = useState(false);
   const [exportingTaxCsv, setExportingTaxCsv] = useState(false);
@@ -233,6 +239,7 @@ export default function ReportsPage() {
   const [exportingDiscountsCsv, setExportingDiscountsCsv] = useState(false);
   const [exportingStaffCsv, setExportingStaffCsv] = useState(false);
   const [exportingProductsCsv, setExportingProductsCsv] = useState(false);
+  const [exportingCategoriesCsv, setExportingCategoriesCsv] = useState(false);
 
   const role = currentTenant?.role;
   const canView = role === 'owner' || role === 'manager';
@@ -286,6 +293,7 @@ export default function ReportsPage() {
       fetchDiscountReport(selectedDate, endDate),
       fetchStaffReport(selectedDate, endDate),
       fetchProductReport(selectedDate, endDate),
+      fetchCategoryReport(selectedDate, endDate),
     ])
       .then(
         ([
@@ -301,6 +309,7 @@ export default function ReportsPage() {
           discountsRes,
           staffRes,
           productsRes,
+          categoriesRes,
         ]) => {
           setStats(isToday ? statsRes.data : null);
           setDaySummary(isToday ? null : statsRes.data.summary);
@@ -315,6 +324,7 @@ export default function ReportsPage() {
           setDiscountReport(discountsRes);
           setStaffReport(staffRes);
           setProductReport(productsRes);
+          setCategoryReport(categoriesRes);
         },
       )
       .catch((err: unknown) => {
@@ -429,6 +439,18 @@ export default function ReportsPage() {
       toast.error(err instanceof Error ? err.message : t('reports.productsExportFailed'));
     } finally {
       setExportingProductsCsv(false);
+    }
+  };
+
+  const handleExportCategoriesCsv = async () => {
+    setExportingCategoriesCsv(true);
+    try {
+      await downloadCategoriesCsv(selectedDate, endDate);
+      toast.success(t('reports.categoriesExportSuccess'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('reports.categoriesExportFailed'));
+    } finally {
+      setExportingCategoriesCsv(false);
     }
   };
 
@@ -1600,6 +1622,113 @@ export default function ReportsPage() {
                   </div>
                 ) : null}
                 <p className="text-caption text-flo-text-muted">{t('reports.productsSalesNote')}</p>
+              </div>
+            )}
+          </Panel>
+
+          <Panel
+            className="mt-4"
+            title={
+              <span className="inline-flex items-center gap-2">
+                <Tags className="size-4 text-flo-text-muted" aria-hidden />
+                {t('reports.categoriesTitle')}
+              </span>
+            }
+            actions={
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void handleExportCategoriesCsv()}
+                disabled={exportingCategoriesCsv || loading}
+              >
+                {exportingCategoriesCsv
+                  ? t('reports.categoriesExporting')
+                  : t('reports.categoriesExportCsv')}
+              </Button>
+            }
+          >
+            {!categoryReport ? (
+              <EmptyState title={t('reports.categoriesEmpty')} className="min-h-[120px] py-6" />
+            ) : categoryReport.totals.category_count === 0 ? (
+              <EmptyState title={t('reports.categoriesNoRows')} className="min-h-[120px] py-6" />
+            ) : (
+              <div className="space-y-4">
+                <p className="text-caption text-flo-text-muted">{t('reports.categoriesClarity')}</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="rounded-flo-md border border-flo-border p-3">
+                    <p className="text-caption text-flo-text-muted">
+                      {t('reports.categoriesUnits')}
+                    </p>
+                    <p className="text-numeric-lg">{categoryReport.totals.quantity_sold}</p>
+                  </div>
+                  <div className="rounded-flo-md border border-flo-border p-3">
+                    <p className="text-caption text-flo-text-muted">
+                      {t('reports.categoriesMerchandise')}
+                    </p>
+                    <p className="text-numeric-lg">
+                      {fmt(categoryReport.totals.merchandise_sales)}
+                    </p>
+                  </div>
+                  <div className="rounded-flo-md border border-flo-border p-3">
+                    <p className="text-caption text-flo-text-muted">
+                      {t('reports.categoriesItemDiscounts')}
+                    </p>
+                    <p className="text-numeric-lg">{fmt(categoryReport.totals.item_discounts)}</p>
+                  </div>
+                  <div className="rounded-flo-md border border-flo-border p-3">
+                    <p className="text-caption text-flo-text-muted">
+                      {t('reports.categoriesCount')}
+                    </p>
+                    <p className="text-numeric-lg">{categoryReport.totals.category_count}</p>
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-flo-border text-flo-text-muted">
+                        <th className="py-2 pr-3">{t('reports.categoriesColCategory')}</th>
+                        <th className="py-2 pr-3 text-right">{t('reports.categoriesColUnits')}</th>
+                        <th className="py-2 pr-3 text-right">
+                          {t('reports.categoriesColMerchandise')}
+                        </th>
+                        <th className="py-2 pr-3 text-right">
+                          {t('reports.categoriesColDiscounts')}
+                        </th>
+                        <th className="py-2 pr-3 text-right">
+                          {t('reports.categoriesColProducts')}
+                        </th>
+                        <th className="py-2 text-right">{t('reports.categoriesColShare')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {categoryReport.by_category.map((row) => (
+                        <tr
+                          key={row.category_id ?? row.category_name}
+                          className="border-b border-flo-border/60"
+                        >
+                          <td className="py-2 pr-3 font-medium text-flo-text">
+                            {row.category_name}
+                          </td>
+                          <td className="py-2 pr-3 text-right text-numeric">{row.quantity_sold}</td>
+                          <td className="py-2 pr-3 text-right text-numeric">
+                            {fmt(row.merchandise_sales)}
+                          </td>
+                          <td className="py-2 pr-3 text-right text-numeric">
+                            {fmt(row.item_discounts)}
+                          </td>
+                          <td className="py-2 pr-3 text-right text-numeric">{row.product_count}</td>
+                          <td className="py-2 text-right text-numeric">
+                            {(row.share_of_merchandise * 100).toFixed(1)}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-caption text-flo-text-muted">
+                  {t('reports.categoriesSalesNote')}
+                </p>
               </div>
             )}
           </Panel>
