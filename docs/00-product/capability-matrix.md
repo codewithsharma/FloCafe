@@ -16,6 +16,7 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 **R5–R8 note (2026-08-15):** R5 BOM (v79), R6 purchasing (v80), R7 CRM (v82), R8 staff workforce — **COMPLETE**.
 **RCP-05 note (2026-08-21):** Recipe consumptions list UI **COMPLETE** (`/products/recipes/consumptions`); Consumption reports → Existing (thin). Schema tip remains **v88**. Advanced actual-vs-theoretical BI remains Later.
 **PRC-DRAFT note (2026-08-21):** Draft PO line amend **COMPLETE** — `PUT /api/purchasing/purchase-orders/:id/lines` (draft-only); no schema bump; receiving remains sole stock entry.
+**ROPS-FC-CSV note (2026-08-21):** Food-cost CSV export **COMPLETE** — `GET /api/reports/export/food-cost.csv`; Restaurant Ops recipes deepen starts; schema tip remains **v88**.
 **R9 Slice 1 note (2026-08-15):** Expenses **COMPLETE** — schema tip **v83**.
 **R9 Slice 2 note (2026-08-15):** Financial Audit-Trail Hardening **COMPLETE** — schema tip remains **v83**.
 **R9 Slice 3 note (2026-08-15):** Tax Reporting Depth + Accountant Export **COMPLETE** — schema tip remains **v83**.

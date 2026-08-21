@@ -54,7 +54,11 @@ import {
   fetchOpsFinance,
   type OpsFinancePayload,
 } from '@/lib/ops-finance-report';
-import { fetchFoodCostReport, type FoodCostPayload } from '@/lib/food-cost-report';
+import {
+  downloadFoodCostCsv,
+  fetchFoodCostReport,
+  type FoodCostPayload,
+} from '@/lib/food-cost-report';
 import {
   downloadVoidsCsv,
   fetchVoidCancelReport,
@@ -235,6 +239,7 @@ export default function ReportsPage() {
   const [exportingTaxCsv, setExportingTaxCsv] = useState(false);
   const [exportingExpensesCsv, setExportingExpensesCsv] = useState(false);
   const [exportingVoidsCsv, setExportingVoidsCsv] = useState(false);
+  const [exportingFoodCostCsv, setExportingFoodCostCsv] = useState(false);
   const [exportingPaymentsCsv, setExportingPaymentsCsv] = useState(false);
   const [exportingDiscountsCsv, setExportingDiscountsCsv] = useState(false);
   const [exportingStaffCsv, setExportingStaffCsv] = useState(false);
@@ -391,6 +396,18 @@ export default function ReportsPage() {
       toast.error(err instanceof Error ? err.message : t('reports.voidsExportFailed'));
     } finally {
       setExportingVoidsCsv(false);
+    }
+  };
+
+  const handleExportFoodCostCsv = async () => {
+    setExportingFoodCostCsv(true);
+    try {
+      await downloadFoodCostCsv(selectedDate, endDate);
+      toast.success(t('reports.foodCostExportSuccess'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('reports.foodCostExportFailed'));
+    } finally {
+      setExportingFoodCostCsv(false);
     }
   };
 
@@ -714,7 +731,25 @@ export default function ReportsPage() {
           </section>
 
           <section className="mb-6" aria-label={t('reports.foodCostTitle')}>
-            <Panel title={t('reports.foodCostTitle')}>
+            <Panel
+              title={t('reports.foodCostTitle')}
+              actions={
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={exportingFoodCostCsv || loading}
+                  onClick={() => void handleExportFoodCostCsv()}
+                >
+                  {exportingFoodCostCsv ? (
+                    <Loader2 className="size-4 mr-2 animate-spin" aria-hidden />
+                  ) : (
+                    <Download className="size-4 mr-2" aria-hidden />
+                  )}
+                  {t('reports.foodCostExportCsv')}
+                </Button>
+              }
+            >
               {!foodCost ? (
                 <EmptyState title={t('reports.foodCostEmpty')} className="min-h-[120px] py-6" />
               ) : (

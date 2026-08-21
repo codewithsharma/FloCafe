@@ -1,8 +1,10 @@
 /**
  * R9 Slice 6 — theoretical food-cost period report from R5 consumption snapshots.
- * Actual-vs-theoretical BI remains R12 / out of scope.
+ * Actual-vs-theoretical BI remains Later / out of scope.
+ * ROPS-FC-CSV — CSV export reuses the same query (no schema change).
  */
 import { getDatabase, utcDayBounds } from '../db';
+import { toCsvRow } from '../lib/csv';
 import { queryDaySalesSemantics } from './day-sales-semantics';
 
 export type FoodCostRecipeLine = {
@@ -24,6 +26,25 @@ export type FoodCostReport = {
   consumption_count: number;
   by_recipe: FoodCostRecipeLine[];
 };
+
+const FOOD_COST_CSV_HEADERS = [
+  'start_date',
+  'end_date',
+  'recipe_id',
+  'recipe_name',
+  'menu_product_id',
+  'consumption_count',
+  'theoretical_cogs_cents',
+  'insufficient_line_count',
+  'net_sales',
+  'period_theoretical_cogs_cents',
+  'food_cost_percent',
+] as const;
+
+function csvCell(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return '';
+  return String(value);
+}
 
 export function queryFoodCostReport(
   db: ReturnType<typeof getDatabase>,
@@ -98,4 +119,52 @@ export function queryFoodCostReport(
       insufficient_line_count: Number(row.insufficient_line_count || 0),
     })),
   };
+}
+
+/** Deterministic CSV from an already-built food-cost report (same rollup as JSON). */
+export function foodCostReportToCsv(report: FoodCostReport): string {
+  const lines = [toCsvRow([...FOOD_COST_CSV_HEADERS])];
+  if (report.by_recipe.length === 0) {
+    lines.push(
+      toCsvRow(
+        FOOD_COST_CSV_HEADERS.map((h) =>
+          csvCell(
+            (
+              {
+                start_date: report.startDate,
+                end_date: report.endDate,
+                recipe_id: '',
+                recipe_name: '',
+                menu_product_id: '',
+                consumption_count: 0,
+                theoretical_cogs_cents: 0,
+                insufficient_line_count: report.insufficient_line_count,
+                net_sales: report.net_sales,
+                period_theoretical_cogs_cents: report.theoretical_cogs_cents,
+                food_cost_percent: report.food_cost_percent,
+              } as Record<(typeof FOOD_COST_CSV_HEADERS)[number], string | number | null>
+            )[h],
+          ),
+        ),
+      ),
+    );
+  } else {
+    for (const row of report.by_recipe) {
+      const cells: Record<(typeof FOOD_COST_CSV_HEADERS)[number], string | number | null> = {
+        start_date: report.startDate,
+        end_date: report.endDate,
+        recipe_id: row.recipe_id,
+        recipe_name: row.recipe_name,
+        menu_product_id: row.menu_product_id,
+        consumption_count: row.consumption_count,
+        theoretical_cogs_cents: row.theoretical_cogs_cents,
+        insufficient_line_count: row.insufficient_line_count,
+        net_sales: report.net_sales,
+        period_theoretical_cogs_cents: report.theoretical_cogs_cents,
+        food_cost_percent: report.food_cost_percent,
+      };
+      lines.push(toCsvRow(FOOD_COST_CSV_HEADERS.map((h) => csvCell(cells[h]))));
+    }
+  }
+  return `${lines.join('\n')}\n`;
 }

@@ -62,6 +62,20 @@ function auth(userId: string, role: string): Record<string, string> {
   return { Authorization: `Bearer ${token}` };
 }
 
+async function apiText(
+  baseUrl: string,
+  urlPath: string,
+  headers: Record<string, string>,
+): Promise<{ status: number; text: string; contentType: string }> {
+  const response = await (globalThis as any).fetch(baseUrl + urlPath, { headers });
+  const text = await response.text();
+  return {
+    status: response.status,
+    text,
+    contentType: String(response.headers.get('content-type') || ''),
+  };
+}
+
 async function main(): Promise<void> {
   console.log('\nR9 Slice 6 — Food-cost Report v1');
   console.log('='.repeat(60));
@@ -133,14 +147,34 @@ async function main(): Promise<void> {
     });
     assertEqual(denied.status, 403, 'cashier food-cost 403');
 
+    const csvOk = await apiText(baseUrl, `/api/reports/export/food-cost.csv?${q}`, owner.authHeader);
+    assertEqual(csvOk.status, 200, 'Owner food-cost CSV 200');
+    assert(csvOk.contentType.includes('text/csv'), 'CSV content-type');
+    assert(csvOk.text.includes('recipe_id'), 'CSV has recipe_id header');
+    assert(csvOk.text.includes('Latte Recipe'), 'CSV has recipe row');
+
+    const csvDenied = await apiText(
+      baseUrl,
+      `/api/reports/export/food-cost.csv?${q}`,
+      auth(cashierId, 'cashier'),
+    );
+    assertEqual(csvDenied.status, 403, 'cashier food-cost CSV 403');
+
+    const exportAudit = db
+      .prepare(`SELECT COUNT(*) AS c FROM audit_logs WHERE action = ?`)
+      .get('report.food_cost_exported') as { c: number };
+    assert(Number(exportAudit.c) >= 1, 'food_cost_exported audit');
+
     const page = fs.readFileSync(
       path.join(__dirname, '../frontend/src/app/(dashboard)/reports/page.tsx'),
       'utf8',
     );
     const en = fs.readFileSync(path.join(__dirname, '../frontend/src/lib/i18n/en.json'), 'utf8');
     assert(page.includes('foodCost') || page.includes('food-cost'), 'reports UI food cost');
+    assert(page.includes('downloadFoodCostCsv'), 'reports UI food-cost CSV download');
     assert(en.includes('reports.foodCostTitle'), 'en food cost title');
     assert(en.includes('reports.foodCostClarity'), 'en food cost clarity');
+    assert(en.includes('reports.foodCostExportCsv'), 'en food cost export');
   } finally {
     server.close();
     closeDatabase();

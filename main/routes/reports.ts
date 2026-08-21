@@ -13,7 +13,7 @@ import {
   listPostedExpensesForCsv,
   queryOpsFinanceReport,
 } from '../services/ops-finance-report';
-import { queryFoodCostReport } from '../services/food-cost-report';
+import { foodCostReportToCsv, queryFoodCostReport } from '../services/food-cost-report';
 import { queryVoidCancelReport, voidCancelReportToCsv } from '../services/void-cancel-report';
 import {
   paymentReportToCsv,
@@ -526,6 +526,52 @@ router.get('/food-cost', requireRole('owner', 'manager'), (req: Request, res: Re
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+router.get(
+  '/export/food-cost.csv',
+  requireRole('owner', 'manager'),
+  (req: Request, res: Response) => {
+    try {
+      const db = getDatabase();
+      const today = utcTodayDate();
+      const startDate = reportDate(req.query.start_date, today);
+      const endDate = reportDate(req.query.end_date, today);
+      if (startDate > endDate) {
+        return res.status(400).json({ error: 'start_date must be on or before end_date' });
+      }
+
+      const report = queryFoodCostReport(db, startDate, endDate);
+      const csv = foodCostReportToCsv(report);
+
+      logAuditEvent({
+        actorUserId: (req as { user?: { userId?: string } }).user?.userId ?? null,
+        action: 'report.food_cost_exported',
+        entityType: 'food_cost_report',
+        entityId: `${startDate}_${endDate}`,
+        result: 'success',
+        metadata: {
+          format: 'csv',
+          start_date: startDate,
+          end_date: endDate,
+          row_count: report.by_recipe.length,
+          consumption_count: report.consumption_count,
+          theoretical_cogs_cents: report.theoretical_cogs_cents,
+          food_cost_percent: report.food_cost_percent,
+        },
+      });
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="operavia-food-cost-${startDate}-to-${endDate}.csv"`,
+      );
+      res.status(200).send(csv);
+    } catch (error: unknown) {
+      console.error('[API] Food-cost CSV export failed:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
 
 // R12 — Void / Cancel report from audit_logs (no schema change).
 router.get('/voids', requireRole('owner', 'manager'), (req: Request, res: Response) => {
