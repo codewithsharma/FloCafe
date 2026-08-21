@@ -68,6 +68,7 @@ import { InitializeDatabaseDialog } from '@/components/settings/InitializeDataba
 import { WhatsAppEnableCard } from '@/components/settings/WhatsAppEnableCard';
 import { TaxConfigurationPanel } from '@/components/settings/TaxConfigurationPanel';
 import { PaymentMethodsSettings } from '@/components/settings/PaymentMethodsSettings';
+import { PrinterHealthPanel } from '@/components/settings/PrinterHealthPanel';
 import ShiftHistoryPanel from '@/components/shifts/ShiftHistoryPanel';
 import { PageHeader, Panel } from '@/components/flo';
 import type { HealthCheckReport } from '@/types/electron';
@@ -4687,6 +4688,7 @@ export default function SettingsPage() {
             <TabsContent value="receipts-printers">
               <div className="pb-6 max-w-6xl space-y-6">
                 <div className="space-y-6">
+                  {canViewTaxConfiguration ? <PrinterHealthPanel enabled /> : null}
                   <Panel>
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">

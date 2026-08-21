@@ -48,6 +48,8 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 **Exhaustive QA audit (2026-08-15):** Pack at `docs/qa/`. Live GUI + RBAC + RC: PASS WITH CONDITIONS. Production readiness: **CONDITIONAL GO**. Final release hardening: **CONDITIONAL GO** (`docs/qa/FINAL-RELEASE-HARDENING-AUDIT.md`) — P1-06 unopenable DB fail-closed; OPS-02 drill checklist; RC checklist. Live café still blocked on signed/notarized RC + OPS-02 + Master-PIN DR + security residual acceptance + sign-off. Residual eng: JWT/CSP Phase C, REAL dual-write.
 
 
+**P10 PRINT-HEALTH (2026-08-21):** Printer health & recovery UX — no schema bump; `npm run test:print-health`. Report `docs/qa/PRINTER-HEALTH-RECOVERY-IMPLEMENTATION-REPORT.md`. Deepens R13 queue; Settings recovery panel.
+
 **P9 RPT-STAFF (2026-08-21):** Staff performance report — no schema bump; `npm run test:rpt-staff`. Report `docs/qa/STAFF-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`. Attribution: order creator + audit/refund/shift actors (not cashier/waiter sales).
 
 **P8 KDS-ALERTS (2026-08-21):** Sound & visual KDS alerts — no schema bump; `npm run test:kds-alerts`. Report `docs/qa/KDS-ALERTS-IMPLEMENTATION-REPORT.md`.

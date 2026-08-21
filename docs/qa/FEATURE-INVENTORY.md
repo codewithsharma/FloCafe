@@ -9,6 +9,8 @@
 
 **P8 note (2026-08-21):** KDS-ALERTS Sound & visual alerts — FE-only seen-`order_item.id` tracker; suite `npm run test:kds-alerts`. Status: **Implemented / Hardening verified**. Schema tip remains **v88**.
 
+**P10 note (2026-08-21):** PRINT-HEALTH Printer health & recovery — `GET /api/printers/health` + Settings UI; suite `npm run test:print-health`. Status: **Implemented / Hardening verified**. Schema tip remains **v88**. Deepens R13; no parallel queue.
+
 **P9 note (2026-08-21):** RPT-STAFF Staff performance report — `GET /api/reports/staff` + CSV; suite `npm run test:rpt-staff`. Status: **Implemented / Hardening verified**. Schema tip remains **v88**. Attribution: creator / audit actor / refunds.created_by / shift openers — not cashier or waiter sales.
 
 **P7 note (2026-08-21):** RPT-DISC Discount report — `GET /api/reports/discounts` + CSV; suite `npm run test:rpt-disc`. Status: **Implemented / Hardening verified**. Schema tip remains **v88**.
@@ -153,10 +155,11 @@
 | STF-06  | Staff         | Permissions depth                                 | gated UIs                          | `requireRole` on cancel/discount/settings                                        | `users`                                                                       | all                                     | Hardening |
 | PRT-01  | Printing      | Thermal ESC/POS receipt (58/80mm)                 | `/settings`, `print-test`          | `/api/printers*`, `print-bill`                                                   | `printers`, `print_logs`                                                      | owner, manager, cashier                 | Existing  |
 | PRT-02  | Printing      | Kitchen / KOT printing                            | `/kds`, `/pos`                     | `POST /api/printers/print-kot`                                                   | `printers`, `print_logs`                                                      | owner, manager, cashier                 | Existing  |
-| PRT-03  | Printing      | Print queue + retry                               | `/settings`, `/operations`         | `GET /api/printers/jobs`, `POST …/jobs/:id/retry`                                | `print_jobs`                                                                  | owner, manager                          | Existing  |
+| PRT-03  | Printing      | Print queue + retry                               | `/settings`                        | `GET /api/printers/jobs`, `POST …/jobs/:id/retry`                                | `print_jobs`                                                                  | owner, manager                          | Existing  |
 | PRT-04  | Printing      | Print refund / day-close                          | `/orders`, `/operations`           | `POST /api/printers/print-refund\|print-day-close`                               | `print_logs`                                                                  | owner, manager, cashier                 | Existing  |
 | PRT-05  | Printing      | Printer CRUD / detect / test                      | `/settings`, `print-test`          | `/api/printers`, detect, test                                                    | `printers`                                                                    | owner, manager                          | Existing  |
 | PRT-06  | Printing      | Cash drawer kick                                  | `/pos`                             | `POST /api/printers/kick-drawer`                                                 | `printers`                                                                    | owner, manager, cashier                 | Existing  |
+| PRT-07  | Printing      | Printer health & recovery (PRINT-HEALTH)          | `/settings` (receipts-printers)    | `GET /api/printers/health` + job retry                                           | `print_jobs`, `printers`                                                      | owner, manager                          | Existing  |
 | TAX-01  | Tax           | GST calculation                                   | `/pos`, `/reports`                 | `POST /api/tax/preview`, bill path                                               | `tax_rules`, `tax_categories`                                                 | cashier+                                | Existing  |
 | TAX-02  | Tax           | Signed tax packs + offline verify                 | `/settings`                        | `/api/tax-packs*`                                                                | `country_packs`, `country_pack_versions`                                      | owner, manager                          | Existing  |
 | TAX-03  | Tax           | Tax reporting + accountant CSV                    | `/reports`                         | tax-components + export                                                          | `bills`, `tax_*`                                                              | owner, manager                          | Existing  |
@@ -207,7 +210,7 @@ Do **not** treat these capability-matrix rows as QA pass/fail requirements for t
 - Modifier groups as first-class product depth beyond shipped addon groups; multiple/time-based menus; item descriptions as Planned depth
 - Partial payment as Planned product row (collectible `partial` may exist — do not expand scope)
 - Expediter; KDS analytics; sound/visual alerts
-- Multiple printer routing / bar printer / printer health-recovery as Planned depth
+- Multiple printer routing / bar printer as Planned depth (health/recovery now Existing via PRINT-HEALTH)
 - Stock transfer; expiry tracking; consumption reports (beyond recipe consumptions)
 - CRM birthday/anniversary/feedback; loyalty rewards/redemption/gift cards
 - Attendance; scheduling

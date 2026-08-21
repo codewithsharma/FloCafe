@@ -181,8 +181,8 @@ This matrix is the backlog and posture for what we keep, harden, build, defer, o
 | Bar printer              | 🔵 Planned  |
 | Print queue              | 🟢 Existing |
 | Print retry              | 🟢 Existing |
-| Printer health           | 🔵 Planned  |
-| Printer recovery         | 🔵 Planned  |
+| Printer health           | 🟢 Existing |
+| Printer recovery         | 🟢 Existing |
 | Bluetooth printing       | ⚪ Later    |
 | Cash drawer              | 🔵 Planned  |
 | Barcode scanner          | ⚪ Later    |
@@ -347,7 +347,7 @@ R8 (2026-08-15) deepened Existing staff management (search/filter, detail, shift
 | App restart recovery        | 🟡 Hardening |
 | Device failure recovery     | 🔵 Planned   |
 | KDS offline behavior        | 🟡 Hardening |
-| Printer recovery            | 🔵 Planned   |
+| Printer recovery            | 🟢 Existing  |
 | Cloud non-blocking billing  | 🟢 Existing  |
 | Offline tax verification    | 🟢 Existing  |
 

@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-21 — P10 PRINT-HEALTH Printer health & recovery (COMPLETE)
+
+No schema bump (tip remains **v88**). Health derived from open `print_jobs` + default printer config (not live ESC/POS ACK). Concurrent retries claimed via `failed→pending` lease (`PRINT_JOB_BUSY`). Settings Receipts/Printers recovery panel. Suite `npm run test:print-health`. Report `docs/qa/PRINTER-HEALTH-RECOVERY-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**.
+
 ## 2026-08-21 — P9 RPT-STAFF Staff performance report (COMPLETE)
 
 No schema bump (tip remains **v88**). Trustworthy attribution only: `orders.user_id` (creator), settled-bill sales via creator, `payment.received` audit actors, `refunds.created_by`, discount/void audit counts, shift open/close. Explicitly omit cashier tender actor, waiter sales, attendance. `GET /api/reports/staff` + CSV + Reports UI. Suite `npm run test:rpt-staff`. Report `docs/qa/STAFF-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**.

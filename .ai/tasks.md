@@ -2,6 +2,7 @@
 
 ## Mandate
 
+- [x] **P10 PRINT-HEALTH (2026-08-21):** Printer health & recovery UX; no schema bump; `npm run test:print-health`. Report `docs/qa/PRINTER-HEALTH-RECOVERY-IMPLEMENTATION-REPORT.md`.
 - [x] **P9 RPT-STAFF (2026-08-21):** Staff performance report; no schema bump; `npm run test:rpt-staff`. Report `docs/qa/STAFF-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`.
 - [x] **P8 KDS-ALERTS (2026-08-21):** Sound & visual KDS alerts; no schema bump; `npm run test:kds-alerts`. Report `docs/qa/KDS-ALERTS-IMPLEMENTATION-REPORT.md`.
 - [x] **P7 RPT-DISC (2026-08-21):** Discount report; no schema bump; `npm run test:rpt-disc`. Report `docs/qa/DISCOUNT-REPORT-IMPLEMENTATION-REPORT.md`.

@@ -322,8 +322,56 @@ async function attemptBillPrint(
 /**
  * Reattempt a pending/failed bill print once (bounded by max_attempts).
  * Success writes print_logs and marks the job done.
+ *
+ * Concurrency: claims failed → pending before hardware I/O so a second
+ * concurrent retry gets PRINT_JOB_BUSY (or reclaims stale pending after 60s).
  */
 export async function retryPrintJob(jobId: string, actorUserId: string): Promise<PrintJobRow> {
+  const claimed = claimJobForRetry(jobId);
+  const payload = parsePayload(claimed.payload_json);
+  const nextAttempts = claimed.attempts + 1;
+
+  try {
+    const outcome = await attemptBillPrint(claimed.bill_id!, payload);
+
+    if (!outcome.ok) {
+      return markJobFailed(claimed.id, nextAttempts, outcome.detail);
+    }
+
+    const printType = outcome.effectiveIsReprint ? 'reprint' : 'receipt';
+    await logSaleReceiptPrint(claimed.bill_id!, actorUserId, printType);
+    return markJobDone(claimed.id, nextAttempts);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : 'Print retry failed';
+    return markJobFailed(claimed.id, nextAttempts, detail);
+  }
+}
+
+const STALE_PENDING_MS = 60_000;
+
+/**
+ * Atomically claim a retryable job. Uses status=pending as in-flight lease.
+ */
+export function claimJobForRetry(jobId: string): PrintJobRow {
+  const db = getDatabase();
+  const ts = now();
+
+  const claimFailed = db
+    .prepare(
+      `UPDATE print_jobs
+       SET status = 'pending', updated_at = ?
+       WHERE id = ?
+         AND status = 'failed'
+         AND attempts < max_attempts
+         AND job_type = 'bill'
+         AND bill_id IS NOT NULL`,
+    )
+    .run(ts, jobId);
+
+  if (claimFailed.changes === 1) {
+    return getPrintJob(jobId)!;
+  }
+
   const job = getPrintJob(jobId);
   if (!job) {
     throw new PrintQueueError(404, 'PRINT_JOB_NOT_FOUND', 'Print job not found');
@@ -338,15 +386,178 @@ export async function retryPrintJob(jobId: string, actorUserId: string): Promise
     throw new PrintQueueError(400, 'PRINT_JOB_UNSUPPORTED', 'Only bill print jobs are supported');
   }
 
-  const payload = parsePayload(job.payload_json);
-  const nextAttempts = job.attempts + 1;
-  const outcome = await attemptBillPrint(job.bill_id, payload);
-
-  if (!outcome.ok) {
-    return markJobFailed(job.id, nextAttempts, outcome.detail);
+  if (job.status === 'pending') {
+    const updatedMs = Date.parse(job.updated_at.replace(' ', 'T') + 'Z');
+    const age = Number.isFinite(updatedMs) ? Date.now() - updatedMs : 0;
+    if (age < STALE_PENDING_MS) {
+      throw new PrintQueueError(409, 'PRINT_JOB_BUSY', 'Print job retry already in progress');
+    }
+    // Stale pending (crashed mid-retry) — reclaim
+    db.prepare(`UPDATE print_jobs SET updated_at = ? WHERE id = ? AND status = 'pending'`).run(
+      ts,
+      jobId,
+    );
+    return getPrintJob(jobId)!;
   }
 
-  const printType = outcome.effectiveIsReprint ? 'reprint' : 'receipt';
-  await logSaleReceiptPrint(job.bill_id, actorUserId, printType);
-  return markJobDone(job.id, nextAttempts);
+  throw new PrintQueueError(409, 'PRINT_JOB_NOT_RETRYABLE', 'Print job is not retryable');
+}
+
+export type PrintHealthOverall = 'healthy' | 'degraded' | 'error' | 'unknown';
+
+export type PrintHealthJobView = {
+  id: string;
+  job_type: string;
+  status: PrintJobStatus;
+  bill_id: number | null;
+  order_id: number | null;
+  attempts: number;
+  max_attempts: number;
+  retries_remaining: number;
+  retryable: boolean;
+  exhausted: boolean;
+  last_error: string | null;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+  has_prior_print_log: boolean;
+};
+
+export type PrintHealthReport = {
+  overall: PrintHealthOverall;
+  semantics: {
+    healthy: string;
+    degraded: string;
+    error: string;
+    unknown: string;
+  };
+  default_printer: {
+    present: boolean;
+    id: string | null;
+    name: string | null;
+    connection_type: string | null;
+  };
+  queue: {
+    open_count: number;
+    pending_count: number;
+    failed_count: number;
+    retryable_count: number;
+    exhausted_count: number;
+    oldest_open_at: string | null;
+  };
+  jobs: PrintHealthJobView[];
+};
+
+export const PRINT_HEALTH_SEMANTICS = {
+  healthy:
+    'No open print jobs and a default printer is configured. Does not claim live hardware ACK.',
+  degraded:
+    'Open retryable print jobs (failed/pending with attempts remaining) and/or no default printer while queue is empty.',
+  error:
+    'One or more open jobs are exhausted (attempts >= max_attempts), or open jobs exist with no default printer.',
+  unknown: 'Reserved; unused when queue and printer config can be read.',
+} as const;
+
+function sanitizeError(raw: string | null): string | null {
+  if (!raw) return null;
+  const oneLine = raw.replace(/\s+/g, ' ').trim();
+  return oneLine.slice(0, 240);
+}
+
+/**
+ * Derived printer/queue health from print_jobs + default printer config.
+ * No hardware heartbeat — OS detect remains a separate endpoint.
+ */
+export function getPrintHealth(): PrintHealthReport {
+  const db = getDatabase();
+  const open = listOpenPrintJobs();
+
+  const defaultRow = db
+    .prepare(`SELECT id, name, connection_type FROM printers WHERE is_default = 1 LIMIT 1`)
+    .get() as { id: string; name: string; connection_type: string } | undefined;
+
+  const billIds = [...new Set(open.map((j) => j.bill_id).filter((id): id is number => id != null))];
+  const billsWithLog = new Set<number>();
+  if (billIds.length > 0) {
+    const placeholders = billIds.map(() => '?').join(',');
+    const rows = db
+      .prepare(
+        `SELECT DISTINCT bill_id FROM print_logs
+         WHERE bill_id IN (${placeholders})
+           AND print_type IN ('receipt', 'reprint')`,
+      )
+      .all(...billIds) as Array<{ bill_id: number }>;
+    for (const r of rows) billsWithLog.add(Number(r.bill_id));
+  }
+
+  const jobs: PrintHealthJobView[] = open.map((j) => {
+    const retries_remaining = Math.max(0, j.max_attempts - j.attempts);
+    const exhausted = j.attempts >= j.max_attempts;
+    const retryable =
+      !exhausted &&
+      (j.status === 'failed' || j.status === 'pending') &&
+      j.job_type === 'bill' &&
+      j.bill_id != null;
+    return {
+      id: j.id,
+      job_type: j.job_type,
+      status: j.status,
+      bill_id: j.bill_id,
+      order_id: j.order_id,
+      attempts: j.attempts,
+      max_attempts: j.max_attempts,
+      retries_remaining,
+      retryable,
+      exhausted,
+      last_error: sanitizeError(j.last_error),
+      created_at: j.created_at,
+      updated_at: j.updated_at,
+      completed_at: j.completed_at,
+      has_prior_print_log: j.bill_id != null && billsWithLog.has(j.bill_id),
+    };
+  });
+
+  const pending_count = jobs.filter((j) => j.status === 'pending').length;
+  const failed_count = jobs.filter((j) => j.status === 'failed').length;
+  const exhausted_count = jobs.filter((j) => j.exhausted).length;
+  const retryable_count = jobs.filter((j) => j.retryable && !j.exhausted).length;
+  const oldest_open_at =
+    open.length === 0
+      ? null
+      : open.reduce(
+          (oldest, j) => (j.created_at < oldest ? j.created_at : oldest),
+          open[0].created_at,
+        );
+
+  const defaultPresent = !!defaultRow;
+  let overall: PrintHealthOverall = 'healthy';
+  if (open.length === 0 && defaultPresent) {
+    overall = 'healthy';
+  } else if (exhausted_count > 0 || (open.length > 0 && !defaultPresent)) {
+    overall = 'error';
+  } else if (open.length > 0 || !defaultPresent) {
+    overall = 'degraded';
+  } else {
+    overall = 'unknown';
+  }
+
+  return {
+    overall,
+    semantics: { ...PRINT_HEALTH_SEMANTICS },
+    default_printer: {
+      present: defaultPresent,
+      id: defaultRow?.id ?? null,
+      name: defaultRow?.name ?? null,
+      connection_type: defaultRow?.connection_type ?? null,
+    },
+    queue: {
+      open_count: open.length,
+      pending_count,
+      failed_count,
+      retryable_count,
+      exhausted_count,
+      oldest_open_at,
+    },
+    jobs,
+  };
 }

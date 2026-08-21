@@ -30,6 +30,7 @@ import { printReceipt as logSaleReceiptPrint } from '../services/receipt';
 import { logAuditEvent } from '../services/audit-log';
 import {
   enqueueBillPrintFailure,
+  getPrintHealth,
   listOpenPrintJobs,
   retryPrintJob,
   PrintQueueError,
@@ -161,17 +162,63 @@ router.get('/jobs', requireRole('owner', 'manager'), (_req: Request, res: Respon
   }
 });
 
+// GET /api/printers/health — derived queue + default-printer health (Owner/Manager)
+router.get('/health', requireRole('owner', 'manager'), (_req: Request, res: Response) => {
+  try {
+    res.json({ health: getPrintHealth() });
+  } catch (error: unknown) {
+    console.error('[API] Printer health failed:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // POST /api/printers/jobs/:id/retry — one bounded reattempt
 router.post(
   '/jobs/:id/retry',
   requireRole('owner', 'manager'),
   async (req: Request, res: Response) => {
+    const actorUserId = String((req as { user?: { userId?: string } }).user?.userId || '');
+    const jobId = String(req.params.id || '');
     try {
-      const actorUserId = String((req as any).user?.userId || '');
-      const job = await retryPrintJob(String(req.params.id), actorUserId);
+      logAuditEvent({
+        actorUserId: actorUserId || null,
+        action: 'print_job.retry_requested',
+        entityType: 'print_job',
+        entityId: jobId,
+        result: 'success',
+        metadata: { job_id: jobId },
+      });
+
+      const job = await retryPrintJob(jobId, actorUserId);
       if (job.status === 'done') {
+        logAuditEvent({
+          actorUserId: actorUserId || null,
+          action: 'print_job.retry_succeeded',
+          entityType: 'print_job',
+          entityId: jobId,
+          result: 'success',
+          metadata: {
+            job_id: jobId,
+            bill_id: job.bill_id,
+            attempts: job.attempts,
+          },
+        });
         return res.json({ success: true, job });
       }
+      logAuditEvent({
+        actorUserId: actorUserId || null,
+        action: 'print_job.retry_failed',
+        entityType: 'print_job',
+        entityId: jobId,
+        result: 'failure',
+        reason: job.last_error,
+        metadata: {
+          job_id: jobId,
+          bill_id: job.bill_id,
+          attempts: job.attempts,
+          max_attempts: job.max_attempts,
+        },
+      });
       return res.status(502).json({
         error: 'Print retry failed. Check printer connection and settings.',
         code: 'PRINT_RETRY_FAILED',
@@ -179,6 +226,15 @@ router.post(
       });
     } catch (error: any) {
       if (error instanceof PrintQueueError) {
+        logAuditEvent({
+          actorUserId: actorUserId || null,
+          action: 'print_job.retry_rejected',
+          entityType: 'print_job',
+          entityId: jobId,
+          result: 'failure',
+          reason: error.message,
+          metadata: { job_id: jobId, code: error.code },
+        });
         return res.status(error.statusCode).json({ error: error.message, code: error.code });
       }
       console.error('[Print Job Retry] Error:', error);
