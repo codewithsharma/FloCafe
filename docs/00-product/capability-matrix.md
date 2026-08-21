@@ -604,7 +604,7 @@ Some 🔵 Planned rows already have a **shipped slice**. Treat Planned as remain
 | Priority queue / ticket timers / prep-time | R3: `orders.kitchen_priority` + item timestamps + aging UI; expediter/analytics/sound still Planned                                         |
 | Multiple printer routing                   | `kitchen_stations.printer_id`                                                                                                               |
 | Cash drawer                                | Phase 3.6F `POST /api/printers/kick-drawer`                                                                                                 |
-| Waste management                           | R4 SKU wastage + reasons (not ingredient waste); Phase 4.15 base                                                                            |
+| Waste management                           | R4 SKU wastage + ADR-015 recipe-linked waste (v89 `recipe_waste_*`; not folded into R9.6 theoretical food-cost %)                           |
 | Inventory count / reconciliation           | R4 `inventory_counts` draft→apply via ledger `count_variance`; UI `/products/counts`                                                        |
 | Inventory report                           | Phase 4.11 on-hand valuation (not food-cost %)                                                                                              |
 | Stock adjustment                           | R4 mandatory Idempotency-Key + audits; units convert on adjust                                                                              |

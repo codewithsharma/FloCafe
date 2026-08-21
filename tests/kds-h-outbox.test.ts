@@ -54,8 +54,8 @@ async function main() {
 
   stopKdsOutboxWorker();
   const db = initTestDb();
-  assertEqual(getSupportedSchemaVersion(), 88, 'schema tip is v88');
-  assertEqual(Number(db.pragma('user_version', { simple: true })), 88, 'fresh DB at tip 88');
+  assertEqual(getSupportedSchemaVersion(), 89, 'schema tip is v89');
+  assertEqual(Number(db.pragma('user_version', { simple: true })), 89, 'fresh DB at tip 88');
 
   db.prepare(
     `INSERT INTO users (id, name, email, password, role, is_active, created_at, updated_at)

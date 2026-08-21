@@ -141,7 +141,7 @@ async function main() {
   console.log('='.repeat(60));
 
   const db = initTestDb();
-  assertEqual(getSupportedSchemaVersion(), 88, 'schema tip remains v88 (no bump)');
+  assertEqual(getSupportedSchemaVersion(), 89, 'schema tip is v89');
 
   const owner = seedOwnerUser(db);
   const manager = seedManagerUser(db);

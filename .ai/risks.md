@@ -2,6 +2,7 @@
 
 ## Active program notes (2026-08-21)
 
+- ⚠️ RISK: **ROPS-RWASTE v1** — no reverse API; corrections via adjust/count. Waste COGS not in R9.6 until a dedicated report slice.
 - ⚠️ RISK: **R16 / OPS-02** — Eng **CONDITIONAL GO** (`docs/qa/OPS-02-FINAL-REPORT.md`, score 78/100). Live **NO-GO** until signed RC + site drills + Master PIN escrow + exec sign-off. Eng P1 OBS-001 + KDS-001 closed this phase.
 - ⚠️ RISK: **P19 audit** — QR guest order create still keyless (P1) — **out of OPS-02 scope**; authorize QR-ORD-IDEM separately. Do not treat Phase C / offline queue / REAL cutover as default next without authorize.
 - ⚠️ RISK: **P18 audit** — Live NO-GO is R16/OPS-02 (signing+ops), not feature deficit. Staff create/add-items Idempotency closed by P18; QR exception remains.

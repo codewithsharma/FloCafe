@@ -200,7 +200,7 @@ async function apiMaybeHtml(
 async function main() {
   console.log('\nR3 — Kitchen OS\n' + '='.repeat(60));
   // Expected: R3 migration adds item kitchen timestamps + order priority.
-  assertEqual(getSupportedSchemaVersion(), 88, 'schema version is 88 (tip after INV-AUTO-86)');
+  assertEqual(getSupportedSchemaVersion(), 89, 'schema version is 89 (tip after ROPS-RWASTE)');
 
   const db = initTestDb();
   const owner = seedOwnerUser(db);

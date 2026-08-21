@@ -2816,4 +2816,57 @@ export const MIGRATIONS: { version: number; name: string; up: () => void }[] = [
       `);
     },
   },
+  {
+    version: 89,
+    name: 'rops_rwaste_recipe_linked_waste',
+    up: () => {
+      // ADR-015 / ROPS-RWASTE v1 — recipe-linked waste events + lines + idempotency.
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS recipe_waste_events (
+          id TEXT PRIMARY KEY,
+          recipe_id TEXT NOT NULL,
+          recipe_name TEXT NOT NULL,
+          menu_product_id TEXT NOT NULL,
+          portions REAL NOT NULL,
+          yield_qty REAL NOT NULL,
+          wastage_reason TEXT NOT NULL,
+          actor_user_id TEXT,
+          notes TEXT,
+          created_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_recipe_waste_events_recipe
+          ON recipe_waste_events(recipe_id);
+        CREATE INDEX IF NOT EXISTS idx_recipe_waste_events_created
+          ON recipe_waste_events(created_at);
+
+        CREATE TABLE IF NOT EXISTS recipe_waste_lines (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          waste_event_id TEXT NOT NULL,
+          ingredient_product_id TEXT NOT NULL,
+          ingredient_name TEXT,
+          quantity_delta REAL NOT NULL,
+          unit TEXT NOT NULL,
+          unit_cost_cents INTEGER,
+          line_cost_cents INTEGER,
+          inventory_movement_id INTEGER,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (waste_event_id) REFERENCES recipe_waste_events(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_recipe_waste_lines_event
+          ON recipe_waste_lines(waste_event_id);
+
+        CREATE TABLE IF NOT EXISTS recipe_waste_idempotency (
+          user_id TEXT NOT NULL,
+          idempotency_key TEXT NOT NULL,
+          recipe_id TEXT NOT NULL,
+          request_hash TEXT NOT NULL,
+          response_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          PRIMARY KEY (user_id, idempotency_key)
+        );
+        CREATE INDEX IF NOT EXISTS idx_recipe_waste_idempotency_recipe
+          ON recipe_waste_idempotency(recipe_id);
+      `);
+    },
+  },
 ];

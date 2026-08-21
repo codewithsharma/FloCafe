@@ -2,7 +2,8 @@
 
 ## Mandate
 
-- [ ] **ADR-015 Recipe-linked waste (2026-08-21):** Proposed design only — `docs/14-decisions/ADR-015-recipe-linked-waste.md`. **BLOCKED** for code/schema until Accept + implement auth. Next: human Accept, then optional ROPS-RWASTE implement.
+- [x] **ROPS-RWASTE Recipe-linked waste v1 (2026-08-21):** COMPLETE — ADR-015 Accepted; schema v89; `POST /api/recipes/:id/waste`; O/M UI; `npm run test:rwaste`. Next: waste COGS report (optional) or ROPS-REFREV policy ADR.
+- [x] **ADR-015 Recipe-linked waste (2026-08-21):** Accepted + implemented as ROPS-RWASTE v1.
 - [x] **ROPS-FC-ING By-ingredient food-cost rollup (2026-08-21):** COMPLETE — same SoT as R9.6; Σ ingredient == period COGS; `test:r9.6`. Next: RECIPE_WASTE (design) or refund→recipe reverse (ADR).
 - [x] **ROPS-FC-CSV Food-cost CSV export (2026-08-21):** COMPLETE — Restaurant Ops first deepen; `test:r9.6`. Next: by-ingredient rollup or RECIPE_WASTE (design). R5 inventory polish stays secondary.
 - [x] **PRC-DRAFT Draft PO line amend (2026-08-21):** COMPLETE — draft-only `PUT …/lines`; FE amend; `test:r6` + UI contract. Next P2: movements CSV / supplier edit UI.

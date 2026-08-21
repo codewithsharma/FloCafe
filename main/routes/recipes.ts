@@ -3,6 +3,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { getDatabase, now, withTxn } from '../db';
 import { requireRole } from '../middleware/security';
 import { validateBody } from '../middleware/validate';
 import {
@@ -19,9 +20,15 @@ import {
 import { listConsumptions } from '../services/recipe-consumption';
 import { InventoryServiceError } from '../services/inventory';
 import {
+  recipeWasteRequestHash,
+  RecipeWasteServiceError,
+  wasteRecipePortions,
+} from '../services/recipe-waste';
+import {
   recipeCreateBodySchema,
   recipeIngredientsReplaceBodySchema,
   recipeUpdateBodySchema,
+  recipeWasteBodySchema,
 } from '../validation/recipe';
 import { routeParam } from '../lib/route-params';
 
@@ -32,16 +39,46 @@ function actorId(req: Request): string | null {
 }
 
 function mapError(error: unknown, res: Response): boolean {
-  if (error instanceof RecipeServiceError || error instanceof InventoryServiceError) {
-    res.status(error.statusCode).json({ error: error.message });
+  if (
+    error instanceof RecipeServiceError ||
+    error instanceof InventoryServiceError ||
+    error instanceof RecipeWasteServiceError
+  ) {
+    const code = (error as { code?: string }).code;
+    res.status(error.statusCode).json({
+      error: error.message,
+      ...(code ? { code } : {}),
+    });
     return true;
   }
   const status = (error as { statusCode?: number })?.statusCode;
   if (typeof status === 'number' && status >= 400 && status < 600) {
-    res.status(status).json({ error: (error as Error).message || 'Request failed' });
+    res.status(status).json({
+      error: (error as Error).message || 'Request failed',
+      ...((error as { code?: string }).code ? { code: (error as { code?: string }).code } : {}),
+    });
     return true;
   }
   return false;
+}
+
+function requireRecipeWasteIdempotencyKey(req: Request): string {
+  const supplied = req.get('Idempotency-Key')?.trim();
+  if (!supplied) {
+    throw new RecipeWasteServiceError(
+      400,
+      'Idempotency-Key is required',
+      'RECIPE_WASTE_IDEMPOTENCY_REQUIRED',
+    );
+  }
+  if (supplied.length > 128) {
+    throw new RecipeWasteServiceError(
+      400,
+      'Idempotency-Key is invalid or too long',
+      'RECIPE_WASTE_IDEMPOTENCY_INVALID',
+    );
+  }
+  return supplied;
 }
 
 /** GET /api/recipes/consumptions — must be before /:id */
@@ -210,6 +247,85 @@ router.put(
     } catch (error: unknown) {
       if (mapError(error, res)) return;
       console.error('[API] replace ingredients error:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+);
+
+/** ADR-015 — POST /api/recipes/:id/waste */
+router.post(
+  '/:id/waste',
+  requireRole('owner', 'manager'),
+  validateBody(recipeWasteBodySchema),
+  (req: Request, res: Response) => {
+    try {
+      const actor = actorId(req);
+      if (!actor) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      const recipeId = routeParam(req.params.id);
+      const body = req.body as {
+        portions: number;
+        wastage_reason: 'SPOILAGE' | 'DAMAGED' | 'EXPIRED' | 'SPILLAGE' | 'OTHER';
+        notes?: string | null;
+      };
+      const idempotencyKey = requireRecipeWasteIdempotencyKey(req);
+      const requestHash = recipeWasteRequestHash(recipeId, {
+        portions: body.portions,
+        wastage_reason: body.wastage_reason,
+        notes: body.notes,
+      });
+
+      const result = withTxn(() => {
+        const db = getDatabase();
+        const existing = db
+          .prepare(
+            `SELECT request_hash, response_json FROM recipe_waste_idempotency
+             WHERE user_id = ? AND idempotency_key = ?`,
+          )
+          .get(actor, idempotencyKey) as
+          { request_hash: string; response_json: string } | undefined;
+
+        if (existing) {
+          if (existing.request_hash !== requestHash) {
+            throw new RecipeWasteServiceError(
+              409,
+              'Idempotency-Key was already used for a different recipe waste request',
+              'RECIPE_WASTE_IDEMPOTENCY_CONFLICT',
+            );
+          }
+          return JSON.parse(existing.response_json) as {
+            waste_event: unknown;
+            lines: unknown[];
+          };
+        }
+
+        const wasted = wasteRecipePortions(
+          {
+            recipeId,
+            portions: body.portions,
+            wastageReason: body.wastage_reason,
+            notes: body.notes,
+            actorUserId: actor,
+          },
+          { db, alreadyInTxn: true },
+        );
+
+        const response = { waste_event: wasted.waste_event, lines: wasted.lines };
+        db.prepare(
+          `INSERT INTO recipe_waste_idempotency
+            (user_id, idempotency_key, recipe_id, request_hash, response_json, created_at)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+        ).run(actor, idempotencyKey, recipeId, requestHash, JSON.stringify(response), now());
+
+        return response;
+      });
+
+      res.status(201).json(result);
+    } catch (error: unknown) {
+      if (mapError(error, res)) return;
+      console.error('[API] recipe waste error:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   },

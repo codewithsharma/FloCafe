@@ -76,7 +76,7 @@ async function main() {
   console.log('\nR8 — Staff & Workforce OS\n' + '='.repeat(60));
 
   const db = initTestDb();
-  assertEqual(getSupportedSchemaVersion(), 88, 'S-STAFF schema tip is v88');
+  assertEqual(getSupportedSchemaVersion(), 89, 'S-STAFF schema tip is v89');
 
   const owner = seedOwnerUser(db);
   const manager = seedManagerUser(db);

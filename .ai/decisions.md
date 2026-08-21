@@ -1,8 +1,8 @@
 # Decisions
 
-## 2026-08-21 — ADR-015 Recipe-linked waste (ROPS-RWASTE) — Proposed (design only)
+## 2026-08-21 — ADR-015 Recipe-linked waste (ROPS-RWASTE) — Accepted + SHIPPED v1
 
-Policy ADR: `docs/14-decisions/ADR-015-recipe-linked-waste.md`. Separate from SKU wastage and sale `recipe_consumptions`. v1 = waste N portions of active recipe; ledger `adjustment` + `reason=recipe_waste*`; cost snapshots; food-cost % unchanged; schema v89 required only after Accept + implement auth. No code/schema in this step. Sibling ROPS-REFREV remains separate.
+ADR: `docs/14-decisions/ADR-015-recipe-linked-waste.md`. Schema **v89**; `POST /api/recipes/:id/waste` + mandatory Idempotency-Key; O/M UI; ledger `adjustment` + `reference_type=recipe_waste` + `reason=recipe_waste:<CODE>`; cost snapshots; audit `inventory.recipe_wasted`; suite `npm run test:rwaste`. Does **not** fold into R9.6 theoretical food-cost. Deferred: reverse, waste COGS report, ROPS-REFREV, ROPS-AVT.
 
 Docs: `docs/qa/OPS-02-PRODUCTION-GAP-MATRIX.md`, `OPS-02-RELEASE-GATES.md`, `OPS-02-TEST-EXECUTION-REPORT.md`, `OPS-02-MANUAL-TEST-MATRIX.md`, `OPS-02-FINAL-REPORT.md`. Eng fixes only: health version from package.json; `notifyKdsUpdate` → KDS outbox enqueue; recovery tier includes REC-01; stale P18/P15 test helpers. QR-ORD-IDEM not authorized. Live NO-GO until signed RC + site + escrow + sign-off. Score **78/100**.
 

@@ -224,6 +224,7 @@
     "test:r3": "node tests/run-electron-node-test.cjs tests/r3-kitchen-os.test.ts",
     "test:r4": "node tests/run-electron-node-test.cjs tests/r4-inventory-os.test.ts",
     "test:r5": "node tests/run-electron-node-test.cjs tests/r5-bom-recipes-food-cost.test.ts",
+    "test:rwaste": "node tests/run-electron-node-test.cjs tests/rops-rwaste.test.ts",
     "test:r6": "node tests/run-electron-node-test.cjs tests/r6-purchasing.test.ts",
     "test:r7": "node tests/run-electron-node-test.cjs tests/r7-customer-crm.test.ts",
     "test:r8": "node tests/run-electron-node-test.cjs tests/r8-staff-workforce.test.ts",

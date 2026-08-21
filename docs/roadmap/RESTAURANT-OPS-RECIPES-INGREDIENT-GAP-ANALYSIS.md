@@ -48,23 +48,23 @@ Evidence: `recipe.ts`, `recipe-consumption.ts`, `recipe-cost.ts`, `food-cost-rep
 
 ## 3. Restaurant Operations — feature gap matrix
 
-| Feature                            | ID          | State          | Evidence                                                                                     | Deps ready?            | Priority      |
-| ---------------------------------- | ----------- | -------------- | -------------------------------------------------------------------------------------------- | ---------------------- | ------------- |
-| BOM + yield + prep_loss            | ROPS-BOM    | **COMPLETE**   | Recipes UI + consume                                                                         | —                      | —             |
-| Sale consume / cancel reverse      | ROPS-CON    | **COMPLETE**   | Order txn + RCP-REV                                                                          | —                      | —             |
-| Consumptions list UI               | ROPS-HIST   | **COMPLETE**   | RCP-05                                                                                       | —                      | —             |
-| Theoretical food-cost report       | ROPS-FC     | **COMPLETE**   | R9.6 JSON + UI                                                                               | —                      | —             |
-| Food-cost CSV export               | ROPS-FC-CSV | **COMPLETE**   | `GET /api/reports/export/food-cost.csv` + Reports Download                                   | —                      | —             |
-| Food-cost by-ingredient rollup     | ROPS-FC-ING | **COMPLETE**   | `by_ingredient` on food-cost JSON + UI + CSV section; reconciles to period COGS              | —                      | —             |
-| Actual vs theoretical BI           | ROPS-AVT    | **LATER**      | Matrix/R9.6/P17 explicit Later                                                               | Eng yes; product Later | Auth required |
-| Recipe-linked waste                | ROPS-RWASTE | **DESIGNED**   | [ADR-015](../14-decisions/ADR-015-recipe-linked-waste.md) Proposed — Accept before implement | Accept + auth          | P2            |
-| Restaurant refund → recipe reverse | ROPS-REFREV | **POLICY GAP** | Cancel reverse exists; refund restock asymmetry                                              | Policy ADR             | P2            |
-| Addon/modifier BOM                 | ROPS-ADDON  | **DEFERRED**   | Price-only addons                                                                            | Design + auth          | Deferred      |
-| Formal recipe versions             | ROPS-VER    | **MISSING**    | Snapshots only                                                                               | Schema                 | Deferred      |
-| Prep / production batches          | ROPS-PREP   | **MISSING**    | Yield is sale math only                                                                      | New model              | Do not invent |
-| Ingredient substitution            | ROPS-SUB    | **NONE**       | No code                                                                                      | —                      | Do not invent |
-| Allergen / recipe notes ops        | ROPS-ALG    | **NONE**       | No recipe allergen model                                                                     | —                      | Do not invent |
-| Matrix 86 doc lag                  | ROPS-86-DOC | **DOC**        | Auto-86 Existing in inventory                                                                | Docs only              | P3            |
+| Feature                            | ID          | State          | Evidence                                                                                   | Deps ready?            | Priority      |
+| ---------------------------------- | ----------- | -------------- | ------------------------------------------------------------------------------------------ | ---------------------- | ------------- |
+| BOM + yield + prep_loss            | ROPS-BOM    | **COMPLETE**   | Recipes UI + consume                                                                       | —                      | —             |
+| Sale consume / cancel reverse      | ROPS-CON    | **COMPLETE**   | Order txn + RCP-REV                                                                        | —                      | —             |
+| Consumptions list UI               | ROPS-HIST   | **COMPLETE**   | RCP-05                                                                                     | —                      | —             |
+| Theoretical food-cost report       | ROPS-FC     | **COMPLETE**   | R9.6 JSON + UI                                                                             | —                      | —             |
+| Food-cost CSV export               | ROPS-FC-CSV | **COMPLETE**   | `GET /api/reports/export/food-cost.csv` + Reports Download                                 | —                      | —             |
+| Food-cost by-ingredient rollup     | ROPS-FC-ING | **COMPLETE**   | `by_ingredient` on food-cost JSON + UI + CSV section; reconciles to period COGS            | —                      | —             |
+| Actual vs theoretical BI           | ROPS-AVT    | **LATER**      | Matrix/R9.6/P17 explicit Later                                                             | Eng yes; product Later | Auth required |
+| Recipe-linked waste                | ROPS-RWASTE | **COMPLETE**   | ADR-015 Accepted; schema v89; `POST /api/recipes/:id/waste`; O/M UI; `npm run test:rwaste` | —                      | —             |
+| Restaurant refund → recipe reverse | ROPS-REFREV | **POLICY GAP** | Cancel reverse exists; refund restock asymmetry                                            | Policy ADR             | P2            |
+| Addon/modifier BOM                 | ROPS-ADDON  | **DEFERRED**   | Price-only addons                                                                          | Design + auth          | Deferred      |
+| Formal recipe versions             | ROPS-VER    | **MISSING**    | Snapshots only                                                                             | Schema                 | Deferred      |
+| Prep / production batches          | ROPS-PREP   | **MISSING**    | Yield is sale math only                                                                    | New model              | Do not invent |
+| Ingredient substitution            | ROPS-SUB    | **NONE**       | No code                                                                                    | —                      | Do not invent |
+| Allergen / recipe notes ops        | ROPS-ALG    | **NONE**       | No recipe allergen model                                                                   | —                      | Do not invent |
+| Matrix 86 doc lag                  | ROPS-86-DOC | **DOC**        | Auto-86 Existing in inventory                                                              | Docs only              | P3            |
 
 ---
 
@@ -86,9 +86,16 @@ Evidence: `recipe.ts`, `recipe-consumption.ts`, `recipe-cost.ts`, `food-cost-rep
 | **Rounding**       | Qty: 6 dp; effective unit cost: round(cogs / known_qty); % of COGS: 2 dp                                         |
 | **Filters**        | Same as food-cost: `start_date` / `end_date` only                                                                |
 
+### Recipe-linked waste (ROPS-RWASTE) — **COMPLETE**
+
+| Field            | Value                                                                                                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Status**       | Schema v89; `POST /api/recipes/:id/waste` + Idempotency-Key; O/M UI on recipes; ledger `adjustment`/`recipe_waste`; audit `inventory.recipe_wasted`; `test:rwaste` |
+| **Out of scope** | Waste reverse; waste COGS report; prep batches; recipe versions; actual-vs-theoretical BI; free-form multi-SKU waste                                               |
+
 ### Next deepen candidates
 
-1. **ROPS-RWASTE implement** — only after ADR-015 **Accepted** + explicit authorize (schema v89)
+1. **Waste COGS report** (ROPS-RWASTE-RPT) — separate metric over `recipe_waste_*` (do not fold into R9.6 theoretical %)
 2. Refund→recipe reverse — **policy ADR first** (ROPS-REFREV)
 3. Actual-vs-theoretical BI — Later (auth required)
 

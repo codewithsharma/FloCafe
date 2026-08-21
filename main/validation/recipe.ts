@@ -32,5 +32,13 @@ export const recipeIngredientsReplaceBodySchema = z.object({
   ingredients: z.array(recipeIngredientSchema),
 });
 
+/** ADR-015 / ROPS-RWASTE v1 */
+export const recipeWasteBodySchema = z.object({
+  portions: z.number().finite().positive().max(1_000_000),
+  wastage_reason: z.enum(['SPOILAGE', 'DAMAGED', 'EXPIRED', 'SPILLAGE', 'OTHER']),
+  notes: z.string().trim().max(1000).nullable().optional(),
+});
+
 export type RecipeCreateBody = z.infer<typeof recipeCreateBodySchema>;
 export type RecipeUpdateBody = z.infer<typeof recipeUpdateBodySchema>;
+export type RecipeWasteBody = z.infer<typeof recipeWasteBodySchema>;

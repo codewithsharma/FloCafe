@@ -87,8 +87,8 @@ async function main() {
   assertEqual(effectiveIsActive(true, true), false, 'both → unavailable');
 
   const db = initTestDb();
-  assertEqual(getSupportedSchemaVersion(), 88, 'schema tip is v88');
-  assertEqual(Number(db.pragma('user_version', { simple: true })), 88, 'fresh DB tip 88');
+  assertEqual(getSupportedSchemaVersion(), 89, 'schema tip is v89');
+  assertEqual(Number(db.pragma('user_version', { simple: true })), 89, 'fresh DB tip 89');
 
   const owner = seedOwnerUser(db);
 

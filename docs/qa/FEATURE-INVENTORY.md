@@ -2,10 +2,12 @@
 
 **Product:** OPERAVIA Restaurant (repo legacy: FloCafe)  
 **Commit:** `b996b9806d3075b852895273ca4eda2289a143a8`  
-**Schema tip:** v88 (`inv_auto_86_availability_flags`)  
+**Schema tip:** v89 (`rops_rwaste_recipe_linked_waste`)  
 **Roles:** owner, manager, cashier, waiter, chef  
 **Source of truth (status):** [`docs/00-product/capability-matrix.md`](../00-product/capability-matrix.md) — **Existing** and **Hardening** only  
-**Code evidence:** [`docs/00-product/feature-list.md`](../00-product/feature-list.md), `main/routes/`, schema v88
+**Code evidence:** [`docs/00-product/feature-list.md`](../00-product/feature-list.md), `main/routes/`, schema v89
+
+**ROPS-RWASTE note (2026-08-21):** ADR-015 Accepted — recipe-linked waste v1; `POST /api/recipes/:id/waste`; schema **v89**; suite `npm run test:rwaste`. Does not change sale food-cost SoT. Waste COGS report deferred.
 
 **P8 note (2026-08-21):** KDS-ALERTS Sound & visual alerts — FE-only seen-`order_item.id` tracker; suite `npm run test:kds-alerts`. Status: **Implemented / Hardening verified**. Schema tip remains **v88**.
 
@@ -104,6 +106,7 @@
 | RCP-03    | Recipes       | Ingredient deduction on sale / cancel reverse (P17 CAS/atomic/idempotency tests) | `/pos` (implicit)                  | order create/add-items / cancel                                                                       | `recipe_consumptions`, `inventory_movements`                                  | cashier+                                | Existing  |
 | RCP-04    | Recipes       | Food costing (theoretical cents; P17 prefers `cost_cents`)                       | `/products/recipes`                | `GET /api/recipes/:id/cost`                                                                           | `recipes`, `products`                                                         | owner, manager                          | Existing  |
 | RCP-05    | Recipes       | Recipe consumptions list UI + API (order_id/limit filters)                       | `/products/recipes/consumptions`   | `GET /api/recipes/consumptions`                                                                       | `recipe_consumptions`, `recipe_consumption_lines`                             | owner, manager                          | Existing  |
+| RCP-06    | Recipes       | Recipe-linked waste (portions of active recipe; ADR-015)                         | `/products/recipes`                | `POST /api/recipes/:id/waste` (+ Idempotency-Key)                                                     | `recipe_waste_events`, `recipe_waste_lines`, `inventory_movements`            | owner, manager                          | Existing  |
 | PRC-01    | Procurement   | Supplier management (+ deactivate)                                               | `/products/purchasing`             | `/api/purchasing/suppliers*`                                                                          | `suppliers`                                                                   | owner, manager; read: +chef             | Existing  |
 | PRC-02    | Procurement   | Supplier product pricing                                                         | `/products/purchasing`             | `/api/purchasing/suppliers/:id/products`                                                              | `supplier_products`                                                           | owner, manager; read: +chef             | Existing  |
 | PRC-03    | Procurement   | Purchase orders + status                                                         | `/products/purchasing`             | `/api/purchasing/purchase-orders*`, `…/status`                                                        | `purchase_orders`, `purchase_order_lines`                                     | owner, manager; read: +chef             | Existing  |

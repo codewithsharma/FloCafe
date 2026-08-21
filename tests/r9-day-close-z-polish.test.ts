@@ -131,14 +131,14 @@ async function main(): Promise<void> {
   console.log('\nR9 Slice 4 — Day-close / Z Polish');
   console.log('='.repeat(60));
 
-  assertEqual(getSupportedSchemaVersion(), 88, 'schema tip is v88');
+  assertEqual(getSupportedSchemaVersion(), 89, 'schema tip is v89');
 
   initTestDb();
   const db = getDatabase();
   assertEqual(
     Number(db.pragma('user_version', { simple: true })),
     86,
-    'fresh DB at user_version 88',
+    'fresh DB at user_version 89',
   );
 
   const owner = seedOwnerUser(db);

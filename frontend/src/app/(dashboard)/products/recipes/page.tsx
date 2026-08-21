@@ -19,14 +19,23 @@ import {
   replaceRecipeIngredients,
   setRecipeActive,
   updateRecipe,
+  wasteRecipePortions,
   type Recipe,
   type RecipeCostResult,
   type RecipeIngredient,
+  type RecipeWastageReason,
 } from '@/lib/recipes';
 import { PageHeader, Panel, LoadingState, EmptyState } from '@/components/flo';
 import { Button } from '@/components/ui/button';
 
 const UNITS = ['pcs', 'box', 'pack', 'kg', 'g', 'L', 'ml'] as const;
+const WASTE_REASONS: RecipeWastageReason[] = [
+  'SPOILAGE',
+  'DAMAGED',
+  'EXPIRED',
+  'SPILLAGE',
+  'OTHER',
+];
 
 type DraftLine = {
   ingredient_product_id: string;
@@ -89,6 +98,9 @@ export default function RecipesPage() {
   const [editIngQty, setEditIngQty] = useState('');
   const [editIngUnit, setEditIngUnit] = useState<string>('g');
   const [editIngPrepLoss, setEditIngPrepLoss] = useState('0');
+  const [wastePortions, setWastePortions] = useState('1');
+  const [wasteReason, setWasteReason] = useState<RecipeWastageReason>('SPOILAGE');
+  const [wasteNotes, setWasteNotes] = useState('');
 
   useEffect(() => {
     if (!isOwnerOrManager) {
@@ -397,6 +409,44 @@ export default function RecipesPage() {
     }
   }
 
+  async function submitWaste() {
+    if (!selected || !selected.is_active) {
+      toast.error(t('recipes.wasteInactiveHint'));
+      return;
+    }
+    const portions = Number(wastePortions);
+    if (!(Number.isFinite(portions) && portions > 0)) {
+      toast.error(t('recipes.wasteInvalid'));
+      return;
+    }
+    setBusy(true);
+    try {
+      const key =
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `rw-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      await wasteRecipePortions(
+        selected.id,
+        {
+          portions,
+          wastage_reason: wasteReason,
+          notes: wasteNotes.trim() ? wasteNotes.trim() : null,
+        },
+        key,
+      );
+      toast.success(t('recipes.wasteSuccess'));
+      setWastePortions('1');
+      setWasteNotes('');
+    } catch (err: unknown) {
+      toast.error(
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error ||
+          t('recipes.wasteFailed'),
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!isOwnerOrManager) {
     return <LoadingState label={t('recipes.title')} className="min-h-[16rem]" />;
   }
@@ -617,6 +667,50 @@ export default function RecipesPage() {
               </div>
             )}
           </div>
+
+          {selected.is_active ? (
+            <div className="space-y-2 rounded-md border p-3">
+              <div className="text-sm font-medium">{t('recipes.wasteTitle')}</div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="block text-xs">
+                  {t('recipes.wastePortions')}
+                  <input
+                    className="mt-1 w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                    value={wastePortions}
+                    onChange={(e) => setWastePortions(e.target.value)}
+                    inputMode="decimal"
+                  />
+                </label>
+                <label className="block text-xs">
+                  {t('recipes.wasteReason')}
+                  <select
+                    className="mt-1 w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                    value={wasteReason}
+                    onChange={(e) => setWasteReason(e.target.value as RecipeWastageReason)}
+                  >
+                    {WASTE_REASONS.map((code) => (
+                      <option key={code} value={code}>
+                        {t(`recipes.wasteReason.${code}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label className="block text-xs">
+                {t('recipes.wasteNotes')}
+                <input
+                  className="mt-1 w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                  value={wasteNotes}
+                  onChange={(e) => setWasteNotes(e.target.value)}
+                />
+              </label>
+              <Button type="button" size="sm" disabled={busy} onClick={submitWaste}>
+                {t('recipes.wasteSubmit')}
+              </Button>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">{t('recipes.wasteInactiveHint')}</p>
+          )}
 
           <div className="space-y-2 rounded-md border p-3">
             <label className="block text-xs">

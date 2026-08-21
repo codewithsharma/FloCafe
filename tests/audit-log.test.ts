@@ -166,7 +166,7 @@ async function main() {
 
   initDatabase();
   const upgraded = getDatabase();
-  assert.equal(upgraded.pragma('user_version', { simple: true }), 88);
+  assert.equal(upgraded.pragma('user_version', { simple: true }), 89);
   assert.ok(
     upgraded.prepare(`SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'audit_logs'`).get(),
     'audit_logs exists after upgrade from v67',

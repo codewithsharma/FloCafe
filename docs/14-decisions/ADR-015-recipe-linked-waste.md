@@ -1,8 +1,9 @@
 # ADR-015: Recipe-linked waste (ROPS-RWASTE)
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-08-21  
-**Deciders:** Product + CTO (**human Accept required before any implementation**)  
+**Accepted:** 2026-08-21  
+**Deciders:** Product + CTO (Accepted — implement ROPS-RWASTE v1 authorized)  
 **Supersedes:** n/a  
 **Amends:** none — does **not** change Phase 4.15 / R4 SKU wastage, R5 recipe consume/reverse, ADR-011 refund restock, or R9.6 food-cost SoT until an authorized implement slice explicitly says so  
 **Related:**
@@ -40,13 +41,13 @@ Operators need to record **ingredient / recipe prep waste** (e.g. burned batch, 
 
 Today they can only SKU-waste each ingredient manually (no recipe link, no COGS snapshot) or absorb loss into unexplained shrink via counts.
 
-**This ADR is policy/design only.** It does **not** authorize schema, API, UI, or report code.
+**This ADR is Accepted.** ROPS-RWASTE v1 is implemented (schema v89).
 
-**Baseline at drafting:** schema **v88** · package **3.0.5** · tip includes ROPS-FC-ING (`24ef5d4` lineage).
+**Baseline at drafting:** schema **v88** · package **3.0.5**. **Shipped tip:** schema **v89**.
 
 ---
 
-## 2. Decision (Proposed — pending Accept)
+## 2. Decision (Accepted)
 
 ### 2.1 Product semantics
 
@@ -287,27 +288,27 @@ QR-ORD-IDEM · Apple signing · Live Go-Live · multi-location · addon BOM · a
 
 ## 5. Acceptance checklist (before coding)
 
-- [ ] Product + CTO mark this ADR **Accepted** (or revise)
-- [ ] Confirm chef read/write policy (default: neither)
-- [ ] Confirm waste report is a **separate** follow-on slice (recommended)
-- [ ] Authorize implement slice with migration v89 + tests + UI
-- [ ] Do **not** start ROPS-REFREV or ROPS-AVT under this ADR
+- [x] Product + CTO mark this ADR **Accepted** (or revise)
+- [x] Confirm chef read/write policy (default: neither — O/M only)
+- [x] Confirm waste report is a **separate** follow-on slice (recommended)
+- [x] Authorize implement slice with migration v89 + tests + UI
+- [x] Do **not** start ROPS-REFREV or ROPS-AVT under this ADR
 
 ---
 
 ## 6. Recommendation
 
-| Gate                                 | Result                                                     |
-| ------------------------------------ | ---------------------------------------------------------- |
-| Design completeness                  | **Sufficient** for a thin implement slice after Accept     |
-| Schema change required for implement | **Yes** (v89) — blocked until Accept + authorize migration |
-| Implementation now                   | **Not authorized** (this task is design-only)              |
+| Gate                                 | Result                                                         |
+| ------------------------------------ | -------------------------------------------------------------- |
+| Design completeness                  | **Sufficient**                                                 |
+| Schema change required for implement | **Done** — migration **v89** `rops_rwaste_recipe_linked_waste` |
+| Implementation                       | **Shipped** — ROPS-RWASTE v1 (`POST /api/recipes/:id/waste`)   |
 
-### Verdict for the current ask
+### Verdict
 
 ```text
-PROCEED  — to human Accept of ADR-015
-BLOCKED  — for code/schema until Accept + explicit implement authorization
+SHIPPED — ROPS-RWASTE v1 (schema v89 + API + O/M UI + npm run test:rwaste)
+DEFERRED — waste COGS report; reverse; ROPS-REFREV; ROPS-AVT
 ```
 
-**Suggested next product step:** Accept (or amend) ADR-015, then authorize **ROPS-RWASTE implement** (migration + `POST …/waste` + O/M UI + tests). Optionally queue **waste COGS report** as ROPS-RWASTE-RPT after events exist.
+**Suggested next product step:** Optional **waste COGS report** (ROPS-RWASTE-RPT) over `recipe_waste_*`. Policy ADR for **ROPS-REFREV** remains separate.

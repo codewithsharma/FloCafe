@@ -164,3 +164,49 @@ export async function listRecipeConsumptions(opts?: {
   });
   return data.consumptions || [];
 }
+
+/** ADR-015 / ROPS-RWASTE — waste N portions of an active recipe */
+export type RecipeWastageReason = 'SPOILAGE' | 'DAMAGED' | 'EXPIRED' | 'SPILLAGE' | 'OTHER';
+
+export interface RecipeWasteEvent {
+  id: string;
+  recipe_id: string;
+  recipe_name: string;
+  menu_product_id: string;
+  portions: number;
+  yield_qty: number;
+  wastage_reason: string;
+  actor_user_id: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface RecipeWasteLine {
+  id: number;
+  waste_event_id: string;
+  ingredient_product_id: string;
+  ingredient_name: string | null;
+  quantity_delta: number;
+  unit: string;
+  unit_cost_cents: number | null;
+  line_cost_cents: number | null;
+  inventory_movement_id: number | null;
+  created_at: string;
+}
+
+export async function wasteRecipePortions(
+  recipeId: string,
+  body: {
+    portions: number;
+    wastage_reason: RecipeWastageReason;
+    notes?: string | null;
+  },
+  idempotencyKey: string,
+): Promise<{ waste_event: RecipeWasteEvent; lines: RecipeWasteLine[] }> {
+  const { data } = await api.post<{ waste_event: RecipeWasteEvent; lines: RecipeWasteLine[] }>(
+    `/recipes/${recipeId}/waste`,
+    body,
+    { headers: { 'Idempotency-Key': idempotencyKey } },
+  );
+  return data;
+}
