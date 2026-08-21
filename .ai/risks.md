@@ -2,6 +2,7 @@
 
 ## Active program notes (2026-08-21)
 
+- ⚠️ RISK: **P14** clients omitting `expected_status` can still last-writer-win on *forward* order-status races; prefer sending `expected_status`. Not full offline/disaster recovery.
 - ⚠️ RISK: **Audit_logs append-only is convention-only** (no UPDATE/DELETE deny triggers yet — R12 fixtures rewrite `created_at`).
 - ⚠️ RISK: **RPT-CATEGORY / RPT-PRODUCT** merchandise ≠ app Gross Sales; category is live join (not snapshotted). Operators must read the clarity notes.
 - ⚠️ RISK: **PRINT-HEALTH** is queue/config derived — not live paper-out/ACK. Multiple open jobs per bill can still double-print if each is retried (pre-existing R13).

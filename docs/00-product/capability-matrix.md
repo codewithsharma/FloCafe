@@ -538,13 +538,15 @@ Remaining after H3 (not falsely marked Existing): Sensitive-action controls (Pla
 
 ### H4 delivered depth (2026-08-15)
 
-| Row                  | Still        | H4 closed                                                                         |
-| -------------------- | ------------ | --------------------------------------------------------------------------------- |
-| Conflict handling    | 🟡 Hardening | Cancel re-check in txn; item cancel no-op; item restore status conflict 409       |
-| App restart recovery | 🟡 Hardening | Restore audit + create-time backup integrity; interrupted swap recovery preserved |
-| Restore              | 🟡 Hardening | Backup integrity before success; `backup.created` / `restore.completed            | failed` audits |
+| Row                  | Still        | H4 closed                                                                                                                                                         |
+| -------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Conflict handling    | 🟡 Hardening | H4 cancel/restore guards + **P14** order-status CAS (`expected_status` / monotonicity → `409 ORDER_STATUS_CONFLICT`); payment complete cannot overwrite cancelled |
+| App restart recovery | 🟡 Hardening | Restore audit + create-time backup integrity; **P14** POS sticky-attempt clear on permanent/409; stock adjust stable Idempotency-Key across retry                 |
+| Restore              | 🟡 Hardening | Backup integrity before success; `backup.created` / `restore.completed                                                                                            | failed` audits |
 
-Remaining after H4 (not falsely marked Existing): order-status CAS, stock adjust idempotency, Drive backup-now PIN, durable KDS outbox, disaster recovery (Planned).
+Remaining after H4/P14 (not falsely marked Existing): disaster recovery (Planned); Device failure recovery (Planned). Drive backup-now PIN closed R4.1; durable KDS outbox closed P4; stock adjust server idempotency closed R4 (+ P14 FE key stability); order-status CAS closed P14 (Hardening deepen, not full offline DR).
+
+**P14 POS / Offline Conflict Hardening (2026-08-21):** No schema bump (v88). Suite `npm run test:p14`. Plan/report under `docs/qa/P14-*`. Conflict handling / App restart recovery remain 🟡 Hardening.
 
 **R14 thin deepen (2026-08-15):** Corrupt-openable live DB fail-closed latched via install-state `corrupt_database` + schema-health integrity — see [`docs/05-production/r14-corrupt-db-fail-closed.md`](../05-production/r14-corrupt-db-fail-closed.md). Data integrity checks → 🟡 Hardening. Does not promote Disaster recovery → Existing.
 

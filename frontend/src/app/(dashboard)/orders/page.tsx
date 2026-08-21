@@ -1035,6 +1035,7 @@ export default function OrdersPage() {
     try {
       await api.patch(`/orders/${cancelModal.order.id}/status`, {
         status: 'cancelled',
+        expected_status: cancelModal.order.status,
         reason: cancelModal.reason || undefined,
         free_table: cancelModal.freeTable,
         override_pin: cancelModal.overridePin || undefined,

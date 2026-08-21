@@ -2,6 +2,7 @@
 
 ## Mandate
 
+- [x] **P14 POS-OFFLINE-CONFLICT-HARDENING (2026-08-21):** Order-status CAS + stock FE key + offline conflict hygiene; no schema bump; `npm run test:p14`. Report `docs/qa/P14-POS-OFFLINE-CONFLICT-HARDENING-IMPLEMENTATION-REPORT.md`.
 - [x] **P13 DATA-AUDIT-HARDENING (2026-08-21):** Data & audit integrity; no schema bump; `npm run test:data-audit`. Report `docs/qa/P13-DATA-AUDIT-HARDENING-IMPLEMENTATION-REPORT.md`.
 - [x] **P12 RPT-CATEGORY (2026-08-21):** Category performance report; no schema bump; `npm run test:rpt-category`. Report `docs/qa/CATEGORY-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`.
 - [x] **P11 RPT-PRODUCT (2026-08-21):** Product performance report; no schema bump; `npm run test:rpt-product`. Report `docs/qa/PRODUCT-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`.

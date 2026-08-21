@@ -89,7 +89,17 @@ export function registerStatusRoutes(router: Router): void {
     validateBody(orderStatusBodySchema),
     (req: Request, res: Response) => {
       try {
-        const { status, reason, override_pin, free_table } = req.body;
+        const {
+          status,
+          reason,
+          override_pin,
+          free_table,
+          expected_status: expectedStatusRaw,
+        } = req.body;
+        const expectedStatus =
+          expectedStatusRaw === undefined || expectedStatusRaw === null
+            ? undefined
+            : String(expectedStatusRaw);
 
         // reason is optional for cancellation
 
@@ -114,6 +124,12 @@ export function registerStatusRoutes(router: Router): void {
             });
           }
         }
+
+        const statusLifecycle = ['pending', 'preparing', 'ready', 'served', 'completed'] as const;
+        const orderStatusConflict = () => ({
+          error: 'Order status changed; refresh and try again',
+          code: 'ORDER_STATUS_CONFLICT',
+        });
 
         let cancelIdempotencyKey: string | null = null;
         let cancelRequestHash: string | null = null;
@@ -213,36 +229,126 @@ export function registerStatusRoutes(router: Router): void {
 
         const nowStr = now();
 
-        const { updatedOrder, orderItems, table } = withTxn(() => {
+        type StatusTxnOk = {
+          ok: true;
+          updatedOrder: any;
+          orderItems: ReturnType<typeof attachEffectiveAddons>;
+          table: { name?: unknown } | null;
+        };
+        type StatusTxnConflict = {
+          ok: false;
+          conflict: 'ORDER_STATUS_CONFLICT' | 'ILLEGAL_STATUS_TRANSITION';
+          from?: string;
+          to?: string;
+        };
+
+        const txnResult = withTxn((): StatusTxnOk | StatusTxnConflict => {
+          // P14: re-read under txn; CAS / monotonicity so stale clients cannot overwrite newer state.
+          const locked = db.prepare('SELECT status FROM orders WHERE id = ?').get(orderId) as
+            { status: string } | undefined;
+          if (!locked) {
+            return { ok: false, conflict: 'ORDER_STATUS_CONFLICT' };
+          }
+
+          if (locked.status === status) {
+            if (expectedStatus !== undefined && expectedStatus !== locked.status) {
+              return { ok: false, conflict: 'ORDER_STATUS_CONFLICT' };
+            }
+            // Idempotent: already at target — no side effects / no false re-audit.
+            const updatedOrder = parseRowJson(
+              db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId),
+            ) as any;
+            const orderItems = attachEffectiveAddons(
+              db,
+              itemsForAddons(
+                db
+                  .prepare('SELECT * FROM order_items WHERE order_id = ?')
+                  .all(orderId)
+                  .map(parseItemJson) as OrderItemRow[],
+              ),
+            );
+            const tableRow2 = updatedOrder.table_id
+              ? (db.prepare('SELECT * FROM tables WHERE id = ?').get(updatedOrder.table_id) as
+                  OrderRow | undefined)
+              : null;
+            const table = tableRow2 ? { ...tableRow2, name: tableRow2.number } : null;
+            return { ok: true, updatedOrder, orderItems, table };
+          } else if (locked.status === 'cancelled' || locked.status === 'completed') {
+            return {
+              ok: false,
+              conflict: 'ILLEGAL_STATUS_TRANSITION',
+              from: locked.status,
+              to: status,
+            };
+          } else if (expectedStatus !== undefined) {
+            if (expectedStatus !== locked.status) {
+              return { ok: false, conflict: 'ORDER_STATUS_CONFLICT' };
+            }
+          } else if (status !== 'cancelled') {
+            const fromIdx = statusLifecycle.indexOf(
+              locked.status as (typeof statusLifecycle)[number],
+            );
+            const toIdx = statusLifecycle.indexOf(status as (typeof statusLifecycle)[number]);
+            if (fromIdx >= 0 && toIdx >= 0 && toIdx < fromIdx) {
+              return { ok: false, conflict: 'ORDER_STATUS_CONFLICT' };
+            }
+          }
+
+          const casPredicate = expectedStatus !== undefined ? expectedStatus : locked.status;
+          const runCasUpdate = (sql: string, params: unknown[]): boolean => {
+            const result = db.prepare(sql).run(...params);
+            return result.changes === 1;
+          };
+
           switch (status) {
             case 'preparing':
-              db.prepare(
-                'UPDATE orders SET status = ?, cooking_started_at = ?, updated_at = ? WHERE id = ?',
-              ).run(status, nowStr, nowStr, req.params.id);
+              if (
+                !runCasUpdate(
+                  'UPDATE orders SET status = ?, cooking_started_at = ?, updated_at = ? WHERE id = ? AND status = ?',
+                  [status, nowStr, nowStr, orderId, casPredicate],
+                )
+              ) {
+                return { ok: false, conflict: 'ORDER_STATUS_CONFLICT' };
+              }
               break;
 
             case 'ready':
-              db.prepare(
-                'UPDATE orders SET status = ?, ready_at = ?, updated_at = ? WHERE id = ?',
-              ).run(status, nowStr, nowStr, req.params.id);
+              if (
+                !runCasUpdate(
+                  'UPDATE orders SET status = ?, ready_at = ?, updated_at = ? WHERE id = ? AND status = ?',
+                  [status, nowStr, nowStr, orderId, casPredicate],
+                )
+              ) {
+                return { ok: false, conflict: 'ORDER_STATUS_CONFLICT' };
+              }
               break;
 
             case 'served':
-              db.prepare(
-                'UPDATE orders SET status = ?, served_at = ?, updated_at = ? WHERE id = ?',
-              ).run(status, nowStr, nowStr, req.params.id);
+              if (
+                !runCasUpdate(
+                  'UPDATE orders SET status = ?, served_at = ?, updated_at = ? WHERE id = ? AND status = ?',
+                  [status, nowStr, nowStr, orderId, casPredicate],
+                )
+              ) {
+                return { ok: false, conflict: 'ORDER_STATUS_CONFLICT' };
+              }
               break;
 
             case 'completed':
-              db.prepare(
-                'UPDATE orders SET status = ?, completed_at = ?, updated_at = ? WHERE id = ?',
-              ).run(status, nowStr, nowStr, req.params.id);
+              if (
+                !runCasUpdate(
+                  'UPDATE orders SET status = ?, completed_at = ?, updated_at = ? WHERE id = ? AND status = ?',
+                  [status, nowStr, nowStr, orderId, casPredicate],
+                )
+              ) {
+                return { ok: false, conflict: 'ORDER_STATUS_CONFLICT' };
+              }
               db.prepare(
                 `
               UPDATE order_items SET status = 'served', updated_at = ?
               WHERE order_id = ? AND status IN ('pending', 'preparing', 'ready')
             `,
-              ).run(nowStr, req.params.id);
+              ).run(nowStr, orderId);
               if (isModuleEnabled('tables') && order.table_id) {
                 freeTableIfModule(db, String(order.table_id), nowStr);
               }
@@ -250,10 +356,11 @@ export function registerStatusRoutes(router: Router): void {
 
             case 'cancelled': {
               // H4: re-read under the txn lock so concurrent cancels cannot double-restock.
-              const locked = db.prepare('SELECT status FROM orders WHERE id = ?').get(orderId) as
-                { status: string } | undefined;
-              if (!locked || locked.status === 'cancelled') {
+              if (locked.status === 'cancelled') {
                 break;
+              }
+              if (expectedStatus !== undefined && expectedStatus !== locked.status) {
+                return { ok: false, conflict: 'ORDER_STATUS_CONFLICT' };
               }
               const items = db
                 .prepare('SELECT * FROM order_items WHERE order_id = ?')
@@ -285,9 +392,18 @@ export function registerStatusRoutes(router: Router): void {
                 actorUserId: authUser?.userId ?? null,
                 reason: 'order_cancelled',
               });
-              db.prepare(
-                'UPDATE orders SET status = ?, cancelled_at = ?, cancellation_reason = ?, updated_at = ? WHERE id = ?',
-              ).run(status, nowStr, reason, nowStr, orderId);
+              const cancelUpdate = db
+                .prepare(
+                  'UPDATE orders SET status = ?, cancelled_at = ?, cancellation_reason = ?, updated_at = ? WHERE id = ? AND status = ?',
+                )
+                .run(status, nowStr, reason, nowStr, orderId, locked.status);
+              if (cancelUpdate.changes !== 1) {
+                // Roll back restock via withTxn abort.
+                throw Object.assign(new Error('ORDER_STATUS_CONFLICT'), {
+                  statusCode: 409,
+                  code: 'ORDER_STATUS_CONFLICT',
+                });
+              }
               // Only free table if explicitly requested (default: true for backward compatibility)
               if (isModuleEnabled('tables') && order.table_id && free_table !== false) {
                 freeTableIfModule(db, String(order.table_id), nowStr);
@@ -300,7 +416,7 @@ export function registerStatusRoutes(router: Router): void {
                 result: 'success',
                 reason: reason || null,
                 metadata: {
-                  previous_status: order.status,
+                  previous_status: locked.status,
                   reason: reason || null,
                 },
                 context: {
@@ -329,8 +445,20 @@ export function registerStatusRoutes(router: Router): void {
                 OrderRow | undefined)
             : null;
           const table = tableRow2 ? { ...tableRow2, name: tableRow2.number } : null;
-          return { updatedOrder, orderItems, table };
+          return { ok: true, updatedOrder, orderItems, table };
         });
+
+        if (!txnResult.ok) {
+          if (txnResult.conflict === 'ILLEGAL_STATUS_TRANSITION') {
+            return res.status(409).json({
+              error: `Illegal status transition from ${txnResult.from} to ${txnResult.to}`,
+              code: 'ILLEGAL_STATUS_TRANSITION',
+            });
+          }
+          return res.status(409).json(orderStatusConflict());
+        }
+
+        const { updatedOrder, orderItems, table } = txnResult;
 
         cloudSync.recordOrderChanged(orderId, `order.${status}`);
         if (isModuleEnabled('kds')) notifyKdsUpdate();
@@ -354,6 +482,13 @@ export function registerStatusRoutes(router: Router): void {
         }
         res.json(response);
       } catch (error: unknown) {
+        const err = error as { statusCode?: number; code?: string; message?: string };
+        if (err?.statusCode === 409 || err?.code === 'ORDER_STATUS_CONFLICT') {
+          return res.status(409).json({
+            error: 'Order status changed; refresh and try again',
+            code: 'ORDER_STATUS_CONFLICT',
+          });
+        }
         console.error('[API] Internal error:', error);
         res.status(500).json({ error: 'Internal server error' });
       }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
@@ -72,6 +72,7 @@ export default function ProductsPage() {
   const [stockAdjustQuantity, setStockAdjustQuantity] = useState('');
   const [stockAdjustWastageReason, setStockAdjustWastageReason] = useState<WastageReason>('OTHER');
   const [stockAdjusting, setStockAdjusting] = useState(false);
+  const stockAdjustIdempotencyKeyRef = useRef<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const { confirm, ConfirmDialog } = useConfirm();
   const [editingAddonGroup, setEditingAddonGroup] = useState<AddonGroup | null>(null);
@@ -356,6 +357,7 @@ export default function ProductsPage() {
 
   const openStockAdjust = (product: Product) => {
     if (!isOwnerOrManager || !product.track_inventory) return;
+    stockAdjustIdempotencyKeyRef.current = null;
     setStockAdjustProduct(product);
     setStockAdjustAction('increase');
     setStockAdjustQuantity('');
@@ -370,14 +372,22 @@ export default function ProductsPage() {
       toast.error(t('stockAdjust.invalidQuantity'));
       return;
     }
+    if (!stockAdjustIdempotencyKeyRef.current) {
+      stockAdjustIdempotencyKeyRef.current = crypto.randomUUID();
+    }
     setStockAdjusting(true);
     try {
-      await postProductStockAdjust(stockAdjustProduct.id, {
-        action: stockAdjustAction,
-        quantity,
-        ...(stockAdjustAction === 'wastage' ? { wastage_reason: stockAdjustWastageReason } : {}),
-      });
+      await postProductStockAdjust(
+        stockAdjustProduct.id,
+        {
+          action: stockAdjustAction,
+          quantity,
+          ...(stockAdjustAction === 'wastage' ? { wastage_reason: stockAdjustWastageReason } : {}),
+        },
+        stockAdjustIdempotencyKeyRef.current,
+      );
       toast.success(t('stockAdjust.success'));
+      stockAdjustIdempotencyKeyRef.current = null;
       setStockAdjustProduct(null);
       setStockAdjustQuantity('');
       setStockAdjustWastageReason('OTHER');
@@ -737,6 +747,7 @@ export default function ProductsPage() {
             open={stockAdjustProduct !== null}
             onOpenChange={(open) => {
               if (!open && !stockAdjusting) {
+                stockAdjustIdempotencyKeyRef.current = null;
                 setStockAdjustProduct(null);
                 setStockAdjustQuantity('');
                 setStockAdjustWastageReason('OTHER');

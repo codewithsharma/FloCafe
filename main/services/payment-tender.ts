@@ -731,8 +731,10 @@ export function applyPaymentBatch(
           .get(bill.order_id, bill.id);
         const orderFullyPaid = !unpaidSibling;
         if (orderFullyPaid) {
+          // P14: do not overwrite cancelled (or already completed) via payment settle race.
           db.prepare(
-            "UPDATE orders SET status = 'completed', completed_at = ?, updated_at = ? WHERE id = ?",
+            `UPDATE orders SET status = 'completed', completed_at = ?, updated_at = ?
+             WHERE id = ? AND status NOT IN ('cancelled', 'completed')`,
           ).run(changedAt, changedAt, bill.order_id);
           const order = db
             .prepare('SELECT table_id FROM orders WHERE id = ?')

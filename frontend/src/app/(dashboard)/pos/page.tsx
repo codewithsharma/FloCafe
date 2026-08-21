@@ -52,6 +52,7 @@ import {
 } from '@/lib/pos/eighty-six';
 import { canAccessPos, getLandingPageForRole } from '@/lib/rbac';
 import { useRouter } from 'next/navigation';
+import { classifyMutationError, shouldClearMutationAttempt } from '@/lib/mutation-errors';
 
 const PREPAID_ATTEMPT_STORAGE_KEY = 'flo.prepaid.checkout.attempt';
 const POSTPAID_ATTEMPT_STORAGE_KEY = 'flo.postpaid.order.attempt';
@@ -574,6 +575,9 @@ export default function POSPage() {
 
       await printKotIfEnabled(orderForKot);
     } catch (err: unknown) {
+      if (shouldClearMutationAttempt(classifyMutationError(err))) {
+        clearPostpaidAttempt();
+      }
       const error = err as { response?: { data?: { message?: string; error?: string } } };
       toast.error(
         error.response?.data?.message || error.response?.data?.error || t('pos.placeOrderFailed'),
@@ -812,6 +816,9 @@ export default function POSPage() {
 
       await printBillForTenant(paidBill, isPrepaidCheckout);
     } catch (err: unknown) {
+      if (shouldClearMutationAttempt(classifyMutationError(err))) {
+        clearPrepaidAttempt();
+      }
       const error = err as {
         response?: { data?: { message?: string; error?: string } };
         message?: string;

@@ -1,7 +1,7 @@
 'use client';
 import { getLandingPageForRole } from '@/lib/rbac';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, AlertTriangle } from 'lucide-react';
@@ -38,6 +38,7 @@ export default function LowStockPage() {
   const [stockAdjustQuantity, setStockAdjustQuantity] = useState('');
   const [stockAdjustWastageReason, setStockAdjustWastageReason] = useState<WastageReason>('OTHER');
   const [stockAdjusting, setStockAdjusting] = useState(false);
+  const stockAdjustIdempotencyKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!isOwnerOrManager) {
@@ -69,6 +70,7 @@ export default function LowStockPage() {
 
   const openStockAdjust = (product: Product) => {
     if (!isOwnerOrManager || !product.track_inventory) return;
+    stockAdjustIdempotencyKeyRef.current = null;
     setStockAdjustProduct(product);
     setStockAdjustAction('increase');
     setStockAdjustQuantity('');
@@ -79,14 +81,22 @@ export default function LowStockPage() {
     if (!stockAdjustProduct) return;
     const quantity = parseStockAdjustQuantity(stockAdjustQuantity);
     if (quantity === null || !canSubmitStockAdjust(stockAdjustAction, stockAdjustQuantity)) return;
+    if (!stockAdjustIdempotencyKeyRef.current) {
+      stockAdjustIdempotencyKeyRef.current = crypto.randomUUID();
+    }
     setStockAdjusting(true);
     try {
-      const updated = await postProductStockAdjust(stockAdjustProduct.id, {
-        action: stockAdjustAction,
-        quantity,
-        ...(stockAdjustAction === 'wastage' ? { wastage_reason: stockAdjustWastageReason } : {}),
-      });
+      const updated = await postProductStockAdjust(
+        stockAdjustProduct.id,
+        {
+          action: stockAdjustAction,
+          quantity,
+          ...(stockAdjustAction === 'wastage' ? { wastage_reason: stockAdjustWastageReason } : {}),
+        },
+        stockAdjustIdempotencyKeyRef.current,
+      );
       toast.success(t('stockAdjust.success'));
+      stockAdjustIdempotencyKeyRef.current = null;
       setStockAdjustProduct(null);
       setStockAdjustQuantity('');
       setStockAdjustWastageReason('OTHER');
@@ -172,6 +182,7 @@ export default function LowStockPage() {
         open={stockAdjustProduct !== null}
         onOpenChange={(open) => {
           if (!open) {
+            stockAdjustIdempotencyKeyRef.current = null;
             setStockAdjustProduct(null);
             setStockAdjustQuantity('');
             setStockAdjustWastageReason('OTHER');

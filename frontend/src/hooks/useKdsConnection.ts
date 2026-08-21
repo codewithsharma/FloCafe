@@ -538,6 +538,10 @@ export function useKdsConnection(options: UseKdsConnectionOptions): UseKdsConnec
             pendingRetriesRef.current.delete(itemId);
             persistPendingRetries();
           }
+        } else {
+          // P14: permanent non-409 4xx must not flush forever across reconnect/polls.
+          pendingRetriesRef.current.delete(itemId);
+          persistPendingRetries();
         }
         if (!opts.silent) {
           toast.error(t('kds.failedToUpdateItem'));

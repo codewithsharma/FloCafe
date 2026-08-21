@@ -243,6 +243,7 @@
     "test:rpt-product": "node tests/run-electron-node-test.cjs tests/rpt-product-product-report.test.ts",
     "test:rpt-category": "node tests/run-electron-node-test.cjs tests/rpt-category-category-report.test.ts",
     "test:data-audit": "node tests/run-electron-node-test.cjs tests/data-audit-hardening.test.ts",
+    "test:p14": "node tests/run-electron-node-test.cjs tests/p14-pos-offline-conflict.test.ts",
     "test:r13": "node tests/run-electron-node-test.cjs tests/r13-print-queue.test.ts",
     "test:print-health": "node tests/run-electron-node-test.cjs tests/print-health.test.ts",
     "test:r14": "node tests/run-electron-node-test.cjs tests/r14-corrupt-db-fail-closed.test.ts",

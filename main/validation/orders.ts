@@ -86,6 +86,11 @@ export const orderStatusBodySchema = z
     status: z.enum(['preparing', 'ready', 'served', 'completed', 'cancelled'], {
       message: 'Invalid status. Use: preparing, ready, served, completed, cancelled',
     }),
+    /** P14 CAS: client-observed status; when set, UPDATE requires match or 409 ORDER_STATUS_CONFLICT. */
+    expected_status: z
+      .enum(['pending', 'preparing', 'ready', 'served', 'completed', 'cancelled'])
+      .optional()
+      .nullable(),
     reason: z.string().max(500).optional().nullable(),
     override_pin: z.string().optional().nullable(),
     free_table: z.boolean().optional().nullable(),

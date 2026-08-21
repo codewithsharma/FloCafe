@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-21 — P14 POS-OFFLINE-CONFLICT-HARDENING (COMPLETE)
+
+No schema bump (tip **v88**). Order-status CAS (`expected_status` + monotonicity → `409 ORDER_STATUS_CONFLICT`); payment settle cannot overwrite cancelled; stock FE stable Idempotency-Key; POS sticky-attempt clear on permanent/409; KDS pending clear on permanent 4xx (backoff unchanged). Suite `npm run test:p14`. Offline Conflict handling / App restart recovery remain **🟡 Hardening**. LIVE PILOT NO-GO.
+
 ## 2026-08-21 — P13 DATA-AUDIT-HARDENING (COMPLETE)
 
 No schema bump (tip **v88**). Close critical audit gaps: bill applyDiscount audited; order/QR create + item discount + item restore audits inside `withTxn`; remove false print retry_requested success; payment-method merge audited. DB deny-triggers deferred (fixture compatibility). Suite `npm run test:data-audit`. Audit logging / Data integrity matrix rows remain **🟡 Hardening**. LIVE PILOT NO-GO.
