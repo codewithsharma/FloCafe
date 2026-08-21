@@ -10,7 +10,7 @@
 
 ## Commit
 
-`a6f3478`
+`a6f3478` (+ `bc77b01` order.created in-txn follow-up)
 
 ## Schema
 
