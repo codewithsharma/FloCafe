@@ -1,4 +1,3 @@
-import { createHash } from 'crypto';
 import { Router, Request, Response } from 'express';
 import {
   getDatabase,
@@ -66,7 +65,8 @@ import { ORDER_OWNED_CONCERNS } from '../../services/order';
 void ORDER_OWNED_CONCERNS;
 
 import {
-  orderIdempotencyKey,
+  requireOrderIdempotencyKey,
+  hashOrderIdempotencyPayload,
   checkPinRateLimit,
   syncCustomerTagCounts,
   validateItemAddonGroupLimits,
@@ -106,15 +106,15 @@ export function registerItemsRoutes(router: Router): void {
         }
         const body = req.body || {};
         const { items, special_instructions } = body;
-        const idempotencyKey = orderIdempotencyKey(req);
+        const idempotencyKey = requireOrderIdempotencyKey(req);
         const authUser = getAuthUser(req);
         if (!authUser) return res.status(401).json({ error: 'Authentication required' });
         const idempotencyUserId = String(authUser.userId);
-        const requestHash = idempotencyKey
-          ? createHash('sha256')
-              .update(JSON.stringify({ order_id: req.params.id, items, special_instructions }))
-              .digest('hex')
-          : null;
+        const requestHash = hashOrderIdempotencyPayload({
+          order_id: req.params.id,
+          items,
+          special_instructions,
+        });
         const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id) as
           OrderRow | undefined;
         if (!order) {
@@ -162,33 +162,14 @@ export function registerItemsRoutes(router: Router): void {
           if (!currentOrder) {
             throw Object.assign(new Error('Order not found'), { statusCode: 404 });
           }
-          if (idempotencyKey) {
-            const prior = db
-              .prepare(
-                `
-            SELECT request_hash, response_json
-            FROM order_idempotency
-            WHERE (user_id = ? OR user_id = 'legacy') AND idempotency_key = ?
-            ORDER BY CASE WHEN user_id = ? THEN 0 ELSE 1 END
-            LIMIT 1
-          `,
-              )
-              .get(idempotencyUserId, idempotencyKey, idempotencyUserId) as
-              { request_hash: string; response_json: string } | undefined;
-            if (prior) {
-              if (prior.request_hash !== requestHash)
-                throw Object.assign(
-                  new Error('Idempotency-Key was already used for a different order request'),
-                  { statusCode: 409 },
-                );
-              try {
-                return { replayResponse: JSON.parse(prior.response_json) };
-              } catch {
-                throw Object.assign(new Error('Stored order response is invalid'), {
-                  statusCode: 500,
-                });
-              }
-            }
+          const prior = lookupOrderIdempotencyReplay(
+            db,
+            idempotencyUserId,
+            idempotencyKey,
+            requestHash,
+          );
+          if (prior.replay) {
+            return { replayResponse: prior.response };
           }
           if (['completed', 'cancelled'].includes(currentOrder.status ?? '')) {
             throw Object.assign(new Error('Cannot add items to a completed or cancelled order'), {
@@ -504,11 +485,7 @@ export function registerItemsRoutes(router: Router): void {
             ),
           );
           const response = { order: Object.assign({}, updatedOrder, { items: updatedItems }) };
-          if (idempotencyKey && requestHash) {
-            db.prepare(
-              'INSERT INTO order_idempotency (user_id, idempotency_key, request_hash, response_json, created_at) VALUES (?, ?, ?, ?, ?)',
-            ).run(idempotencyUserId, idempotencyKey, requestHash, JSON.stringify(response), now());
-          }
+          storeOrderIdempotency(db, idempotencyUserId, idempotencyKey, requestHash, response);
           return { updatedOrder, updatedItems, replayResponse: null };
         });
 
@@ -525,9 +502,13 @@ export function registerItemsRoutes(router: Router): void {
         )) {
           console.error('[API] Internal error:', error);
         }
-        res
-          .status(errorStatus(error) || 500)
-          .json({ error: errorStatus(error) ? errorMessage(error) : 'Internal server error' });
+        const payload: Record<string, unknown> = {
+          error: errorStatus(error) ? errorMessage(error) : 'Internal server error',
+        };
+        if ((error as { code?: string }).code) {
+          payload.code = (error as { code?: string }).code;
+        }
+        res.status(errorStatus(error) || 500).json(payload);
       }
     },
   );

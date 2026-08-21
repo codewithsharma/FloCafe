@@ -1,8 +1,12 @@
 # Decisions
 
+## 2026-08-21 — P18 ORD-IDEM-HARDENING (COMPLETE)
+
+No schema bump (**v88**). Require `Idempotency-Key` on `POST /api/orders` and `POST /api/orders/:id/items`; canonical request fingerprint; `ORDER_IDEMPOTENCY_*` codes; reuse `order_idempotency` user scope; cancel/discount remain optional; QR public create exception. Suite `npm run test:p18`. LIVE PILOT NO-GO. Do not start P19 without audit.
+
 ## 2026-08-21 — P17 RCP-CONSUMPTION-HARDENING (COMPLETE)
 
-No schema bump (**v88**). Prefer `products.cost_cents` for consume snapshots and live recipe cost; FE BOM post-create edit + prep_loss/yield PATCH; prove CAS concurrency, multi-ingredient atomicity, idempotency; encode P16 cancel/void/restaurant-refund (no recipe reverse) in `test:p17`. Chef read API vs O/M GUI mismatch intentional. Consumptions list UI / addon BOM / WAC-FIFO / profitability deferred. LIVE PILOT NO-GO. Do not start P18 without audit.
+No schema bump (**v88**). Prefer `products.cost_cents` for consume snapshots and live recipe cost; FE BOM post-create edit + prep_loss/yield PATCH; prove CAS concurrency, multi-ingredient atomicity, idempotency; encode P16 cancel/void/restaurant-refund (no recipe reverse) in `test:p17`. Chef read API vs O/M GUI mismatch intentional. Consumptions list UI / addon BOM / WAC-FIFO / profitability deferred. LIVE PILOT NO-GO.
 
 ## 2026-08-21 — P16 INV-OS-HARDENING (COMPLETE)
 

@@ -247,6 +247,7 @@
     "test:p15": "node tests/run-electron-node-test.cjs tests/p15-sensitive-action-controls.test.ts",
     "test:p16": "node tests/run-electron-node-test.cjs tests/p16-inventory-os-hardening.test.ts",
     "test:p17": "node tests/run-electron-node-test.cjs tests/p17-recipe-consumption-hardening.test.ts",
+    "test:p18": "node tests/run-electron-node-test.cjs tests/p18-order-idempotency-hardening.test.ts",
     "test:r13": "node tests/run-electron-node-test.cjs tests/r13-print-queue.test.ts",
     "test:print-health": "node tests/run-electron-node-test.cjs tests/print-health.test.ts",
     "test:r14": "node tests/run-electron-node-test.cjs tests/r14-corrupt-db-fail-closed.test.ts",

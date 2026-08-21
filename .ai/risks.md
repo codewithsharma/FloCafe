@@ -2,6 +2,7 @@
 
 ## Active program notes (2026-08-21)
 
+- ⚠️ RISK: **P18 audit** — Live NO-GO is R16/OPS-02 (signing+ops), not feature deficit. Top eng residual if authorized: order-create Idempotency-Key optional → duplicate order/stock/recipe (P17 GAP-009 / P18-GAP-001).
 - ⚠️ RISK: **P16** retained REAL qty; typed ledger / reserved_qty / inventory CSV deferred. Partial cancel still does not restock until full-order cancel catch-up.
 - ⚠️ RISK: **P15** does not cover served-item soft-cancel policy, cashier void UI, IPC restore null actor, or authz-denial audit flood.
 - ⚠️ RISK: **P14** clients omitting `expected_status` can still last-writer-win on *forward* order-status races; prefer sending `expected_status`. Not full offline/disaster recovery.

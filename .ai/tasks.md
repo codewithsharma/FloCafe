@@ -2,6 +2,8 @@
 
 ## Mandate
 
+- [x] **P18 ORD-IDEM-HARDENING (2026-08-21):** COMPLETE — mandatory order create/add-items Idempotency-Key; `npm run test:p18`. Report `docs/qa/P18-ORDER-IDEMPOTENCY-IMPLEMENTATION-REPORT.md`.
+- [x] **P18 Deep Audit (2026-08-21):** COMPLETE — `docs/qa/P18-DEEP-AUDIT.md`.
 - [x] **P17 Recipe Consumption / Food Cost Hardening (2026-08-21):** COMPLETE — cost_cents prefer path; FE BOM edit; CAS/atomic/idempotency/P16 policy tests; schema v88; `npm run test:p17`. Report `docs/qa/P17-RECIPE-CONSUMPTION-IMPLEMENTATION-REPORT.md`.
 - [x] **P17 Recipe Consumption Audit (2026-08-21):** COMPLETE — `docs/qa/P17-RECIPE-CONSUMPTION-AUDIT.md`.
 - [x] **P16 Inventory OS Hardening (2026-08-21):** COMPLETE — CAS sale floor, availability PUT, opening/count audits; `npm run test:p16`. Report `docs/qa/P16-INVENTORY-OS-IMPLEMENTATION-REPORT.md`.

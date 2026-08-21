@@ -1,6 +1,7 @@
 /**
  * R4.1 — shared helpers for order routes (behavior unchanged).
  */
+import { createHash } from 'crypto';
 import { Request } from 'express';
 
 export type AuthUser = { userId: string; role: string; email?: string };
@@ -118,13 +119,55 @@ import { getDatabase, now, parseItemJson, parseRowJson, attachEffectiveAddons } 
 
 const MAX_ORDER_IDEMPOTENCY_KEY_LENGTH = 128;
 
+/** Optional key (cancel/discount). Missing → null. */
 export function orderIdempotencyKey(req: Request): string | null {
   const supplied = req.get('Idempotency-Key')?.trim();
   if (!supplied) return null;
   if (supplied.length > MAX_ORDER_IDEMPOTENCY_KEY_LENGTH || !/^[\x21-\x7e]+$/.test(supplied)) {
-    throw Object.assign(new Error('Idempotency-Key is invalid or too long'), { statusCode: 400 });
+    throw Object.assign(new Error('Idempotency-Key is invalid or too long'), {
+      statusCode: 400,
+      code: 'ORDER_IDEMPOTENCY_INVALID',
+    });
   }
   return supplied;
+}
+
+/** Mandatory key for order create / add-items (P18). Payment-parity codes. */
+export function requireOrderIdempotencyKey(req: Request): string {
+  const supplied = req.get('Idempotency-Key')?.trim();
+  if (!supplied) {
+    throw Object.assign(new Error('Idempotency-Key is required'), {
+      statusCode: 400,
+      code: 'ORDER_IDEMPOTENCY_REQUIRED',
+    });
+  }
+  if (supplied.length > MAX_ORDER_IDEMPOTENCY_KEY_LENGTH || !/^[\x21-\x7e]+$/.test(supplied)) {
+    throw Object.assign(new Error('Idempotency-Key is invalid or too long'), {
+      statusCode: 400,
+      code: 'ORDER_IDEMPOTENCY_INVALID',
+    });
+  }
+  return supplied;
+}
+
+/** Deterministic JSON for order idempotency fingerprints (sorted object keys). */
+export function canonicalizeOrderRequest(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalizeOrderRequest).join(',')}]`;
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value as Record<string, unknown>)
+      .sort()
+      .map(
+        (key) =>
+          `${JSON.stringify(key)}:${canonicalizeOrderRequest((value as Record<string, unknown>)[key])}`,
+      )
+      .join(',')}}`;
+  }
+  if (value === undefined) return 'undefined';
+  return JSON.stringify(value);
+}
+
+export function hashOrderIdempotencyPayload(payload: unknown): string {
+  return createHash('sha256').update(canonicalizeOrderRequest(payload)).digest('hex');
 }
 
 // Rate limiting for PIN validation (simple in-memory)
@@ -298,6 +341,7 @@ export function lookupOrderIdempotencyReplay(
   if (prior.request_hash !== requestHash) {
     throw Object.assign(new Error('Idempotency-Key was already used for a different request'), {
       statusCode: 409,
+      code: 'ORDER_IDEMPOTENCY_CONFLICT',
     });
   }
   try {

@@ -1,4 +1,3 @@
-import { createHash } from 'crypto';
 import { Router, Request, Response } from 'express';
 import {
   getDatabase,
@@ -66,7 +65,8 @@ import { ORDER_OWNED_CONCERNS } from '../../services/order';
 void ORDER_OWNED_CONCERNS;
 
 import {
-  orderIdempotencyKey,
+  requireOrderIdempotencyKey,
+  hashOrderIdempotencyPayload,
   checkPinRateLimit,
   syncCustomerTagCounts,
   validateItemAddonGroupLimits,
@@ -104,13 +104,11 @@ export function registerCreateRoutes(router: Router): void {
             delivery_charge,
             items,
           } = body;
-          const idempotencyKey = orderIdempotencyKey(req);
+          const idempotencyKey = requireOrderIdempotencyKey(req);
           const authUser = getAuthUser(req);
           if (!authUser) return res.status(401).json({ error: 'Authentication required' });
           const idempotencyUserId = String(authUser.userId);
-          const requestHash = idempotencyKey
-            ? createHash('sha256').update(JSON.stringify(body)).digest('hex')
-            : null;
+          const requestHash = hashOrderIdempotencyPayload(body);
           // Always the authenticated caller, never client-supplied — trusting a
           // client-sent user_id would let staff spoof order attribution, and the
           // frontend has in fact never sent one, so every order got user_id=NULL.
@@ -132,22 +130,20 @@ export function registerCreateRoutes(router: Router): void {
             return res.status(400).json({ error: errorMessage(err) });
           }
           const result = withTxn(() => {
-            if (idempotencyKey && requestHash) {
-              // Preserve exact replay for pre-user-scoped records whose creator is
-              // unavailable. New records never use the `legacy` compatibility owner.
-              const prior = lookupOrderIdempotencyReplay(
-                db,
-                idempotencyUserId,
-                idempotencyKey,
-                requestHash,
-              );
-              if (prior.replay) {
-                return {
-                  order: prior.response.order,
-                  orderItems: prior.response.order?.items || [],
-                  idempotentReplay: true,
-                };
-              }
+            // Preserve exact replay for pre-user-scoped records whose creator is
+            // unavailable. New records never use the `legacy` compatibility owner.
+            const prior = lookupOrderIdempotencyReplay(
+              db,
+              idempotencyUserId,
+              idempotencyKey,
+              requestHash,
+            );
+            if (prior.replay) {
+              return {
+                order: prior.response.order,
+                orderItems: prior.response.order?.items || [],
+                idempotentReplay: true,
+              };
             }
 
             // Resolve operational shift association for the request terminal
@@ -424,9 +420,7 @@ export function registerCreateRoutes(router: Router): void {
               ),
             );
             const response = { order: Object.assign({}, order, { items: orderItems }) };
-            if (idempotencyKey && requestHash) {
-              storeOrderIdempotency(db, idempotencyUserId, idempotencyKey, requestHash, response);
-            }
+            storeOrderIdempotency(db, idempotencyUserId, idempotencyKey, requestHash, response);
             logAuditEvent({
               actorUserId: authenticatedUserId ?? null,
               action: 'order.created',
