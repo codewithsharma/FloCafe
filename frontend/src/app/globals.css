@@ -1,50 +1,50 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
   /* Wire Next font CSS variables */
-  --font-sans: var(--font-geist-sans), "Geist", system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-geist-mono), "Geist Mono", ui-monospace, monospace;
-  --font-numeric: var(--font-geist-sans), "Geist", system-ui, sans-serif;
+  --font-sans: var(--font-geist-sans), 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), 'Geist Mono', ui-monospace, monospace;
+  --font-numeric: var(--font-geist-sans), 'Geist', system-ui, sans-serif;
   --radius: 0.625rem;
 
   /* --- Flo design tokens (burnt orange / warm stone) --- */
-  --flo-brand-50: #FFF1E6;
-  --flo-brand-100: #FFE4CC;
-  --flo-brand-500: #F97316;
-  --flo-brand-600: #E85D04;
-  --flo-brand-700: #C2410C;
-  --flo-brand-900: #9A3412;
+  --flo-brand-50: #fff1e6;
+  --flo-brand-100: #ffe4cc;
+  --flo-brand-500: #f97316;
+  --flo-brand-600: #e85d04;
+  --flo-brand-700: #c2410c;
+  --flo-brand-900: #9a3412;
 
-  --flo-legacy-brand: #E85D04;
-  --flo-legacy-brand-light: #FFF1E6;
-  --flo-legacy-brand-hover: #C2410C;
+  --flo-legacy-brand: #e85d04;
+  --flo-legacy-brand-light: #fff1e6;
+  --flo-legacy-brand-hover: #c2410c;
 
-  --flo-success: #15803D;
-  --flo-success-subtle: #F0FDF4;
-  --flo-warning: #CA8A04;
-  --flo-warning-subtle: #FEFCE8;
-  --flo-danger: #B91C1C;
-  --flo-danger-subtle: #FEF2F2;
-  --flo-info: #0284C7;
-  --flo-info-subtle: #F0F9FF;
+  --flo-success: #15803d;
+  --flo-success-subtle: #f0fdf4;
+  --flo-warning: #ca8a04;
+  --flo-warning-subtle: #fefce8;
+  --flo-danger: #b91c1c;
+  --flo-danger-subtle: #fef2f2;
+  --flo-info: #0284c7;
+  --flo-info-subtle: #f0f9ff;
 
-  --flo-bg: #F7F5F2;
-  --flo-surface: #FFFFFF;
-  --flo-surface-raised: #FFFFFF;
-  --flo-surface-muted: #FAF8F5;
-  --flo-border: #E7E2DC;
-  --flo-border-strong: #D6D0C8;
+  --flo-bg: #f7f5f2;
+  --flo-surface: #ffffff;
+  --flo-surface-raised: #ffffff;
+  --flo-surface-muted: #faf8f5;
+  --flo-border: #e7e2dc;
+  --flo-border-strong: #d6d0c8;
   --flo-text: #292524;
-  --flo-text-secondary: #78716C;
-  --flo-text-muted: #A8A29E;
-  --flo-focus: #E85D04;
+  --flo-text-secondary: #78716c;
+  --flo-text-muted: #a8a29e;
+  --flo-focus: #e85d04;
 
   --flo-sidebar: #292524;
-  --flo-sidebar-hover: #44403C;
+  --flo-sidebar-hover: #44403c;
 
   --flo-radius-sm: 0.375rem;
   --flo-radius-md: 0.5rem;
@@ -61,6 +61,29 @@
   --flo-duration-slow: 300ms;
   --flo-ease: cubic-bezier(0.4, 0, 0.2, 1);
 
+  /*
+   * V1-UI-P1-FOUNDATIONS — minimal layout/touch tokens for Commercial V1.
+   * Spacing: prefer these over ad-hoc px when hardening POS/admin chrome.
+   * Touch: 44px minimum hit target for POS/kiosk controls.
+   * Cart: fluid width contract for PosWorkspace (replaces fixed 320px).
+   * Page pad: reserved for AppShell/content (Phase 2); defined here to avoid rename churn.
+   */
+  --flo-space-1: 0.25rem; /* 4px */
+  --flo-space-2: 0.5rem; /* 8px */
+  --flo-space-3: 0.75rem; /* 12px */
+  --flo-space-4: 1rem; /* 16px */
+  --flo-space-5: 1.5rem; /* 24px */
+  --flo-space-6: 2rem; /* 32px */
+  --flo-touch-min: 2.75rem; /* 44px */
+  --flo-pos-cart-min: 17.5rem; /* 280px */
+  --flo-pos-cart-max: 23.75rem; /* 380px */
+  /* AppShell page padding (used by AppShell / ContextHeader — not ad-hoc components) */
+  --flo-page-pad-x: 1rem;
+  --flo-page-pad-y: 1rem;
+  /* Content width contract: standard (forms/reading) · wide (tables/ops) · full (no max) */
+  --flo-content-max: 72rem; /* 1152px */
+  --flo-content-max-wide: 90rem; /* 1440px */
+
   /* shadcn tokens — mapped to Flo palette */
   --background: var(--flo-bg);
   --foreground: var(--flo-text);
@@ -69,7 +92,7 @@
   --popover: var(--flo-surface);
   --popover-foreground: var(--flo-text);
   --primary: var(--flo-brand-600);
-  --primary-foreground: #FFFFFF;
+  --primary-foreground: #ffffff;
   --secondary: var(--flo-surface-muted);
   --secondary-foreground: var(--flo-text);
   --muted: var(--flo-surface-muted);
@@ -86,13 +109,20 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: var(--flo-sidebar);
-  --sidebar-foreground: #FAFAF9;
+  --sidebar-foreground: #fafaf9;
   --sidebar-primary: var(--flo-brand-600);
-  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: var(--flo-sidebar-hover);
-  --sidebar-accent-foreground: #FAFAF9;
+  --sidebar-accent-foreground: #fafaf9;
   --sidebar-border: var(--flo-sidebar-hover);
   --sidebar-ring: var(--flo-brand-600);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --flo-page-pad-x: 1.5rem;
+    --flo-page-pad-y: 1.5rem;
+  }
 }
 
 body {
@@ -109,20 +139,20 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D6D0C8;
+  background: #d6d0c8;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #A8A29E;
+  background: #a8a29e;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #57534E;
+  background: #57534e;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #78716C;
+  background: #78716c;
 }
 
 @theme inline {
@@ -166,12 +196,12 @@ body {
   --color-sidebar-ring: var(--sidebar-ring);
 
   /* Legacy brand colors — aligned with Flo primary */
-  --color-brand: #E85D04;
-  --color-brand-light: #FFF1E6;
-  --color-brand-hover: #C2410C;
-  --color-brand-ring: #E85D0480;
-  --color-success: #15803D;
-  --color-success-light: #F0FDF4;
+  --color-brand: #e85d04;
+  --color-brand-light: #fff1e6;
+  --color-brand-hover: #c2410c;
+  --color-brand-ring: #e85d0480;
+  --color-success: #15803d;
+  --color-success-light: #f0fdf4;
   --color-success-hover: #166534;
 
   /* Flo design system colors */
@@ -207,46 +237,61 @@ body {
   --radius-flo-md: var(--flo-radius-md);
   --radius-flo-lg: var(--flo-radius-lg);
   --radius-flo-xl: var(--flo-radius-xl);
+
+  /* V1-UI foundations — spacing / touch / POS cart (see :root comments) */
+  --spacing-flo-1: var(--flo-space-1);
+  --spacing-flo-2: var(--flo-space-2);
+  --spacing-flo-3: var(--flo-space-3);
+  --spacing-flo-4: var(--flo-space-4);
+  --spacing-flo-5: var(--flo-space-5);
+  --spacing-flo-6: var(--flo-space-6);
+  --spacing-flo-touch-min: var(--flo-touch-min);
+  --spacing-flo-pos-cart-min: var(--flo-pos-cart-min);
+  --spacing-flo-pos-cart-max: var(--flo-pos-cart-max);
+  --spacing-flo-page-pad-x: var(--flo-page-pad-x);
+  --spacing-flo-page-pad-y: var(--flo-page-pad-y);
+  --spacing-flo-content-max: var(--flo-content-max);
+  --spacing-flo-content-max-wide: var(--flo-content-max-wide);
 }
 
 .dark {
   --flo-brand-50: #431407;
-  --flo-brand-100: #7C2D12;
-  --flo-brand-500: #FB923C;
-  --flo-brand-600: #F97316;
-  --flo-brand-700: #EA580C;
-  --flo-brand-900: #FFF1E6;
+  --flo-brand-100: #7c2d12;
+  --flo-brand-500: #fb923c;
+  --flo-brand-600: #f97316;
+  --flo-brand-700: #ea580c;
+  --flo-brand-900: #fff1e6;
 
-  --flo-success: #22C55E;
-  --flo-success-subtle: #14532D;
-  --flo-warning: #EAB308;
-  --flo-warning-subtle: #713F12;
-  --flo-danger: #EF4444;
-  --flo-danger-subtle: #7F1D1D;
-  --flo-info: #38BDF8;
-  --flo-info-subtle: #0C4A6E;
+  --flo-success: #22c55e;
+  --flo-success-subtle: #14532d;
+  --flo-warning: #eab308;
+  --flo-warning-subtle: #713f12;
+  --flo-danger: #ef4444;
+  --flo-danger-subtle: #7f1d1d;
+  --flo-info: #38bdf8;
+  --flo-info-subtle: #0c4a6e;
 
-  --flo-bg: #1C1917;
+  --flo-bg: #1c1917;
   --flo-surface: #292524;
-  --flo-surface-raised: #44403C;
+  --flo-surface-raised: #44403c;
   --flo-surface-muted: #292524;
-  --flo-border: #44403C;
-  --flo-border-strong: #57534E;
-  --flo-text: #FAFAF9;
-  --flo-text-secondary: #A8A29E;
-  --flo-text-muted: #78716C;
-  --flo-focus: #F97316;
+  --flo-border: #44403c;
+  --flo-border-strong: #57534e;
+  --flo-text: #fafaf9;
+  --flo-text-secondary: #a8a29e;
+  --flo-text-muted: #78716c;
+  --flo-focus: #f97316;
 
-  --flo-sidebar: #0C0A09;
-  --flo-sidebar-hover: #44403C;
+  --flo-sidebar: #0c0a09;
+  --flo-sidebar-hover: #44403c;
 
   --flo-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --flo-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --flo-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
 
-  --flo-legacy-brand: #F97316;
+  --flo-legacy-brand: #f97316;
   --flo-legacy-brand-light: #431407;
-  --flo-legacy-brand-hover: #EA580C;
+  --flo-legacy-brand-hover: #ea580c;
 
   --background: var(--flo-bg);
   --foreground: var(--flo-text);
@@ -255,7 +300,7 @@ body {
   --popover: var(--flo-surface-raised);
   --popover-foreground: var(--flo-text);
   --primary: var(--flo-brand-600);
-  --primary-foreground: #FFFFFF;
+  --primary-foreground: #ffffff;
   --secondary: var(--flo-surface-muted);
   --secondary-foreground: var(--flo-text);
   --muted: var(--flo-surface-muted);
@@ -272,11 +317,11 @@ body {
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: var(--flo-sidebar);
-  --sidebar-foreground: #FAFAF9;
+  --sidebar-foreground: #fafaf9;
   --sidebar-primary: var(--flo-brand-600);
-  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: var(--flo-sidebar-hover);
-  --sidebar-accent-foreground: #FAFAF9;
+  --sidebar-accent-foreground: #fafaf9;
   --sidebar-border: var(--flo-sidebar-hover);
   --sidebar-ring: var(--flo-brand-600);
 }
@@ -352,18 +397,36 @@ body {
 }
 
 @keyframes shake-centered {
-  0%, 100% { transform: translateX(-50%); }
-  20%, 60% { transform: translateX(calc(-50% - 5px)); }
-  40%, 80% { transform: translateX(calc(-50% + 5px)); }
+  0%,
+  100% {
+    transform: translateX(-50%);
+  }
+  20%,
+  60% {
+    transform: translateX(calc(-50% - 5px));
+  }
+  40%,
+  80% {
+    transform: translateX(calc(-50% + 5px));
+  }
 }
 .animate-shake-centered {
   animation: shake-centered 0.4s ease-in-out;
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-5px); }
-  40%, 80% { transform: translateX(5px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-5px);
+  }
+  40%,
+  80% {
+    transform: translateX(5px);
+  }
 }
 .animate-shake {
   animation: shake 0.4s ease-in-out;
@@ -374,4 +437,22 @@ body {
   .animate-shake-centered {
     animation: none;
   }
+}
+
+/* V1-UI-P2-SHELL — content width utilities (opt-in via PageFrame or class) */
+.flo-page-frame {
+  width: 100%;
+  margin-inline: auto;
+}
+
+.flo-page-frame--standard {
+  max-width: var(--flo-content-max);
+}
+
+.flo-page-frame--wide {
+  max-width: var(--flo-content-max-wide);
+}
+
+.flo-page-frame--full {
+  max-width: none;
 }

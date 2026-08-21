@@ -4,6 +4,7 @@ export { ContextHeader } from './ContextHeader';
 export { ThemeToggle } from './ThemeToggle';
 export { Panel } from './Panel';
 export { PageHeader } from './PageHeader';
+export { PageFrame } from './PageFrame';
 export { SectionHeader } from './SectionHeader';
 export { MoneyDisplay } from './MoneyDisplay';
 export { VarianceIndicator } from './VarianceIndicator';

@@ -225,44 +225,58 @@ export default function ProductGrid({
             className="w-full min-h-11 pl-9 pr-4 py-2 bg-flo-bg border border-flo-border rounded-flo-md focus:border-flo-brand-500 focus:ring-2 focus:ring-flo-brand-500/20 outline-none transition-colors text-body"
           />
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-thin">
-          <button
-            type="button"
-            onClick={() => setSelectedCategory(null)}
-            className={cn(
-              'min-h-11 shrink-0 px-4 rounded-flo-md text-sm font-medium whitespace-nowrap transition-colors',
-              !selectedCategory
-                ? 'bg-flo-brand-600 text-white'
-                : 'bg-flo-bg text-flo-text-secondary border border-flo-border hover:border-flo-brand-500',
-            )}
+        <div className="relative">
+          <div
+            className="flex gap-2 overflow-x-auto pb-0.5 pr-6 scrollbar-thin scroll-smooth [scrollbar-width:thin]"
+            role="tablist"
+            aria-label={t('pos.allCategories')}
           >
-            {t('pos.allCategories')}
-          </button>
-          {categories
-            .filter((cat) => cat.id != null)
-            .map((cat) => {
-              const colorClasses = getCategoryColorClasses(cat.color);
-              const isSelected = selectedCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={cn(
-                    'min-h-11 shrink-0 px-4 rounded-flo-md text-sm font-medium whitespace-nowrap transition-colors',
-                    isSelected
-                      ? colorClasses
-                        ? `${colorClasses.activeBg} ${colorClasses.activeText}`
-                        : 'bg-flo-brand-600 text-white'
-                      : colorClasses
-                        ? `${colorClasses.bg} ${colorClasses.text} border ${colorClasses.border}`
-                        : 'bg-flo-bg text-flo-text-secondary border border-flo-border hover:border-flo-brand-500',
-                  )}
-                >
-                  {cat.name}
-                </button>
-              );
-            })}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={!selectedCategory}
+              onClick={() => setSelectedCategory(null)}
+              className={cn(
+                'min-h-11 shrink-0 px-4 rounded-flo-md text-sm font-medium whitespace-nowrap transition-colors',
+                !selectedCategory
+                  ? 'bg-flo-brand-600 text-white'
+                  : 'bg-flo-bg text-flo-text-secondary border border-flo-border hover:border-flo-brand-500',
+              )}
+            >
+              {t('pos.allCategories')}
+            </button>
+            {categories
+              .filter((cat) => cat.id != null)
+              .map((cat) => {
+                const colorClasses = getCategoryColorClasses(cat.color);
+                const isSelected = selectedCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={isSelected}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={cn(
+                      'min-h-11 shrink-0 px-4 rounded-flo-md text-sm font-medium whitespace-nowrap transition-colors',
+                      isSelected
+                        ? colorClasses
+                          ? `${colorClasses.activeBg} ${colorClasses.activeText}`
+                          : 'bg-flo-brand-600 text-white'
+                        : colorClasses
+                          ? `${colorClasses.bg} ${colorClasses.text} border ${colorClasses.border}`
+                          : 'bg-flo-bg text-flo-text-secondary border border-flo-border hover:border-flo-brand-500',
+                    )}
+                  >
+                    {cat.name}
+                  </button>
+                );
+              })}
+          </div>
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-flo-surface to-transparent"
+            aria-hidden
+          />
         </div>
       </div>
 
@@ -271,9 +285,10 @@ export default function ProductGrid({
         <div
           className={cn(
             'grid gap-3',
+            'grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))]',
             sidebarOpen
-              ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4'
-              : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5',
+              ? 'xl:grid-cols-[repeat(auto-fill,minmax(10.5rem,1fr))]'
+              : 'xl:grid-cols-[repeat(auto-fill,minmax(11rem,1fr))]',
           )}
         >
           {filtered.map((product) => {
@@ -325,7 +340,7 @@ export default function ProductGrid({
                   )}
 
                   {showProductImages && (
-                    <div className="w-full aspect-square rounded-flo-md mb-2 relative overflow-hidden">
+                    <div className="w-full aspect-[4/3] max-h-36 rounded-flo-md mb-2 relative overflow-hidden">
                       <div
                         className="absolute inset-0 flex items-center justify-center"
                         style={{ backgroundColor: nameToColor(product.name) }}
@@ -352,17 +367,23 @@ export default function ProductGrid({
                     </div>
                   )}
 
-                  <h3 className="text-body font-medium text-flo-text line-clamp-2 leading-snug text-left">
+                  <h3 className="text-body font-medium text-flo-text line-clamp-2 leading-snug text-left break-words">
                     {product.name}
                   </h3>
-                  <div className="flex items-center justify-between mt-1.5 gap-1">
-                    <p className="text-numeric text-flo-brand-700">{fmt(Number(product.price))}</p>
-                    <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center justify-between mt-1.5 gap-2">
+                    <p className="text-numeric text-flo-brand-700 shrink-0 tabular-nums">
+                      {fmt(Number(product.price))}
+                    </p>
+                    <div className="flex items-center gap-1 shrink-0 min-w-0">
                       {!showProductImages && product.tags && product.tags.length > 0 && (
                         <TagBadge tag={product.tags[0]} />
                       )}
                       {product.addon_groups && product.addon_groups.length > 0 && (
-                        <SlidersHorizontal size={14} className="text-flo-text-muted" aria-hidden />
+                        <SlidersHorizontal
+                          size={14}
+                          className="text-flo-text-muted shrink-0"
+                          aria-hidden
+                        />
                       )}
                     </div>
                   </div>

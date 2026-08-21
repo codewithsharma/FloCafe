@@ -2,6 +2,12 @@
 
 ## Mandate
 
+- [x] **V1-UI-KDS-HYBRID (2026-08-21):** COMPLETE — Flo light header + dark shared `KdsTicketCard` board (Tabs+Kanban+modal) on in-app `/kds`; standalone deferred. Spec: `docs/superpowers/specs/2026-08-21-kds-hybrid-redesign-design.md`. Tests: `v1-ui-kds-hybrid-redesign` + `test:kds-alerts`.
+- [x] **V1-UI-CART-KDS-TABS (2026-08-21):** COMPLETE — cart panel Header/Lines/Footer redesign + prior Tabs polish; superseded board chrome by KDS-HYBRID.
+- [x] **V1-UI-P2-SHELL (2026-08-21):** IMPLEMENTED — AppShell token pad + PageFrame wide default; ContextHeader demoted (no duplicate h1) + SidebarTrigger ≥44; full-bleed /pos|/kds via normalizePathname; standalone Geist; layout-integrity 10/10. Do not mix commit with ROPS-RWASTE FE / KDS WIP. Next: P4 ops/admin.
+- [x] **V1-UI-P3-POS (2026-08-21):** CLOSED — POS UX/responsive harden. Leave closed unless QA finds regression.
+- [x] **V1-UI-P1-FOUNDATIONS (2026-08-21):** CLOSED — Flo tokens; fluid cart; Addon/Cart/FAB a11y; layout 1280/1440/1600.
+- [ ] **V1-UI-RESPONSIVE (2026-08-21):** Audit COMPLETE. P1+P2+P3 done; next **P4 Operations/Admin** → QR → Kiosk → QA.
 - [x] **ROPS-RWASTE Recipe-linked waste v1 (2026-08-21):** COMPLETE — ADR-015 Accepted; schema v89; `POST /api/recipes/:id/waste`; O/M UI; `npm run test:rwaste`. Next: waste COGS report (optional) or ROPS-REFREV policy ADR.
 - [x] **ADR-015 Recipe-linked waste (2026-08-21):** Accepted + implemented as ROPS-RWASTE v1.
 - [x] **ROPS-FC-ING By-ingredient food-cost rollup (2026-08-21):** COMPLETE — same SoT as R9.6; Σ ingredient == period COGS; `test:r9.6`. Next: RECIPE_WASTE (design) or refund→recipe reverse (ADR).

@@ -2,31 +2,22 @@
 
 import { PointerActivationConstraints, PointerSensor } from '@dnd-kit/dom';
 import { DragDropProvider, useDraggable, type DragEndEvent } from '@dnd-kit/react';
-import { Clock } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { KdsColumn } from '@/components/kds/KdsColumn';
 import { KdsItemModal } from '@/components/kds/KdsItemModal';
-import { Badge } from '@/components/ui/badge';
+import { KdsTicketCard } from '@/components/kds/KdsTicketCard';
 import {
   STATUS_CONFIG,
   STATUS_ORDER,
   normalizeKitchenStatus,
-  ORDER_TYPE_BADGE_STYLES,
   type KitchenStatus,
   type KdsOrder,
   type KdsOrderItem,
 } from '@/hooks/useKdsConnection';
-import {
-  resolveTicketAgeAnchor,
-  ticketAgeCardClass,
-  ticketAgeClockClass,
-  ticketAgeTier,
-} from '@/lib/kds-ticket-age';
-import { kdsNewTicketCardClass } from '@/lib/kds-alerts';
-import { ORDER_TYPE_LABEL_KEYS } from '@/lib/order-types';
+import { KDS_BOARD_STATUS } from '@/lib/kds-board-theme';
 import { useI18n } from '@/hooks/useI18n';
-import { parseDbTimestamp } from '@/lib/utils';
+import { cn, parseDbTimestamp } from '@/lib/utils';
 
 export interface KdsKanbanBoardProps {
   orders: KdsOrder[];
@@ -239,15 +230,9 @@ function KanbanOrderCard({
   reducedMotion?: boolean;
   onItemOpen: (item: KdsOrderItem) => void;
 }) {
-  const { t } = useI18n();
-  const config = STATUS_CONFIG[status];
+  const board = KDS_BOARD_STATUS[status];
   const itemIds = items.map((i) => i.id);
   const busy = items.some((i) => updating === i.id);
-  const ageAnchor = resolveTicketAgeAnchor(order, items);
-  const ageTier = ticketAgeTier(ageAnchor);
-  const cardBorder = ticketAgeCardClass(ageTier, config.border);
-  const isRush = (order.kitchen_priority ?? 0) > 0;
-  const newTicketClass = kdsNewTicketCardClass(highlighted, reducedMotion);
   const { ref, isDragging } = useDraggable({
     id: `order-${order.id}-${status}`,
     data: { itemIds, fromStatus: status },
@@ -256,102 +241,64 @@ function KanbanOrderCard({
   return (
     <div
       ref={ref}
-      className={`select-none cursor-grab active:cursor-grabbing transition ${
-        isDragging ? 'opacity-40' : ''
-      } ${busy ? 'pointer-events-none opacity-60' : ''}`}
+      className={cn(
+        'cursor-grab select-none transition active:cursor-grabbing',
+        isDragging ? 'opacity-40' : '',
+        busy ? 'pointer-events-none opacity-60' : '',
+      )}
     >
-      <div
-        className={`flex flex-col rounded-flo-lg border-2 bg-flo-surface p-3 shadow-sm ${cardBorder} ${newTicketClass}`}
-        data-kds-new-ticket={highlighted ? 'true' : undefined}
-        aria-label={highlighted ? t('kds.newTicket') : undefined}
+      <KdsTicketCard
+        order={order}
+        items={items}
+        status={status}
+        timeSince={timeSince}
+        highlighted={highlighted}
+        reducedMotion={reducedMotion}
       >
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-            <span className="shrink-0 text-sm font-bold text-flo-text">#{order.order_number}</span>
-            {isRush && (
-              <Badge className="border-flo-danger/40 bg-flo-danger-subtle text-flo-danger">
-                {t('kds.rush')}
-              </Badge>
+        {items.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onItemOpen(item);
+            }}
+            className={cn(
+              'w-full rounded-flo-md border px-2.5 py-2 text-left transition hover:brightness-110 active:scale-[0.98]',
+              board.border,
+              board.bg,
             )}
-            <Badge
-              variant="outline"
-              className={
-                ORDER_TYPE_BADGE_STYLES[order.type] ||
-                'bg-flo-bg text-flo-text-secondary border-flo-border'
-              }
-            >
-              {t(ORDER_TYPE_LABEL_KEYS[order.type] ?? order.type)}
-            </Badge>
-            {order.table?.name && (
-              <Badge variant="secondary">{t('kds.tableLabel', { name: order.table.name })}</Badge>
-            )}
-            {order.station_name && (
-              <Badge variant="outline" className="border-flo-border text-flo-text-secondary">
-                {t('kds.stationLabel', { name: order.station_name })}
-              </Badge>
-            )}
-            {ageTier === 'danger' && (
-              <Badge variant="outline" className="border-flo-danger/40 text-flo-danger">
-                {t('kds.overdue')}
-              </Badge>
-            )}
-          </div>
-          <div
-            className={`flex shrink-0 items-center gap-1 font-mono text-sm ${ticketAgeClockClass(ageTier)}`}
           >
-            <Clock size={12} />
-            {timeSince(ageAnchor)}
-          </div>
-        </div>
-
-        {order.special_instructions && (
-          <p className="mb-2 break-words rounded border border-flo-warning/30 bg-flo-warning-subtle px-2 py-1 text-sm font-medium text-flo-warning">
-            📝 {order.special_instructions}
-          </p>
-        )}
-
-        <div className="space-y-1">
-          {items.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                onItemOpen(item);
-              }}
-              className={`w-full rounded-flo-md border px-2 py-1.5 text-left transition hover:brightness-95 active:scale-[0.98] ${config.border} ${config.bg}`}
-            >
-              <div className="flex items-center gap-2">
-                <span className={`w-6 shrink-0 text-base font-bold ${config.text}`}>
-                  {item.quantity}×
-                </span>
-                <span className="flex-1 truncate text-lg font-medium text-flo-text">
-                  {item.product_name}
-                </span>
+            <div className="flex items-center gap-2">
+              <span className={cn('w-7 shrink-0 text-base font-bold', board.text)}>
+                {item.quantity}×
+              </span>
+              <span className="flex-1 truncate text-lg font-medium text-flo-text">
+                {item.product_name}
+              </span>
+            </div>
+            {item.addons && item.addons.length > 0 && (
+              <div className="ml-7 mt-1 flex flex-wrap gap-1">
+                {item.addons.map((addon, i) => (
+                  <span
+                    key={`${addon.id ?? addon.name}-${i}`}
+                    className="rounded border border-flo-info/40 bg-flo-surface/50 px-1.5 py-0.5 text-[10px] text-flo-info"
+                  >
+                    + {addon.name}
+                    {(addon.quantity || 1) > 1 ? ` ×${addon.quantity}` : ''}
+                  </span>
+                ))}
               </div>
-              {item.addons && item.addons.length > 0 && (
-                <div className="ml-[26px] mt-1 flex flex-wrap gap-1">
-                  {item.addons.map((addon, i) => (
-                    <span
-                      key={`${addon.id ?? addon.name}-${i}`}
-                      className="rounded border border-flo-info/30 bg-flo-surface/70 px-1.5 py-0.5 text-[10px] text-flo-info"
-                    >
-                      + {addon.name}
-                      {(addon.quantity || 1) > 1 ? ` ×${addon.quantity}` : ''}
-                    </span>
-                  ))}
-                </div>
-              )}
-              {item.special_instructions && (
-                <p className="ml-[26px] mt-0.5 break-words text-sm font-medium italic text-flo-danger">
-                  {`"${item.special_instructions}"`}
-                </p>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
+            )}
+            {item.special_instructions && (
+              <p className="ml-7 mt-0.5 break-words text-sm font-medium italic text-flo-danger">
+                {`"${item.special_instructions}"`}
+              </p>
+            )}
+          </button>
+        ))}
+      </KdsTicketCard>
     </div>
   );
 }
@@ -369,66 +316,62 @@ function VoidedColumn({
 }) {
   const { t } = useI18n();
   const config = STATUS_CONFIG.voided;
+  const board = KDS_BOARD_STATUS.voided;
   const count = groups.reduce((sum, g) => sum + g.items.length, 0);
 
   return (
-    <div className="flex-1 min-w-[260px] flex flex-col">
+    <div className="flex min-w-[260px] flex-1 flex-col">
       <div
-        className={`flex items-center gap-2 rounded-t-lg border-2 border-b-0 px-3 py-2 ${config.bg} ${config.border}`}
+        className={cn(
+          'flex items-center gap-2 rounded-t-flo-lg border border-b-0 px-3 py-2.5',
+          board.bg,
+          board.border,
+        )}
       >
-        <div className={`h-2 w-2 rounded-full ${config.color}`} />
-        <span className={`text-base font-semibold ${config.text}`}>{t(config.labelKey)}</span>
-        <span className="ml-auto rounded-full bg-flo-surface/70 px-1.5 py-0.5 text-xs font-medium tabular-nums text-flo-text">
+        <div className={cn('h-2.5 w-2.5 rounded-full', board.color)} />
+        <span className={cn('text-base font-semibold', board.text)}>{t(config.labelKey)}</span>
+        <span className="ml-auto rounded-full bg-flo-surface/50 px-1.5 py-0.5 text-xs font-medium tabular-nums text-flo-text">
           {count}
         </span>
       </div>
       <div
-        className={`flex-1 space-y-2 overflow-y-auto rounded-b-lg border-2 border-t-0 bg-flo-bg/40 p-2 ${config.border}`}
+        className={cn(
+          'flex-1 space-y-2 overflow-y-auto rounded-b-flo-lg border border-t-0 bg-flo-bg/60 p-2',
+          board.border,
+        )}
         style={{ minHeight: '60vh', maxHeight: 'calc(100vh - 220px)' }}
       >
         {groups.map(({ order, items }) => (
-          <div
+          <KdsTicketCard
             key={order.id}
-            className={`flex flex-col rounded-flo-lg border-2 bg-flo-surface p-3 opacity-80 shadow-sm ${config.border}`}
+            order={order}
+            items={items}
+            status="voided"
+            timeSince={() => '—'}
+            className="opacity-80"
           >
-            <div className="mb-2 flex min-w-0 flex-wrap items-center gap-1.5">
-              <span className="shrink-0 text-sm font-bold text-flo-text">
-                #{order.order_number}
-              </span>
-              {(order.kitchen_priority ?? 0) > 0 && (
-                <Badge className="border-flo-danger/40 bg-flo-danger-subtle text-flo-danger">
-                  {t('kds.rush')}
-                </Badge>
-              )}
-              {order.table?.name && (
-                <Badge variant="secondary">{t('kds.tableLabel', { name: order.table.name })}</Badge>
-              )}
-              {order.station_name && (
-                <Badge variant="outline" className="border-flo-border text-flo-text-secondary">
-                  {t('kds.stationLabel', { name: order.station_name })}
-                </Badge>
-              )}
-            </div>
-            <div className="space-y-1">
-              {items.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => onItemOpen(item, order.order_number)}
-                  className={`w-full rounded-flo-md border px-2 py-1.5 text-left transition hover:brightness-95 active:scale-[0.98] ${config.border} ${config.bg}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`w-6 shrink-0 text-base font-bold ${config.text}`}>
-                      {item.quantity}×
-                    </span>
-                    <span className="flex-1 truncate text-lg font-medium text-flo-text-muted line-through">
-                      {item.product_name}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
+            {items.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onItemOpen(item, order.order_number)}
+                className={cn(
+                  'w-full rounded-flo-md border px-2.5 py-2 text-left transition hover:brightness-110 active:scale-[0.98]',
+                  board.border,
+                  board.bg,
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <span className={cn('w-7 shrink-0 text-base font-bold', board.text)}>
+                    {item.quantity}×
+                  </span>
+                  <span className="flex-1 truncate text-lg font-medium text-flo-text-muted line-through">
+                    {item.product_name}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </KdsTicketCard>
         ))}
         {count === 0 && (
           <div className="flex flex-col items-center justify-center py-6 text-xs text-flo-text-muted">

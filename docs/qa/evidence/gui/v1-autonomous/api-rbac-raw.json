@@ -1,0 +1,381 @@
+{
+  "kind": "api-rbac-probe",
+  "probedAt": "2026-08-21T16:37:59.985625Z",
+  "tokenSource": "minted HS256 with e2e-test-secret matching seed userIds (login rate-limited; field name from live login: access_token)",
+  "loginFieldName": "access_token",
+  "loginResponseKeys": ["access_token", "token_type", "expires_in", "user", "tenants"],
+  "note": "Login captured earlier for owner/manager/cashier/waiter; chef hit auth rate limit (429). Same response shape expected.",
+  "expected": {
+    "GET /api/products": ["cashier", "chef", "manager", "owner", "waiter"],
+    "GET /api/orders": ["cashier", "manager", "owner", "waiter"],
+    "GET /api/reports/summary": ["manager", "owner"],
+    "GET /api/settings/business": ["cashier", "chef", "manager", "owner", "waiter"],
+    "GET /api/staff": ["manager", "owner"],
+    "GET /api/refunds": ["cashier", "manager", "owner"],
+    "POST /api/bills/no-such-bill/refund": ["cashier", "manager", "owner"]
+  },
+  "matrix": [
+    {
+      "role": "owner",
+      "method": "GET",
+      "path": "/api/products",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"products\":[{\"id\":\"e2e-product\",\"category_id\":\"e2e-category\",\"name\":\"E2E Coffee\",\"description\":null,\"price\":60,\"cost\":0,\"sku\":null,\"barcode\":null,\"is_active\":1,\"sort_order\":1,\"tra"
+    },
+    {
+      "role": "owner",
+      "method": "GET",
+      "path": "/api/orders",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"orders\":[]}"
+    },
+    {
+      "role": "owner",
+      "method": "GET",
+      "path": "/api/reports/summary",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"summary\":{\"date\":\"2026-08-21\",\"orders\":{\"count\":0,\"total\":0},\"bills\":{\"count\":0,\"total\":0,\"collected\":0,\"grossSales\":0,\"refunds\":0,\"netSales\":0},\"customers\":{\"new\":0},\"ordersBySt"
+    },
+    {
+      "role": "owner",
+      "method": "GET",
+      "path": "/api/settings/business",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"business_name\":\"\",\"timezone\":\"Asia/Kolkata\",\"currency\":\"THB\",\"country\":\"TH\",\"language\":\"en\",\"tax_registration_number\":\"\",\"state_code\":\"\",\"business_address\":\"\",\"business_phone\":\"\""
+    },
+    {
+      "role": "owner",
+      "method": "GET",
+      "path": "/api/settings",
+      "status": 200,
+      "verdict": "INFO",
+      "leak": false,
+      "body_preview": "{\"settings\":{\"business_name\":\"\",\"currency_symbol\":\"\u20b9\",\"timezone\":\"Asia/Kolkata\",\"address\":\"\",\"phone\":\"\",\"email\":\"\",\"business_address\":\"\",\"business_phone\":\"\",\"instagram_handle\":\"\",\""
+    },
+    {
+      "role": "owner",
+      "method": "GET",
+      "path": "/api/staff",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"staff\":[{\"id\":\"e2e-cashier\",\"name\":\"E2E cashier\",\"email\":\"cashier@flo.local\",\"role\":\"cashier\",\"has_pin\":0,\"is_active\":1,\"created_at\":\"2026-08-21 16:35:27\",\"updated_at\":\"2026-08-2"
+    },
+    {
+      "role": "owner",
+      "method": "GET",
+      "path": "/api/refunds",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"refunds\":[]}"
+    },
+    {
+      "role": "owner",
+      "method": "POST",
+      "path": "/api/bills/no-such-bill/refund",
+      "status": 400,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"error\":\"Idempotency-Key is required\",\"code\":\"REFUND_IDEMPOTENCY_REQUIRED\"}"
+    },
+    {
+      "role": "manager",
+      "method": "GET",
+      "path": "/api/products",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"products\":[{\"id\":\"e2e-product\",\"category_id\":\"e2e-category\",\"name\":\"E2E Coffee\",\"description\":null,\"price\":60,\"cost\":0,\"sku\":null,\"barcode\":null,\"is_active\":1,\"sort_order\":1,\"tra"
+    },
+    {
+      "role": "manager",
+      "method": "GET",
+      "path": "/api/orders",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"orders\":[]}"
+    },
+    {
+      "role": "manager",
+      "method": "GET",
+      "path": "/api/reports/summary",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"summary\":{\"date\":\"2026-08-21\",\"orders\":{\"count\":0,\"total\":0},\"bills\":{\"count\":0,\"total\":0,\"collected\":0,\"grossSales\":0,\"refunds\":0,\"netSales\":0},\"customers\":{\"new\":0},\"ordersBySt"
+    },
+    {
+      "role": "manager",
+      "method": "GET",
+      "path": "/api/settings/business",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"business_name\":\"\",\"timezone\":\"Asia/Kolkata\",\"currency\":\"THB\",\"country\":\"TH\",\"language\":\"en\",\"tax_registration_number\":\"\",\"state_code\":\"\",\"business_address\":\"\",\"business_phone\":\"\""
+    },
+    {
+      "role": "manager",
+      "method": "GET",
+      "path": "/api/settings",
+      "status": 200,
+      "verdict": "INFO",
+      "leak": false,
+      "body_preview": "{\"settings\":{\"business_name\":\"\",\"currency_symbol\":\"\u20b9\",\"timezone\":\"Asia/Kolkata\",\"address\":\"\",\"phone\":\"\",\"email\":\"\",\"business_address\":\"\",\"business_phone\":\"\",\"instagram_handle\":\"\",\""
+    },
+    {
+      "role": "manager",
+      "method": "GET",
+      "path": "/api/staff",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"staff\":[{\"id\":\"e2e-cashier\",\"name\":\"E2E cashier\",\"email\":\"cashier@flo.local\",\"role\":\"cashier\",\"has_pin\":0,\"is_active\":1,\"created_at\":\"2026-08-21 16:35:27\",\"updated_at\":\"2026-08-2"
+    },
+    {
+      "role": "manager",
+      "method": "GET",
+      "path": "/api/refunds",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"refunds\":[]}"
+    },
+    {
+      "role": "manager",
+      "method": "POST",
+      "path": "/api/bills/no-such-bill/refund",
+      "status": 400,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"error\":\"Idempotency-Key is required\",\"code\":\"REFUND_IDEMPOTENCY_REQUIRED\"}"
+    },
+    {
+      "role": "cashier",
+      "method": "GET",
+      "path": "/api/products",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"products\":[{\"id\":\"e2e-product\",\"category_id\":\"e2e-category\",\"name\":\"E2E Coffee\",\"description\":null,\"price\":60,\"cost\":0,\"sku\":null,\"barcode\":null,\"is_active\":1,\"sort_order\":1,\"tra"
+    },
+    {
+      "role": "cashier",
+      "method": "GET",
+      "path": "/api/orders",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"orders\":[]}"
+    },
+    {
+      "role": "cashier",
+      "method": "GET",
+      "path": "/api/reports/summary",
+      "status": 403,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"error\":\"Insufficient permissions\"}"
+    },
+    {
+      "role": "cashier",
+      "method": "GET",
+      "path": "/api/settings/business",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"business_name\":\"\",\"timezone\":\"Asia/Kolkata\",\"currency\":\"THB\",\"country\":\"TH\",\"language\":\"en\",\"tax_registration_number\":\"\",\"state_code\":\"\",\"business_address\":\"\",\"business_phone\":\"\""
+    },
+    {
+      "role": "cashier",
+      "method": "GET",
+      "path": "/api/settings",
+      "status": 200,
+      "verdict": "INFO",
+      "leak": false,
+      "body_preview": "{\"settings\":{\"business_name\":\"\",\"currency_symbol\":\"\u20b9\",\"timezone\":\"Asia/Kolkata\",\"address\":\"\",\"phone\":\"\",\"email\":\"\",\"business_address\":\"\",\"business_phone\":\"\",\"instagram_handle\":\"\",\""
+    },
+    {
+      "role": "cashier",
+      "method": "GET",
+      "path": "/api/staff",
+      "status": 403,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"error\":\"Insufficient permissions\"}"
+    },
+    {
+      "role": "cashier",
+      "method": "GET",
+      "path": "/api/refunds",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"refunds\":[]}"
+    },
+    {
+      "role": "cashier",
+      "method": "POST",
+      "path": "/api/bills/no-such-bill/refund",
+      "status": 400,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"error\":\"Idempotency-Key is required\",\"code\":\"REFUND_IDEMPOTENCY_REQUIRED\"}"
+    },
+    {
+      "role": "waiter",
+      "method": "GET",
+      "path": "/api/products",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"products\":[{\"id\":\"e2e-product\",\"category_id\":\"e2e-category\",\"name\":\"E2E Coffee\",\"description\":null,\"price\":60,\"cost\":0,\"sku\":null,\"barcode\":null,\"is_active\":1,\"sort_order\":1,\"tra"
+    },
+    {
+      "role": "waiter",
+      "method": "GET",
+      "path": "/api/orders",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"orders\":[]}"
+    },
+    {
+      "role": "waiter",
+      "method": "GET",
+      "path": "/api/reports/summary",
+      "status": 403,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"error\":\"Insufficient permissions\"}"
+    },
+    {
+      "role": "waiter",
+      "method": "GET",
+      "path": "/api/settings/business",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"business_name\":\"\",\"timezone\":\"Asia/Kolkata\",\"currency\":\"THB\",\"country\":\"TH\",\"language\":\"en\",\"tax_registration_number\":\"\",\"state_code\":\"\",\"business_address\":\"\",\"business_phone\":\"\""
+    },
+    {
+      "role": "waiter",
+      "method": "GET",
+      "path": "/api/settings",
+      "status": 200,
+      "verdict": "INFO",
+      "leak": false,
+      "body_preview": "{\"settings\":{\"business_name\":\"\",\"currency_symbol\":\"\u20b9\",\"timezone\":\"Asia/Kolkata\",\"address\":\"\",\"phone\":\"\",\"email\":\"\",\"business_address\":\"\",\"business_phone\":\"\",\"instagram_handle\":\"\",\""
+    },
+    {
+      "role": "waiter",
+      "method": "GET",
+      "path": "/api/staff",
+      "status": 403,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"error\":\"Insufficient permissions\"}"
+    },
+    {
+      "role": "waiter",
+      "method": "GET",
+      "path": "/api/refunds",
+      "status": 403,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"error\":\"Insufficient permissions\"}"
+    },
+    {
+      "role": "waiter",
+      "method": "POST",
+      "path": "/api/bills/no-such-bill/refund",
+      "status": 403,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"error\":\"Insufficient permissions\"}"
+    },
+    {
+      "role": "chef",
+      "method": "GET",
+      "path": "/api/products",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"products\":[{\"id\":\"e2e-product\",\"category_id\":\"e2e-category\",\"name\":\"E2E Coffee\",\"description\":null,\"price\":60,\"cost\":0,\"sku\":null,\"barcode\":null,\"is_active\":1,\"sort_order\":1,\"tra"
+    },
+    {
+      "role": "chef",
+      "method": "GET",
+      "path": "/api/orders",
+      "status": 403,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"error\":\"Insufficient permissions\"}"
+    },
+    {
+      "role": "chef",
+      "method": "GET",
+      "path": "/api/reports/summary",
+      "status": 403,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"error\":\"Insufficient permissions\"}"
+    },
+    {
+      "role": "chef",
+      "method": "GET",
+      "path": "/api/settings/business",
+      "status": 200,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"business_name\":\"\",\"timezone\":\"Asia/Kolkata\",\"currency\":\"THB\",\"country\":\"TH\",\"language\":\"en\",\"tax_registration_number\":\"\",\"state_code\":\"\",\"business_address\":\"\",\"business_phone\":\"\""
+    },
+    {
+      "role": "chef",
+      "method": "GET",
+      "path": "/api/settings",
+      "status": 200,
+      "verdict": "INFO",
+      "leak": false,
+      "body_preview": "{\"settings\":{\"business_name\":\"\",\"currency_symbol\":\"\u20b9\",\"timezone\":\"Asia/Kolkata\",\"address\":\"\",\"phone\":\"\",\"email\":\"\",\"business_address\":\"\",\"business_phone\":\"\",\"instagram_handle\":\"\",\""
+    },
+    {
+      "role": "chef",
+      "method": "GET",
+      "path": "/api/staff",
+      "status": 403,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"error\":\"Insufficient permissions\"}"
+    },
+    {
+      "role": "chef",
+      "method": "GET",
+      "path": "/api/refunds",
+      "status": 403,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"error\":\"Insufficient permissions\"}"
+    },
+    {
+      "role": "chef",
+      "method": "POST",
+      "path": "/api/bills/no-such-bill/refund",
+      "status": 403,
+      "verdict": "PASS",
+      "leak": false,
+      "body_preview": "{\"error\":\"Insufficient permissions\"}"
+    }
+  ],
+  "leaks": [],
+  "p0_p1": []
+}

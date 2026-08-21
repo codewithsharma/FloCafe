@@ -82,7 +82,7 @@ export default function AuditLogsPage() {
   }
 
   return (
-    <div className="space-y-4 p-4 md:p-6">
+    <div className="space-y-4">
       <PageHeader
         title={t('audit.title')}
         description={t('audit.subtitle')}

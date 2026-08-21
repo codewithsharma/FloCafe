@@ -674,63 +674,69 @@ export default function ProductsPage() {
 
       {activeTab === 'products' && (
         <>
-          <div className="flex justify-end gap-2 mb-4">
-            {isOwnerOrManager && isModuleEnabled('inventory', verticalId) && (
-              <>
-                <Button variant="outline" asChild>
-                  <Link href="/products/recipes">
-                    <ClipboardList size={16} className="mr-1" /> {t('recipes.title')}
-                  </Link>
+          <div
+            data-testid="products-inventory-actions"
+            className="mb-4 overflow-x-auto pb-1 [scrollbar-width:thin]"
+          >
+            <div className="flex w-max min-w-full flex-nowrap justify-end gap-2 [&>*]:shrink-0">
+              {isOwnerOrManager && isModuleEnabled('inventory', verticalId) && (
+                <>
+                  <Button variant="outline" asChild>
+                    <Link href="/products/recipes">
+                      <ClipboardList size={16} className="mr-1" /> {t('recipes.title')}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/products/recipes/consumptions">
+                      <History size={16} className="mr-1" /> {t('recipeConsumptions.title')}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/products/purchasing">
+                      <Truck size={16} className="mr-1" /> {t('purchasing.title')}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/products/low-stock">
+                      <AlertTriangle size={16} className="mr-1" /> {t('lowStock.title')}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/products/counts">
+                      <ClipboardList size={16} className="mr-1" /> {t('inventoryCounts.title')}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/products/valuation">
+                      <CircleDollarSign size={16} className="mr-1" />{' '}
+                      {t('inventoryValuation.title')}
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <Link href="/products/movements">
+                      <History size={16} className="mr-1" /> {t('inventoryMovements.title')}
+                    </Link>
+                  </Button>
+                </>
+              )}
+              {isOwnerOrManager && taxCategories.length > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setBulkTaxCategoryId('');
+                    setShowBulkTaxModal(true);
+                  }}
+                >
+                  Assign tax category
                 </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/products/recipes/consumptions">
-                    <History size={16} className="mr-1" /> {t('recipeConsumptions.title')}
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/products/purchasing">
-                    <Truck size={16} className="mr-1" /> {t('purchasing.title')}
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/products/low-stock">
-                    <AlertTriangle size={16} className="mr-1" /> {t('lowStock.title')}
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/products/counts">
-                    <ClipboardList size={16} className="mr-1" /> {t('inventoryCounts.title')}
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/products/valuation">
-                    <CircleDollarSign size={16} className="mr-1" /> {t('inventoryValuation.title')}
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href="/products/movements">
-                    <History size={16} className="mr-1" /> {t('inventoryMovements.title')}
-                  </Link>
-                </Button>
-              </>
-            )}
-            {isOwnerOrManager && taxCategories.length > 0 && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setBulkTaxCategoryId('');
-                  setShowBulkTaxModal(true);
-                }}
-              >
-                Assign tax category
+              )}
+              <Button variant="outline" onClick={() => openCsvModal('products')}>
+                <FileSpreadsheet size={16} className="mr-1" /> CSV
               </Button>
-            )}
-            <Button variant="outline" onClick={() => openCsvModal('products')}>
-              <FileSpreadsheet size={16} className="mr-1" /> CSV
-            </Button>
-            <Button onClick={openCreate}>
-              <Plus size={16} className="mr-1" /> {t('products.addProduct')}
-            </Button>
+              <Button onClick={openCreate}>
+                <Plus size={16} className="mr-1" /> {t('products.addProduct')}
+              </Button>
+            </div>
           </div>
 
           {/* Product Table */}

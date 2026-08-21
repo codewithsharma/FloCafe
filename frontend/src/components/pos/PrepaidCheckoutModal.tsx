@@ -321,7 +321,7 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
       }}
     >
       <DialogContent className="border-flo-border bg-flo-surface sm:max-w-md max-h-[90vh] overflow-hidden flex flex-col gap-0 p-0">
-        <DialogHeader className="px-5 pt-5 pb-4 border-b border-flo-border">
+        <DialogHeader className="px-5 pt-5 pb-4 border-b border-flo-border shrink-0">
           <DialogTitle className="text-flo-text">{tPos('checkout')}</DialogTitle>
           <p className="text-xs text-flo-text-muted mt-0.5 capitalize">
             {t(
@@ -334,7 +334,7 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
           </p>
         </DialogHeader>
 
-        <div className="px-5 py-4 space-y-4 max-h-[75vh] overflow-y-auto">
+        <div className="px-5 py-4 space-y-4 flex-1 min-h-0 overflow-y-auto">
           {/* Amount + Customer Card */}
           <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl px-5 py-4 text-white">
             <div className="flex items-start justify-between">
@@ -428,7 +428,7 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
               <button
                 type="button"
                 onClick={() => setDiscountOpen((open) => !open)}
-                className="w-full flex items-center justify-between gap-3 px-3 py-2.5 bg-flo-bg text-left"
+                className="w-full min-h-11 flex items-center justify-between gap-3 px-3 py-2.5 bg-flo-bg text-left"
               >
                 <span className="text-sm font-medium text-flo-text">
                   {preview?.discountAmount
@@ -445,15 +445,17 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
                 <div className="bg-purple-50 border-t border-purple-200 p-3 space-y-2">
                   <div className="flex rounded-lg overflow-hidden border border-purple-200">
                     <button
+                      type="button"
                       onClick={() => setDiscountType('percentage')}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${discountType === 'percentage' ? 'bg-purple-600 text-white' : 'bg-flo-surface text-flo-text-secondary hover:bg-flo-bg'}`}
+                      className={`flex-1 min-h-11 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${discountType === 'percentage' ? 'bg-purple-600 text-white' : 'bg-flo-surface text-flo-text-secondary hover:bg-flo-bg'}`}
                     >
                       <Percent size={14} />
                       {t('pos.percentage')}
                     </button>
                     <button
+                      type="button"
                       onClick={() => setDiscountType('amount')}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${discountType === 'amount' ? 'bg-purple-600 text-white' : 'bg-flo-surface text-flo-text-secondary hover:bg-flo-bg'}`}
+                      className={`flex-1 min-h-11 flex items-center justify-center gap-1.5 py-2 text-sm font-medium transition-colors ${discountType === 'amount' ? 'bg-purple-600 text-white' : 'bg-flo-surface text-flo-text-secondary hover:bg-flo-bg'}`}
                     >
                       {t('pos.flatAmount')}
                     </button>
@@ -536,7 +538,7 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
                     type="button"
                     title={label}
                     onClick={() => allocateRemainingTo(idx)}
-                    className={`w-36 shrink-0 rounded-l-xl border px-3 flex items-center gap-2 text-sm font-semibold transition-colors ${active ? 'bg-flo-brand-600 text-white border-flo-brand-600' : 'bg-flo-bg text-flo-text border-flo-border hover:border-flo-brand-600 hover:text-flo-brand-600'}`}
+                    className={`min-w-[7rem] max-w-[40%] flex-1 shrink-0 rounded-l-xl border px-3 min-h-11 flex items-center gap-2 text-sm font-semibold transition-colors ${active ? 'bg-flo-brand-600 text-white border-flo-brand-600' : 'bg-flo-bg text-flo-text border-flo-border hover:border-flo-brand-600 hover:text-flo-brand-600'}`}
                   >
                     {Icon && <Icon size={15} />}
                     <span className="truncate">{label}</span>
@@ -614,7 +616,7 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
                     );
                     setWalletAmount(due > 0 ? due.toFixed(2) : '');
                   }}
-                  className={`w-36 shrink-0 rounded-l-xl border px-3 flex items-center gap-2 text-sm font-semibold ${walletAmt > 0 ? 'bg-purple-600 text-white border-purple-600' : 'bg-purple-50 text-purple-800 border-purple-200 disabled:bg-flo-bg disabled:text-flo-text-muted disabled:border-flo-border'}`}
+                  className={`min-w-[7rem] max-w-[40%] flex-1 shrink-0 rounded-l-xl border px-3 min-h-11 flex items-center gap-2 text-sm font-semibold ${walletAmt > 0 ? 'bg-purple-600 text-white border-purple-600' : 'bg-purple-50 text-purple-800 border-purple-200 disabled:bg-flo-bg disabled:text-flo-text-muted disabled:border-flo-border'}`}
                 >
                   <Wallet size={15} />
                   <span className="truncate">{t('pos.loyaltyWallet')}</span>
@@ -660,11 +662,11 @@ export default function PrepaidCheckoutModal({ currency, onClose, onConfirm }: P
         </div>
 
         {/* Pay Button */}
-        <div className="px-5 pb-6 pt-3 border-t border-flo-border">
+        <div className="px-5 pb-5 pt-3 border-t border-flo-border shrink-0">
           <Button
             onClick={handleConfirm}
             disabled={processing || !canConfirmPayable || totalPayment < remainingAmount - 0.01}
-            className="w-full min-h-11 h-12 text-base font-semibold rounded-flo-lg bg-flo-brand-600 hover:bg-flo-brand-700"
+            className="w-full min-h-12 text-base font-semibold rounded-flo-lg bg-flo-brand-600 hover:bg-flo-brand-700"
             size="lg"
           >
             {taxLoading

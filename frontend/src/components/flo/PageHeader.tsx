@@ -11,13 +11,7 @@ export interface PageHeaderProps {
   className?: string;
 }
 
-export function PageHeader({
-  title,
-  description,
-  context,
-  actions,
-  className,
-}: PageHeaderProps) {
+export function PageHeader({ title, description, context, actions, className }: PageHeaderProps) {
   return (
     <header
       className={cn(
@@ -25,17 +19,17 @@ export function PageHeader({
         className,
       )}
     >
-      <div className="min-w-0">
-        <h1 className="text-h1 text-flo-text truncate">{title}</h1>
-        {context ? (
-          <p className="text-caption text-flo-text-muted mt-1">{context}</p>
-        ) : null}
+      <div className="min-w-0 flex-1">
+        <h1 className="text-h1 text-flo-text break-words">{title}</h1>
+        {context ? <p className="text-caption text-flo-text-muted mt-1">{context}</p> : null}
         {description ? (
           <p className="text-body text-flo-text-secondary mt-1">{description}</p>
         ) : null}
       </div>
       {actions ? (
-        <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
+        <div className="flex w-full sm:w-auto shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+          {actions}
+        </div>
       ) : null}
     </header>
   );

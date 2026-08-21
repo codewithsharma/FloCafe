@@ -4,7 +4,7 @@ OPERAVIA / Operavia Restaurant POS (repo legacy: FloCafe). Electron + Express + 
 
 ## Active vertical
 
-Restaurant ops — Recipes & Ingredient Ops deepen (post R5/R6 core).
+Restaurant Commercial V1 — **UI/UX + responsive hardening** (`V1-UI-RESPONSIVE`) is the next major track after ROPS-RWASTE.
 
 ## Schema tip
 
@@ -12,10 +12,17 @@ Restaurant ops — Recipes & Ingredient Ops deepen (post R5/R6 core).
 
 ## Recently shipped
 
-- ROPS-RWASTE v1: recipe-linked waste events/lines, `POST /api/recipes/:id/waste`, O/M UI, `npm run test:rwaste`
-- ROPS-FC-ING / ROPS-FC-CSV food-cost deepen
-- RCP-05 consumptions list UI; PRC-DRAFT PO line amend
+- ROPS-RWASTE v1 (audited; FE idempotency key hold may still be local uncommitted)
+- ROPS-FC-ING / ROPS-FC-CSV; RCP-05; PRC-DRAFT
+
+## Active planning
+
+- Phase 1 audit: `docs/ui/V1-UI-RESPONSIVE-AUDIT.md`
+- **V1-UI-P1-FOUNDATIONS** + **V1-UI-P2-SHELL** + **V1-UI-P3-POS** COMPLETE (local, uncommitted)
+- **V1-UI-CART-KDS-TABS** + **V1-UI-KDS-HYBRID** also present locally — do not mix commits
+- Keep separate from ROPS-RWASTE FE idempotency fix when committing
+- **Next:** `V1-UI-P4` Operations/Admin responsive harden → QR → Kiosk → final QA
 
 ## Explicit non-goals (still)
 
-QR-ORD-IDEM · Apple signing · Live Go-Live · multi-location · waste reverse · waste COGS report · ROPS-REFREV · ROPS-AVT · addon BOM
+QR-ORD-IDEM · Apple signing · Live Go-Live · multi-location · waste reverse · waste COGS report · ROPS-REFREV · ROPS-AVT · full UI rewrite · unauthorized kiosk/QR product builds

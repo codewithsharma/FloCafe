@@ -5,11 +5,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import FloSidebar from '@/components/flo/Sidebar';
 import { ContextHeader } from '@/components/flo/ContextHeader';
+import { PageFrame } from '@/components/flo/PageFrame';
 import GlobalNotifications from '@/components/layout/GlobalNotifications';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { useI18n } from '@/hooks/useI18n';
 import { getClientTerminalId } from '@/lib/terminal-id';
-import { getRouteTitleKey } from '@/config/navigation';
+import { normalizePathname } from '@/config/navigation';
 import { cn } from '@/lib/utils';
 import { applyTheme, getStoredTheme } from '@/lib/theme';
 
@@ -17,16 +18,25 @@ export interface AppShellProps {
   children: ReactNode;
 }
 
+const FULL_BLEED_PATHS = new Set(['/pos', '/kds']);
+
+function isFullBleedPath(pathname: string | null): boolean {
+  const path = normalizePathname(pathname || '/');
+  if (FULL_BLEED_PATHS.has(path)) return true;
+  // Nested paths under operational surfaces (defensive)
+  return path.startsWith('/pos/') || path.startsWith('/kds/');
+}
+
 /**
  * Flo POS application shell.
- * Old pages remain functional inside the new chrome (incremental migration).
+ * Contract:
+ * - Full-bleed: /pos, /kds (no ContextHeader, no page pad, no content max)
+ * - Standard pages: tokenized pad + wide content frame + ContextHeader chrome
  */
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const { t } = useI18n();
-  const [online, setOnline] = useState(
-    typeof navigator !== 'undefined' ? navigator.onLine : true,
-  );
+  const [online, setOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const terminalShort = useMemo(() => {
     if (typeof window === 'undefined') return '—';
     const id = getClientTerminalId();
@@ -34,8 +44,7 @@ export function AppShell({ children }: AppShellProps) {
     return id.length <= 8 ? id : `${id.slice(0, 4)}…${id.slice(-4)}`;
   }, []);
 
-  const isFullBleed = pathname === '/pos' || pathname === '/kds';
-  const titleKey = useMemo(() => getRouteTitleKey(pathname || '/'), [pathname]);
+  const isFullBleed = isFullBleedPath(pathname);
 
   useEffect(() => {
     const onOnline = () => setOnline(true);
@@ -72,7 +81,6 @@ export function AppShell({ children }: AppShellProps) {
       <SidebarInset className="h-screen overflow-hidden flex flex-col bg-flo-bg">
         {!isFullBleed && (
           <ContextHeader
-            title={t(titleKey)}
             context={`${online ? t('flo.shell.online') : t('flo.shell.offline')} · ${t('flo.shell.terminal')} ${terminalShort}`}
           />
         )}
@@ -82,10 +90,10 @@ export function AppShell({ children }: AppShellProps) {
             'flex-1 min-h-0 min-w-0',
             isFullBleed
               ? 'flex flex-col overflow-hidden p-0'
-              : 'overflow-auto p-4 md:p-6',
+              : 'overflow-auto px-[length:var(--flo-page-pad-x)] py-[length:var(--flo-page-pad-y)]',
           )}
         >
-          {children}
+          {isFullBleed ? children : <PageFrame variant="wide">{children}</PageFrame>}
         </div>
       </SidebarInset>
     </SidebarProvider>

@@ -95,6 +95,7 @@ export default function CartPanel({
 
   return (
     <div
+      data-testid="pos-cart-panel"
       className={cn(
         'flex flex-col h-full min-h-0',
         isDrawer
@@ -136,12 +137,12 @@ export default function CartPanel({
         </div>
 
         {cart.orderType === 'dine_in' && (
-          <div className="flex items-center justify-between rounded-flo-md border border-flo-border bg-flo-bg px-3 py-2">
-            <div className="flex items-center gap-2 text-body text-flo-text-secondary">
+          <div className="flex items-center justify-between gap-2 px-0.5 py-0.5">
+            <div className="flex items-center gap-2 text-caption text-flo-text-secondary">
               <Users className="size-4" aria-hidden />
               <span>{t('pos.pax', { defaultValue: 'Pax' })}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <button
                 type="button"
                 aria-label={t('pos.decreasePax', { defaultValue: 'Decrease pax' })}
@@ -187,12 +188,12 @@ export default function CartPanel({
         )}
       </div>
 
-      {/* Line items */}
-      <div className={cn('flex-1 overflow-y-auto p-3 md:p-4 min-h-0', isDrawer && 'max-h-[40vh]')}>
+      {/* Line items — sole scroll owner inside cart (desktop + drawer) */}
+      <div className="flex-1 overflow-y-auto px-3 md:px-4 min-h-0">
         {existingOrder &&
           existingOrder.items &&
           existingOrder.items.filter((i: OrderItem) => i.status !== 'cancelled').length > 0 && (
-            <div className="mb-3 pb-3 border-b border-dashed border-flo-border">
+            <div className="mb-2 py-3 border-b border-dashed border-flo-border">
               <p className="text-caption font-semibold text-flo-text-muted uppercase tracking-wider mb-2">
                 {t('pos.alreadyOrdered')}
               </p>
@@ -226,71 +227,84 @@ export default function CartPanel({
             </p>
           </div>
         ) : (
-          <ul className="space-y-3">
+          <ul>
             {cart.items.map((item) => (
-              <li key={item.id} className="flex items-start gap-2">
-                <button
-                  type="button"
-                  onClick={() => cart.removeItem(item.id)}
-                  aria-label={t('common.removeItem')}
-                  className="size-11 shrink-0 rounded-full text-flo-text-muted hover:text-flo-danger hover:bg-flo-danger-subtle flex items-center justify-center transition-colors"
-                >
-                  <Trash2 className="size-4" />
-                </button>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-body font-medium text-flo-text truncate">
+              <li
+                key={item.id}
+                data-testid="pos-cart-line"
+                className="border-b border-flo-border/50 py-2.5 last:border-b-0"
+              >
+                <div className="flex items-start gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => cart.removeItem(item.id)}
+                    aria-label={t('common.removeItem')}
+                    className="size-11 shrink-0 rounded-full text-flo-text-muted hover:text-flo-danger hover:bg-flo-danger-subtle flex items-center justify-center transition-colors"
+                  >
+                    <Trash2 className="size-4" aria-hidden />
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-body font-medium text-flo-text line-clamp-2 break-words">
                       {item.product.name}
                     </p>
-                    {onEditItem && (
-                      <button
-                        type="button"
-                        onClick={() => onEditItem(item)}
-                        className="shrink-0 flex items-center gap-1 min-h-11 px-2 rounded-flo-full bg-flo-warning-subtle text-flo-warning text-caption font-medium"
-                      >
-                        <SquarePen className="size-3.5" aria-hidden />
-                        {t('common.edit')}
-                      </button>
+                    {item.addons.length > 0 && (
+                      <div className="mt-0.5">
+                        {item.addons.map((a) => (
+                          <p key={a.id} className="text-caption text-flo-text-muted">
+                            + {a.name}
+                            {(a.quantity || 1) > 1 ? ` ×${a.quantity}` : ''}{' '}
+                            {Number(a.price) > 0 && `(${fmt(Number(a.price) * (a.quantity || 1))})`}
+                          </p>
+                        ))}
+                      </div>
                     )}
-                  </div>
-                  {item.addons.length > 0 && (
-                    <div className="mt-0.5">
-                      {item.addons.map((a) => (
-                        <p key={a.id} className="text-caption text-flo-text-muted">
-                          + {a.name}
-                          {(a.quantity || 1) > 1 ? ` ×${a.quantity}` : ''}{' '}
-                          {Number(a.price) > 0 && `(${fmt(Number(a.price) * (a.quantity || 1))})`}
-                        </p>
-                      ))}
+                    {item.special_instructions && (
+                      <p className="text-caption text-flo-text-muted italic mt-0.5 break-words">
+                        {item.special_instructions}
+                      </p>
+                    )}
+                    <div className="mt-1.5 flex items-center justify-between gap-2">
+                      <p className="text-numeric text-flo-text-secondary tabular-nums">
+                        {fmt(Number(item.product.price))}
+                      </p>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {onEditItem && (
+                          <button
+                            type="button"
+                            onClick={() => onEditItem(item)}
+                            aria-label={t('common.edit')}
+                            className="shrink-0 flex items-center gap-1 min-h-11 px-2 rounded-flo-md border border-flo-border text-flo-text-secondary text-caption font-medium hover:bg-flo-surface-muted"
+                          >
+                            <SquarePen className="size-3.5" aria-hidden />
+                            {t('common.edit')}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => cart.updateQuantity(item.id, item.quantity - 1)}
+                          aria-label={t('pos.decreaseQuantity', {
+                            defaultValue: 'Decrease quantity',
+                          })}
+                          className="size-11 min-h-[var(--flo-touch-min)] min-w-[var(--flo-touch-min)] rounded-full bg-flo-surface-muted flex items-center justify-center hover:bg-flo-border"
+                        >
+                          <Minus className="size-4" aria-hidden />
+                        </button>
+                        <span className="text-body font-medium w-7 text-center tabular-nums">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => cart.updateQuantity(item.id, item.quantity + 1)}
+                          aria-label={t('pos.increaseQuantity', {
+                            defaultValue: 'Increase quantity',
+                          })}
+                          className="size-11 min-h-[var(--flo-touch-min)] min-w-[var(--flo-touch-min)] rounded-full bg-flo-surface-muted flex items-center justify-center hover:bg-flo-border"
+                        >
+                          <Plus className="size-4" aria-hidden />
+                        </button>
+                      </div>
                     </div>
-                  )}
-                  {item.special_instructions && (
-                    <p className="text-caption text-flo-text-muted italic mt-0.5 break-words">
-                      {item.special_instructions}
-                    </p>
-                  )}
-                  <p className="text-numeric text-flo-text-secondary mt-0.5">
-                    {fmt(Number(item.product.price))}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => cart.updateQuantity(item.id, item.quantity - 1)}
-                    className="size-11 rounded-full bg-flo-surface-muted flex items-center justify-center hover:bg-flo-border"
-                  >
-                    <Minus className="size-4" />
-                  </button>
-                  <span className="text-body font-medium w-6 text-center tabular-nums">
-                    {item.quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => cart.updateQuantity(item.id, item.quantity + 1)}
-                    className="size-11 rounded-full bg-flo-surface-muted flex items-center justify-center hover:bg-flo-border"
-                  >
-                    <Plus className="size-4" />
-                  </button>
+                  </div>
                 </div>
               </li>
             ))}
@@ -301,12 +315,12 @@ export default function CartPanel({
       {/* Totals + actions */}
       <div className="shrink-0 p-3 md:p-4 border-t border-flo-border bg-flo-surface">
         {cart.items.length > 0 && (
-          <div className="mb-3">
+          <div className="mb-2">
             <textarea
               value={cart.orderNotes}
               onChange={(e) => cart.setOrderNotes(e.target.value.slice(0, 200))}
               placeholder={t('pos.orderNotesPlaceholder')}
-              rows={2}
+              rows={1}
               maxLength={200}
               className="w-full min-h-11 px-3 py-2 text-body border border-flo-border rounded-flo-md resize-none bg-flo-bg focus:outline-none focus:ring-2 focus:ring-flo-brand-500/20 focus:border-flo-brand-500"
             />
@@ -315,13 +329,15 @@ export default function CartPanel({
             </p>
           </div>
         )}
-        <div className="flex justify-between mb-1 text-body">
-          <span className="text-flo-text-secondary">{t('pos.items')}</span>
+        <div className="flex justify-between mb-0.5 text-caption text-flo-text-secondary">
+          <span>{t('pos.items')}</span>
           <span className="font-medium tabular-nums">{cart.itemCount()}</span>
         </div>
-        <div className="flex justify-between items-baseline mb-4">
+        <div className="flex justify-between items-baseline mb-3">
           <span className="text-h3 text-flo-text">{t('pos.subtotal')}</span>
-          <span className="text-numeric-xl text-flo-brand-700">{fmt(cart.subtotal())}</span>
+          <span className="text-numeric-xl text-flo-brand-700 tabular-nums">
+            {fmt(cart.subtotal())}
+          </span>
         </div>
         <div className="flex gap-2">
           {canHold && (

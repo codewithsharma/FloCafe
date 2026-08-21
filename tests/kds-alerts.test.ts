@@ -18,6 +18,7 @@ const workspace = read('frontend/src/components/kds/KdsWorkspace.tsx');
 const header = read('frontend/src/components/kds/KdsHeader.tsx');
 const kanban = read('frontend/src/components/kds/KdsKanbanBoard.tsx');
 const tabs = read('frontend/src/components/kds/KdsTabsView.tsx');
+const ticket = read('frontend/src/components/kds/KdsTicketCard.tsx');
 const en = read('frontend/src/lib/i18n/en.json');
 
 assert.match(lib, /class KdsAlertTracker/, 'KdsAlertTracker present');
@@ -31,8 +32,9 @@ assert.match(workspace, /useKdsAlerts/, 'workspace wires alerts');
 assert.match(workspace, /highlightOrderIds/, 'workspace passes highlights');
 assert.match(header, /kds-sound-toggle/, 'header sound toggle');
 assert.match(header, /kds\.soundOn/, 'sound on label');
-assert.match(kanban, /kdsNewTicketCardClass/, 'kanban highlight class');
-assert.match(tabs, /kdsNewTicketCardClass/, 'tabs highlight class');
+assert.match(kanban, /KdsTicketCard/, 'kanban uses shared ticket');
+assert.match(tabs, /KdsTicketCard/, 'tabs use shared ticket');
+assert.match(ticket, /kdsNewTicketCardClass/, 'shared ticket applies highlight class');
 assert.match(en, /"kds\.soundOn"/, 'en sound on');
 assert.match(en, /"kds\.newTicket"/, 'en new ticket');
 

@@ -39,19 +39,21 @@ export default function PosTopbar({ tables, onShowTablePicker }: Props) {
           type="button"
           onClick={onShowTablePicker}
           className={cn(
-            'min-h-11 shrink-0 flex items-center gap-1.5 px-3 text-sm rounded-flo-md border font-medium transition-colors whitespace-nowrap',
+            'min-h-11 shrink-0 max-w-[40vw] flex items-center gap-1.5 px-3 text-sm rounded-flo-md border font-medium transition-colors',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500 focus-visible:ring-offset-2',
             cart.tableId
               ? 'bg-flo-brand-600 text-white border-flo-brand-600 hover:bg-flo-brand-700'
               : 'bg-flo-warning-subtle border-flo-warning/40 text-flo-warning hover:border-flo-warning',
           )}
         >
-          <LayoutGrid className="size-4" aria-hidden />
-          {cart.tableId
-            ? t('pos.tableLabel', {
-                name: tables.find((tbl) => tbl.id === cart.tableId)?.name || cart.tableId,
-              })
-            : t('pos.selectTable')}
+          <LayoutGrid className="size-4 shrink-0" aria-hidden />
+          <span className="truncate">
+            {cart.tableId
+              ? t('pos.tableLabel', {
+                  name: tables.find((tbl) => tbl.id === cart.tableId)?.name || cart.tableId,
+                })
+              : t('pos.selectTable')}
+          </span>
         </button>
       )}
 

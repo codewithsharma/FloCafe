@@ -20,10 +20,10 @@ interface Props {
 }
 
 const TAG_COLORS: Record<string, string> = {
-  veg:    'bg-green-100 text-green-700',
+  veg: 'bg-green-100 text-green-700',
   nonveg: 'bg-red-100 text-red-700',
-  vegan:  'bg-emerald-100 text-emerald-700',
-  spicy:  'bg-orange-100 text-orange-700',
+  vegan: 'bg-emerald-100 text-emerald-700',
+  spicy: 'bg-orange-100 text-orange-700',
 };
 
 function tagColor(tag: string) {
@@ -34,18 +34,30 @@ function digitsOnly(value: string | null | undefined): string {
   return String(value || '').replace(/\D/g, '');
 }
 
-function phoneMatchesInput(customerPhoneDigits: string | null | undefined, inputDigits: string): boolean {
+function phoneMatchesInput(
+  customerPhoneDigits: string | null | undefined,
+  inputDigits: string,
+): boolean {
   if (!customerPhoneDigits || !inputDigits) return false;
   return customerPhoneDigits.includes(inputDigits);
 }
 
-function TagBadges({ counts, t }: { counts: Record<string, number>; t: (k: string, p?: Record<string, string | number>) => string }) {
+function TagBadges({
+  counts,
+  t,
+}: {
+  counts: Record<string, number>;
+  t: (k: string, p?: Record<string, string | number>) => string;
+}) {
   const entries = Object.entries(counts).filter(([, n]) => n > 0);
   if (entries.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-1">
       {entries.map(([tag, count]) => (
-        <span key={tag} className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${tagColor(tag)}`}>
+        <span
+          key={tag}
+          className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${tagColor(tag)}`}
+        >
           {t('pos.tagCount', { tag, count })}
         </span>
       ))}
@@ -87,25 +99,28 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
   useEffect(() => {
     if (!customer) return;
     const controller = new AbortController();
-    api.get(`/customers/${customer.id}/wallet`, { signal: controller.signal })
+    api
+      .get(`/customers/${customer.id}/wallet`, { signal: controller.signal })
       .then((res) => setLoyaltyPoints(res.data.balance))
       .catch((err: unknown) => {
-        if (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError')) return;
+        if (err instanceof Error && (err.name === 'CanceledError' || err.name === 'AbortError'))
+          return;
         setLoyaltyPoints(null);
       });
     return () => controller.abort();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customer?.id]);
 
   useEffect(() => {
     if (cart.customerId && !cart.customer) {
       const controller = new AbortController();
-      api.get(`/customers/${cart.customerId}`, { signal: controller.signal })
-        .then(res => cart.setCustomer(res.data.customer))
+      api
+        .get(`/customers/${cart.customerId}`, { signal: controller.signal })
+        .then((res) => cart.setCustomer(res.data.customer))
         .catch(() => {});
       return () => controller.abort();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cart.customerId]);
 
   useEffect(() => {
@@ -118,14 +133,22 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
   const searchByPhone = (p: string) => {
     clearTimeout(debounceRef.current);
     requestAbortRef.current?.abort();
-    if (p.length < 3) { setMatched(null); setName(''); setSearched(false); return; }
+    if (p.length < 3) {
+      setMatched(null);
+      setName('');
+      setSearched(false);
+      return;
+    }
     debounceRef.current = setTimeout(async () => {
       const controller = new AbortController();
       requestAbortRef.current = controller;
       try {
-        const { data } = await api.get(`/customers-search?q=${encodeURIComponent(p)}`, { signal: controller.signal });
-        const results = Array.isArray(data) ? data : (data.customers || []);
-        const exactMatch = results.find((result: Customer) => phoneMatchesInput(result.phone_digits, p)) || null;
+        const { data } = await api.get(`/customers-search?q=${encodeURIComponent(p)}`, {
+          signal: controller.signal,
+        });
+        const results = Array.isArray(data) ? data : data.customers || [];
+        const exactMatch =
+          results.find((result: Customer) => phoneMatchesInput(result.phone_digits, p)) || null;
         const found: Customer | null = exactMatch || results[0] || null;
         setMatched(found);
         setName(found ? found.name : '');
@@ -157,7 +180,10 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
   const handleSelectMatched = () => {
     if (!matched) return;
     cart.setCustomer(matched);
-    setPhone(''); setName(''); setMatched(null); setSearched(false);
+    setPhone('');
+    setName('');
+    setMatched(null);
+    setSearched(false);
     onSelected?.();
   };
 
@@ -176,9 +202,16 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
     }
     setCreating(true);
     try {
-      const { data } = await api.post('/customers', { name: name.trim(), phone: parsed.e164, country_code: parsed.countryCode });
+      const { data } = await api.post('/customers', {
+        name: name.trim(),
+        phone: parsed.e164,
+        country_code: parsed.countryCode,
+      });
       cart.setCustomer(data.customer);
-      setPhone(''); setName(''); setMatched(null); setSearched(false);
+      setPhone('');
+      setName('');
+      setMatched(null);
+      setSearched(false);
       toast.success(t('pos.customerCreated'));
       onSelected?.();
     } catch (err: unknown) {
@@ -194,14 +227,20 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
   const handleWidgetBlur = (e: React.FocusEvent<HTMLDivElement>) => {
     if (e.currentTarget.contains(e.relatedTarget as Node)) return;
     if (creating) return;
-    if (matched) { handleSelectMatched(); return; }
-    if (isNew && name.trim() && phone.trim()) { handleCreate(); }
+    if (matched) {
+      handleSelectMatched();
+      return;
+    }
+    if (isNew && name.trim() && phone.trim()) {
+      handleCreate();
+    }
   };
 
   const handleClear = () => cart.setCustomer(null);
 
   // ── Shared input classes ───────────────────────────────────────────────────
-  const baseInput = 'px-3 min-h-11 border border-flo-border rounded-flo-md bg-flo-surface text-flo-text focus:ring-2 focus:ring-flo-brand-500 focus:border-flo-brand-600 outline-none text-sm';
+  const baseInput =
+    'px-3 min-h-11 border border-flo-border rounded-flo-md bg-flo-surface text-flo-text focus:ring-2 focus:ring-flo-brand-500 focus:border-flo-brand-600 outline-none text-sm';
 
   // ── Customer already selected ──────────────────────────────────────────────
   if (customer) {
@@ -210,25 +249,40 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
     if (variant === 'topbar') {
       return (
         <>
-          <div className="h-10 min-h-11 flex items-center gap-2 px-3 bg-flo-brand-50 rounded-flo-md min-w-0 w-full">
+          <div className="min-h-11 flex items-center gap-2 px-3 bg-flo-brand-50 rounded-flo-md min-w-0 w-full">
             <button
+              type="button"
               onClick={() => setEditingCustomer(true)}
               title={t('pos.editCustomer', { defaultValue: 'Edit name / phone' })}
-              className="flex-1 min-w-0 flex items-center gap-x-2 flex-wrap text-left group"
+              className="flex-1 min-w-0 flex items-center gap-x-2 flex-wrap text-left group min-h-11"
             >
-              <span className="font-semibold text-flo-brand-600 text-sm truncate group-hover:underline">{customer.name}</span>
+              <span className="font-semibold text-flo-brand-600 text-sm truncate group-hover:underline">
+                {customer.name}
+              </span>
               <span className="text-flo-brand-600/70 text-xs shrink-0">{customer.phone}</span>
-              <Pencil size={11} className="text-flo-brand-600/50 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Pencil
+                size={11}
+                className="text-flo-brand-600/50 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-hidden
+              />
               {!!loyaltyPoints && loyaltyPoints > 0 && (
                 <span className="flex items-center gap-0.5 text-xs font-medium text-flo-brand-600 bg-flo-surface/70 rounded-full px-1.5 py-0.5 shrink-0">
-                  <Gift size={11} />
-                  {t('pos.loyaltyPointsShort', { count: loyaltyPoints, defaultValue: '{count} pts' })}
+                  <Gift size={11} aria-hidden />
+                  {t('pos.loyaltyPointsShort', {
+                    count: loyaltyPoints,
+                    defaultValue: '{count} pts',
+                  })}
                 </span>
               )}
               {hasTags && <TagBadges counts={customer.tag_counts!} t={t} />}
             </button>
-            <button onClick={handleClear} className="text-flo-brand-600 hover:text-flo-brand-700 shrink-0 ml-auto">
-              <X size={14} />
+            <button
+              type="button"
+              onClick={handleClear}
+              aria-label={t('pos.clearCustomer', { defaultValue: 'Clear customer' })}
+              className="min-h-11 min-w-11 shrink-0 flex items-center justify-center text-flo-brand-600 hover:text-flo-brand-700 rounded-flo-md"
+            >
+              <X size={14} aria-hidden />
             </button>
           </div>
           {editingCustomer && (
@@ -245,12 +299,25 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
     return (
       <div className="space-y-1">
         <div className="flex items-center justify-between px-3 py-2 bg-flo-brand-50 rounded-lg text-sm">
-          <button onClick={() => setEditingCustomer(true)} className="flex-1 min-w-0 flex items-center gap-2 text-left group">
-            <span className="font-medium text-flo-brand-600 truncate group-hover:underline">{customer.name}</span>
-            {customer.phone && <span className="text-xs text-flo-text-secondary">{customer.phone}</span>}
-            <Pencil size={11} className="text-flo-brand-600/50 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          <button
+            onClick={() => setEditingCustomer(true)}
+            className="flex-1 min-w-0 flex items-center gap-2 text-left group"
+          >
+            <span className="font-medium text-flo-brand-600 truncate group-hover:underline">
+              {customer.name}
+            </span>
+            {customer.phone && (
+              <span className="text-xs text-flo-text-secondary">{customer.phone}</span>
+            )}
+            <Pencil
+              size={11}
+              className="text-flo-brand-600/50 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+            />
           </button>
-          <button onClick={handleClear} className="text-flo-brand-600 hover:text-flo-brand-700 ml-2 shrink-0">
+          <button
+            onClick={handleClear}
+            className="text-flo-brand-600 hover:text-flo-brand-700 ml-2 shrink-0"
+          >
             <X size={14} />
           </button>
         </div>
@@ -276,8 +343,7 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
   if (variant === 'topbar') {
     return (
       <div className="relative w-full min-w-0">
-        <div className="h-10 flex items-center gap-2 min-w-0" onBlur={handleWidgetBlur}>
-
+        <div className="flex min-h-11 items-center gap-2 min-w-0" onBlur={handleWidgetBlur}>
           <input
             type="tel"
             inputMode="tel"
@@ -285,7 +351,8 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
             onChange={handlePhoneChange}
             onKeyDown={handlePhoneKeyDown}
             placeholder={dialCode ? `${dialCode} ${t('pos.phone')}` : t('pos.phone')}
-            className="h-10 w-48 shrink-0 px-3 text-sm border border-amber-400 bg-amber-50 placeholder:text-amber-600/70 rounded-lg focus:ring-2 focus:ring-amber-200 focus:border-amber-500 outline-none"
+            aria-label={t('pos.phone')}
+            className="min-h-11 min-w-0 flex-1 basis-28 max-w-[12rem] px-3 text-sm border border-amber-400 bg-amber-50 placeholder:text-amber-600/70 rounded-flo-md focus:ring-2 focus:ring-amber-200 focus:border-amber-500 outline-none"
           />
           <input
             ref={nameRef}
@@ -299,7 +366,8 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
             }}
             readOnly={!!matched}
             placeholder={searched ? (matched ? '' : t('pos.enterName')) : t('pos.nameAutoFills')}
-            className={`h-10 w-48 shrink-0 px-3 text-sm border rounded-lg focus:ring-2 outline-none transition-colors duration-150 ${
+            aria-label={t('pos.name', { defaultValue: 'Customer name' })}
+            className={`min-h-11 min-w-0 flex-1 basis-32 px-3 text-sm border rounded-flo-md focus:ring-2 outline-none transition-colors duration-150 ${
               matched
                 ? 'border-flo-border bg-flo-bg cursor-pointer focus:ring-flo-brand-500/20 focus:border-flo-brand-600'
                 : 'border-indigo-200 bg-indigo-50 placeholder:text-indigo-400/80 focus:ring-indigo-200 focus:border-indigo-400'
@@ -308,17 +376,19 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
           />
           {matched && (
             <button
+              type="button"
               onClick={handleSelectMatched}
-              className="h-10 shrink-0 px-3 bg-flo-brand-600 text-white text-xs rounded-lg hover:bg-flo-brand-700 whitespace-nowrap"
+              className="min-h-11 shrink-0 px-3 bg-flo-brand-600 text-white text-xs rounded-flo-md hover:bg-flo-brand-700 whitespace-nowrap"
             >
               {t('pos.select')}
             </button>
           )}
           {isNew && name.trim() && (
             <button
+              type="button"
               onClick={handleCreate}
               disabled={creating}
-              className="h-10 shrink-0 px-3 bg-flo-brand-600 text-white text-xs rounded-lg hover:bg-flo-brand-700 disabled:opacity-50 whitespace-nowrap"
+              className="min-h-11 shrink-0 px-3 bg-flo-brand-600 text-white text-xs rounded-flo-md hover:bg-flo-brand-700 disabled:opacity-50 whitespace-nowrap"
             >
               {creating ? t('pos.loadingEllipsis') : t('common.add')}
             </button>
@@ -330,7 +400,9 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
             {matched ? (
               <span className="text-xs text-green-600 font-medium">{t('pos.customerFound')}</span>
             ) : (
-              <span className="text-xs text-red-500 font-medium">{t('pos.newCustomerEnterName')}</span>
+              <span className="text-xs text-red-500 font-medium">
+                {t('pos.newCustomerEnterName')}
+              </span>
             )}
           </div>
         )}
@@ -343,7 +415,6 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
     <div className="space-y-2" onBlur={handleWidgetBlur}>
       <div className="grid grid-cols-1 gap-2">
         <div className="flex items-stretch gap-2">
-
           <input
             type="tel"
             inputMode="numeric"
@@ -378,8 +449,9 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
               <p className="text-xs text-green-600 font-medium">{t('pos.customerFoundClick')}</p>
               {matched.tag_counts && <TagBadges counts={matched.tag_counts} t={t} />}
               <button
+                type="button"
                 onClick={handleSelectMatched}
-                className="w-full py-1.5 bg-flo-brand-600 text-white text-sm rounded-lg hover:bg-flo-brand-700"
+                className="w-full min-h-11 py-2 bg-flo-brand-600 text-white text-sm rounded-flo-md hover:bg-flo-brand-700"
               >
                 {t('pos.selectName', { name: matched.name })}
               </button>
@@ -389,9 +461,10 @@ export default function CustomerSearch({ onSelected, variant = 'default' }: Prop
               <p className="text-xs text-red-500 font-medium">{t('pos.newCustomerEnterName')}</p>
               {name.trim() && (
                 <button
+                  type="button"
                   onClick={handleCreate}
                   disabled={creating}
-                  className="w-full py-1.5 bg-flo-brand-600 text-white text-sm rounded-lg hover:bg-flo-brand-700 disabled:opacity-50"
+                  className="w-full min-h-11 py-2 bg-flo-brand-600 text-white text-sm rounded-flo-md hover:bg-flo-brand-700 disabled:opacity-50"
                 >
                   {creating ? t('pos.creating') : t('pos.addName', { name: name.trim() })}
                 </button>

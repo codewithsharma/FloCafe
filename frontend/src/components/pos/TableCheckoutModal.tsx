@@ -209,7 +209,7 @@ export default function TableCheckoutModal({
                     className="flex justify-between items-start py-1.5 px-2 bg-flo-bg rounded-flo-md"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-flo-text font-medium">
+                      <p className="text-sm text-flo-text font-medium">
                         {item.quantity}x {item.product_name}
                       </p>
                       {item.special_instructions && (

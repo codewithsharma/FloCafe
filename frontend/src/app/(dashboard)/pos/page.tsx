@@ -1158,7 +1158,7 @@ export default function POSPage() {
               <button
                 type="button"
                 className="fixed bottom-5 right-5 z-40 size-14 bg-flo-brand-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-flo-brand-700 transition-colors md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-flo-brand-500 focus-visible:ring-offset-2"
-                aria-label={t('pos.placeOrderButton')}
+                aria-label={t('pos.openCart', { defaultValue: 'Open cart' })}
               >
                 <ShoppingCart size={22} aria-hidden />
                 {itemCount > 0 && (
@@ -1168,8 +1168,8 @@ export default function POSPage() {
                 )}
               </button>
             </DrawerTrigger>
-            <DrawerContent className="max-h-[85vh] border-flo-border">
-              <div className="overflow-y-auto max-h-[80vh] px-2 pb-2">
+            <DrawerContent className="max-h-[85vh] border-flo-border flex flex-col overflow-hidden p-0">
+              <div className="flex min-h-0 flex-1 flex-col px-2 pb-2 pt-1">
                 <CartPanel {...cartPanelProps} variant="drawer" />
               </div>
             </DrawerContent>

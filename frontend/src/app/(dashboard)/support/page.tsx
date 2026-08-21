@@ -7,7 +7,7 @@ import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PageHeader, Panel, LoadingState } from '@/components/flo';
+import { PageHeader, Panel, LoadingState, PageFrame } from '@/components/flo';
 import { useI18n } from '@/hooks/useI18n';
 import { useSupportTicketStatus } from '@/hooks/useSupportTicketStatus';
 import { useSupportDiagnosticsPreview } from '@/hooks/useSupportDiagnosticsPreview';
@@ -24,8 +24,14 @@ type SupportProfile = {
 };
 
 const EMPTY_PROFILE: SupportProfile = {
-  contact_name: '', contact_email: '', contact_phone: '', restaurant_name: '',
-  country: '', timezone: '', app_version: '', platform: '',
+  contact_name: '',
+  contact_email: '',
+  contact_phone: '',
+  restaurant_name: '',
+  country: '',
+  timezone: '',
+  app_version: '',
+  platform: '',
 };
 
 export default function SupportPage() {
@@ -42,7 +48,8 @@ export default function SupportPage() {
   const diagnosticsPreview = useSupportDiagnosticsPreview(category);
 
   useEffect(() => {
-    api.get('/support-ticket/profile')
+    api
+      .get('/support-ticket/profile')
       .then(({ data }) => setProfile({ ...EMPTY_PROFILE, ...data }))
       .catch(() => toast.error(t('support.profileLoadFailed')))
       .finally(() => setLoading(false));
@@ -83,11 +90,8 @@ export default function SupportPage() {
     'w-full resize-y rounded-flo-md border border-flo-border bg-flo-surface px-3 py-2 text-sm text-flo-text shadow-xs outline-none focus-visible:border-flo-brand-500 focus-visible:ring-2 focus-visible:ring-flo-brand-500/30';
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6">
-      <PageHeader
-        title={t('support.title')}
-        description={t('support.subtitle')}
-      />
+    <PageFrame variant="standard" className="space-y-6">
+      <PageHeader title={t('support.title')} description={t('support.subtitle')} />
 
       {submittedId && (
         <Panel className="border-flo-success/30 bg-flo-success-subtle/30">
@@ -97,14 +101,23 @@ export default function SupportPage() {
               <p className="font-medium text-flo-text">{t('support.requestQueued')}</p>
               {delivery.status === 'delivered' && delivery.supportCode ? (
                 <>
-                  <p className="mt-1 text-sm font-semibold text-flo-text">{t('support.supportCode')}: <span className="font-mono">{delivery.supportCode}</span></p>
-                  <p className="mt-0.5 text-xs text-flo-text-secondary">{t('support.supportCodeHint')}</p>
+                  <p className="mt-1 text-sm font-semibold text-flo-text">
+                    {t('support.supportCode')}:{' '}
+                    <span className="font-mono">{delivery.supportCode}</span>
+                  </p>
+                  <p className="mt-0.5 text-xs text-flo-text-secondary">
+                    {t('support.supportCodeHint')}
+                  </p>
                 </>
               ) : (
                 <>
-                  <p className="mt-1 text-xs text-flo-text-secondary">{t('support.requestId')}: {submittedId}</p>
+                  <p className="mt-1 text-xs text-flo-text-secondary">
+                    {t('support.requestId')}: {submittedId}
+                  </p>
                   <p className="mt-0.5 text-xs text-flo-text-secondary">
-                    {delivery.status === 'failed' ? t('support.stillQueuedLocally') : t('support.confirmingDelivery')}
+                    {delivery.status === 'failed'
+                      ? t('support.stillQueuedLocally')
+                      : t('support.confirmingDelivery')}
                   </p>
                 </>
               )}
@@ -130,7 +143,12 @@ export default function SupportPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="support-category">{t('support.category')}</Label>
-                  <select id="support-category" value={category} onChange={(e) => setCategory(e.target.value)} className={selectClass}>
+                  <select
+                    id="support-category"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className={selectClass}
+                  >
                     <option value="general">{t('support.categoryGeneral')}</option>
                     <option value="bug">{t('support.categoryBug')}</option>
                     <option value="printer">{t('support.categoryPrinter')}</option>
@@ -141,7 +159,12 @@ export default function SupportPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="support-severity">{t('support.urgency')}</Label>
-                  <select id="support-severity" value={severity} onChange={(e) => setSeverity(e.target.value)} className={selectClass}>
+                  <select
+                    id="support-severity"
+                    value={severity}
+                    onChange={(e) => setSeverity(e.target.value)}
+                    className={selectClass}
+                  >
                     <option value="low">{t('support.urgencyLow')}</option>
                     <option value="normal">{t('support.urgencyNormal')}</option>
                     <option value="high">{t('support.urgencyHigh')}</option>
@@ -151,14 +174,36 @@ export default function SupportPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="support-subject">{t('support.subject')}</Label>
-                <Input id="support-subject" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={255} placeholder={t('support.subjectPlaceholder')} required />
+                <Input
+                  id="support-subject"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  maxLength={255}
+                  placeholder={t('support.subjectPlaceholder')}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="support-message">{t('support.description')}</Label>
-                <textarea id="support-message" value={message} onChange={(e) => setMessage(e.target.value)} maxLength={20000} rows={10} className={textareaClass} placeholder={t('support.descriptionPlaceholder')} required />
-                <p className="text-right text-xs text-flo-text-muted">{message.length.toLocaleString()} / 20,000</p>
+                <textarea
+                  id="support-message"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  maxLength={20000}
+                  rows={10}
+                  className={textareaClass}
+                  placeholder={t('support.descriptionPlaceholder')}
+                  required
+                />
+                <p className="text-right text-xs text-flo-text-muted">
+                  {message.length.toLocaleString()} / 20,000
+                </p>
               </div>
-              <Button type="submit" disabled={loading || submitting || !subject.trim() || !message.trim()} className="w-full sm:w-auto">
+              <Button
+                type="submit"
+                disabled={loading || submitting || !subject.trim() || !message.trim()}
+                className="w-full sm:w-auto"
+              >
                 <LifeBuoy className="size-4" />
                 {submitting ? t('support.submitting') : t('support.submit')}
               </Button>
@@ -174,20 +219,44 @@ export default function SupportPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="support-name">{t('support.contactName')}</Label>
-                  <Input id="support-name" value={profile.contact_name} onChange={(e) => setProfile({ ...profile, contact_name: e.target.value })} maxLength={255} />
+                  <Input
+                    id="support-name"
+                    value={profile.contact_name}
+                    onChange={(e) => setProfile({ ...profile, contact_name: e.target.value })}
+                    maxLength={255}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="support-email">{t('support.email')}</Label>
-                  <Input id="support-email" type="email" value={profile.contact_email} onChange={(e) => setProfile({ ...profile, contact_email: e.target.value })} maxLength={255} />
+                  <Input
+                    id="support-email"
+                    type="email"
+                    value={profile.contact_email}
+                    onChange={(e) => setProfile({ ...profile, contact_email: e.target.value })}
+                    maxLength={255}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="support-phone">{t('support.phone')}</Label>
-                  <Input id="support-phone" type="tel" value={profile.contact_phone} onChange={(e) => setProfile({ ...profile, contact_phone: e.target.value })} maxLength={50} />
+                  <Input
+                    id="support-phone"
+                    type="tel"
+                    value={profile.contact_phone}
+                    onChange={(e) => setProfile({ ...profile, contact_phone: e.target.value })}
+                    maxLength={50}
+                  />
                 </div>
               </div>
             </Panel>
 
-            <Panel title={<span className="flex items-center gap-2 text-base"><Bug className="size-4" />{t('support.technicalDetails')}</span>}>
+            <Panel
+              title={
+                <span className="flex items-center gap-2 text-base">
+                  <Bug className="size-4" />
+                  {t('support.technicalDetails')}
+                </span>
+              }
+            >
               <div className="space-y-3 text-sm">
                 <p className="text-flo-text-secondary">{t('support.technicalHint')}</p>
                 <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-flo-md bg-flo-bg p-3 text-xs">
@@ -196,7 +265,9 @@ export default function SupportPage() {
                   <dt className="text-flo-text-secondary">{t('support.platform')}</dt>
                   <dd className="text-flo-text">{profile.platform || '—'}</dd>
                   <dt className="text-flo-text-secondary">{t('support.location')}</dt>
-                  <dd className="text-flo-text">{[profile.country, profile.timezone].filter(Boolean).join(' · ') || '—'}</dd>
+                  <dd className="text-flo-text">
+                    {[profile.country, profile.timezone].filter(Boolean).join(' · ') || '—'}
+                  </dd>
                 </dl>
                 <div className="flex gap-2 text-xs text-flo-text-secondary">
                   <ShieldCheck className="mt-0.5 size-4 shrink-0 text-flo-success" />
@@ -205,7 +276,9 @@ export default function SupportPage() {
                 {diagnosticsPreview && (
                   <details className="text-xs text-flo-text-secondary">
                     <summary className="cursor-pointer">{t('support.showPayload')}</summary>
-                    <pre className="mt-2 max-h-40 overflow-auto rounded-flo-md bg-flo-bg p-2">{JSON.stringify(diagnosticsPreview, null, 2)}</pre>
+                    <pre className="mt-2 max-h-40 overflow-auto rounded-flo-md bg-flo-bg p-2">
+                      {JSON.stringify(diagnosticsPreview, null, 2)}
+                    </pre>
                   </details>
                 )}
               </div>
@@ -213,6 +286,6 @@ export default function SupportPage() {
           </div>
         </form>
       )}
-    </div>
+    </PageFrame>
   );
 }

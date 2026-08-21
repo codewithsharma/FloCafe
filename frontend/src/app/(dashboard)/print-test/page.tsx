@@ -8,7 +8,12 @@ import { usePrinterStore } from '@/hooks/usePrinter';
 import { showPrintWarningsToast } from '@/lib/printer/warnings-toast';
 import { usePosSettingsStore } from '@/store/pos-settings';
 import { printerService } from '@/lib/printer/PrinterService';
-import { createTestBill, createTestOrder, createTestTenant, createTestCustomer } from '@/lib/printer/test-data';
+import {
+  createTestBill,
+  createTestOrder,
+  createTestTenant,
+  createTestCustomer,
+} from '@/lib/printer/test-data';
 import { printWebBill, generateBillHtml } from '@/lib/printer/web-print';
 import { shareBillViaWhatsApp, getWhatsAppMessage } from '@/lib/whatsapp-share';
 import { formatCurrencyForTenant, getCountryByCode } from '@/lib/countries';
@@ -24,11 +29,21 @@ export default function PrintTestPage() {
   const [paperWidth, setPaperWidth] = useState<PaperWidth>(58);
   const [testing, setTesting] = useState(false);
 
-  const { printBill, printTaxBill, printKot, printMethod, setPrintMethod, downloadLastReceipt, lastPrintedBytes, status } = usePrinterStore();
+  const {
+    printBill,
+    printTaxBill,
+    printKot,
+    printMethod,
+    setPrintMethod,
+    downloadLastReceipt,
+    lastPrintedBytes,
+    status,
+  } = usePrinterStore();
   const kotPrintingEnabled = usePosSettingsStore((s) => s.kotPrintingEnabled);
   const printerPaperSize = usePosSettingsStore((s) => s.printerPaperSize);
   const { t } = useI18n();
-  const effectiveTestMode: TestMode = !kotPrintingEnabled && testMode === 'kot' ? 'receipt' : testMode;
+  const effectiveTestMode: TestMode =
+    !kotPrintingEnabled && testMode === 'kot' ? 'receipt' : testMode;
 
   const testBill = useMemo(() => createTestBill(), []);
   const testOrder = useMemo(() => createTestOrder(), []);
@@ -141,14 +156,16 @@ export default function PrintTestPage() {
     { value: 'tax', label: 'Detailed Tax Bill (Thermal)', icon: Printer },
     // Hidden entirely when KOT printing is disabled — this is a manual
     // "Print KOT" action, which must never be reachable in that state (#133).
-    ...(kotPrintingEnabled ? [{ value: 'kot' as TestMode, label: 'KOT (Kitchen Ticket)', icon: Printer }] : []),
+    ...(kotPrintingEnabled
+      ? [{ value: 'kot' as TestMode, label: 'KOT (Kitchen Ticket)', icon: Printer }]
+      : []),
     { value: 'web-print', label: 'Web Print (Browser)', icon: FileText },
     { value: 'whatsapp', label: 'WhatsApp Share', icon: MessageCircle },
   ];
 
   return (
-    <div className="min-h-full bg-flo-bg p-4 md:p-8">
-      <div className="mx-auto max-w-2xl">
+    <div className="min-h-full bg-flo-bg">
+      <div className="flo-page-frame flo-page-frame--standard">
         <PageHeader
           title={
             <span className="inline-flex items-center gap-3">
@@ -262,32 +279,19 @@ export default function PrintTestPage() {
         </Panel>
 
         <div className="flex gap-3">
-          <Button
-            onClick={handlePrint}
-            disabled={testing}
-            className="flex-1"
-            size="lg"
-          >
+          <Button onClick={handlePrint} disabled={testing} className="flex-1" size="lg">
             {testing ? t('printTest.printing') : t('printTest.runTest')}
           </Button>
 
           {effectiveTestMode === 'web-print' && (
-            <Button
-              onClick={handleDownloadHtml}
-              variant="outline"
-              size="lg"
-            >
+            <Button onClick={handleDownloadHtml} variant="outline" size="lg">
               <Download size={18} className="mr-2" />
               {t('printTest.downloadHtml')}
             </Button>
           )}
 
           {effectiveTestMode === 'whatsapp' && (
-            <Button
-              onClick={handleCopyWhatsappText}
-              variant="outline"
-              size="lg"
-            >
+            <Button onClick={handleCopyWhatsappText} variant="outline" size="lg">
               {t('printTest.copyText')}
             </Button>
           )}
@@ -295,12 +299,16 @@ export default function PrintTestPage() {
 
         <Panel title={t('printTest.dataPreview')} className="mt-6">
           <pre className="overflow-x-auto text-xs text-flo-text-secondary">
-            {JSON.stringify({
-              bill: testBill.bill_number,
-              total: testBill.total,
-              items: testOrder.items?.length,
-              customer: testCustomer.name,
-            }, null, 2)}
+            {JSON.stringify(
+              {
+                bill: testBill.bill_number,
+                total: testBill.total,
+                items: testOrder.items?.length,
+                customer: testCustomer.name,
+              },
+              null,
+              2,
+            )}
           </pre>
         </Panel>
       </div>
@@ -312,32 +320,46 @@ function generateThermalReceiptHtml(
   bill: ReturnType<typeof createTestBill>,
   tenant: ReturnType<typeof createTestTenant>,
   paperWidth: 58 | 80,
-  options?: { taxRegistrationNumber?: string; address?: string; phone?: string; t?: (key: string, params?: Record<string, string | number>) => string }
+  options?: {
+    taxRegistrationNumber?: string;
+    address?: string;
+    phone?: string;
+    t?: (key: string, params?: Record<string, string | number>) => string;
+  },
 ): string {
   const t = options?.t ?? ((k: string) => k);
   const fontSize = paperWidth === 58 ? '10px' : '12px';
   const padding = paperWidth === 58 ? '4px' : '6px';
-  
-  const fmtCurrency = (amount: number) => formatCurrencyForTenant(amount, tenant.country, tenant.currency);
-  
+
+  const fmtCurrency = (amount: number) =>
+    formatCurrencyForTenant(amount, tenant.country, tenant.currency);
+
   const items = bill.order?.items || [];
-  const rows = items.map((item, idx) => `
+  const rows = items
+    .map(
+      (item, idx) => `
     <tr>
       <td style="font-size:${fontSize};padding:${padding};">${idx + 1}. ${item.product_name}</td>
       <td style="font-size:${fontSize};padding:${padding};text-align:right;">${item.quantity}</td>
       <td style="font-size:${fontSize};padding:${padding};text-align:right;">${fmtCurrency(item.unit_price)}</td>
       <td style="font-size:${fontSize};padding:${padding};text-align:right;">${fmtCurrency(item.subtotal)}</td>
     </tr>
-  `).join('');
+  `,
+    )
+    .join('');
 
   const taxComponents = resolveTaxComponents(bill);
   const taxIdLabel = getCountryByCode(tenant.country ?? 'IN')?.taxIdLabel || 'Tax ID';
-  const taxRows = taxComponents.map((component) => `
+  const taxRows = taxComponents
+    .map(
+      (component) => `
         <tr>
           <td style="padding:${padding};">${formatTaxComponentLabel(component)}</td>
           <td style="text-align:right;padding:${padding};">${fmtCurrency(component.amount)}</td>
         </tr>
-  `).join('');
+  `,
+    )
+    .join('');
 
   return `
     <div style="text-align:center;padding:${padding};font-family:'Courier New',monospace;font-size:${fontSize};">
@@ -368,12 +390,16 @@ function generateThermalReceiptHtml(
           <td style="padding:${padding};">${t('common.subtotal')}</td>
           <td style="text-align:right;padding:${padding};">${fmtCurrency(bill.subtotal)}</td>
         </tr>
-        ${bill.discount_amount > 0 ? `
+        ${
+          bill.discount_amount > 0
+            ? `
         <tr>
           <td style="padding:${padding};">${t('common.discount')}</td>
           <td style="text-align:right;padding:${padding};">-${fmtCurrency(bill.discount_amount)}</td>
         </tr>
-        ` : ''}
+        `
+            : ''
+        }
         ${taxRows}
         <tr style="font-weight:bold;">
           <td style="padding:${padding};">${t('common.total')}</td>
@@ -387,20 +413,21 @@ function generateThermalReceiptHtml(
   `;
 }
 
-function generateKotHtml(
-  order: ReturnType<typeof createTestOrder>,
-  paperWidth: 58 | 80
-): string {
+function generateKotHtml(order: ReturnType<typeof createTestOrder>, paperWidth: 58 | 80): string {
   const fontSize = paperWidth === 58 ? '10px' : '12px';
   const padding = paperWidth === 58 ? '4px' : '6px';
-  
+
   const items = order.items || [];
-  const rows = items.map((item, idx) => `
+  const rows = items
+    .map(
+      (item, idx) => `
     <tr>
       <td style="font-size:${fontSize};padding:${padding};">${idx + 1}. ${item.product_name}</td>
       <td style="font-size:${fontSize};padding:${padding};text-align:right;font-weight:bold;">${item.quantity}</td>
     </tr>
-  `).join('');
+  `,
+    )
+    .join('');
 
   return `
     <div style="text-align:center;padding:${padding};font-family:'Courier New',monospace;font-size:${fontSize};">

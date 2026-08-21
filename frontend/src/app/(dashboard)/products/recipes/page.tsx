@@ -1,7 +1,7 @@
 'use client';
 import { getLandingPageForRole } from '@/lib/rbac';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ChefHat, History, Plus } from 'lucide-react';
@@ -101,6 +101,8 @@ export default function RecipesPage() {
   const [wastePortions, setWastePortions] = useState('1');
   const [wasteReason, setWasteReason] = useState<RecipeWastageReason>('SPOILAGE');
   const [wasteNotes, setWasteNotes] = useState('');
+  /** Hold until success so ambiguous retry cannot double-debit (parity with stock adjust). */
+  const wasteIdempotencyKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!isOwnerOrManager) {
@@ -147,6 +149,7 @@ export default function RecipesPage() {
   }, [isOwnerOrManager, inventoryEnabled, refresh, t]);
 
   useEffect(() => {
+    wasteIdempotencyKeyRef.current = null;
     if (!selectedId) {
       setCost(null);
       setEditName('');
@@ -419,12 +422,14 @@ export default function RecipesPage() {
       toast.error(t('recipes.wasteInvalid'));
       return;
     }
-    setBusy(true);
-    try {
-      const key =
+    if (!wasteIdempotencyKeyRef.current) {
+      wasteIdempotencyKeyRef.current =
         typeof crypto !== 'undefined' && 'randomUUID' in crypto
           ? crypto.randomUUID()
           : `rw-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    }
+    setBusy(true);
+    try {
       await wasteRecipePortions(
         selected.id,
         {
@@ -432,9 +437,10 @@ export default function RecipesPage() {
           wastage_reason: wasteReason,
           notes: wasteNotes.trim() ? wasteNotes.trim() : null,
         },
-        key,
+        wasteIdempotencyKeyRef.current,
       );
       toast.success(t('recipes.wasteSuccess'));
+      wasteIdempotencyKeyRef.current = null;
       setWastePortions('1');
       setWasteNotes('');
     } catch (err: unknown) {
@@ -679,6 +685,7 @@ export default function RecipesPage() {
                     value={wastePortions}
                     onChange={(e) => setWastePortions(e.target.value)}
                     inputMode="decimal"
+                    disabled={busy}
                   />
                 </label>
                 <label className="block text-xs">
@@ -687,6 +694,7 @@ export default function RecipesPage() {
                     className="mt-1 w-full rounded-md border bg-background px-2 py-1.5 text-sm"
                     value={wasteReason}
                     onChange={(e) => setWasteReason(e.target.value as RecipeWastageReason)}
+                    disabled={busy}
                   >
                     {WASTE_REASONS.map((code) => (
                       <option key={code} value={code}>
@@ -702,6 +710,7 @@ export default function RecipesPage() {
                   className="mt-1 w-full rounded-md border bg-background px-2 py-1.5 text-sm"
                   value={wasteNotes}
                   onChange={(e) => setWasteNotes(e.target.value)}
+                  disabled={busy}
                 />
               </label>
               <Button type="button" size="sm" disabled={busy} onClick={submitWaste}>

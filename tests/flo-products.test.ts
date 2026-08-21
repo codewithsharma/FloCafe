@@ -71,6 +71,15 @@ function main(): void {
     !productsPage.includes('bg-white rounded-xl shadow-xl'),
     'legacy modal panel removed from page',
   );
+  assert.ok(
+    productsPage.includes('data-testid="products-inventory-actions"'),
+    'products inventory action row test id',
+  );
+  assert.match(
+    productsPage,
+    /products-inventory-actions[\s\S]*?overflow-x-auto/,
+    'products inventory actions scroll horizontally on narrow viewports',
+  );
   assert.ok(productsPage.includes('ProductFormDialog'), 'products page uses ProductFormDialog');
   assert.ok(productsPage.includes('CategoryFormDialog'), 'products page uses CategoryFormDialog');
   assert.ok(productsPage.includes('AddonGroupDialog'), 'products page uses AddonGroupDialog');

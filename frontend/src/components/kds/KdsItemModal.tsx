@@ -9,7 +9,9 @@ import {
   type KitchenStatus,
   type KdsOrderItem,
 } from '@/hooks/useKdsConnection';
+import { KDS_BOARD_STATUS } from '@/lib/kds-board-theme';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 export interface KdsItemModalProps {
   item: KdsOrderItem;
@@ -29,6 +31,7 @@ export function KdsItemModal({
   const { t } = useI18n();
   const statusLabel = (s: KitchenStatus) => t(STATUS_CONFIG[normalizeKitchenStatus(s)].labelKey);
   const currentStatus = normalizeKitchenStatus(item.status);
+  const board = KDS_BOARD_STATUS[currentStatus];
   // 'voided' is locked — it's outside STATUS_ORDER on purpose (issue #150),
   // so there's no next/prev to compute for it.
   const isVoided = currentStatus === 'voided';
@@ -46,7 +49,7 @@ export function KdsItemModal({
       }}
     >
       <DialogContent
-        className="flex max-w-sm flex-col gap-5 border-flo-border bg-flo-surface-raised sm:max-w-sm"
+        className="flex max-w-sm flex-col gap-5 border-flo-border bg-flo-surface text-flo-text sm:max-w-sm"
         aria-labelledby="kds-item-modal-title"
       >
         <DialogHeader className="space-y-0 text-left">
@@ -55,25 +58,31 @@ export function KdsItemModal({
           </p>
           <DialogTitle
             id="kds-item-modal-title"
-            className={`text-2xl font-bold leading-tight ${isVoided ? 'text-flo-text-muted line-through' : 'text-flo-text'}`}
+            className={cn(
+              'text-2xl font-bold leading-tight',
+              isVoided ? 'text-flo-text-muted line-through' : 'text-flo-text',
+            )}
           >
             {item.product_name}
           </DialogTitle>
           <div className="mt-1.5 flex items-center gap-2">
-            <span className={`text-sm font-bold ${STATUS_CONFIG[currentStatus].text}`}>
-              {item.quantity}×
-            </span>
+            <span className={cn('text-sm font-bold', board.text)}>{item.quantity}×</span>
             <span
-              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CONFIG[currentStatus].bg} ${STATUS_CONFIG[currentStatus].text}`}
+              className={cn(
+                'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium',
+                board.bg,
+                board.text,
+                board.border,
+              )}
             >
-              <div className={`h-1.5 w-1.5 rounded-full ${STATUS_CONFIG[currentStatus].color}`} />
+              <div className={cn('h-1.5 w-1.5 rounded-full', board.color)} />
               {statusLabel(currentStatus)}
             </span>
           </div>
         </DialogHeader>
 
         {item.addons && item.addons.length > 0 && (
-          <div className="rounded-flo-lg bg-flo-info-subtle p-3">
+          <div className="rounded-flo-lg border border-flo-info/40 bg-flo-info-subtle/40 p-3">
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-flo-info">
               {t('kds.addonsLabel')}
             </p>
@@ -81,7 +90,7 @@ export function KdsItemModal({
               {item.addons.map((addon, i) => (
                 <span
                   key={`${addon.id ?? addon.name}-${i}`}
-                  className="rounded-flo-md border border-flo-info/30 bg-flo-surface px-2.5 py-1 text-sm font-medium text-flo-info"
+                  className="rounded-flo-md border border-flo-info/40 bg-flo-surface px-2.5 py-1 text-sm font-medium text-flo-info"
                 >
                   + {addon.name}
                   {(addon.quantity || 1) > 1 ? ` ×${addon.quantity}` : ''}
@@ -92,7 +101,7 @@ export function KdsItemModal({
         )}
 
         {item.special_instructions && (
-          <div className="rounded-flo-lg bg-flo-danger-subtle p-3">
+          <div className="rounded-flo-lg border border-flo-danger/40 bg-flo-danger-subtle/40 p-3">
             <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-flo-danger">
               {t('kds.specialInstructionsLabel')}
             </p>
@@ -103,20 +112,22 @@ export function KdsItemModal({
         )}
 
         {!isVoided && (
-          <div className="flex items-center justify-center gap-1.5">
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
             {STATUS_ORDER.map((s, i) => {
               const isCurrent = currentStatus === s;
               const isPast = currentIdx > i;
+              const step = KDS_BOARD_STATUS[s];
               return (
                 <div key={s} className="flex items-center gap-1.5">
                   <div
-                    className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
+                    className={cn(
+                      'flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium',
                       isCurrent
-                        ? `${STATUS_CONFIG[s].bg} ${STATUS_CONFIG[s].text} ring-2 ring-current`
+                        ? cn(step.bg, step.text, step.border, 'ring-2 ring-flo-brand-500')
                         : isPast
-                          ? 'bg-flo-bg text-flo-text-muted line-through'
-                          : 'bg-flo-bg text-flo-text-muted'
-                    }`}
+                          ? 'border-flo-border bg-flo-surface-muted text-flo-text-muted line-through'
+                          : 'border-flo-border bg-flo-surface-muted text-flo-text-muted',
+                    )}
                   >
                     {statusLabel(s)}
                   </div>
@@ -138,9 +149,13 @@ export function KdsItemModal({
             <>
               {next && (
                 <button
+                  type="button"
                   onClick={() => onUpdateStatus(item.id, next)}
                   disabled={updating}
-                  className={`min-h-11 w-full rounded-flo-xl py-5 text-xl font-bold text-white transition-all active:scale-95 disabled:opacity-50 ${STATUS_CONFIG[next].color} hover:brightness-90`}
+                  className={cn(
+                    'min-h-11 w-full rounded-flo-xl py-5 text-xl font-bold text-white transition-all active:scale-95 disabled:opacity-50',
+                    KDS_BOARD_STATUS[next].bump,
+                  )}
                 >
                   {updating
                     ? t('kds.updating')
@@ -149,9 +164,10 @@ export function KdsItemModal({
               )}
               {prev && (
                 <button
+                  type="button"
                   onClick={() => onUpdateStatus(item.id, prev)}
                   disabled={updating}
-                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-flo-xl border-2 border-flo-border bg-flo-bg py-4 text-base font-semibold text-flo-text-secondary transition-all hover:bg-flo-surface-muted active:scale-95 disabled:opacity-50"
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-flo-xl border border-flo-border bg-flo-surface-muted py-4 text-base font-semibold text-flo-text-secondary transition-all hover:bg-flo-surface active:scale-95 disabled:opacity-50"
                 >
                   <ChevronLeft size={18} />
                   {t('kds.backTo', { status: statusLabel(prev) })}

@@ -28,6 +28,7 @@ import {
   MetricCard,
   AttentionStrip,
   LoadingState,
+  PageFrame,
   type AttentionItem,
 } from '@/components/flo';
 import { isModuleEnabled } from '@/lib/modules';
@@ -194,7 +195,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div>
+    <PageFrame variant="standard">
       <PageHeader title={t('flo.home.title')} description={t('flo.home.todayDescription')} />
 
       {loading ? (
@@ -261,6 +262,6 @@ export default function DashboardPage() {
           </div>
         </>
       )}
-    </div>
+    </PageFrame>
   );
 }
