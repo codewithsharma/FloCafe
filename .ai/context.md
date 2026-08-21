@@ -48,7 +48,9 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 **Exhaustive QA audit (2026-08-15):** Pack at `docs/qa/`. Live GUI + RBAC + RC: PASS WITH CONDITIONS. Production readiness: **CONDITIONAL GO**. Final release hardening: **CONDITIONAL GO** (`docs/qa/FINAL-RELEASE-HARDENING-AUDIT.md`) — P1-06 unopenable DB fail-closed; OPS-02 drill checklist; RC checklist. Live café still blocked on signed/notarized RC + OPS-02 + Master-PIN DR + security residual acceptance + sign-off. Residual eng: JWT/CSP Phase C, REAL dual-write.
 
 
-**P16 INV-OS-HARDENING (2026-08-21):** Inventory integrity hardening — sale/recipe CAS floors; PUT is_active→availability; opening/count audits; policy tests; no schema bump; `npm run test:p16`. Audit `docs/qa/P16-INVENTORY-OS-AUDIT.md`. Report `docs/qa/P16-INVENTORY-OS-IMPLEMENTATION-REPORT.md`. LIVE PILOT NO-GO. P17 NOT STARTED.
+**P17 RCP-CONSUMPTION-HARDENING (2026-08-21):** COMPLETE — consume/live cost prefer `cost_cents`; FE BOM edit + prep_loss/yield PATCH; CAS/atomic/idempotency/P16 policy tests; schema **v88**; `npm run test:p17`. Audit `docs/qa/P17-RECIPE-CONSUMPTION-AUDIT.md`. Report `docs/qa/P17-RECIPE-CONSUMPTION-IMPLEMENTATION-REPORT.md`. LIVE PILOT NO-GO. P18 NOT STARTED.
+
+**P16 INV-OS-HARDENING (2026-08-21):** Inventory integrity hardening — sale/recipe CAS floors; PUT is_active→availability; opening/count audits; policy tests; no schema bump; `npm run test:p16`. Audit `docs/qa/P16-INVENTORY-OS-AUDIT.md`. Report `docs/qa/P16-INVENTORY-OS-IMPLEMENTATION-REPORT.md`. LIVE PILOT NO-GO.
 
 **P16 INVENTORY-OS AUDIT (2026-08-21):** Docs — `docs/qa/P16-INVENTORY-OS-AUDIT.md`. Inventory OS largely Existing (R4/R5/R6/P5); P16 implemented as hardening.
 

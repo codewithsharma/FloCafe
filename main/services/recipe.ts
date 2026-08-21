@@ -11,7 +11,12 @@ import {
   isAllowedInventoryUnit,
   type InventoryUnit,
 } from './inventory-units';
-import { computeRecipeCost, toCostCents, toPriceCents, type RecipeCostResult } from './recipe-cost';
+import {
+  computeRecipeCost,
+  preferProductCostCents,
+  toPriceCents,
+  type RecipeCostResult,
+} from './recipe-cost';
 
 export class RecipeServiceError extends Error {
   readonly statusCode: number;
@@ -47,6 +52,7 @@ export interface RecipeIngredientRow {
   created_at: string;
   ingredient_name?: string;
   ingredient_cost?: number | null;
+  ingredient_cost_cents?: number | null;
   inventory_unit?: string;
   is_active?: number;
 }
@@ -146,6 +152,7 @@ export function listRecipeIngredients(recipeId: string, db?: any): RecipeIngredi
     .prepare(
       `
     SELECT ri.*, p.name AS ingredient_name, p.cost AS ingredient_cost,
+           p.cost_cents AS ingredient_cost_cents,
            COALESCE(p.inventory_unit, 'pcs') AS inventory_unit, p.is_active
     FROM recipe_ingredients ri
     JOIN products p ON p.id = ri.ingredient_product_id
@@ -388,7 +395,7 @@ export function computeRecipeCostForId(recipeId: string): RecipeCostResult & {
       unit: ing.unit,
       prep_loss_bps: Number(ing.prep_loss_bps) || 0,
       inventoryUnit: (ing.inventory_unit || 'pcs') as string,
-      unitCostCents: toCostCents(ing.ingredient_cost),
+      unitCostCents: preferProductCostCents(ing.ingredient_cost_cents, ing.ingredient_cost),
       ingredientProductId: ing.ingredient_product_id,
       name: ing.ingredient_name,
     }));

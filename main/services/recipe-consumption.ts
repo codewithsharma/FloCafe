@@ -17,7 +17,7 @@ import {
   type RecipeIngredientRow,
   type RecipeRow,
 } from './recipe';
-import { portionConsumeQty, toCostCents } from './recipe-cost';
+import { portionConsumeQty, preferProductCostCents } from './recipe-cost';
 
 export interface RecipeConsumptionRow {
   id: string;
@@ -75,7 +75,7 @@ type IngredientProduct = StockTrackedProduct & {
 function loadIngredientProduct(db: any, productId: string): IngredientProduct {
   const row = db
     .prepare(
-      `SELECT id, name, track_inventory, stock_quantity, cost,
+      `SELECT id, name, track_inventory, stock_quantity, cost, cost_cents,
               COALESCE(inventory_unit, 'pcs') AS inventory_unit
        FROM products WHERE id = ? AND deleted_at IS NULL`,
     )
@@ -201,10 +201,7 @@ function writeConsumeLine(
     reason: 'recipe_consumption',
   });
 
-  const unitCostCents =
-    product.cost_cents != null && Number.isFinite(Number(product.cost_cents))
-      ? Math.trunc(Number(product.cost_cents))
-      : toCostCents(product.cost);
+  const unitCostCents = preferProductCostCents(product.cost_cents, product.cost);
   const lineCostCents = unitCostCents === null ? null : Math.round(Math.abs(qty) * unitCostCents);
 
   ctx.lineStmt.run(

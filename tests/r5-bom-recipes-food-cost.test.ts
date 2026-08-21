@@ -80,7 +80,7 @@ async function main() {
   const db = initTestDb();
   assertEqual(
     Number(db.pragma('user_version', { simple: true })),
-    86,
+    88,
     'fresh DB at user_version 88',
   );
   assert(!!db.prepare("SELECT name FROM sqlite_master WHERE name='recipes'").get(), 'recipes');

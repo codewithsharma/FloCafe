@@ -2,7 +2,9 @@
 
 ## Mandate
 
-- [x] **P16 Inventory OS Hardening (2026-08-21):** COMPLETE — CAS sale floor, availability PUT, opening/count audits; `npm run test:p16`. Report `docs/qa/P16-INVENTORY-OS-IMPLEMENTATION-REPORT.md`. P17 NOT STARTED.
+- [x] **P17 Recipe Consumption / Food Cost Hardening (2026-08-21):** COMPLETE — cost_cents prefer path; FE BOM edit; CAS/atomic/idempotency/P16 policy tests; schema v88; `npm run test:p17`. Report `docs/qa/P17-RECIPE-CONSUMPTION-IMPLEMENTATION-REPORT.md`.
+- [x] **P17 Recipe Consumption Audit (2026-08-21):** COMPLETE — `docs/qa/P17-RECIPE-CONSUMPTION-AUDIT.md`.
+- [x] **P16 Inventory OS Hardening (2026-08-21):** COMPLETE — CAS sale floor, availability PUT, opening/count audits; `npm run test:p16`. Report `docs/qa/P16-INVENTORY-OS-IMPLEMENTATION-REPORT.md`.
 - [x] **P16 Inventory OS Audit (2026-08-21):** COMPLETE — `docs/qa/P16-INVENTORY-OS-AUDIT.md`.
 - [x] **P15 SEC-SENSITIVE-ACTIONS (2026-08-21):** Sensitive-action controls; no schema bump; `npm run test:p15`. Report `docs/qa/P15-SENSITIVE-ACTION-CONTROLS-IMPLEMENTATION-REPORT.md`.
 - [x] **P14 POS-OFFLINE-CONFLICT-HARDENING (2026-08-21):** Order-status CAS + stock FE key + offline conflict hygiene; no schema bump; `npm run test:p14`. Report `docs/qa/P14-POS-OFFLINE-CONFLICT-HARDENING-IMPLEMENTATION-REPORT.md`.

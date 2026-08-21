@@ -38,6 +38,14 @@ export interface RecipeCostResult {
   lines: RecipeIngredientCostLine[];
 }
 
+/** Prefer dual-write cost_cents when present; else REAL cost → cents. Null when unavailable. */
+export function preferProductCostCents(costCents: unknown, cost: unknown): number | null {
+  if (costCents != null && costCents !== '' && Number.isFinite(Number(costCents))) {
+    return Math.trunc(Number(costCents));
+  }
+  return toCostCents(cost);
+}
+
 /** Convert catalog REAL cost to integer cents. Null when unavailable. */
 export function toCostCents(cost: unknown): number | null {
   if (cost === null || cost === undefined || cost === '') return null;

@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-21 — P17 RCP-CONSUMPTION-HARDENING (COMPLETE)
+
+No schema bump (**v88**). Prefer `products.cost_cents` for consume snapshots and live recipe cost; FE BOM post-create edit + prep_loss/yield PATCH; prove CAS concurrency, multi-ingredient atomicity, idempotency; encode P16 cancel/void/restaurant-refund (no recipe reverse) in `test:p17`. Chef read API vs O/M GUI mismatch intentional. Consumptions list UI / addon BOM / WAC-FIFO / profitability deferred. LIVE PILOT NO-GO. Do not start P18 without audit.
+
 ## 2026-08-21 — P16 INV-OS-HARDENING (COMPLETE)
 
 No schema bump (**v88**). Sale/recipe consume CAS floors; PUT `is_active` via availability; opening + count lifecycle audits; cancel/void/refund policy encoded in `test:p16`. Typed ledger / reserved_qty / export deferred. LIVE PILOT NO-GO.
