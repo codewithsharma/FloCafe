@@ -75,10 +75,23 @@ Reports page panel after Product Performance: summary metrics, category table, e
 
 ## Test Matrix
 
-| Command                     | Result               |
-| --------------------------- | -------------------- |
-| `npm run test:rpt-category` | PASS                 |
-| Regressions                 | _(filled after run)_ |
+| Command                     | Result                                                          |
+| --------------------------- | --------------------------------------------------------------- |
+| `npm run test:rpt-category` | PASS                                                            |
+| `npm run test:rpt-product`  | PASS                                                            |
+| `npm run test:rpt-pay`      | PASS                                                            |
+| `npm run test:rpt-disc`     | PASS                                                            |
+| `npm run test:rpt-staff`    | PASS                                                            |
+| `npm run test:r13`          | PASS (51/51)                                                    |
+| `npm run test:kds-alerts`   | PASS                                                            |
+| `npm run test:kds-h-outbox` | PASS                                                            |
+| `npm run test:inv-auto-86`  | PASS                                                            |
+| `npm run test:critical`     | PASS (24/24)                                                    |
+| `npm run test:phase2`       | PASS                                                            |
+| `npm run test:print-health` | PASS                                                            |
+| `npm run build`             | PASS                                                            |
+| `npm run build:frontend`    | PASS                                                            |
+| `npm run lint`              | Baseline debt (~13 errors / 9 warnings); **0 new** on P12 files |
 
 ## Known Limitations
 
