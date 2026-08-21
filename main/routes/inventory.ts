@@ -187,7 +187,7 @@ router.post(
   (req: Request, res: Response) => {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const count = submitInventoryCount(id);
+      const count = submitInventoryCount(id, String((req as any).user.userId));
       res.json({ count });
     } catch (error: unknown) {
       if (mapInventoryError(error, res)) return;
@@ -218,7 +218,7 @@ router.post(
   (req: Request, res: Response) => {
     try {
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const count = cancelInventoryCount(id);
+      const count = cancelInventoryCount(id, String((req as any).user.userId));
       res.json({ count });
     } catch (error: unknown) {
       if (mapInventoryError(error, res)) return;

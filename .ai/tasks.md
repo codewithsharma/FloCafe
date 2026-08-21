@@ -2,6 +2,8 @@
 
 ## Mandate
 
+- [x] **P16 Inventory OS Hardening (2026-08-21):** COMPLETE — CAS sale floor, availability PUT, opening/count audits; `npm run test:p16`. Report `docs/qa/P16-INVENTORY-OS-IMPLEMENTATION-REPORT.md`. P17 NOT STARTED.
+- [x] **P16 Inventory OS Audit (2026-08-21):** COMPLETE — `docs/qa/P16-INVENTORY-OS-AUDIT.md`.
 - [x] **P15 SEC-SENSITIVE-ACTIONS (2026-08-21):** Sensitive-action controls; no schema bump; `npm run test:p15`. Report `docs/qa/P15-SENSITIVE-ACTION-CONTROLS-IMPLEMENTATION-REPORT.md`.
 - [x] **P14 POS-OFFLINE-CONFLICT-HARDENING (2026-08-21):** Order-status CAS + stock FE key + offline conflict hygiene; no schema bump; `npm run test:p14`. Report `docs/qa/P14-POS-OFFLINE-CONFLICT-HARDENING-IMPLEMENTATION-REPORT.md`.
 - [x] **P13 DATA-AUDIT-HARDENING (2026-08-21):** Data & audit integrity; no schema bump; `npm run test:data-audit`. Report `docs/qa/P13-DATA-AUDIT-HARDENING-IMPLEMENTATION-REPORT.md`.

@@ -46,13 +46,23 @@ export function createInventoryCount(args: {
   const db = getDatabase();
   const id = `cnt-${randomUUID().slice(0, 8)}`;
   const ts = now();
-  db.prepare(
-    `
+  return withTxn(() => {
+    db.prepare(
+      `
     INSERT INTO inventory_counts (id, status, notes, created_by, created_at, updated_at)
     VALUES (?, 'draft', ?, ?, ?, ?)
   `,
-  ).run(id, args.notes ?? null, args.createdBy, ts, ts);
-  return requireCount(db, id);
+    ).run(id, args.notes ?? null, args.createdBy, ts, ts);
+    logAuditEvent({
+      actorUserId: args.createdBy,
+      action: 'inventory.count_created',
+      entityType: 'inventory_count',
+      entityId: id,
+      result: 'success',
+      metadata: { status: 'draft', notes: args.notes ?? null },
+    });
+    return requireCount(db, id);
+  });
 }
 
 export function upsertCountLine(args: {
@@ -112,7 +122,10 @@ export function upsertCountLine(args: {
   });
 }
 
-export function submitInventoryCount(countId: string): InventoryCountRow {
+export function submitInventoryCount(
+  countId: string,
+  actorUserId?: string | null,
+): InventoryCountRow {
   return withTxn(() => {
     const db = getDatabase();
     const count = requireCount(db, countId);
@@ -132,11 +145,22 @@ export function submitInventoryCount(countId: string): InventoryCountRow {
       ts,
       countId,
     );
+    logAuditEvent({
+      actorUserId: actorUserId ?? count.created_by,
+      action: 'inventory.count_submitted',
+      entityType: 'inventory_count',
+      entityId: countId,
+      result: 'success',
+      metadata: { previous_status: 'draft', line_count: lineCount },
+    });
     return requireCount(db, countId);
   });
 }
 
-export function cancelInventoryCount(countId: string): InventoryCountRow {
+export function cancelInventoryCount(
+  countId: string,
+  actorUserId?: string | null,
+): InventoryCountRow {
   return withTxn(() => {
     const db = getDatabase();
     const count = requireCount(db, countId);
@@ -151,6 +175,14 @@ export function cancelInventoryCount(countId: string): InventoryCountRow {
       ts,
       countId,
     );
+    logAuditEvent({
+      actorUserId: actorUserId ?? count.created_by,
+      action: 'inventory.count_cancelled',
+      entityType: 'inventory_count',
+      entityId: countId,
+      result: 'success',
+      metadata: { previous_status: count.status },
+    });
     return requireCount(db, countId);
   });
 }

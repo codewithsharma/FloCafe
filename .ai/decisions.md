@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-21 — P16 INV-OS-HARDENING (COMPLETE)
+
+No schema bump (**v88**). Sale/recipe consume CAS floors; PUT `is_active` via availability; opening + count lifecycle audits; cancel/void/refund policy encoded in `test:p16`. Typed ledger / reserved_qty / export deferred. LIVE PILOT NO-GO.
+
 ## 2026-08-21 — P15 SEC-SENSITIVE-ACTIONS (COMPLETE)
 
 No schema bump (tip **v88**). Bill discount after successful tender → 409; order cancel `pin_approved_by` + failed PIN audits; item void failed PIN audit; audit sanitizer allowlists `pin_approved_by`; Drive backup-now / DB export-import / Master PIN reset audits; LAN `network_mode` owner+Master PIN. Suite `npm run test:p15`. Matrix **Sensitive-action controls → 🟢 Existing**. Authorization / RBAC remain **🟡 Hardening**. LIVE PILOT NO-GO.

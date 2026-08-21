@@ -17,6 +17,13 @@
  * applyAbsoluteStockChange / adjustProductStock. Zero-delta skips movements.
  * Opening stock uses movement_type `adjustment` + reason `opening` (no schema change).
  *
+ * P16 hardening: sale/recipe consume UPDATEs use stock_quantity >= ? CAS floors
+ * (same pattern as manual decrease/wastage). PUT is_active routes through
+ * product-availability (not raw flag writes). Opening + count lifecycle audit.
+ *
+ * Ledger movement_type CHECK remains sale | cancel_restore | adjustment.
+ * Opening / receipt / wastage / count_variance / recipe_* are reason conventions.
+ *
  * Read ownership (Phase 2.12): HTTP GET /api/inventory/movements → listInventoryMovements.
  * Ledger history begins at v75 (no backfill).
  *
@@ -204,15 +211,32 @@ export function applyRecipeStockDelta(
   if (!Number.isFinite(quantityDelta) || quantityDelta === 0) {
     return { movementId: null, stockAfter: readStockAfter(db, product.id) };
   }
-  if (quantityDelta < 0) {
-    assertStockAvailable(product, Math.abs(quantityDelta));
-  }
   if (!isTracking(product)) {
     throw new InventoryServiceError(400, `Ingredient does not track inventory: ${product.name}`);
   }
-  db.prepare(
-    'UPDATE products SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?',
-  ).run(quantityDelta, updatedAt, product.id);
+  if (quantityDelta < 0) {
+    const need = Math.abs(quantityDelta);
+    // P16: CAS floor — same concurrency guarantee as sale decrement.
+    const result = db
+      .prepare(
+        `
+      UPDATE products
+      SET stock_quantity = stock_quantity + ?, updated_at = ?
+      WHERE id = ?
+        AND deleted_at IS NULL
+        AND track_inventory = 1
+        AND stock_quantity >= ?
+    `,
+      )
+      .run(quantityDelta, updatedAt, product.id, need) as { changes: number };
+    if (result.changes === 0) {
+      throw new InventoryServiceError(400, `Insufficient stock for ${product.name}`);
+    }
+  } else {
+    db.prepare(
+      'UPDATE products SET stock_quantity = stock_quantity + ?, updated_at = ? WHERE id = ?',
+    ).run(quantityDelta, updatedAt, product.id);
+  }
   const stockAfter = readStockAfter(db, product.id);
   const movementId = recordMovement(db, {
     productId: product.id,
@@ -269,7 +293,7 @@ export function applyPurchaseReceiptStock(
   return { movementId, stockAfter };
 }
 
-/** Sale / add-items path: check then decrement when tracking. No floor on UPDATE. */
+/** Sale / add-items path: atomic floor on UPDATE (P16 — no check-then-act race). */
 export function decrementTrackedStock(
   db: any,
   product: StockTrackedProduct,
@@ -281,11 +305,29 @@ export function decrementTrackedStock(
     'inventory',
     DOMAIN_SPAN.inventory.decrement,
     () => {
-      assertStockAvailable(product, quantity);
       if (!isTracking(product)) return;
-      db.prepare(
-        'UPDATE products SET stock_quantity = stock_quantity - ?, updated_at = ? WHERE id = ?',
-      ).run(quantity, updatedAt, product.id);
+      if (typeof quantity !== 'number' || !Number.isFinite(quantity) || quantity <= 0) {
+        throw new InventoryServiceError(400, 'quantity must be a positive number');
+      }
+      // Fast-fail for common sequential cases; CAS below is authoritative under concurrency.
+      assertStockAvailable(product, quantity);
+      const result = db
+        .prepare(
+          `
+        UPDATE products
+        SET stock_quantity = stock_quantity - ?, updated_at = ?
+        WHERE id = ?
+          AND deleted_at IS NULL
+          AND track_inventory = 1
+          AND stock_quantity >= ?
+      `,
+        )
+        .run(quantity, updatedAt, product.id, quantity) as { changes: number };
+
+      if (result.changes === 0) {
+        throw new InventoryServiceError(400, `Insufficient stock for ${product.name}`);
+      }
+
       const stockAfter = readStockAfter(db, product.id);
       recordMovement(db, {
         productId: product.id,

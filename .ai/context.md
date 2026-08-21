@@ -48,6 +48,10 @@ Runtime: Electron + Express (`main/`) + SQLite (better-sqlite3, WAL, `PRAGMA use
 **Exhaustive QA audit (2026-08-15):** Pack at `docs/qa/`. Live GUI + RBAC + RC: PASS WITH CONDITIONS. Production readiness: **CONDITIONAL GO**. Final release hardening: **CONDITIONAL GO** (`docs/qa/FINAL-RELEASE-HARDENING-AUDIT.md`) — P1-06 unopenable DB fail-closed; OPS-02 drill checklist; RC checklist. Live café still blocked on signed/notarized RC + OPS-02 + Master-PIN DR + security residual acceptance + sign-off. Residual eng: JWT/CSP Phase C, REAL dual-write.
 
 
+**P16 INV-OS-HARDENING (2026-08-21):** Inventory integrity hardening — sale/recipe CAS floors; PUT is_active→availability; opening/count audits; policy tests; no schema bump; `npm run test:p16`. Audit `docs/qa/P16-INVENTORY-OS-AUDIT.md`. Report `docs/qa/P16-INVENTORY-OS-IMPLEMENTATION-REPORT.md`. LIVE PILOT NO-GO. P17 NOT STARTED.
+
+**P16 INVENTORY-OS AUDIT (2026-08-21):** Docs — `docs/qa/P16-INVENTORY-OS-AUDIT.md`. Inventory OS largely Existing (R4/R5/R6/P5); P16 implemented as hardening.
+
 **P15 SEC-SENSITIVE-ACTIONS (2026-08-21):** Sensitive-action controls — bill discount tender guard; cancel/void PIN accountability + sanitizer allowlist; LAN network_mode owner+Master PIN; Drive/export/import/master-pin audits; no schema bump; `npm run test:p15`. Matrix Sensitive-action controls → 🟢 Existing. LIVE PILOT NO-GO.
 
 **P14 POS-OFFLINE-CONFLICT-HARDENING (2026-08-21):** Order-status CAS + payment complete guard; FE stock Idempotency-Key stability; POS/KDS 409/permanent retry hygiene; no schema bump; `npm run test:p14`. Plan `docs/qa/P14-POS-OFFLINE-CONFLICT-HARDENING-PLAN.md`. Report `docs/qa/P14-POS-OFFLINE-CONFLICT-HARDENING-IMPLEMENTATION-REPORT.md`. Offline Conflict handling / App restart recovery remain 🟡 Hardening. LIVE PILOT NO-GO.

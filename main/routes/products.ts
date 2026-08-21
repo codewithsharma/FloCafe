@@ -776,6 +776,20 @@ router.post('/', requireRole('owner', 'manager'), (req: Request, res: Response) 
           referenceId: id,
           reason: 'opening',
         });
+        const actorUserId = (req as { user?: { userId?: string } }).user?.userId ?? null;
+        logAuditEvent({
+          actorUserId,
+          action: 'inventory.opening_stock',
+          entityType: 'product',
+          entityId: id,
+          result: 'success',
+          metadata: {
+            product_id: id,
+            quantity: initialStock,
+            reason: 'opening',
+            reference_type: 'product_create',
+          },
+        });
       });
     } catch (error: unknown) {
       if (error instanceof InventoryServiceError) {
@@ -917,7 +931,6 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
             track_inventory = COALESCE(@track_inventory, track_inventory),
             inventory_unit = COALESCE(@inventory_unit, inventory_unit),
             low_stock_threshold = COALESCE(@low_stock_threshold, low_stock_threshold),
-            is_active = COALESCE(@is_active, is_active),
             image_url = CASE WHEN @has_image_url = 1 THEN @image_url ELSE image_url END,
             sort_order = COALESCE(@sort_order, sort_order),
             cb_percent = CASE WHEN @has_cb_percent = 1 THEN @cb_percent ELSE cb_percent END,
@@ -939,7 +952,6 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
           track_inventory: track_inventory ? 1 : track_inventory === 0 ? 0 : null,
           inventory_unit: resolvedPutUnit,
           low_stock_threshold,
-          is_active: is_active !== undefined ? (is_active ? 1 : 0) : null,
           has_image_url: hasImageUrl ? 1 : 0,
           image_url: hasImageUrl ? image_url : null,
           sort_order,
@@ -950,12 +962,34 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
           id: productId,
         });
 
+        // P16: is_active must go through availability service (manual/auto flags), not raw PUT.
+        const actorUserId = (req as { user?: { userId?: string } }).user?.userId ?? null;
+        if (is_active !== undefined) {
+          setManualAvailability(db, productId, Boolean(is_active), { actorUserId });
+        }
+
         if (hasStockQuantity) {
-          applyAbsoluteStockChange(db, productId, stock_quantity, {
+          const stockResult = applyAbsoluteStockChange(db, productId, stock_quantity, {
             referenceType: 'product_update',
             referenceId: productId,
             reason: 'product_update',
           });
+          if (stockResult.changed) {
+            logAuditEvent({
+              actorUserId,
+              action: 'inventory.stock_set',
+              entityType: 'product',
+              entityId: productId,
+              result: 'success',
+              metadata: {
+                product_id: productId,
+                quantity: stock_quantity,
+                delta: stockResult.delta,
+                stock_after: stockResult.stockAfter,
+                reason: 'product_update',
+              },
+            });
+          }
         }
 
         if (addon_group_ids !== undefined) {
@@ -972,6 +1006,9 @@ router.put('/:id', requireRole('owner', 'manager'), (req: Request, res: Response
       });
     } catch (error: unknown) {
       if (error instanceof InventoryServiceError) {
+        return res.status(error.statusCode).json({ error: error.message });
+      }
+      if (error instanceof ProductAvailabilityError) {
         return res.status(error.statusCode).json({ error: error.message });
       }
       throw error;
