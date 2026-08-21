@@ -8,7 +8,7 @@
 | Feature ID | `RPT-PRODUCT`                                   |
 | Phase      | P11                                             |
 | Status     | **COMPLETE** (Implemented / Hardening verified) |
-| Commit     | _(see git after commit)_                        |
+| Commit     | `af0d324`                                       |
 | Schema     | **v88** (no bump)                               |
 
 Live pilot remains **NO-GO** (R16).
