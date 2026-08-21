@@ -3,7 +3,7 @@
 **Status:** COMPLETE  
 **Feature ID:** `ORD-IDEM-HARDENING`  
 **Date:** 2026-08-21  
-**Commit:** _(filled after commit)_  
+**Commit:** `ea61ac9` (`ea61ac991388c9254af36f657663d7ba07d57ebd`)  
 **Schema:** **v88** (no bump)  
 **Live pilot:** NO-GO
 
