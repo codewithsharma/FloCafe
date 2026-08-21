@@ -21,6 +21,7 @@ import {
   queryPaymentsReceivedByMethod,
 } from '../services/payment-report';
 import { discountReportToCsv, queryDiscountReport } from '../services/discount-report';
+import { queryStaffReport, staffReportToCsv } from '../services/staff-report';
 import { logAuditEvent } from '../services/audit-log';
 import { correlationId } from '../errors';
 import { toCsvRow } from '../lib/csv';
@@ -713,6 +714,69 @@ router.get(
     }
   },
 );
+
+// RPT-STAFF — Staff performance / activity (persisted attribution only; no schema change).
+router.get('/staff', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const today = utcTodayDate();
+    const startDate = reportDate(req.query.start_date, today);
+    const endDate = reportDate(req.query.end_date, today);
+    if (startDate > endDate) {
+      return res.status(400).json({ error: 'start_date must be on or before end_date' });
+    }
+    const staffIdRaw = req.query.staff_id;
+    const staffId = typeof staffIdRaw === 'string' && staffIdRaw.trim() ? staffIdRaw.trim() : null;
+    const report = queryStaffReport(db, startDate, endDate, { staffId });
+    res.json({ staff: report });
+  } catch (error: unknown) {
+    console.error('[API] Staff report failed:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/export/staff.csv', requireRole('owner', 'manager'), (req: Request, res: Response) => {
+  try {
+    const db = getDatabase();
+    const today = utcTodayDate();
+    const startDate = reportDate(req.query.start_date, today);
+    const endDate = reportDate(req.query.end_date, today);
+    if (startDate > endDate) {
+      return res.status(400).json({ error: 'start_date must be on or before end_date' });
+    }
+    const staffIdRaw = req.query.staff_id;
+    const staffId = typeof staffIdRaw === 'string' && staffIdRaw.trim() ? staffIdRaw.trim() : null;
+    const report = queryStaffReport(db, startDate, endDate, { staffId });
+    const csv = staffReportToCsv(report);
+
+    logAuditEvent({
+      actorUserId: (req as { user?: { userId?: string } }).user?.userId ?? null,
+      action: 'report.staff_exported',
+      entityType: 'staff_report',
+      entityId: `${startDate}_${endDate}`,
+      result: 'success',
+      metadata: {
+        format: 'csv',
+        start_date: startDate,
+        end_date: endDate,
+        staff_id: staffId,
+        staff_count: report.totals.staff_count,
+        orders_created: report.totals.orders_created,
+        sales_from_orders_created: report.totals.sales_from_orders_created,
+      },
+    });
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="operavia-staff-${startDate}-to-${endDate}.csv"`,
+    );
+    res.status(200).send(csv);
+  } catch (error: unknown) {
+    console.error('[API] Staff CSV export failed:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 router.get('/sales', requireRole('owner', 'manager'), (req: Request, res: Response) => {
   try {

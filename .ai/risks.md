@@ -2,7 +2,8 @@
 
 ## Active program notes (2026-08-21)
 
-- ⚠️ RISK: **Full `npm run lint`** remains red on pre-existing frontend React Compiler rules (`set-state-in-effect`, `refs` in `useKdsConnection.ts`, recipes/QR/TableQrDialog, etc.) — baseline debt; do not conflate with P6/P7/P8.
+- ⚠️ RISK: **RPT-STAFF** “Sales from Orders Created” is creator attribution — not cashier or waiter performance. Operators must read the clarity note.
+- ⚠️ RISK: **Full `npm run lint`** remains red on pre-existing frontend React Compiler rules (`set-state-in-effect`, `refs` in `useKdsConnection.ts`, recipes/QR/TableQrDialog, etc.) — baseline debt; do not conflate with P6/P7/P8/P9.
 - ⚠️ RISK: **KDS-ALERTS** sound default is off; autoplay policies may block beep until toggle click — visual highlight remains primary signal.
 - ⚠️ RISK: **RPT-DISC** app Gross Sales is post-discount bill total (incl. tax) — operators must not expect Gross − Discount = Net merchandise without reading the report note.
 - ⚠️ RISK: **RPT-PAY** payment-time window ≠ shift_id cash drawer window — operators must not expect exact match to expected cash without reading the semantics note.

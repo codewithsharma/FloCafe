@@ -20,6 +20,7 @@ import {
   BarChart3,
   Wallet,
   BadgePercent,
+  Users,
   Download,
   Loader2,
 } from 'lucide-react';
@@ -68,6 +69,7 @@ import {
   fetchDiscountReport,
   type DiscountReportPayload,
 } from '@/lib/discount-report';
+import { downloadStaffCsv, fetchStaffReport, type StaffReportPayload } from '@/lib/staff-report';
 
 interface PaymentMethodBreakdown {
   method: string | null;
@@ -214,6 +216,7 @@ export default function ReportsPage() {
   const [voidsReport, setVoidsReport] = useState<VoidCancelPayload | null>(null);
   const [paymentReport, setPaymentReport] = useState<PaymentReportPayload | null>(null);
   const [discountReport, setDiscountReport] = useState<DiscountReportPayload | null>(null);
+  const [staffReport, setStaffReport] = useState<StaffReportPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [exportingCsv, setExportingCsv] = useState(false);
   const [exportingTaxCsv, setExportingTaxCsv] = useState(false);
@@ -221,6 +224,7 @@ export default function ReportsPage() {
   const [exportingVoidsCsv, setExportingVoidsCsv] = useState(false);
   const [exportingPaymentsCsv, setExportingPaymentsCsv] = useState(false);
   const [exportingDiscountsCsv, setExportingDiscountsCsv] = useState(false);
+  const [exportingStaffCsv, setExportingStaffCsv] = useState(false);
 
   const role = currentTenant?.role;
   const canView = role === 'owner' || role === 'manager';
@@ -272,6 +276,7 @@ export default function ReportsPage() {
       fetchVoidCancelReport(selectedDate, endDate),
       fetchPaymentReport(selectedDate, endDate),
       fetchDiscountReport(selectedDate, endDate),
+      fetchStaffReport(selectedDate, endDate),
     ])
       .then(
         ([
@@ -285,6 +290,7 @@ export default function ReportsPage() {
           voidsRes,
           paymentsRes,
           discountsRes,
+          staffRes,
         ]) => {
           setStats(isToday ? statsRes.data : null);
           setDaySummary(isToday ? null : statsRes.data.summary);
@@ -297,6 +303,7 @@ export default function ReportsPage() {
           setVoidsReport(voidsRes);
           setPaymentReport(paymentsRes);
           setDiscountReport(discountsRes);
+          setStaffReport(staffRes);
         },
       )
       .catch((err: unknown) => {
@@ -387,6 +394,18 @@ export default function ReportsPage() {
       toast.error(err instanceof Error ? err.message : t('reports.discountsExportFailed'));
     } finally {
       setExportingDiscountsCsv(false);
+    }
+  };
+
+  const handleExportStaffCsv = async () => {
+    setExportingStaffCsv(true);
+    try {
+      await downloadStaffCsv(selectedDate, endDate);
+      toast.success(t('reports.staffExportSuccess'));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('reports.staffExportFailed'));
+    } finally {
+      setExportingStaffCsv(false);
     }
   };
 
@@ -1320,6 +1339,108 @@ export default function ReportsPage() {
                 <p className="text-caption text-flo-text-muted">
                   {t('reports.discountsSalesNote')}
                 </p>
+              </div>
+            )}
+          </Panel>
+
+          <Panel
+            className="mt-4"
+            title={
+              <span className="inline-flex items-center gap-2">
+                <Users className="size-4 text-flo-text-muted" aria-hidden />
+                {t('reports.staffTitle')}
+              </span>
+            }
+            actions={
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void handleExportStaffCsv()}
+                disabled={exportingStaffCsv || loading}
+              >
+                {exportingStaffCsv ? t('reports.staffExporting') : t('reports.staffExportCsv')}
+              </Button>
+            }
+          >
+            {!staffReport ? (
+              <EmptyState title={t('reports.staffEmpty')} className="min-h-[120px] py-6" />
+            ) : staffReport.totals.staff_count === 0 ? (
+              <EmptyState title={t('reports.staffNoRows')} className="min-h-[120px] py-6" />
+            ) : (
+              <div className="space-y-4">
+                <p className="text-caption text-flo-text-muted">{t('reports.staffClarity')}</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="rounded-flo-md border border-flo-border p-3">
+                    <p className="text-caption text-flo-text-muted">
+                      {t('reports.staffOrdersCreated')}
+                    </p>
+                    <p className="text-numeric-lg">{staffReport.totals.orders_created}</p>
+                  </div>
+                  <div className="rounded-flo-md border border-flo-border p-3">
+                    <p className="text-caption text-flo-text-muted">
+                      {t('reports.staffSalesCreated')}
+                    </p>
+                    <p className="text-numeric-lg">
+                      {fmt(staffReport.totals.sales_from_orders_created)}
+                    </p>
+                  </div>
+                  <div className="rounded-flo-md border border-flo-border p-3">
+                    <p className="text-caption text-flo-text-muted">{t('reports.staffPayments')}</p>
+                    <p className="text-numeric-lg">
+                      {fmt(staffReport.totals.payments_received_amount)}
+                    </p>
+                  </div>
+                  <div className="rounded-flo-md border border-flo-border p-3">
+                    <p className="text-caption text-flo-text-muted">{t('reports.staffRefunds')}</p>
+                    <p className="text-numeric-lg">{fmt(staffReport.totals.refunds_amount)}</p>
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-flo-border text-flo-text-muted">
+                        <th className="py-2 pr-3">{t('reports.staffColStaff')}</th>
+                        <th className="py-2 pr-3">{t('reports.staffColRole')}</th>
+                        <th className="py-2 pr-3 text-right">{t('reports.staffColOrders')}</th>
+                        <th className="py-2 pr-3 text-right">{t('reports.staffColSales')}</th>
+                        <th className="py-2 pr-3 text-right">{t('reports.staffColPayments')}</th>
+                        <th className="py-2 pr-3 text-right">{t('reports.staffColRefunds')}</th>
+                        <th className="py-2 pr-3 text-right">{t('reports.staffColDiscounts')}</th>
+                        <th className="py-2 pr-3 text-right">{t('reports.staffColVoids')}</th>
+                        <th className="py-2 text-right">{t('reports.staffColShiftsOpened')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {staffReport.by_staff.map((row) => (
+                        <tr key={row.staff_id} className="border-b border-flo-border/60">
+                          <td className="py-2 pr-3 font-medium text-flo-text">{row.staff_name}</td>
+                          <td className="py-2 pr-3 text-flo-text-secondary">{row.role}</td>
+                          <td className="py-2 pr-3 text-right text-numeric">
+                            {row.orders_created}
+                          </td>
+                          <td className="py-2 pr-3 text-right text-numeric">
+                            {fmt(row.sales_from_orders_created)}
+                          </td>
+                          <td className="py-2 pr-3 text-right text-numeric">
+                            {fmt(row.payments_received_amount)}
+                          </td>
+                          <td className="py-2 pr-3 text-right text-numeric">
+                            {fmt(row.refunds_amount)}
+                          </td>
+                          <td className="py-2 pr-3 text-right text-numeric">
+                            {row.discounts_applied_count}
+                          </td>
+                          <td className="py-2 pr-3 text-right text-numeric">
+                            {row.voids_cancels_count}
+                          </td>
+                          <td className="py-2 text-right text-numeric">{row.shifts_opened}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-caption text-flo-text-muted">{t('reports.staffSalesNote')}</p>
               </div>
             )}
           </Panel>

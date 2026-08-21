@@ -1,5 +1,9 @@
 # Decisions
 
+## 2026-08-21 — P9 RPT-STAFF Staff performance report (COMPLETE)
+
+No schema bump (tip remains **v88**). Trustworthy attribution only: `orders.user_id` (creator), settled-bill sales via creator, `payment.received` audit actors, `refunds.created_by`, discount/void audit counts, shift open/close. Explicitly omit cashier tender actor, waiter sales, attendance. `GET /api/reports/staff` + CSV + Reports UI. Suite `npm run test:rpt-staff`. Report `docs/qa/STAFF-PERFORMANCE-REPORT-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**.
+
 ## 2026-08-21 — P8 KDS-ALERTS Sound & visual alerts (COMPLETE)
 
 No schema bump (tip remains **v88**). FE-only `KdsAlertTracker` keys on `order_item.id`; first non-empty snapshot seeds without alerting; empty auth boards stay unarmed; reconnect replay does not storm. Device-local sound toggle + Web Audio beep. Suite `npm run test:kds-alerts`. Report `docs/qa/KDS-ALERTS-IMPLEMENTATION-REPORT.md`. Status: **Implemented / Hardening verified**.

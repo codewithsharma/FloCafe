@@ -9,6 +9,8 @@
 
 **P8 note (2026-08-21):** KDS-ALERTS Sound & visual alerts — FE-only seen-`order_item.id` tracker; suite `npm run test:kds-alerts`. Status: **Implemented / Hardening verified**. Schema tip remains **v88**.
 
+**P9 note (2026-08-21):** RPT-STAFF Staff performance report — `GET /api/reports/staff` + CSV; suite `npm run test:rpt-staff`. Status: **Implemented / Hardening verified**. Schema tip remains **v88**. Attribution: creator / audit actor / refunds.created_by / shift openers — not cashier or waiter sales.
+
 **P7 note (2026-08-21):** RPT-DISC Discount report — `GET /api/reports/discounts` + CSV; suite `npm run test:rpt-disc`. Status: **Implemented / Hardening verified**. Schema tip remains **v88**.
 
 **P6 note (2026-08-21):** RPT-PAY Payment report deepen — `GET /api/reports/payments` + CSV; suite `npm run test:rpt-pay`. Status: **Implemented / Hardening verified**. Schema tip remains **v88**.
@@ -119,6 +121,7 @@
 | RPT-10  | Reporting     | Ops-finance compose                               | `/reports`, `/operations`          | `GET /api/reports/ops-finance`                                                   | `bills`, `expenses`, `day_closes`                                             | owner, manager                          | Existing  |
 | RPT-11  | Reporting     | Payment report (RPT-PAY)                          | `/reports`                         | `GET /api/reports/payments`, `export/payments.csv`                               | `bills.payment_details`, `refunds`                                            | owner, manager                          | Existing  |
 | RPT-12  | Reporting     | Discount report (RPT-DISC)                        | `/reports`                         | `GET /api/reports/discounts`, `export/discounts.csv`                             | `bills.discount_*`, `order_items.discount_amount`                             | owner, manager                          | Existing  |
+| RPT-13  | Reporting     | Staff performance (RPT-STAFF)                     | `/reports`                         | `GET /api/reports/staff`, `export/staff.csv`                                     | `orders.user_id`, `audit_logs`, `refunds`, `shifts`                           | owner, manager                          | Existing  |
 | QR-01   | QR            | QR menu (guest)                                   | `/qr`                              | `GET /api/public/qr/menu`                                                        | `products`, `categories`                                                      | public (token)                          | Existing  |
 | QR-02   | QR            | QR ordering (pay-at-counter)                      | `/qr`                              | `POST /api/public/qr/orders`, `GET …/orders/:orderId`                            | `orders`, `tables.qr_token`                                                   | public (token)                          | Existing  |
 | QR-03   | QR            | Table QR token + rotate / session                 | `/tables`, `/qr`                   | `GET /api/tables/:id/qr`, `POST …/qr-token/rotate`, `GET /api/public/qr/session` | `tables.qr_token`                                                             | staff: O/M; guest: public               | Existing  |
