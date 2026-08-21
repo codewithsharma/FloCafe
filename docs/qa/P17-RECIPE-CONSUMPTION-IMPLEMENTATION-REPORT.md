@@ -4,7 +4,7 @@
 **Feature:** Recipe & Ingredient Consumption / Food Cost Hardening  
 **Feature ID:** `RCP-CONSUMPTION-HARDENING`  
 **Date:** 2026-08-21  
-**Commit:** _(filled after commit)_  
+**Commit:** `2d89064` (`2d8906448b1179b2a52bff2b9e9e14f1791c9f7c`)  
 **Schema:** **v88** (no bump)  
 **Live pilot:** NO-GO
 
